@@ -84,7 +84,7 @@ function refreshDiagnostics(
     return;
   }
   execFile(
-    `${pythonPath}`,
+    pythonPath,
     ["-m", "djlint", "--lint"].concat(getArgs(document)),
     (_error, stdout, stderr) => {
       ensureDjlintInstalled(stderr);
@@ -151,7 +151,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
       const indent = configuration.get<number>("indent");
       execFile(
-        `${pythonPath}`,
+        pythonPath,
         ["-m", "djlint", "--reformat", "--quiet"]
           .concat(indent === undefined ? [] : ["--indent", indent.toString()])
           .concat(getArgs(document)),
