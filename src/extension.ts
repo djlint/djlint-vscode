@@ -69,12 +69,12 @@ function ensureDjlintInstalled(stderr: string): void {
 function refreshDiagnostics(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection,
-  supporetedLanguages: string[]
+  supportedLanguages: string[]
 ): void {
   const configuration = vscode.workspace.getConfiguration("djlint");
   if (
     !configuration.get<boolean>("enableLinting") ||
-    !supporetedLanguages.includes(document.languageId)
+    !supportedLanguages.includes(document.languageId)
   ) {
     return;
   }
@@ -107,7 +107,7 @@ function refreshDiagnostics(
 }
 
 export function activate(context: vscode.ExtensionContext) {
-  const supporetedLanguages = ["html", "django-html", "jinja", "jinja-html"];
+  const supportedLanguages = ["html", "django-html", "jinja", "jinja-html"];
   if (vscode.workspace.getConfiguration("djlint").get<boolean>("autoUpdate")) {
     updateDjlint();
   }
@@ -119,19 +119,19 @@ export function activate(context: vscode.ExtensionContext) {
     refreshDiagnostics(
       vscode.window.activeTextEditor.document,
       collection,
-      supporetedLanguages
+      supportedLanguages
     );
   }
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
-        refreshDiagnostics(editor.document, collection, supporetedLanguages);
+        refreshDiagnostics(editor.document, collection, supportedLanguages);
       }
     })
   );
   context.subscriptions.push(
     vscode.workspace.onDidChangeTextDocument((e) =>
-      refreshDiagnostics(e.document, collection, supporetedLanguages)
+      refreshDiagnostics(e.document, collection, supportedLanguages)
     )
   );
   context.subscriptions.push(
@@ -139,7 +139,7 @@ export function activate(context: vscode.ExtensionContext) {
   );
 
   // Formatting
-  vscode.languages.registerDocumentFormattingEditProvider(supporetedLanguages, {
+  vscode.languages.registerDocumentFormattingEditProvider(supportedLanguages, {
     provideDocumentFormattingEdits(
       document: vscode.TextDocument
     ): vscode.TextEdit[] {
