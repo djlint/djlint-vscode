@@ -83,9 +83,16 @@ function refreshDiagnostics(
     vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
     return;
   }
+  const ignore = configuration.get<string[]>("ignore");
   execFile(
     pythonPath,
-    ["-m", "djlint", "--lint"].concat(getArgs(document)),
+    ["-m", "djlint", "--lint"]
+      .concat(
+        ignore === undefined || ignore.length === 0
+          ? []
+          : ["--ignore", ignore.join(",")]
+      )
+      .concat(getArgs(document)),
     (_error, stdout, stderr) => {
       ensureDjlintInstalled(stderr);
       const diags: vscode.Diagnostic[] = [];
