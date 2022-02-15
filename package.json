@@ -47,6 +47,13 @@
           "default": true,
           "description": "Lint for common issues."
         },
+        "djlint.ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Codes to ignore."
+        },
         "djlint.indent": {
           "type": "number",
           "default": 4,
