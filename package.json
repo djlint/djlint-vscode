@@ -37,11 +37,6 @@
     ],
     "configuration": {
       "properties": {
-        "djlint.autoUpdate": {
-          "type": "boolean",
-          "default": false,
-          "description": "Automatically update djLint on VSCode startup."
-        },
         "djlint.enableLinting": {
           "type": "boolean",
           "default": true,

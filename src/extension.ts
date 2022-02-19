@@ -132,9 +132,6 @@ function refreshDiagnostics(
 
 export function activate(context: vscode.ExtensionContext) {
   const supportedLanguages = ["html", "django-html", "jinja", "jinja-html"];
-  if (vscode.workspace.getConfiguration("djlint").get<boolean>("autoUpdate")) {
-    updateDjlint();
-  }
   vscode.commands.registerCommand("djlint.reinstall", updateDjlint);
 
   // Linting

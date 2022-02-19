@@ -5,6 +5,7 @@ We follow [Semantic Versions](https://semver.org/).
 ## [Unreleased]
 
 - Add option to use the Python executable from the current virtual environment.
+- Remove `djlint.autoUpdate` option.
 
 ## [0.2.1] - 2022-02-19
 
