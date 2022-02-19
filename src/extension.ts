@@ -169,7 +169,6 @@ export function activate(context: vscode.ExtensionContext) {
       }
       const configuration = vscode.workspace.getConfiguration("djlint");
       const pythonPath = getPythonPath(configuration);
-      vscode.window.showInformationMessage(`${pythonPath}`);
       if (!pythonPath) {
         return [];
       }
