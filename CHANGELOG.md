@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [Unreleased]
+
+- Add option to use the Python executable from the current virtual environment.
+
 ## [0.2.1] - 2022-02-19
 
 - Save the current file before formatting.

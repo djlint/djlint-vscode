@@ -62,7 +62,12 @@
         "djlint.pythonPath": {
           "type": "string",
           "default": "python",
-          "description": "Path to desired Python interpreter."
+          "description": "Path to desired Python interpreter. Works only if djlint.useVenv is disabled."
+        },
+        "djlint.useVenv": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the Python executable from the current virtual environment. The Python extension must be installed."
         }
       }
     }

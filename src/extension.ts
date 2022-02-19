@@ -13,12 +13,30 @@ function getArgs(document: vscode.TextDocument): string[] {
   }
 }
 
+function getPythonPath(
+  configuration: vscode.WorkspaceConfiguration
+): string | undefined {
+  const pythonExtension = vscode.extensions.getExtension("ms-python.python");
+  if (pythonExtension) {
+    let pythonPath;
+    if (pythonExtension.isActive) {
+      pythonPath =
+        pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
+    } else {
+      pythonExtension.activate().then(() => {
+        pythonPath =
+          pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
+      });
+    }
+    return pythonPath;
+  }
+  vscode.window.showErrorMessage("Invalid Python interpreter path.");
+  return configuration.get<string>("pythonPath");
+}
+
 function updateDjlint(): void {
-  const pythonPath = vscode.workspace
-    .getConfiguration("djlint")
-    .get<string>("pythonPath");
+  const pythonPath = getPythonPath(vscode.workspace.getConfiguration());
   if (!pythonPath) {
-    vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
     return;
   }
   execFile(
@@ -78,9 +96,8 @@ function refreshDiagnostics(
   ) {
     return;
   }
-  const pythonPath = configuration.get<string>("pythonPath");
+  const pythonPath = getPythonPath(configuration);
   if (!pythonPath) {
-    vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
     return;
   }
   const ignore = configuration.get<string[]>("ignore");
@@ -154,9 +171,9 @@ export function activate(context: vscode.ExtensionContext) {
         return [];
       }
       const configuration = vscode.workspace.getConfiguration("djlint");
-      const pythonPath = configuration.get<string>("pythonPath");
+      const pythonPath = getPythonPath(configuration);
+      vscode.window.showInformationMessage(`${pythonPath}`);
       if (!pythonPath) {
-        vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
         return [];
       }
       const indent = configuration.get<number>("indent");
