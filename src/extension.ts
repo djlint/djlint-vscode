@@ -150,6 +150,9 @@ export function activate(context: vscode.ExtensionContext) {
     provideDocumentFormattingEdits(
       document: vscode.TextDocument
     ): vscode.TextEdit[] {
+      if (!document.save()) {
+        return [];
+      }
       const configuration = vscode.workspace.getConfiguration("djlint");
       const pythonPath = configuration.get<string>("pythonPath");
       if (!pythonPath) {
