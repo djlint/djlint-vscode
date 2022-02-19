@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [1.0.1] - 2022-02-20
+
+- Remove unneeded output.
+
 ## [1.0.0] - 2022-02-20
 
 - Add option to use the Python executable from the current virtual environment.
