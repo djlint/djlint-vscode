@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [1.0.2] - 2022-02-20
+
+- Fix `djlint.pythonPath` not working.
+
 ## [1.0.1] - 2022-02-20
 
 - Remove unneeded output.
