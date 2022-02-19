@@ -16,26 +16,32 @@ function getArgs(document: vscode.TextDocument): string[] {
 function getPythonPath(
   configuration: vscode.WorkspaceConfiguration
 ): string | undefined {
-  const pythonExtension = vscode.extensions.getExtension("ms-python.python");
-  if (pythonExtension) {
-    let pythonPath;
-    if (pythonExtension.isActive) {
-      pythonPath =
-        pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
-    } else {
-      pythonExtension.activate().then(() => {
+  if (configuration.get<boolean>("useVenv")) {
+    const pythonExtension = vscode.extensions.getExtension("ms-python.python");
+    if (pythonExtension) {
+      let pythonPath;
+      if (pythonExtension.isActive) {
         pythonPath =
           pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
-      });
+      } else {
+        pythonExtension.activate().then(() => {
+          pythonPath =
+            pythonExtension.exports.settings.getExecutionDetails()
+              .execCommand[0];
+        });
+      }
+      return pythonPath;
     }
-    return pythonPath;
   }
-  vscode.window.showErrorMessage("Invalid Python interpreter path.");
-  return configuration.get<string>("pythonPath");
+  const pythonPath = configuration.get<string>("pythonPath");
+  if (!pythonPath) {
+    vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
+  }
+  return pythonPath;
 }
 
 function updateDjlint(): void {
-  const pythonPath = getPythonPath(vscode.workspace.getConfiguration());
+  const pythonPath = getPythonPath(vscode.workspace.getConfiguration("djlint"));
   if (!pythonPath) {
     return;
   }
