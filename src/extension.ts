@@ -1,6 +1,10 @@
 import { execFile } from "child_process";
 import * as vscode from "vscode";
 
+function getConfiguration(): vscode.WorkspaceConfiguration {
+  return vscode.workspace.getConfiguration("djlint");
+}
+
 function getArgs(document: vscode.TextDocument): string[] {
   switch (document.languageId) {
     case "django-html":
@@ -24,10 +28,8 @@ function getPythonPath(
         pythonPath =
           pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
       } else {
-        pythonExtension.activate().then(() => {
-          pythonPath =
-            pythonExtension.exports.settings.getExecutionDetails()
-              .execCommand[0];
+        pythonExtension.activate().then((api) => {
+          pythonPath = api.settings.getExecutionDetails().execCommand[0];
         });
       }
       return pythonPath;
@@ -41,7 +43,7 @@ function getPythonPath(
 }
 
 function updateDjlint(): void {
-  const pythonPath = getPythonPath(vscode.workspace.getConfiguration("djlint"));
+  const pythonPath = getPythonPath(getConfiguration());
   if (!pythonPath) {
     return;
   }
@@ -95,7 +97,7 @@ function refreshDiagnostics(
   collection: vscode.DiagnosticCollection,
   supportedLanguages: string[]
 ): void {
-  const configuration = vscode.workspace.getConfiguration("djlint");
+  const configuration = getConfiguration();
   if (
     !configuration.get<boolean>("enableLinting") ||
     !supportedLanguages.includes(document.languageId)
@@ -149,45 +151,47 @@ export function activate(context: vscode.ExtensionContext) {
       supportedLanguages
     );
   }
-  context.subscriptions.push(
+  [
     vscode.window.onDidChangeActiveTextEditor((editor) => {
       if (editor) {
         refreshDiagnostics(editor.document, collection, supportedLanguages);
       }
-    })
-  );
-  context.subscriptions.push(
-    vscode.workspace.onDidChangeTextDocument((e) =>
-      refreshDiagnostics(e.document, collection, supportedLanguages)
-    )
-  );
-  context.subscriptions.push(
-    vscode.workspace.onDidCloseTextDocument((doc) => collection.delete(doc.uri))
-  );
+    }),
+    vscode.workspace.onDidSaveTextDocument((doc) =>
+      refreshDiagnostics(doc, collection, supportedLanguages)
+    ),
+    vscode.workspace.onDidCloseTextDocument((doc) =>
+      collection.delete(doc.uri)
+    ),
+  ].forEach((event) => {
+    context.subscriptions.push(event);
+  });
 
   // Formatting
   vscode.languages.registerDocumentFormattingEditProvider(supportedLanguages, {
     provideDocumentFormattingEdits(
       document: vscode.TextDocument
     ): vscode.TextEdit[] {
-      if (!document.save()) {
-        return [];
-      }
-      const configuration = vscode.workspace.getConfiguration("djlint");
-      const pythonPath = getPythonPath(configuration);
-      if (!pythonPath) {
-        return [];
-      }
-      const indent = configuration.get<number>("indent");
-      execFile(
-        pythonPath,
-        ["-m", "djlint", "--reformat", "--quiet"]
-          .concat(indent === undefined ? [] : ["--indent", indent.toString()])
-          .concat(getArgs(document)),
-        (_error, _stderr, stderr) => {
-          ensureDjlintInstalled(stderr);
+      document.save().then((saved) => {
+        if (!saved) {
+          return;
         }
-      );
+        const configuration = getConfiguration();
+        const pythonPath = getPythonPath(configuration);
+        if (!pythonPath) {
+          return;
+        }
+        const indent = configuration.get<number>("indent");
+        execFile(
+          pythonPath,
+          ["-m", "djlint", "--reformat", "--quiet"]
+            .concat(indent === undefined ? [] : ["--indent", indent.toString()])
+            .concat(getArgs(document)),
+          (_error, _stderr, stderr) => {
+            ensureDjlintInstalled(stderr);
+          }
+        );
+      });
       return [];
     },
   });
