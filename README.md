@@ -10,9 +10,9 @@ Search for `djLint` in VS Code extensions.
 
 ## Usage
 
-`djlint-vscode` supports `html`, [`django-html`](https://marketplace.visualstudio.com/items?itemName=batisteo.vscode-django), [`jinja`](https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja) and [`jinja-html`](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml).
+`djlint-vscode` supports automatically setting djLint's `profile` setting for `html`, [`django-html`](https://marketplace.visualstudio.com/items?itemName=batisteo.vscode-django), [`jinja`](https://marketplace.visualstudio.com/items?itemName=wholroyd.jinja) and [`jinja-html`](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml).
 
-Don't forget to check the extension's settings, you might find something useful there.
+Some djLint options, such as `indent` and `ignore`, can be configured directly in the VSCode settings. All other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/).
 
 Add this to your `settings.json` to format all supported file types with `djLint`:
 
