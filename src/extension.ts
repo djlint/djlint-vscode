@@ -185,7 +185,11 @@ export function activate(context: vscode.ExtensionContext) {
         execFile(
           pythonPath,
           ["-m", "djlint", "--reformat", "--quiet"]
-            .concat(indent === undefined ? [] : ["--indent", indent.toString()])
+            .concat(
+              indent === undefined || indent === 4
+                ? []
+                : ["--indent", indent.toString()]
+            )
             .concat(getArgs(document)),
           (_error, _stderr, stderr) => {
             ensureDjlintInstalled(stderr);
