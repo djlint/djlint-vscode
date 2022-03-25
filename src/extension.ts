@@ -181,12 +181,12 @@ export function activate(context: vscode.ExtensionContext) {
         if (!pythonPath) {
           return;
         }
-        const indent = configuration.get<number>("indent");
+        const indent = configuration.get<number | null>("indent");
         execFile(
           pythonPath,
           ["-m", "djlint", "--reformat", "--quiet"]
             .concat(
-              indent === undefined || indent === 4
+              indent === undefined || indent === null
                 ? []
                 : ["--indent", indent.toString()]
             )

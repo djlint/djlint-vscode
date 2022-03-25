@@ -51,7 +51,7 @@
         },
         "djlint.indent": {
           "type": "number",
-          "default": 4,
+          "default": null,
           "description": "Indent spacing."
         },
         "djlint.pythonPath": {
