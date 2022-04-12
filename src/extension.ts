@@ -1,7 +1,7 @@
-import { execFile } from "child_process";
+import { spawn } from "child_process";
 import * as vscode from "vscode";
 
-function getConfiguration(): vscode.WorkspaceConfiguration {
+function getConfig(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration("djlint");
 }
 
@@ -17,79 +17,118 @@ function getArgs(document: vscode.TextDocument): string[] {
   }
 }
 
-function getPythonPath(
-  configuration: vscode.WorkspaceConfiguration
-): string | undefined {
-  if (configuration.get<boolean>("useVenv")) {
-    const pythonExtension = vscode.extensions.getExtension("ms-python.python");
-    if (pythonExtension) {
-      let pythonPath;
-      if (pythonExtension.isActive) {
-        pythonPath =
-          pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
-      } else {
-        pythonExtension.activate().then((api) => {
-          pythonPath = api.settings.getExecutionDetails().execCommand[0];
-        });
-      }
-      return pythonPath;
-    }
-  }
-  const pythonPath = configuration.get<string>("pythonPath");
-  if (!pythonPath) {
-    vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
-  }
-  return pythonPath;
-}
-
-function updateDjlint(): void {
-  const pythonPath = getPythonPath(getConfiguration());
-  if (!pythonPath) {
-    return;
-  }
-  execFile(
-    pythonPath,
-    [
-      "-m",
-      "pip",
-      "install",
-      "--upgrade",
-      "--progress-bar",
-      "off",
-      "--disable-pip-version-check",
-      "--no-color",
-      "djlint",
-    ],
-    (_error, stdout, stderr) => {
-      if (!stdout.includes("Successfully installed")) {
-        vscode.window.showErrorMessage(stderr);
+function getPythonPath(config: vscode.WorkspaceConfiguration): Promise<string> {
+  return new Promise((resolve, reject) => {
+    if (config.get<boolean>("useVenv")) {
+      const pythonExtension =
+        vscode.extensions.getExtension("ms-python.python");
+      if (pythonExtension) {
+        resolve(
+          pythonExtension
+            .activate()
+            .then((api) => api.settings.getExecutionDetails().execCommand[0])
+        );
         return;
       }
-      vscode.window
-        .showInformationMessage(
-          "Successfully installed djLint.",
-          "Show installation log"
-        )
-        .then((option) => {
-          if (option === "Show installation log") {
-            vscode.window.showInformationMessage(stdout);
-          }
-        });
     }
-  );
+    const pythonPath = config.get<string>("pythonPath");
+    if (pythonPath) {
+      resolve(pythonPath);
+    } else {
+      vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
+      reject(pythonPath);
+    }
+  });
 }
 
-function ensureDjlintInstalled(stderr: string): void {
-  if (!stderr.includes("No module named")) {
-    return;
-  }
-  vscode.window
-    .showErrorMessage("djLint is not installed.", "Install")
-    .then((option) => {
-      if (option === "Install") {
-        updateDjlint();
+function installDjlint(): void {
+  getPythonPath(getConfig()).then((pythonPath) => {
+    new Promise<string>((resolve, reject) => {
+      let stdout = "";
+      let stderr = "";
+      const child = spawn(pythonPath, [
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "--progress-bar",
+        "off",
+        "--disable-pip-version-check",
+        "--no-color",
+        "djlint",
+      ]);
+      child.stdout.on("data", (data) => {
+        stdout += data;
+      });
+      child.stderr.on("data", (data) => {
+        stderr += data;
+      });
+      child.on("close", () => {
+        if (
+          stdout.includes("Successfully installed") ||
+          stdout.includes("Requirement already satisfied: djlint")
+        ) {
+          resolve(stdout);
+        } else {
+          reject(stderr);
+        }
+      });
+    })
+      .then((stdout) => {
+        vscode.window
+          .showInformationMessage(
+            "Successfully installed djLint.",
+            "Show installation log"
+          )
+          .then((option) => {
+            if (option === "Show installation log") {
+              vscode.window.showInformationMessage(stdout);
+            }
+          });
+      })
+      .catch((stderr) => {
+        vscode.window.showErrorMessage(stderr);
+      });
+  });
+}
+
+function runDjlint(
+  document: vscode.TextDocument,
+  pythonPath: string,
+  args: string[]
+): Promise<string> {
+  return new Promise<string>((resolve, reject) => {
+    let stdout = "";
+    let stderr = "";
+    const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
+    const child = spawn(
+      pythonPath,
+      ["-m", "djlint", "-"].concat(args).concat(getArgs(document)),
+      cwd ? { cwd: cwd.uri.fsPath } : undefined
+    );
+    child.stdin.write(document.getText());
+    child.stdin.end();
+    child.stdout.on("data", (data) => {
+      stdout += data;
+    });
+    child.stderr.on("data", (data) => {
+      stderr += data;
+    });
+    child.on("close", () => {
+      if (stderr.includes("No module named")) {
+        vscode.window
+          .showErrorMessage("djLint is not installed.", "Install")
+          .then((option) => {
+            if (option === "Install") {
+              installDjlint();
+            }
+          });
+        reject();
+      } else {
+        resolve(stdout);
       }
     });
+  });
 }
 
 function refreshDiagnostics(
@@ -97,29 +136,24 @@ function refreshDiagnostics(
   collection: vscode.DiagnosticCollection,
   supportedLanguages: string[]
 ): void {
-  const configuration = getConfiguration();
+  const config = getConfig();
   if (
-    !configuration.get<boolean>("enableLinting") ||
+    !config.get<boolean>("enableLinting") ||
     !supportedLanguages.includes(document.languageId)
   ) {
     return;
   }
-  const pythonPath = getPythonPath(configuration);
-  if (!pythonPath) {
-    return;
-  }
-  const ignore = configuration.get<string[]>("ignore");
-  execFile(
-    pythonPath,
-    ["-m", "djlint", "--lint"]
-      .concat(
+  getPythonPath(config).then((pythonPath) => {
+    const ignore = config.get<string[]>("ignore");
+    runDjlint(
+      document,
+      pythonPath,
+      ["--lint"].concat(
         ignore === undefined || ignore.length === 0
           ? []
           : ["--ignore", ignore.join(",")]
       )
-      .concat(getArgs(document)),
-    (_error, stdout, stderr) => {
-      ensureDjlintInstalled(stderr);
+    ).then((stdout) => {
       const diags: vscode.Diagnostic[] = [];
       Array.from(
         stdout.matchAll(/^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm)
@@ -134,13 +168,13 @@ function refreshDiagnostics(
         );
       });
       collection.set(document.uri, diags);
-    }
-  );
+    });
+  });
 }
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate(context: vscode.ExtensionContext): void {
   const supportedLanguages = ["html", "django-html", "jinja", "jinja-html"];
-  vscode.commands.registerCommand("djlint.reinstall", updateDjlint);
+  vscode.commands.registerCommand("djlint.reinstall", installDjlint);
 
   // Linting
   const collection = vscode.languages.createDiagnosticCollection("djLint");
@@ -151,52 +185,43 @@ export function activate(context: vscode.ExtensionContext) {
       supportedLanguages
     );
   }
-  [
-    vscode.window.onDidChangeActiveTextEditor((editor) => {
-      if (editor) {
-        refreshDiagnostics(editor.document, collection, supportedLanguages);
-      }
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument((doc) => {
+      refreshDiagnostics(doc, collection, supportedLanguages);
     }),
     vscode.workspace.onDidSaveTextDocument((doc) =>
       refreshDiagnostics(doc, collection, supportedLanguages)
     ),
-    vscode.workspace.onDidCloseTextDocument((doc) =>
-      collection.delete(doc.uri)
-    ),
-  ].forEach((event) => {
-    context.subscriptions.push(event);
-  });
+    vscode.workspace.onDidCloseTextDocument((doc) => collection.delete(doc.uri))
+  );
 
   // Formatting
   vscode.languages.registerDocumentFormattingEditProvider(supportedLanguages, {
     provideDocumentFormattingEdits(
       document: vscode.TextDocument
-    ): vscode.TextEdit[] {
-      document.save().then((saved) => {
-        if (!saved) {
-          return;
-        }
-        const configuration = getConfiguration();
-        const pythonPath = getPythonPath(configuration);
-        if (!pythonPath) {
-          return;
-        }
-        const indent = configuration.get<number | null>("indent");
-        execFile(
+    ): Promise<vscode.TextEdit[]> {
+      const config = getConfig();
+      return getPythonPath(config).then((pythonPath) => {
+        const indent = config.get<number | null>("indent");
+        return runDjlint(
+          document,
           pythonPath,
-          ["-m", "djlint", "--reformat", "--quiet"]
-            .concat(
-              indent === undefined || indent === null
-                ? []
-                : ["--indent", indent.toString()]
-            )
-            .concat(getArgs(document)),
-          (_error, _stderr, stderr) => {
-            ensureDjlintInstalled(stderr);
-          }
-        );
+          ["--reformat"].concat(
+            indent === undefined || indent === null
+              ? []
+              : ["--indent", indent.toString()]
+          )
+        ).then((stdout) => {
+          const lastLineId = document.lineCount - 1;
+          const range = new vscode.Range(
+            0,
+            0,
+            lastLineId,
+            document.lineAt(lastLineId).text.length
+          );
+          return [vscode.TextEdit.replace(range, stdout)];
+        });
       });
-      return [];
     },
   });
 }

@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [1.0.6] - 2022-04-12
+
+- Huge refactoring.
+
 ## [1.0.5] - 2022-03-25
 
 - Set default `indent` to `null`.
