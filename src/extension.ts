@@ -18,7 +18,7 @@ function getArgs(document: vscode.TextDocument): string[] {
 }
 
 function getPythonPath(config: vscode.WorkspaceConfiguration): Promise<string> {
-  return new Promise((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     if (config.get<boolean>("useVenv")) {
       const pythonExtension =
         vscode.extensions.getExtension("ms-python.python");
