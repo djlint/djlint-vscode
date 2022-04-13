@@ -190,9 +190,9 @@ export function activate(context: vscode.ExtensionContext): void {
     );
   }
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((doc) => {
-      refreshDiagnostics(doc, collection, supportedLanguages);
-    }),
+    vscode.workspace.onDidOpenTextDocument((doc) =>
+      refreshDiagnostics(doc, collection, supportedLanguages)
+    ),
     vscode.workspace.onDidSaveTextDocument((doc) =>
       refreshDiagnostics(doc, collection, supportedLanguages)
     ),
