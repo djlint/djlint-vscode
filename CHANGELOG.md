@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [1.0.7] - 2022-04-13
+
+- Minor improvements.
+
 ## [1.0.6] - 2022-04-12
 
 - Huge refactoring.
