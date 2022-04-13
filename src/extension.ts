@@ -8,12 +8,12 @@ function getConfig(): vscode.WorkspaceConfiguration {
 function getArgs(document: vscode.TextDocument): string[] {
   switch (document.languageId) {
     case "django-html":
-      return ["--profile", "django", document.fileName];
+      return ["--profile", "django"];
     case "jinja":
     case "jinja-html":
-      return ["--profile", "jinja", document.fileName];
+      return ["--profile", "jinja"];
     default:
-      return [document.fileName];
+      return [];
   }
 }
 
