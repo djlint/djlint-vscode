@@ -24,9 +24,11 @@ function getPythonPath(config: vscode.WorkspaceConfiguration): Promise<string> {
         vscode.extensions.getExtension("ms-python.python");
       if (pythonExtension) {
         resolve(
-          pythonExtension
-            .activate()
-            .then((api) => api.settings.getExecutionDetails().execCommand[0])
+          pythonExtension.activate().then(
+            (api) =>
+              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+              api.settings.getExecutionDetails().execCommand[0]
+          )
         );
         return;
       }
@@ -35,14 +37,14 @@ function getPythonPath(config: vscode.WorkspaceConfiguration): Promise<string> {
     if (pythonPath) {
       resolve(pythonPath);
     } else {
-      vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
+      void vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
       reject(pythonPath);
     }
   });
 }
 
 function installDjlint(): void {
-  getPythonPath(getConfig()).then((pythonPath) => {
+  void getPythonPath(getConfig()).then((pythonPath) => {
     new Promise<string>((resolve, reject) => {
       let stdout = "";
       let stderr = "";
@@ -75,19 +77,21 @@ function installDjlint(): void {
       });
     })
       .then((stdout) => {
-        vscode.window
+        void vscode.window
           .showInformationMessage(
             "Successfully installed djLint.",
             "Show installation log"
           )
           .then((option) => {
             if (option === "Show installation log") {
-              vscode.window.showInformationMessage(stdout);
+              void vscode.window.showInformationMessage(stdout);
             }
           });
       })
       .catch((stderr) => {
-        vscode.window.showErrorMessage(stderr);
+        if (typeof stderr === "string") {
+          void vscode.window.showErrorMessage(stderr);
+        }
       });
   });
 }
@@ -116,7 +120,7 @@ function runDjlint(
     });
     child.on("close", () => {
       if (stderr.includes("No module named")) {
-        vscode.window
+        void vscode.window
           .showErrorMessage("djLint is not installed.", "Install")
           .then((option) => {
             if (option === "Install") {
@@ -143,9 +147,9 @@ function refreshDiagnostics(
   ) {
     return;
   }
-  getPythonPath(config).then((pythonPath) => {
+  void getPythonPath(config).then((pythonPath) => {
     const ignore = config.get<string[]>("ignore");
-    runDjlint(
+    void runDjlint(
       document,
       pythonPath,
       ["--lint"].concat(
