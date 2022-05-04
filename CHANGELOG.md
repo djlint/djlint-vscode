@@ -2,6 +2,10 @@
 
 We follow [Semantic Versions](https://semver.org/).
 
+## [1.1.0] - 2022-05-04
+
+- Add support for Nunjucks, Twig, Handlebars and Mustache templates.
+
 ## [1.0.7] - 2022-04-13
 
 - Minor improvements.

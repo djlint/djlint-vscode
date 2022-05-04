@@ -1,6 +1,6 @@
 # djlint-vscode
 
-Visual Studio Code extension for formatting and linting Django/Jinja HTML templates using [djLint](https://djlint.com).
+Visual Studio Code extension for formatting and linting Django/Jinja/Nunjucks/Twig/Handlebars/Mustache HTML templates using [djLint](https://djlint.com).
 
 ## Installation
 

@@ -1,8 +1,8 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "description": "Django/Jinja HTML template formatter and linter",
-  "version": "1.0.7",
+  "description": "Django/Jinja/Nunjucks/Twig/Handlebars/Mustache HTML template formatter and linter",
+  "version": "1.1.0",
   "publisher": "monosans",
   "license": "MIT",
   "homepage": "https://github.com/monosans/djlint-vscode",
