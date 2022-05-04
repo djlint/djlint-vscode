@@ -18,6 +18,7 @@ function getArgs(document: vscode.TextDocument): string[] {
     case "nj":
     case "njk":
     case "nunjucks":
+    case "twig":
       return ["--profile", "nunjucks"];
     default:
       return [];
@@ -194,6 +195,7 @@ export function activate(context: vscode.ExtensionContext): void {
     "nj",
     "njk",
     "nunjucks",
+    "twig",
   ];
   vscode.commands.registerCommand("djlint.reinstall", installDjlint);
 

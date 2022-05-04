@@ -23,6 +23,7 @@ Search for `djLint` in VS Code extensions.
 | nj                                                                                        | nunjucks       |
 | njk                                                                                       | nunjucks       |
 | nunjucks                                                                                  | nunjucks       |
+| twig                                                                                      | nunjucks       |
 
 Some djLint options, such as `indent` and `ignore`, can be configured directly in the VSCode settings. Other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
 
@@ -54,6 +55,9 @@ Add this to your `settings.json` to format all supported file types with `djLint
   "editor.defaultFormatter": "monosans.djlint"
 },
 "[nunjucks]": {
+  "editor.defaultFormatter": "monosans.djlint"
+},
+"[twig]": {
   "editor.defaultFormatter": "monosans.djlint"
 },
 ```
