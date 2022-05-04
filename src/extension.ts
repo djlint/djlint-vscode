@@ -12,6 +12,10 @@ function getArgs(document: vscode.TextDocument): string[] {
     case "jinja":
     case "jinja-html":
       return ["--profile", "jinja"];
+    case "nj":
+    case "njk":
+    case "nunjucks":
+      return ["--profile", "nunjucks"];
     default:
       return [];
   }
@@ -177,7 +181,15 @@ function refreshDiagnostics(
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  const supportedLanguages = ["html", "django-html", "jinja", "jinja-html"];
+  const supportedLanguages = [
+    "html",
+    "django-html",
+    "jinja",
+    "jinja-html",
+    "nj",
+    "njk",
+    "nunjucks",
+  ];
   vscode.commands.registerCommand("djlint.reinstall", installDjlint);
 
   // Linting
