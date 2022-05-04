@@ -24,8 +24,10 @@
   "activationEvents": [
     "onLanguage:html",
     "onLanguage:django-html",
-    "onLanguage:jinja-html",
+    "onLanguage:handlebars",
+    "onLanguage:hbs",
     "onLanguage:jinja",
+    "onLanguage:jinja-html",
     "onLanguage:nj",
     "onLanguage:njk",
     "onLanguage:nunjucks"

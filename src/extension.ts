@@ -9,6 +9,9 @@ function getArgs(document: vscode.TextDocument): string[] {
   switch (document.languageId) {
     case "django-html":
       return ["--profile", "django"];
+    case "handlebars":
+    case "hbs":
+      return ["--profile", "handlebars"];
     case "jinja":
     case "jinja-html":
       return ["--profile", "jinja"];
@@ -184,8 +187,10 @@ export function activate(context: vscode.ExtensionContext): void {
   const supportedLanguages = [
     "html",
     "django-html",
-    "jinja",
+    "handlebars",
+    "hbs",
     "jinja-html",
+    "jinja",
     "nj",
     "njk",
     "nunjucks",
