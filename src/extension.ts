@@ -11,6 +11,7 @@ function getArgs(document: vscode.TextDocument): string[] {
       return ["--profile", "django"];
     case "handlebars":
     case "hbs":
+    case "mustache":
       return ["--profile", "handlebars"];
     case "jinja":
     case "jinja-html":
@@ -190,6 +191,7 @@ export function activate(context: vscode.ExtensionContext): void {
     "django-html",
     "handlebars",
     "hbs",
+    "mustache",
     "jinja-html",
     "jinja",
     "nj",

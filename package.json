@@ -26,11 +26,13 @@
     "onLanguage:django-html",
     "onLanguage:handlebars",
     "onLanguage:hbs",
+    "onLanguage:mustache",
     "onLanguage:jinja",
     "onLanguage:jinja-html",
     "onLanguage:nj",
     "onLanguage:njk",
-    "onLanguage:nunjucks"
+    "onLanguage:nunjucks",
+    "onLanguage:twig"
   ],
   "main": "./out/extension.js",
   "contributes": {
