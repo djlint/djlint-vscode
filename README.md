@@ -60,6 +60,10 @@ Add this to your `settings.json` to format all supported file types with `djLint
 },
 ```
 
+## Known issues
+
+Non-ASCII characters turn into `?`. [Solution](https://github.com/Riverside-Healthcare/djLint/issues/243#issuecomment-1124603803).
+
 ## Disclaimer
 
 This extension is not affiliated with the authors of [djLint](https://djlint.com).
