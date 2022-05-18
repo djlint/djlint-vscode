@@ -1,11 +1,19 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
 
+interface IExtensionApi {
+  settings: {
+    getExecutionDetails(resource?: vscode.Uri | undefined): {
+      execCommand: string[] | undefined;
+    };
+  };
+}
+
 function getConfig(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration("djlint");
 }
 
-function getArgs(document: vscode.TextDocument): string[] {
+function getProfileArg(document: vscode.TextDocument): string[] {
   switch (document.languageId) {
     case "django-html":
       return ["--profile", "django"];
@@ -26,99 +34,59 @@ function getArgs(document: vscode.TextDocument): string[] {
   }
 }
 
-function getPythonPath(config: vscode.WorkspaceConfiguration): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    if (config.get<boolean>("useVenv")) {
-      const pythonExtension =
-        vscode.extensions.getExtension("ms-python.python");
-      if (pythonExtension) {
-        resolve(
-          pythonExtension.activate().then(
-            (api) =>
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
-              api.settings.getExecutionDetails().execCommand[0]
-          )
-        );
-        return;
+async function getPythonExec(
+  config: vscode.WorkspaceConfiguration,
+  document: vscode.TextDocument
+): Promise<[string, string[]]> {
+  if (config.get<boolean>("useVenv")) {
+    const pythonExtension = vscode.extensions.getExtension("ms-python.python");
+    if (pythonExtension) {
+      if (!pythonExtension.isActive) {
+        await pythonExtension.activate();
       }
-    }
-    const pythonPath = config.get<string>("pythonPath");
-    if (pythonPath) {
-      resolve(pythonPath);
-    } else {
-      void vscode.window.showErrorMessage("Invalid djlint.pythonPath setting.");
-      reject(pythonPath);
-    }
-  });
-}
-
-function installDjlint(): void {
-  void getPythonPath(getConfig()).then((pythonPath) => {
-    new Promise<string>((resolve, reject) => {
-      let stdout = "";
-      let stderr = "";
-      const child = spawn(pythonPath, [
-        "-m",
-        "pip",
-        "install",
-        "--upgrade",
-        "--progress-bar",
-        "off",
-        "--disable-pip-version-check",
-        "--no-color",
-        "djlint",
-      ]);
-      child.stdout.on("data", (data) => {
-        stdout += data;
-      });
-      child.stderr.on("data", (data) => {
-        stderr += data;
-      });
-      child.on("close", () => {
-        if (
-          stdout.includes("Successfully installed") ||
-          stdout.includes("Requirement already satisfied: djlint")
-        ) {
-          resolve(stdout);
-        } else {
-          reject(stderr);
+      const api = (
+        pythonExtension.isActive
+          ? pythonExtension.exports
+          : await pythonExtension.activate()
+      ) as IExtensionApi;
+      const execCommand = api.settings.getExecutionDetails(
+        document.uri
+      ).execCommand;
+      if (execCommand) {
+        const executable = execCommand.shift();
+        if (executable) {
+          return [executable, execCommand];
         }
-      });
-    })
-      .then((stdout) => {
-        void vscode.window
-          .showInformationMessage(
-            "Successfully installed djLint.",
-            "Show installation log"
-          )
-          .then((option) => {
-            if (option === "Show installation log") {
-              void vscode.window.showInformationMessage(stdout);
-            }
-          });
-      })
-      .catch((stderr) => {
-        if (typeof stderr === "string") {
-          void vscode.window.showErrorMessage(stderr);
-        }
-      });
-  });
+      }
+      const errMsg = "Failed to get Python interpreter from Python extension.";
+      void vscode.window.showErrorMessage(errMsg);
+      throw new Error(errMsg);
+    }
+  }
+  const pythonPath = config.get<string>("pythonPath");
+  if (pythonPath) {
+    return [pythonPath, []];
+  }
+  const errMsg = "Invalid djlint.pythonPath setting.";
+  void vscode.window.showErrorMessage(errMsg);
+  throw new Error(errMsg);
 }
 
 function runDjlint(
   document: vscode.TextDocument,
-  pythonPath: string,
+  pythonExec: [string, string[]],
   args: string[]
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
+    const childArgs = pythonExec[1]
+      .concat(["-m", "djlint", "-"])
+      .concat(args)
+      .concat(getProfileArg(document));
     const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
-    const child = spawn(
-      pythonPath,
-      ["-m", "djlint", "-"].concat(args).concat(getArgs(document)),
-      cwd ? { cwd: cwd.uri.fsPath } : undefined
-    );
+    const options = cwd ? { cwd: cwd.uri.fsPath } : undefined;
+    const child = spawn(pythonExec[0], childArgs, options);
     child.stdin.write(document.getText());
     child.stdin.end();
     child.stdout.on("data", (data) => {
@@ -129,14 +97,10 @@ function runDjlint(
     });
     child.on("close", () => {
       if (stderr.includes("No module named")) {
-        void vscode.window
-          .showErrorMessage("djLint is not installed.", "Install")
-          .then((option) => {
-            if (option === "Install") {
-              installDjlint();
-            }
-          });
-        reject();
+        void vscode.window.showErrorMessage(
+          "djLint is not installed for the current Python interpreter."
+        );
+        reject(new Error(stderr));
       } else {
         resolve(stdout);
       }
@@ -144,48 +108,51 @@ function runDjlint(
   });
 }
 
-function refreshDiagnostics(
+async function refreshDiagnostics(
   document: vscode.TextDocument,
   collection: vscode.DiagnosticCollection,
   supportedLanguages: string[]
-): void {
-  const config = getConfig();
-  if (
-    !config.get<boolean>("enableLinting") ||
-    !supportedLanguages.includes(document.languageId)
-  ) {
+): Promise<void> {
+  if (!supportedLanguages.includes(document.languageId)) {
     return;
   }
-  void getPythonPath(config).then((pythonPath) => {
-    const ignore = config.get<string[]>("ignore");
-    void runDjlint(
-      document,
-      pythonPath,
-      ["--lint"].concat(
-        ignore === undefined || ignore.length === 0
-          ? []
-          : ["--ignore", ignore.join(",")]
-      )
-    ).then((stdout) => {
-      const diags: vscode.Diagnostic[] = [];
-      Array.from(
-        stdout.matchAll(/^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm)
-      ).forEach((value) => {
-        const line = parseInt(value[2]) - 1;
-        const column = parseInt(value[3]);
-        diags.push(
-          new vscode.Diagnostic(
-            new vscode.Range(line, column, line, column),
-            `${value[4]} (${value[1]})`
-          )
-        );
-      });
-      collection.set(document.uri, diags);
-    });
-  });
+  const config = getConfig();
+  if (!config.get<boolean>("enableLinting")) {
+    return;
+  }
+  let pythonExec;
+  try {
+    pythonExec = await getPythonExec(config, document);
+  } catch (error) {
+    return;
+  }
+  const ignore = config.get<string[]>("ignore");
+  const args = ["--lint"];
+  if (ignore !== undefined && ignore.length !== 0) {
+    args.push("--ignore", ignore.join(","));
+  }
+  let stdout;
+  try {
+    stdout = await runDjlint(document, pythonExec, args);
+  } catch (error) {
+    return;
+  }
+  const diags: vscode.Diagnostic[] = [];
+  const matches = stdout.matchAll(/^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm);
+  for (const match of matches) {
+    const line = parseInt(match[2]) - 1;
+    const column = parseInt(match[3]);
+    const range = new vscode.Range(line, column, line, column);
+    const message = `${match[4]} (${match[1]})`;
+    const diag = new vscode.Diagnostic(range, message);
+    diags.push(diag);
+  }
+  collection.set(document.uri, diags);
 }
 
-export function activate(context: vscode.ExtensionContext): void {
+export async function activate(
+  context: vscode.ExtensionContext
+): Promise<void> {
   const supportedLanguages = [
     "html",
     "django-html",
@@ -199,12 +166,11 @@ export function activate(context: vscode.ExtensionContext): void {
     "nunjucks",
     "twig",
   ];
-  vscode.commands.registerCommand("djlint.reinstall", installDjlint);
 
   // Linting
   const collection = vscode.languages.createDiagnosticCollection("djLint");
   if (vscode.window.activeTextEditor) {
-    refreshDiagnostics(
+    await refreshDiagnostics(
       vscode.window.activeTextEditor.document,
       collection,
       supportedLanguages
@@ -222,31 +188,31 @@ export function activate(context: vscode.ExtensionContext): void {
 
   // Formatting
   vscode.languages.registerDocumentFormattingEditProvider(supportedLanguages, {
-    provideDocumentFormattingEdits(
+    async provideDocumentFormattingEdits(
       document: vscode.TextDocument
     ): Promise<vscode.TextEdit[]> {
       const config = getConfig();
-      return getPythonPath(config).then((pythonPath) => {
-        const indent = config.get<number | null>("indent");
-        return runDjlint(
-          document,
-          pythonPath,
-          ["--reformat"].concat(
-            indent === undefined || indent === null
-              ? []
-              : ["--indent", indent.toString()]
-          )
-        ).then((stdout) => {
-          const lastLineId = document.lineCount - 1;
-          const range = new vscode.Range(
-            0,
-            0,
-            lastLineId,
-            document.lineAt(lastLineId).text.length
-          );
-          return [vscode.TextEdit.replace(range, stdout)];
-        });
-      });
+      let pythonPath;
+      try {
+        pythonPath = await getPythonExec(config, document);
+      } catch (error) {
+        return [];
+      }
+      const indent = config.get<number | null>("indent");
+      const args = ["--reformat"];
+      if (indent !== undefined && indent !== null) {
+        args.push("--indent", indent.toString());
+      }
+      let stdout;
+      try {
+        stdout = await runDjlint(document, pythonPath, args);
+      } catch (error) {
+        return [];
+      }
+      const lastLineId = document.lineCount - 1;
+      const lastLineLength = document.lineAt(lastLineId).text.length;
+      const range = new vscode.Range(0, 0, lastLineId, lastLineLength);
+      return [vscode.TextEdit.replace(range, stdout)];
     },
   });
 }

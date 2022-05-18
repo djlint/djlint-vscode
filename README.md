@@ -4,13 +4,14 @@ Visual Studio Code extension for formatting and linting Django/Jinja/Nunjucks/Tw
 
 ## Installation
 
-Search for `djLint` in VS Code extensions.
-
-[Visual Studio Code Marketplace page](https://marketplace.visualstudio.com/items?itemName=monosans.djlint)
+- [Install djLint itself](https://djlint.com/docs/getting-started/).
+- [Install djLint VS Code extension](https://marketplace.visualstudio.com/items?itemName=monosans.djlint).
 
 ## Usage
 
-`djlint-vscode` automatically sets djLint's `profile` setting in accordance with language ID.
+If you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` will use the `djLint` installed in the currently activated Python environment, unless you have the `djlint.useVenv` extension setting disabled.
+
+`djlint-vscode` automatically sets djLint's `profile` setting in accordance with language ID:
 
 | djLint profile | Language ID                                                                                     |
 | -------------- | ----------------------------------------------------------------------------------------------- |
@@ -20,7 +21,7 @@ Search for `djLint` in VS Code extensions.
 | jinja          | jinja, [jinja-html](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml) |
 | nunjucks       | nj, njk, nunjucks, twig                                                                         |
 
-Some djLint options, such as `indent` and `ignore`, can be configured directly in the VSCode settings. Other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
+Some djLint options, such as `indent` and `ignore`, can be configured directly in the VS Code settings. Other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
 
 Add this to your `settings.json` to format all supported file types with `djLint`:
 
@@ -62,7 +63,7 @@ Add this to your `settings.json` to format all supported file types with `djLint
 
 ## Known issues
 
-Non-ASCII characters turn into `?`. [Solution](https://github.com/Riverside-Healthcare/djLint/issues/243#issuecomment-1124603803).
+Non-ASCII characters turn into `?` on Windows. Solution - update `djLint` to version 1.1.1 or higher.
 
 ## Disclaimer
 

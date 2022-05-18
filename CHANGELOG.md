@@ -1,6 +1,11 @@
 # Changelog
 
-We follow [Semantic Versions](https://semver.org/).
+## [2022.5.0] - 2022-05-18
+
+- Huge refactoring.
+- Remove the djLint installer because it was causing problems. It was decided that it is better to let users install it themselves.
+- Fix venv detection.
+- Switch to `webpack` for module bundling.
 
 ## [1.1.0] - 2022-05-04
 
