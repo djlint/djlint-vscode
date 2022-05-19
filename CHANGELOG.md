@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.5.1] - 2022-05-19
+
+- Minor performance fix.
+
 ## [2022.5.0] - 2022-05-18
 
 - Huge refactoring.

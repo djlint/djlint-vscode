@@ -150,9 +150,7 @@ async function refreshDiagnostics(
   collection.set(document.uri, diags);
 }
 
-export async function activate(
-  context: vscode.ExtensionContext
-): Promise<void> {
+export function activate(context: vscode.ExtensionContext): void {
   const supportedLanguages = [
     "html",
     "django-html",
@@ -170,19 +168,17 @@ export async function activate(
   // Linting
   const collection = vscode.languages.createDiagnosticCollection("djLint");
   if (vscode.window.activeTextEditor) {
-    await refreshDiagnostics(
+    void refreshDiagnostics(
       vscode.window.activeTextEditor.document,
       collection,
       supportedLanguages
     );
   }
+  const diagListener = (doc: vscode.TextDocument) =>
+    void refreshDiagnostics(doc, collection, supportedLanguages);
   context.subscriptions.push(
-    vscode.workspace.onDidOpenTextDocument((doc) =>
-      refreshDiagnostics(doc, collection, supportedLanguages)
-    ),
-    vscode.workspace.onDidSaveTextDocument((doc) =>
-      refreshDiagnostics(doc, collection, supportedLanguages)
-    ),
+    vscode.workspace.onDidOpenTextDocument(diagListener),
+    vscode.workspace.onDidSaveTextDocument(diagListener),
     vscode.workspace.onDidCloseTextDocument((doc) => collection.delete(doc.uri))
   );
 
