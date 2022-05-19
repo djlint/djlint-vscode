@@ -41,9 +41,6 @@ async function getPythonExec(
   if (config.get<boolean>("useVenv")) {
     const pythonExtension = vscode.extensions.getExtension("ms-python.python");
     if (pythonExtension) {
-      if (!pythonExtension.isActive) {
-        await pythonExtension.activate();
-      }
       const api = (
         pythonExtension.isActive
           ? pythonExtension.exports

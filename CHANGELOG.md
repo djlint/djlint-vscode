@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.5.2] - 2022-05-19
+
+- Minor bug fix.
+
 ## [2022.5.1] - 2022-05-19
 
 - Minor performance fix.
