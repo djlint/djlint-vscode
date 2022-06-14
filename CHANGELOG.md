@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.6.0] - 2022-06-14
+
+- Replace the `djlint.indent` option with `djlint.useEditorIndentation`, which is more flexible and more consistent with the VS Code API.
+
 ## [2022.5.2] - 2022-05-19
 
 - Minor bug fix.
