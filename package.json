@@ -50,15 +50,15 @@
           },
           "description": "Codes to ignore."
         },
-        "djlint.indent": {
-          "type": "number",
-          "default": null,
-          "description": "Indent spacing."
-        },
         "djlint.pythonPath": {
           "type": "string",
           "default": "python",
           "description": "Path to desired Python interpreter. Works only if djlint.useVenv is disabled or Python extension is not installed."
+        },
+        "djlint.useEditorIndentation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Get number of indent spaces from VS Code (see editor.tabSize setting). Disable to get it from the djLint config file."
         },
         "djlint.useVenv": {
           "type": "boolean",

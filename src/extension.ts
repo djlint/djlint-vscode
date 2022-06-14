@@ -38,7 +38,7 @@ async function getPythonExec(
   config: vscode.WorkspaceConfiguration,
   document: vscode.TextDocument
 ): Promise<[string, string[]]> {
-  if (config.get<boolean>("useVenv")) {
+  if (config.get<boolean>("useVenv") === true) {
     const pythonExtension = vscode.extensions.getExtension("ms-python.python");
     if (pythonExtension) {
       const api = (
@@ -182,7 +182,8 @@ export function activate(context: vscode.ExtensionContext): void {
   // Formatting
   vscode.languages.registerDocumentFormattingEditProvider(supportedLanguages, {
     async provideDocumentFormattingEdits(
-      document: vscode.TextDocument
+      document: vscode.TextDocument,
+      options: vscode.FormattingOptions
     ): Promise<vscode.TextEdit[]> {
       const config = getConfig();
       let pythonPath;
@@ -191,10 +192,9 @@ export function activate(context: vscode.ExtensionContext): void {
       } catch (error) {
         return [];
       }
-      const indent = config.get<number | null>("indent");
       const args = ["--reformat"];
-      if (indent !== undefined && indent !== null) {
-        args.push("--indent", indent.toString());
+      if (config.get<boolean>("useEditorIndentation") === true) {
+        args.push("--indent", options.tabSize.toString());
       }
       let stdout;
       try {
