@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.6.1] - 2022-06-16
+
+- Add `djlint.guessProfile` option to disable automatic djLint profile guessing.
+
 ## [2022.6.0] - 2022-06-14
 
 - Replace the `djlint.indent` option with `djlint.useEditorIndentation`, which is more flexible and more consistent with the VS Code API.

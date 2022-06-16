@@ -43,12 +43,17 @@
           "default": true,
           "description": "Lint for common issues."
         },
+        "djlint.guessProfile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically set djLint's profile setting in accordance with language ID. Disable to get it from the djLint config file."
+        },
         "djlint.ignore": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Codes to ignore."
+          "description": "Codes to ignore. Leave empty to get them from the djLint config file."
         },
         "djlint.pythonPath": {
           "type": "string",

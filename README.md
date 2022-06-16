@@ -11,7 +11,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django |
 
 If you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` will use the `djLint` installed in the currently activated Python environment, unless you have the `djlint.useVenv` extension setting disabled.
 
-`djlint-vscode` automatically sets djLint's `profile` setting in accordance with language ID:
+`djlint-vscode` automatically sets djLint's `profile` setting in accordance with language ID, unless you have the `djlint.guessProfile` extension setting disabled.
 
 | djLint profile | Language ID                                                                                     |
 | -------------- | ----------------------------------------------------------------------------------------------- |

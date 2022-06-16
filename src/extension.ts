@@ -13,7 +13,13 @@ function getConfig(): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration("djlint");
 }
 
-function getProfileArg(document: vscode.TextDocument): string[] {
+function getProfileArg(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration
+): string[] {
+  if (config.get<boolean>("guessProfile") === false) {
+    return [];
+  }
   switch (document.languageId) {
     case "django-html":
       return ["--profile", "django"];
@@ -71,6 +77,7 @@ async function getPythonExec(
 
 function runDjlint(
   document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
   pythonExec: [string, string[]],
   args: string[]
 ): Promise<string> {
@@ -80,7 +87,7 @@ function runDjlint(
     const childArgs = pythonExec[1]
       .concat(["-m", "djlint", "-"])
       .concat(args)
-      .concat(getProfileArg(document));
+      .concat(getProfileArg(document, config));
     const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
     const options = cwd ? { cwd: cwd.uri.fsPath } : undefined;
     const child = spawn(pythonExec[0], childArgs, options);
@@ -130,7 +137,7 @@ async function refreshDiagnostics(
   }
   let stdout;
   try {
-    stdout = await runDjlint(document, pythonExec, args);
+    stdout = await runDjlint(document, config, pythonExec, args);
   } catch (error) {
     return;
   }
@@ -198,7 +205,7 @@ export function activate(context: vscode.ExtensionContext): void {
       }
       let stdout;
       try {
-        stdout = await runDjlint(document, pythonPath, args);
+        stdout = await runDjlint(document, config, pythonPath, args);
       } catch (error) {
         return [];
       }
