@@ -1,5 +1,12 @@
 # Changelog
 
+## [2022.7.0] - 2022-07-02
+
+- Add `djlint.preserveLeadingSpace` option.
+- Add `djlint.preserveBlankLines` option.
+- Add `djlint.requirePragma` option.
+- Lower the minimum required version of VSCode from 1.66 to 1.64.
+
 ## [2022.6.1] - 2022-06-16
 
 - Add `djlint.guessProfile` option to disable automatic djLint profile guessing.
