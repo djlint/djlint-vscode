@@ -58,17 +58,22 @@
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
-          "description": "Attempt to preserve blank lines. Requires djLint>=1.3.0."
+          "description": "Preserve blank lines. Requires djLint>=1.3.0."
         },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",
           "default": false,
-          "description": "Attempt to preserve leading space on text. Requires djLint>=1.2.0."
+          "description": "Preserve leading space. Requires djLint>=1.2.0."
         },
         "djlint.pythonPath": {
           "type": "string",
           "default": "python",
           "description": "Path to desired Python interpreter. Works only if djlint.useVenv is disabled or Python extension is not installed."
+        },
+        "djlint.requirePragma": {
+          "type": "boolean",
+          "default": false,
+          "description": "Format or lint only those files that begin with a comment with the text 'djlint:on'."
         },
         "djlint.useEditorIndentation": {
           "type": "boolean",

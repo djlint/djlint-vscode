@@ -203,6 +203,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (config.get<boolean>("useEditorIndentation") === true) {
         args.push("--indent", options.tabSize.toString());
       }
+      if (config.get<boolean>("requirePragma") === true) {
+        args.push("--require-pragma");
+      }
       if (config.get<boolean>("preserveLeadingSpace") === true) {
         args.push("--preserve-leading-space");
       }
