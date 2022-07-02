@@ -206,6 +206,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (config.get<boolean>("preserveLeadingSpace") === true) {
         args.push("--preserve-leading-space");
       }
+      if (config.get<boolean>("preserveBlankLines") === true) {
+        args.push("--preserve-blank-lines");
+      }
       let stdout;
       try {
         stdout = await runDjlint(document, config, pythonPath, args);

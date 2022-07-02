@@ -55,6 +55,11 @@
           },
           "description": "Codes to ignore. Leave empty to get them from the djLint config file."
         },
+        "djlint.preserveBlankLines": {
+          "type": "boolean",
+          "default": false,
+          "description": "Attempt to preserve blank lines. Requires djLint>=1.3.0."
+        },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",
           "default": false,
