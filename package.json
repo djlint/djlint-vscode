@@ -15,7 +15,7 @@
   },
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.66.0"
+    "vscode": "^1.64.0"
   },
   "categories": [
     "Formatters",
@@ -81,13 +81,13 @@
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "format": "prettier --write '**/*.{ts,json,md,js}'",
+    "lint": "eslint --ext ts --fix .",
+    "format": "prettier --write .",
     "vsce-package": "vsce package -o djlint.vsix"
   },
   "devDependencies": {
     "@types/node": "^14",
-    "@types/vscode": "^1.66",
+    "@types/vscode": "~1.64.0",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "eslint": "^8",
