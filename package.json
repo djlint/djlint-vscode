@@ -55,6 +55,11 @@
           },
           "description": "Codes to ignore. Leave empty to get them from the djLint config file."
         },
+        "djlint.preserveLeadingSpace": {
+          "type": "boolean",
+          "default": false,
+          "description": "Attempt to preserve leading space on text. Requires djLint>=1.2.0."
+        },
         "djlint.pythonPath": {
           "type": "string",
           "default": "python",

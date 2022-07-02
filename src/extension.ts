@@ -203,6 +203,9 @@ export function activate(context: vscode.ExtensionContext): void {
       if (config.get<boolean>("useEditorIndentation") === true) {
         args.push("--indent", options.tabSize.toString());
       }
+      if (config.get<boolean>("preserveLeadingSpace") === true) {
+        args.push("--preserve-leading-space");
+      }
       let stdout;
       try {
         stdout = await runDjlint(document, config, pythonPath, args);
