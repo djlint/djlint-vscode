@@ -21,7 +21,7 @@ If you have the [Python extension](https://marketplace.visualstudio.com/items?it
 | jinja          | jinja, [jinja-html](https://marketplace.visualstudio.com/items?itemName=samuelcolvin.jinjahtml) |
 | nunjucks       | nj, njk, nunjucks, twig                                                                         |
 
-djLint's `indent` and `ignore` options can be configured directly in the VS Code settings. Other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
+djLint's CLI options can be configured directly in the VS Code settings. Other djLint options can be set through the configuration file, as indicated in the [corresponding documentation](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
 
 Add this to your `settings.json` to format all supported file types with `djLint`:
 
