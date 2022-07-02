@@ -100,13 +100,23 @@ function runDjlint(
       stderr += data;
     });
     child.on("close", () => {
+      let errMsg;
       if (stderr.includes("No module named")) {
-        void vscode.window.showErrorMessage(
-          "djLint is not installed for the current Python interpreter."
-        );
-        reject(new Error(stderr));
+        errMsg = "djLint is not installed for the current Python interpreter.";
+      } else if (stderr.includes("No such option: --preserve-blank-lines")) {
+        errMsg =
+          "Your version of djLint does not support the preserveBlankLines option. Disable it in the settings or install djLint>=1.3.0";
+      } else if (stderr.includes("No such option: --preserve-leading-space")) {
+        errMsg =
+          "Your version of djLint does not support the preserveLeadingSpace option. Disable it in the settings or install djLint>=1.2.0";
       } else {
+        errMsg = stderr.match(/No such option.*/)?.toString();
+      }
+      if (errMsg === undefined) {
         resolve(stdout);
+      } else {
+        void vscode.window.showErrorMessage(errMsg);
+        reject(new Error(stderr));
       }
     });
   });
@@ -130,8 +140,8 @@ async function refreshDiagnostics(
   } catch (error) {
     return;
   }
-  const ignore = config.get<string[]>("ignore");
   const args = ["--lint"];
+  const ignore = config.get<string[]>("ignore");
   if (ignore !== undefined && ignore.length !== 0) {
     args.push("--ignore", ignore.join(","));
   }
@@ -141,7 +151,7 @@ async function refreshDiagnostics(
   } catch (error) {
     return;
   }
-  const diags: vscode.Diagnostic[] = [];
+  const diags = [];
   const matches = stdout.matchAll(/^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm);
   for (const match of matches) {
     const line = parseInt(match[2]) - 1;
@@ -216,6 +226,9 @@ export function activate(context: vscode.ExtensionContext): void {
       try {
         stdout = await runDjlint(document, config, pythonPath, args);
       } catch (error) {
+        return [];
+      }
+      if (!stdout || stdout.trim().length === 0) {
         return [];
       }
       const lastLineId = document.lineCount - 1;

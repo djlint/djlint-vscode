@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.7.1] - 2022-07-02
+
+- Add `No such option` error handling.
+
 ## [2022.7.0] - 2022-07-02
 
 - Add `djlint.preserveLeadingSpace` option.
