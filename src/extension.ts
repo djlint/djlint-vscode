@@ -17,7 +17,7 @@ function getProfileArg(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration
 ): string[] {
-  if (config.get<boolean>("guessProfile") === false) {
+  if (!config.get<boolean>("guessProfile")) {
     return [];
   }
   switch (document.languageId) {
@@ -44,7 +44,7 @@ async function getPythonExec(
   config: vscode.WorkspaceConfiguration,
   document: vscode.TextDocument
 ): Promise<[string, string[]]> {
-  if (config.get<boolean>("useVenv") === true) {
+  if (config.get<boolean>("useVenv")) {
     const pythonExtension = vscode.extensions.getExtension("ms-python.python");
     if (pythonExtension) {
       const api = (
@@ -100,17 +100,25 @@ function runDjlint(
       stderr += data;
     });
     child.on("close", () => {
-      let errMsg;
+      let errMsg: string | undefined;
       if (stderr.includes("No module named")) {
         errMsg = "djLint is not installed for the current Python interpreter.";
-      } else if (stderr.includes("No such option: --preserve-blank-lines")) {
-        errMsg =
-          "Your version of djLint does not support the preserveBlankLines option. Disable it in the settings or install djLint>=1.3.0";
-      } else if (stderr.includes("No such option: --preserve-leading-space")) {
-        errMsg =
-          "Your version of djLint does not support the preserveLeadingSpace option. Disable it in the settings or install djLint>=1.2.0";
       } else {
-        errMsg = stderr.match(/No such option.*/)?.toString();
+        const options = [
+          ["format-css", "formatCss", "1.9.0"],
+          ["format-js", "formatJs", "1.9.0"],
+          ["preserve-blank-lines", "preserveBlankLines", "1.3.0"],
+          ["preserve-leading-space", "preserveLeadingSpace", "1.2.0"],
+        ];
+        for (const [cliOption, vscodeOption, minVersion] of options) {
+          if (stderr.includes(`No such option: --${cliOption}`)) {
+            errMsg = `Your version of djLint does not support the ${vscodeOption} option. Disable it in the settings or install djLint>=${minVersion}.`;
+            break;
+          }
+        }
+        if (errMsg === undefined) {
+          errMsg = stderr.match(/No such option.*/)?.toString();
+        }
       }
       if (errMsg === undefined) {
         resolve(stdout);
@@ -210,17 +218,20 @@ export function activate(context: vscode.ExtensionContext): void {
         return [];
       }
       const args = ["--reformat"];
-      if (config.get<boolean>("useEditorIndentation") === true) {
+      if (config.get<boolean>("useEditorIndentation")) {
         args.push("--indent", options.tabSize.toString());
       }
-      if (config.get<boolean>("requirePragma") === true) {
-        args.push("--require-pragma");
-      }
-      if (config.get<boolean>("preserveLeadingSpace") === true) {
-        args.push("--preserve-leading-space");
-      }
-      if (config.get<boolean>("preserveBlankLines") === true) {
-        args.push("--preserve-blank-lines");
+      const boolOptions = {
+        requirePragma: "--require-pragma",
+        preserveLeadingSpace: "--preserve-leading-space",
+        preserveBlankLines: "--preserve-blank-lines",
+        formatCss: "--format-css",
+        formatJs: "--format-js",
+      };
+      for (const [key, value] of Object.entries(boolOptions)) {
+        if (config.get<boolean>(key)) {
+          args.push(value);
+        }
       }
       let stdout;
       try {

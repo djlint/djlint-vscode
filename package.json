@@ -43,6 +43,16 @@
           "default": true,
           "description": "Lint for common issues."
         },
+        "djlint.formatCss": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also format contents of <style> tags. Requires djLint>=1.9.0."
+        },
+        "djlint.formatJs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also format contents of <script> tags. Requires djLint>=1.9.0."
+        },
         "djlint.guessProfile": {
           "type": "boolean",
           "default": true,

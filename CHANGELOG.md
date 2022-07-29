@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.7.2] - 2022-07-29
+
+- Add support for `--format-css` and `--format-js` options.
+
 ## [2022.7.1] - 2022-07-02
 
 - Add `No such option` error handling.
