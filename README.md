@@ -63,7 +63,9 @@ Add this to your `settings.json` to format all supported file types with `djLint
 
 ## Known issues
 
-Non-ASCII characters turn into `?` on Windows. Solution - update `djLint` to version 1.1.1 or higher.
+- Non-ASCII characters turn into `?` on Windows after formatting. Solution - update `djLint` to version 1.1.1 or higher.
+
+- Linting does not work on Windows if there are non-ASCII characters in the file. Solution - update `djLint` to version 1.1.1 or higher.
 
 ## Disclaimer
 
