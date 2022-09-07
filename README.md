@@ -67,6 +67,8 @@ Add this to your `settings.json` to format all supported file types with `djLint
 
 - Linting does not work on Windows if there are non-ASCII characters in the file. Solution - update `djLint` to version 1.1.1 or higher.
 
+- The file content is duplicated after formatting. This is a bug of `djLint` v1.12.1, install another version.
+
 ## Disclaimer
 
 This extension is not affiliated with the authors of [djLint](https://djlint.com).
