@@ -1,5 +1,10 @@
 # Changelog
 
+## [2022.9.0] - 2022-09-13
+
+- Add support for `--configuration` option.
+- Some refactoring to make the code more readable and understandable.
+
 ## [2022.7.2] - 2022-07-29
 
 - Add support for `--format-css` and `--format-js` options.

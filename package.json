@@ -2,7 +2,7 @@
   "name": "djlint",
   "displayName": "djLint",
   "description": "HTML template formatter and linter (Django | Jinja | Nunjucks | Twig | Handlebars | Mustache)",
-  "version": "2022.7.2",
+  "version": "2022.9.0",
   "publisher": "monosans",
   "license": "MIT",
   "homepage": "https://github.com/monosans/djlint-vscode",
@@ -38,6 +38,11 @@
   "contributes": {
     "configuration": {
       "properties": {
+        "djlint.configuration": {
+          "type": "string",
+          "default": "",
+          "description": "Path to global configuration file in .djlintrc format. Requires djLint>=1.13.0."
+        },
         "djlint.enableLinting": {
           "type": "boolean",
           "default": true,
@@ -56,14 +61,14 @@
         "djlint.guessProfile": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically set djLint's profile setting in accordance with language ID. Disable to get it from the djLint config file."
+          "description": "Automatically set djLint's profile setting according to language ID. Disable to get it from the djLint config file."
         },
         "djlint.ignore": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Codes to ignore. Leave empty to get them from the djLint config file."
+          "description": "Codes to ignore. Leave blank to get them from the djLint config file."
         },
         "djlint.preserveBlankLines": {
           "type": "boolean",
@@ -78,22 +83,22 @@
         "djlint.pythonPath": {
           "type": "string",
           "default": "python",
-          "description": "Path to desired Python interpreter. Works only if djlint.useVenv is disabled or Python extension is not installed."
+          "description": "Path to the desired Python interpreter. Only used if djlint.useVenv is disabled or the Python extension is not installed."
         },
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
-          "description": "Format or lint only those files that begin with a comment with the text 'djlint:on'."
+          "description": "Only format or lint files that start with a comment with the text 'djlint:on'."
         },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
-          "description": "Get number of indent spaces from VS Code (see editor.tabSize setting). Disable to get it from the djLint config file."
+          "description": "Get the number of indent spaces from VS Code (see the editor.tabSize setting). Disable to get it from the djLint config file."
         },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "description": "Use the Python executable from the current virtual environment. The Python extension must be installed; if it is not installed, the djlint.pythonPath setting will be used."
+          "description": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the djlint.pythonPath setting will be used."
         }
       }
     }

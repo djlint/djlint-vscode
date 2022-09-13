@@ -1,6 +1,39 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
 
+const supportedLanguages = [
+  "html",
+  "django-html",
+  "handlebars",
+  "hbs",
+  "mustache",
+  "jinja-html",
+  "jinja",
+  "nj",
+  "njk",
+  "nunjucks",
+  "twig",
+];
+
+const formatBoolOptions = [
+  ["requirePragma", "--require-pragma"],
+  ["preserveLeadingSpace", "--preserve-leading-space"],
+  ["preserveBlankLines", "--preserve-blank-lines"],
+  ["formatCss", "--format-css"],
+  ["formatJs", "--format-js"],
+];
+
+const versionedOptions = [
+  ["configuration", "configuration", "1.13.0"],
+  ["format-css", "formatCss", "1.9.0"],
+  ["format-js", "formatJs", "1.9.0"],
+  ["preserve-blank-lines", "preserveBlankLines", "1.3.0"],
+  ["preserve-leading-space", "preserveLeadingSpace", "1.2.0"],
+];
+
+const lintRegex = /^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm;
+const errorRegex = /Error.*/;
+
 interface IExtensionApi {
   settings: {
     getExecutionDetails(resource?: vscode.Uri | undefined): {
@@ -40,9 +73,69 @@ function getProfileArg(
   }
 }
 
-async function getPythonExec(
+function getCommonArgs(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration
+): string[] {
+  const args = getProfileArg(document, config);
+
+  const configuration = config.get<string>("configuration");
+  if (configuration) {
+    args.push("--configuration", configuration);
+  }
+
+  return args;
+}
+
+function getLintArgs(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration
+): string[] {
+  const args = ["--lint"].concat(getCommonArgs(document, config));
+
+  const ignore = config.get<string[]>("ignore");
+  if (ignore !== undefined && ignore.length !== 0) {
+    args.push("--ignore", ignore.join(","));
+  }
+
+  return args;
+}
+
+function getFormatArgs(
+  document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-  document: vscode.TextDocument
+  options: vscode.FormattingOptions
+): string[] {
+  const args = ["--reformat"].concat(getCommonArgs(document, config));
+
+  if (config.get<boolean>("useEditorIndentation")) {
+    args.push("--indent", options.tabSize.toString());
+  }
+
+  for (const [key, value] of formatBoolOptions) {
+    if (config.get<boolean>(key)) {
+      args.push(value);
+    }
+  }
+
+  return args;
+}
+
+function getErrorMsg(stderr: string): string | undefined {
+  if (stderr.includes("No module named")) {
+    return "djLint is not installed for the current active Python interpreter.";
+  }
+  for (const [cliOption, vscodeOption, minVersion] of versionedOptions) {
+    if (stderr.includes(`No such option: --${cliOption}`)) {
+      return `Your version of djLint does not support the ${vscodeOption} option. Disable it in the settings or install djLint>=${minVersion}.`;
+    }
+  }
+  return stderr.match(errorRegex)?.toString();
+}
+
+async function getPythonExec(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration
 ): Promise<[string, string[]]> {
   if (config.get<boolean>("useVenv")) {
     const pythonExtension = vscode.extensions.getExtension("ms-python.python");
@@ -66,10 +159,12 @@ async function getPythonExec(
       throw new Error(errMsg);
     }
   }
+
   const pythonPath = config.get<string>("pythonPath");
   if (pythonPath) {
     return [pythonPath, []];
   }
+
   const errMsg = "Invalid djlint.pythonPath setting.";
   void vscode.window.showErrorMessage(errMsg);
   throw new Error(errMsg);
@@ -77,20 +172,16 @@ async function getPythonExec(
 
 function runDjlint(
   document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration,
   pythonExec: [string, string[]],
   args: string[]
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
-    const childArgs = pythonExec[1]
-      .concat(["-m", "djlint", "-"])
-      .concat(args)
-      .concat(getProfileArg(document, config));
+    const childArgs = pythonExec[1].concat(["-m", "djlint", "-"]).concat(args);
     const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
-    const options = cwd ? { cwd: cwd.uri.fsPath } : undefined;
-    const child = spawn(pythonExec[0], childArgs, options);
+    const childOptions = cwd ? { cwd: cwd.uri.fsPath } : undefined;
+    const child = spawn(pythonExec[0], childArgs, childOptions);
     child.stdin.write(document.getText());
     child.stdin.end();
     child.stdout.on("data", (data) => {
@@ -100,31 +191,12 @@ function runDjlint(
       stderr += data;
     });
     child.on("close", () => {
-      let errMsg: string | undefined;
-      if (stderr.includes("No module named")) {
-        errMsg = "djLint is not installed for the current Python interpreter.";
-      } else {
-        const options = [
-          ["format-css", "formatCss", "1.9.0"],
-          ["format-js", "formatJs", "1.9.0"],
-          ["preserve-blank-lines", "preserveBlankLines", "1.3.0"],
-          ["preserve-leading-space", "preserveLeadingSpace", "1.2.0"],
-        ];
-        for (const [cliOption, vscodeOption, minVersion] of options) {
-          if (stderr.includes(`No such option: --${cliOption}`)) {
-            errMsg = `Your version of djLint does not support the ${vscodeOption} option. Disable it in the settings or install djLint>=${minVersion}.`;
-            break;
-          }
-        }
-        if (errMsg === undefined) {
-          errMsg = stderr.match(/No such option.*/)?.toString();
-        }
-      }
-      if (errMsg === undefined) {
-        resolve(stdout);
-      } else {
+      const errMsg = getErrorMsg(stderr);
+      if (errMsg) {
         void vscode.window.showErrorMessage(errMsg);
         reject(new Error(stderr));
+      } else {
+        resolve(stdout);
       }
     });
   });
@@ -132,35 +204,34 @@ function runDjlint(
 
 async function refreshDiagnostics(
   document: vscode.TextDocument,
-  collection: vscode.DiagnosticCollection,
-  supportedLanguages: string[]
+  collection: vscode.DiagnosticCollection
 ): Promise<void> {
   if (!supportedLanguages.includes(document.languageId)) {
     return;
   }
+
   const config = getConfig();
   if (!config.get<boolean>("enableLinting")) {
     return;
   }
+
   let pythonExec;
   try {
-    pythonExec = await getPythonExec(config, document);
+    pythonExec = await getPythonExec(document, config);
   } catch (error) {
     return;
   }
-  const args = ["--lint"];
-  const ignore = config.get<string[]>("ignore");
-  if (ignore !== undefined && ignore.length !== 0) {
-    args.push("--ignore", ignore.join(","));
-  }
+
+  const args = getLintArgs(document, config);
   let stdout;
   try {
-    stdout = await runDjlint(document, config, pythonExec, args);
+    stdout = await runDjlint(document, pythonExec, args);
   } catch (error) {
     return;
   }
+
   const diags = [];
-  const matches = stdout.matchAll(/^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm);
+  const matches = stdout.matchAll(lintRegex);
   for (const match of matches) {
     const line = parseInt(match[2]) - 1;
     const column = parseInt(match[3]);
@@ -173,31 +244,16 @@ async function refreshDiagnostics(
 }
 
 export function activate(context: vscode.ExtensionContext): void {
-  const supportedLanguages = [
-    "html",
-    "django-html",
-    "handlebars",
-    "hbs",
-    "mustache",
-    "jinja-html",
-    "jinja",
-    "nj",
-    "njk",
-    "nunjucks",
-    "twig",
-  ];
-
   // Linting
   const collection = vscode.languages.createDiagnosticCollection("djLint");
   if (vscode.window.activeTextEditor) {
     void refreshDiagnostics(
       vscode.window.activeTextEditor.document,
-      collection,
-      supportedLanguages
+      collection
     );
   }
   const diagListener = (doc: vscode.TextDocument) =>
-    void refreshDiagnostics(doc, collection, supportedLanguages);
+    void refreshDiagnostics(doc, collection);
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(diagListener),
     vscode.workspace.onDidSaveTextDocument(diagListener),
@@ -211,37 +267,25 @@ export function activate(context: vscode.ExtensionContext): void {
       options: vscode.FormattingOptions
     ): Promise<vscode.TextEdit[]> {
       const config = getConfig();
+
       let pythonPath;
       try {
-        pythonPath = await getPythonExec(config, document);
+        pythonPath = await getPythonExec(document, config);
       } catch (error) {
         return [];
       }
-      const args = ["--reformat"];
-      if (config.get<boolean>("useEditorIndentation")) {
-        args.push("--indent", options.tabSize.toString());
-      }
-      const boolOptions = {
-        requirePragma: "--require-pragma",
-        preserveLeadingSpace: "--preserve-leading-space",
-        preserveBlankLines: "--preserve-blank-lines",
-        formatCss: "--format-css",
-        formatJs: "--format-js",
-      };
-      for (const [key, value] of Object.entries(boolOptions)) {
-        if (config.get<boolean>(key)) {
-          args.push(value);
-        }
-      }
+
+      const args = getFormatArgs(document, config, options);
       let stdout;
       try {
-        stdout = await runDjlint(document, config, pythonPath, args);
+        stdout = await runDjlint(document, pythonPath, args);
       } catch (error) {
         return [];
       }
       if (!stdout || stdout.trim().length === 0) {
         return [];
       }
+
       const lastLineId = document.lineCount - 1;
       const lastLineLength = document.lineAt(lastLineId).text.length;
       const range = new vscode.Range(0, 0, lastLineId, lastLineLength);
