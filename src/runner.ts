@@ -23,6 +23,7 @@ export function runDjlint(
       stderr += data;
     });
     child.on("close", () => {
+      stderr = stderr.trim();
       const errMsg = getErrorMsg(stderr);
       if (errMsg) {
         void vscode.window.showErrorMessage(errMsg);
