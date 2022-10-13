@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.10.0] - 2022-10-13
+
+- Fix usage of config file when it is not in the project root.
+
 ## [2022.9.0] - 2022-09-13
 
 - Add support for `--configuration` option.
