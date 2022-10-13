@@ -1,5 +1,9 @@
 # Changelog
 
+## [2022.10.1] - 2022-10-13
+
+- Improve error handling.
+
 ## [2022.10.0] - 2022-10-13
 
 - Fix usage of config file when it is not in the project root.
