@@ -179,8 +179,8 @@ function runDjlint(
     let stdout = "";
     let stderr = "";
     const childArgs = pythonExec[1].concat(["-m", "djlint", "-"]).concat(args);
-    const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
-    const childOptions = cwd ? { cwd: cwd.uri.fsPath } : undefined;
+    const cwd = vscode.Uri.joinPath(document.uri, "../");
+    const childOptions = cwd ? { cwd: cwd.fsPath } : undefined;
     const child = spawn(pythonExec[0], childArgs, childOptions);
     child.stdin.write(document.getText());
     child.stdin.end();
