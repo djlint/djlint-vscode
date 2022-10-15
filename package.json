@@ -122,6 +122,7 @@
     "@typescript-eslint/parser": "^5",
     "eslint": "^8",
     "eslint-config-prettier": "^8",
+    "ovsx": "^0.5",
     "prettier": "^2",
     "ts-loader": "^9",
     "typescript": "^4",
