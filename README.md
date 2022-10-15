@@ -1,6 +1,6 @@
 # djlint-vscode
 
-Visual Studio Code extension for formatting and linting HTML templates (Django | Jinja | Nunjucks | Twig | Handlebars | Mustache) using [djLint](https://djlint.com).
+Visual Studio Code extension for formatting and linting HTML templates (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache) using [djLint](https://djlint.com).
 
 ## Installation
 
@@ -26,49 +26,15 @@ djLint's CLI options can be configured directly in the VS Code settings. Other d
 Add this to your `settings.json` to format all supported file types with `djLint`:
 
 ```json
-"[html]": {
+"[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
   "editor.defaultFormatter": "monosans.djlint"
-},
-"[django-html]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[handlebars]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[hbs]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[mustache]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[jinja]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[jinja-html]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[nj]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[njk]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[nunjucks]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
-"[twig]": {
-  "editor.defaultFormatter": "monosans.djlint"
-},
+}
 ```
 
 ## Known issues
 
-- Non-ASCII characters turn into `?` on Windows after formatting. Solution - update `djLint` to version 1.1.1 or higher.
+- Non-ASCII characters turn into `?` on Windows after formatting. To fix this, update `djLint` to v1.1.1 or higher.
 
-- Linting does not work on Windows if there are non-ASCII characters in the file. Solution - update `djLint` to version 1.1.1 or higher.
+- Linting does not work on Windows if the file contains non-ASCII characters. To fix this, update `djLint` to v1.1.1 or higher.
 
-- The file content is duplicated after formatting. This is a bug of `djLint` v1.12.1, install another version.
-
-## Disclaimer
-
-This extension is not affiliated with the authors of [djLint](https://djlint.com).
+- File contents are duplicated after formatting. This is a bug in `djLint` v1.12.1, install another version.
