@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "description": "HTML template formatter and linter (Django | Jinja | Nunjucks | Twig | Handlebars | Mustache)",
+  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "version": "2022.10.1",
   "publisher": "monosans",
   "license": "MIT",
