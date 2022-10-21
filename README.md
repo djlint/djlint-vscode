@@ -38,3 +38,5 @@ Add this to your `settings.json` to format all supported file types with `djLint
 - Linting does not work on Windows if the file contains non-ASCII characters. To fix this, update `djLint` to v1.1.1 or higher.
 
 - File contents are duplicated after formatting. This is a bug in `djLint` v1.12.1, install another version.
+
+- The config file is ignored on some versions of Python if it is in the root of the project. To fix this, update `djLint` to v1.19.2 or higher.
