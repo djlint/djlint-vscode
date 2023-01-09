@@ -123,7 +123,7 @@
     "@vscode/vsce": "^2",
     "eslint": "^8",
     "eslint-config-prettier": "^8",
-    "ovsx": "^0.7",
+    "ovsx": "^0.8",
     "prettier": "^2",
     "ts-loader": "^9",
     "typescript": "^4",
