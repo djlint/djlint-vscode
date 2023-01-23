@@ -1,0 +1,6 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 👉 Problem with djLint? Open an issue here.
+    url: https://github.com/Riverside-Healthcare/djLint/issues
+    about: |
+      Having a problem with djLint's formatting, linting, or other features?
