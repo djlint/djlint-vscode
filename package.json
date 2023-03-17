@@ -126,7 +126,7 @@
     "ovsx": "^0.8",
     "prettier": "^2",
     "ts-loader": "^9",
-    "typescript": "^4",
+    "typescript": "^5",
     "webpack": "^5",
     "webpack-cli": "^5"
   },
