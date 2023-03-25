@@ -1,11 +1,14 @@
 # djlint-vscode
 
+[![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/monosans.djlint?label=Visual%20Studio%20Marketplace%20installs)](https://marketplace.visualstudio.com/items?itemName=monosans.djlint)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/monosans/djlint?label=Open%20VSX%20downloads)](https://open-vsx.org/extension/monosans/djlint)
+
 Visual Studio Code extension for formatting and linting HTML templates (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache) using [djLint](https://djlint.com).
 
 ## Installation
 
 - [Install djLint itself](https://djlint.com/docs/getting-started/).
-- Install djLint VS Code extension from [VS Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+- Install djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
 ## Usage
 
