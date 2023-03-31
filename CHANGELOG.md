@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.3.0] - 2023-03-31
+
+- Use [new Python Environment API](https://github.com/microsoft/vscode-python/blob/3269137c4cd0fa8b28b5c5741e54c95b00cd05c8/src/client/apiTypes.ts).
+
 ## [2022.10.1] - 2022-10-13
 
 - Improve error handling.
