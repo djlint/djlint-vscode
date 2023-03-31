@@ -1,33 +1,25 @@
 import * as vscode from "vscode";
-
-interface IExtensionApi {
-  settings: {
-    getExecutionDetails(resource?: vscode.Uri | undefined): {
-      execCommand: string[] | undefined;
-    };
-  };
-}
+import { IExtensionApi } from "./pythonExtTypes";
 
 export async function getPythonExec(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration
-): Promise<[string, string[]]> {
+): Promise<string> {
   if (config.get<boolean>("useVenv")) {
-    const pythonExtension = vscode.extensions.getExtension("ms-python.python");
+    const pythonExtension =
+      vscode.extensions.getExtension<IExtensionApi>("ms-python.python");
     if (pythonExtension) {
-      const api = (
-        pythonExtension.isActive
-          ? pythonExtension.exports
-          : await pythonExtension.activate()
-      ) as IExtensionApi;
-      const execCommand = api.settings.getExecutionDetails(
-        document.uri
-      ).execCommand;
-      if (execCommand) {
-        const executable = execCommand.shift();
-        if (executable) {
-          return [executable, execCommand];
-        }
+      console.log(pythonExtension);
+      if (!pythonExtension.isActive) {
+        await pythonExtension.activate();
+      }
+      const api = pythonExtension.exports;
+      const environment = await api.environments.resolveEnvironment(
+        api.environments.getActiveEnvironmentPath(document.uri)
+      );
+      const pythonExecUri = environment?.executable.uri;
+      if (pythonExecUri) {
+        return pythonExecUri.fsPath;
       }
       const errMsg = "Failed to get Python interpreter from Python extension.";
       void vscode.window.showErrorMessage(errMsg);
@@ -37,7 +29,7 @@ export async function getPythonExec(
 
   const pythonPath = config.get<string>("pythonPath");
   if (pythonPath) {
-    return [pythonPath, []];
+    return pythonPath;
   }
 
   const errMsg = "Invalid djlint.pythonPath setting.";

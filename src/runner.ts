@@ -4,16 +4,16 @@ import { getErrorMsg } from "./errorHandler";
 
 export function runDjlint(
   document: vscode.TextDocument,
-  pythonExec: [string, string[]],
+  pythonExec: string,
   args: string[]
 ): Promise<string> {
   return new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
-    const childArgs = pythonExec[1].concat(["-m", "djlint", "-"]).concat(args);
+    const childArgs = ["-m", "djlint", "-"].concat(args);
     const cwd = vscode.Uri.joinPath(document.uri, "..");
     const childOptions = { cwd: cwd.fsPath };
-    const child = spawn(pythonExec[0], childArgs, childOptions);
+    const child = spawn(pythonExec, childArgs, childOptions);
     child.stdin.write(document.getText());
     child.stdin.end();
     child.stdout.on("data", (data) => {

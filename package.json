@@ -15,7 +15,7 @@
   },
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.64.0"
+    "vscode": "^1.77.0-20230309"
   },
   "categories": [
     "Formatters",
@@ -116,8 +116,8 @@
     "vsce-package": "vsce package -o djlint.vsix"
   },
   "devDependencies": {
-    "@types/node": "^14",
-    "@types/vscode": "1.64.x",
+    "@types/node": "^16",
+    "@types/vscode": "1.77.x",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "@vscode/vsce": "^2",
