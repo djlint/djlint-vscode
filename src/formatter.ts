@@ -53,7 +53,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     } catch (error) {
       return [];
     }
-    if (!stdout || stdout.trim().length === 0) {
+    if (!stdout.trim()) {
       return [];
     }
 
