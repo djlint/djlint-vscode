@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
 import { getCommonArgs } from "./args";
 import { supportedLanguages } from "./constants";
-import { getPythonExec } from "./python";
 import { runDjlint } from "./runner";
 import { getConfig } from "./utils";
 
@@ -34,18 +33,11 @@ export async function refreshDiagnostics(
     return;
   }
 
-  let pythonExec;
-  try {
-    pythonExec = await getPythonExec(document, config);
-  } catch (error) {
-    return;
-  }
-
   const args = getLintArgs(document, config);
   let stdout;
   try {
-    stdout = await runDjlint(document, pythonExec, args);
-  } catch (error) {
+    stdout = await runDjlint(document, config, args);
+  } catch {
     return;
   }
 

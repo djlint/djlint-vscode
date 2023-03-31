@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { getCommonArgs } from "./args";
-import { getPythonExec } from "./python";
 import { runDjlint } from "./runner";
 import { getConfig } from "./utils";
 
@@ -39,18 +38,11 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   ): Promise<vscode.TextEdit[]> {
     const config = getConfig();
 
-    let pythonPath;
-    try {
-      pythonPath = await getPythonExec(document, config);
-    } catch (error) {
-      return [];
-    }
-
     const args = getFormatArgs(document, config, options);
     let stdout;
     try {
-      stdout = await runDjlint(document, pythonPath, args);
-    } catch (error) {
+      stdout = await runDjlint(document, config, args);
+    } catch {
       return [];
     }
     if (!stdout.trim()) {
