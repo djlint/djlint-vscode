@@ -9,7 +9,6 @@ export async function getPythonExec(
     const pythonExtension =
       vscode.extensions.getExtension<IExtensionApi>("ms-python.python");
     if (pythonExtension) {
-      console.log(pythonExtension);
       if (!pythonExtension.isActive) {
         await pythonExtension.activate();
       }
