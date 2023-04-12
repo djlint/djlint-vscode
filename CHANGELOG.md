@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.4.0] - 2023-04-12
+
+- Add support for `--include` option.
+
 ## [2023.3.1] - 2023-03-31
 
 - Remove debug console.log.
