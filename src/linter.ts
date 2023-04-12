@@ -17,6 +17,11 @@ function getLintArgs(
     args.push("--ignore", ignore.join(","));
   }
 
+  const include = config.get<string[]>("include");
+  if (include !== undefined && include.length !== 0) {
+    args.push("--include", include.join(","));
+  }
+
   return args;
 }
 

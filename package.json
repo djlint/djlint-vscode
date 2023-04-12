@@ -70,6 +70,13 @@
           },
           "description": "Codes to ignore. Leave blank to get them from the djLint config file."
         },
+        "djlint.include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Codes to include. Leave blank to get them from the djLint config file. Requires djLint>=1.20.0."
+        },
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
