@@ -70,6 +70,11 @@
           },
           "description": "Codes to ignore. Leave blank to get them from the djLint config file."
         },
+        "djlint.ignoreCase": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not fix case on known html tags. Requires djLint>=1.23.0."
+        },
         "djlint.include": {
           "type": "array",
           "items": {

@@ -1,4 +1,5 @@
 const versionedOptions = [
+  ["ignore-case", "ignoreCase", "1.23.0"],
   ["include", "include", "1.20.0"],
   ["configuration", "configuration", "1.13.0"],
   ["format-css", "formatCss", "1.9.0"],
