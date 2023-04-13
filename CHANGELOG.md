@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.4.1] - 2023-04-13
+
+- Add support for `--ignore-case` option.
+
 ## [2023.4.0] - 2023-04-12
 
 - Add support for `--include` option.
