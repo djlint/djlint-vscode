@@ -9,7 +9,7 @@ const formatBoolOptions = [
   ["preserveBlankLines", "--preserve-blank-lines"],
   ["formatCss", "--format-css"],
   ["formatJs", "--format-js"],
-  ["ignoreCase", "--ignore-case"]
+  ["ignoreCase", "--ignore-case"],
 ];
 
 function getFormatArgs(
