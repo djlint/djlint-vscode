@@ -128,19 +128,19 @@
     "vsce-package": "vsce package -o djlint.vsix"
   },
   "devDependencies": {
-    "@types/node": "^16",
-    "@types/vscode": "1.77.x",
-    "@typescript-eslint/eslint-plugin": "^5",
-    "@typescript-eslint/parser": "^5",
-    "@vscode/vsce": "^2",
-    "eslint": "^8",
-    "eslint-config-prettier": "^8",
-    "ovsx": "^0.8",
-    "prettier": "^2",
-    "ts-loader": "^9",
-    "typescript": "^5",
-    "webpack": "^5",
-    "webpack-cli": "^5"
+    "@types/node": "16.18.24",
+    "@types/vscode": "1.77.0",
+    "@typescript-eslint/eslint-plugin": "5.59.0",
+    "@typescript-eslint/parser": "5.59.0",
+    "@vscode/vsce": "2.19.0",
+    "eslint": "8.38.0",
+    "eslint-config-prettier": "8.8.0",
+    "ovsx": "0.8.0",
+    "prettier": "2.8.7",
+    "ts-loader": "9.4.2",
+    "typescript": "5.0.4",
+    "webpack": "5.80.0",
+    "webpack-cli": "5.0.1"
   },
   "eslintConfig": {
     "extends": [
