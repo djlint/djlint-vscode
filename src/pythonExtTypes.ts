@@ -9,13 +9,13 @@ export interface IExtensionApi {
   };
 }
 
-type ResolvedEnvironment = {
+interface ResolvedEnvironment {
   readonly executable: {
     readonly uri: Uri | undefined;
   };
-};
+}
 
-type EnvironmentPath = {
+interface EnvironmentPath {
   readonly id: string;
   readonly path: string;
-};
+}

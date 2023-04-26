@@ -144,9 +144,9 @@
   },
   "eslintConfig": {
     "extends": [
-      "eslint:recommended",
       "plugin:@typescript-eslint/recommended",
       "plugin:@typescript-eslint/recommended-requiring-type-checking",
+      "plugin:@typescript-eslint/strict",
       "prettier"
     ],
     "root": true,
@@ -162,8 +162,7 @@
     "rules": {
       "@typescript-eslint/naming-convention": "error",
       "curly": "error",
-      "eqeqeq": "error",
-      "no-throw-literal": "error"
+      "eqeqeq": "error"
     },
     "ignorePatterns": [
       "out",
