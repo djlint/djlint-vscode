@@ -1,29 +1,10 @@
 import * as vscode from "vscode";
-import { getCommonArgs } from "./args";
+import { lintingArgs } from "./args";
 import { supportedLanguages } from "./constants";
 import { runDjlint } from "./runner";
 import { getConfig } from "./utils";
 
 const lintRegex = /^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm;
-
-function getLintArgs(
-  document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration
-): string[] {
-  const args = ["--lint"].concat(getCommonArgs(document, config));
-
-  const ignore = config.get<string[]>("ignore");
-  if (ignore !== undefined && ignore.length !== 0) {
-    args.push("--ignore", ignore.join(","));
-  }
-
-  const include = config.get<string[]>("include");
-  if (include !== undefined && include.length !== 0) {
-    args.push("--include", include.join(","));
-  }
-
-  return args;
-}
 
 export async function refreshDiagnostics(
   document: vscode.TextDocument,
@@ -38,10 +19,9 @@ export async function refreshDiagnostics(
     return;
   }
 
-  const args = getLintArgs(document, config);
   let stdout;
   try {
-    stdout = await runDjlint(document, config, args);
+    stdout = await runDjlint(config, document, lintingArgs);
   } catch {
     return;
   }

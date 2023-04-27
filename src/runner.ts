@@ -1,18 +1,22 @@
 import { spawn } from "child_process";
 import * as vscode from "vscode";
+import { CliArg } from "./args";
 import { getErrorMsg } from "./errorHandler";
 import { getPythonExec } from "./python";
 
 export async function runDjlint(
-  document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-  args: string[]
+  document: vscode.TextDocument,
+  args: CliArg[],
+  formattingOptions?: vscode.FormattingOptions
 ): Promise<string> {
   const pythonExec = await getPythonExec(document, config);
   return await new Promise<string>((resolve, reject) => {
     let stdout = "";
     let stderr = "";
-    const childArgs = ["-m", "djlint", "-"].concat(args);
+    const childArgs = ["-m", "djlint", "-"].concat(
+      args.flatMap((arg) => arg.build(config, document, formattingOptions))
+    );
     const cwd = vscode.Uri.joinPath(document.uri, "..");
     const childOptions = { cwd: cwd.fsPath };
     const child = spawn(pythonExec, childArgs, childOptions);

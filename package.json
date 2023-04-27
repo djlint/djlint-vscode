@@ -38,25 +38,72 @@
   "contributes": {
     "configuration": {
       "properties": {
+        "djlint.blankLineAfterTag": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Add an additional blank line after {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
+        },
+        "djlint.blankLineBeforeTag": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Add an additional blank line before {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
+        },
         "djlint.configuration": {
           "type": "string",
-          "default": "",
-          "description": "Path to global configuration file in .djlintrc format. Requires djLint>=1.13.0."
+          "default": null,
+          "description": "Path to global configuration file in .djlintrc format. Requires djLint ≥ 1.13."
+        },
+        "djlint.customBlocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Indent custom template blocks. Requires djLint ≥ 1.25."
+        },
+        "djlint.customHtml": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Indent custom HTML tags. Requires djLint ≥ 1.25."
         },
         "djlint.enableLinting": {
           "type": "boolean",
           "default": true,
           "description": "Lint for common issues."
         },
+        "djlint.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Override the default exclude paths. Requires djLint ≥ 1.25."
+        },
+        "djlint.extendExclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Add additional paths to the default exclude. Requires djLint ≥ 1.25."
+        },
+        "djlint.formatAttributeTemplateTags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Attempt to format template syntax inside of tag attributes. Requires djLint ≥ 1.25."
+        },
         "djlint.formatCss": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of <style> tags. Requires djLint>=1.9.0."
+          "description": "Also format contents of <style> tags. Requires djLint ≥ 1.9."
         },
         "djlint.formatJs": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of <script> tags. Requires djLint>=1.9.0."
+          "description": "Also format contents of <script> tags. Requires djLint ≥ 1.9."
         },
         "djlint.guessProfile": {
           "type": "boolean",
@@ -68,29 +115,56 @@
           "items": {
             "type": "string"
           },
-          "description": "Codes to ignore. Leave blank to get them from the djLint config file."
+          "description": "Codes to ignore."
+        },
+        "djlint.ignoreBlocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Template blocks to not indent. Requires djLint ≥ 1.24."
         },
         "djlint.ignoreCase": {
           "type": "boolean",
           "default": false,
-          "description": "Do not fix case on known html tags. Requires djLint>=1.23.0."
+          "description": "Do not fix case on known html tags. Requires djLint ≥ 1.23."
         },
         "djlint.include": {
           "type": "array",
           "items": {
             "type": "string"
           },
-          "description": "Codes to include. Leave blank to get them from the djLint config file. Requires djLint>=1.20.0."
+          "description": "Codes to include. Requires djLint ≥ 1.20."
+        },
+        "djlint.indentCss": {
+          "type": "integer",
+          "default": null,
+          "description": "CSS indent level. Requires djLint ≥ 1.25."
+        },
+        "djlint.indentJs": {
+          "type": "integer",
+          "default": null,
+          "description": "JS indent level. Requires djLint ≥ 1.25."
+        },
+        "djlint.maxLineLength": {
+          "type": "integer",
+          "default": null,
+          "description": "Max line length. Requires djLint ≥ 1.25."
+        },
+        "djlint.maxAttributeLength": {
+          "type": "integer",
+          "default": null,
+          "description": "Max attribute length. Requires djLint ≥ 1.25."
         },
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve blank lines. Requires djLint>=1.3.0."
+          "description": "Preserve blank lines. Requires djLint ≥ 1.3."
         },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve leading space. Requires djLint>=1.2.0."
+          "description": "Preserve leading space. Requires djLint ≥ 1.2."
         },
         "djlint.pythonPath": {
           "type": "string",
@@ -106,6 +180,11 @@
           "type": "boolean",
           "default": true,
           "description": "Get the number of indent spaces from VS Code (see the editor.tabSize setting). Disable to get it from the djLint config file."
+        },
+        "djlint.useGitignore": {
+          "type": "boolean",
+          "default": false,
+          "description": "Use .gitignore file to extend excludes."
         },
         "djlint.useVenv": {
           "type": "boolean",
@@ -128,7 +207,7 @@
     "vsce-package": "vsce package -o djlint.vsix"
   },
   "devDependencies": {
-    "@types/node": "16.18.24",
+    "@types/node": "16.18.25",
     "@types/vscode": "1.77.0",
     "@typescript-eslint/eslint-plugin": "5.59.1",
     "@typescript-eslint/parser": "5.59.1",
@@ -139,7 +218,7 @@
     "prettier": "2.8.8",
     "ts-loader": "9.4.2",
     "typescript": "5.0.4",
-    "webpack": "5.80.0",
+    "webpack": "5.81.0",
     "webpack-cli": "5.0.2"
   },
   "eslintConfig": {
