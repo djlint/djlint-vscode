@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.4.2] - 2023-04-27
+
+- Add support for CLI arguments added in djLint 1.24.0 & 1.25.0.
+
 ## [2023.4.1] - 2023-04-13
 
 - Add support for `--ignore-case` option.
