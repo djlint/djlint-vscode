@@ -53,7 +53,10 @@
           "description": "Add an additional blank line before {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
         },
         "djlint.configuration": {
-          "type": "string",
+          "type": [
+            "string",
+            null
+          ],
           "default": null,
           "description": "Path to global configuration file in .djlintrc format. Requires djLint ≥ 1.13."
         },
@@ -137,22 +140,34 @@
           "description": "Codes to include. Requires djLint ≥ 1.20."
         },
         "djlint.indentCss": {
-          "type": "integer",
+          "type": [
+            "integer",
+            null
+          ],
           "default": null,
           "description": "CSS indent level. Requires djLint ≥ 1.25."
         },
         "djlint.indentJs": {
-          "type": "integer",
+          "type": [
+            "integer",
+            null
+          ],
           "default": null,
           "description": "JS indent level. Requires djLint ≥ 1.25."
         },
         "djlint.maxLineLength": {
-          "type": "integer",
+          "type": [
+            "integer",
+            null
+          ],
           "default": null,
           "description": "Max line length. Requires djLint ≥ 1.25."
         },
         "djlint.maxAttributeLength": {
-          "type": "integer",
+          "type": [
+            "integer",
+            null
+          ],
           "default": null,
           "description": "Max attribute length. Requires djLint ≥ 1.25."
         },
