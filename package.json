@@ -229,7 +229,7 @@
     "@vscode/vsce": "2.19.0",
     "eslint": "8.39.0",
     "eslint-config-prettier": "8.8.0",
-    "ovsx": "0.8.0",
+    "ovsx": "0.8.1",
     "prettier": "2.8.8",
     "ts-loader": "9.4.2",
     "typescript": "5.0.4",
