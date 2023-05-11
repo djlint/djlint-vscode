@@ -7,32 +7,26 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
-  update-npm-lock:
+  update-dependencies:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - cmd: npm update --lockfile-version 2
+            commit-msg: Update package-lock.json
+            branch: update/npm-lock
+          - cmd: pipx run pre-commit autoupdate
+            commit-msg: Update .pre-commit-config.yaml
+            branch: update/pre-commit-config
     steps:
       - uses: actions/checkout@v3
-      - run: npm update --lockfile-version 2
+      - run: ${{ matrix.cmd }}
       - uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.PAT }}
-          commit-message: Update package-lock.json
+          commit-message: ${{ matrix.commit-msg }}
           committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          branch: update/npm-lock
-          title: Update package-lock.json
-          body:
-  update-pre-commit-config:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - run: pipx install pre-commit
-      - run: pre-commit autoupdate
-      - uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.PAT }}
-          commit-message: Update .pre-commit-config.yaml
-          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          branch: update/pre-commit-config
-          title: Update .pre-commit-config.yaml
+          branch: ${{ matrix.branch }}
+          title: ${{ matrix.commit-msg }}
           body:

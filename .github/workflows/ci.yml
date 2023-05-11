@@ -23,8 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: pipx install pre-commit
-      - run: pre-commit run --all-files
+      - run: pipx run pre-commit run --all-files
   run-tsc:
     runs-on: ubuntu-latest
     steps:
