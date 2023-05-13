@@ -1,5 +1,11 @@
 # Changelog
 
+## [2023.5.0] - 2023-05-13
+
+- Add support for CLI arguments added in djLint 1.26.0 & 1.27.0.
+- Lower minimum required version of VSCode to 1.72.0.
+- Make the package smaller by eliminating unnecessary files.
+
 ## [2023.4.2] - 2023-04-27
 
 - Add support for CLI arguments added in djLint 1.24.0 & 1.25.0.
