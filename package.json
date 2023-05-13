@@ -52,6 +52,11 @@
           },
           "description": "Add an additional blank line before {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
         },
+        "djlint.closeVoidTags": {
+          "type": "boolean",
+          "default": false,
+          "description": "Add closing mark on known void tags. Ex: <img> becomse <img />. Requires djLint ≥ 1.26."
+        },
         "djlint.configuration": {
           "type": [
             "string",
@@ -154,6 +159,11 @@
           ],
           "default": null,
           "description": "JS indent level. Requires djLint ≥ 1.25."
+        },
+        "djlint.lineBreakAfterMultilineTag": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27."
         },
         "djlint.maxLineLength": {
           "type": [

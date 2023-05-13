@@ -138,6 +138,7 @@ export const formattingArgs = commonArgs.concat(
   new ReformatArg(),
   new StringArrayArg("blankLineAfterTag", "--blank-line-after-tag", "1.25"),
   new StringArrayArg("blankLineBeforeTag", "--blank-line-before-tag", "1.25"),
+  new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new StringArrayArg("customBlocks", "--custom-blocks", "1.25"),
   new StringArrayArg("customHtml", "--custom-html", "1.25"),
   new BoolArg(
@@ -151,6 +152,11 @@ export const formattingArgs = commonArgs.concat(
   new BoolArg("ignoreCase", "--ignore-case", "1.23"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),
+  new BoolArg(
+    "lineBreakAfterMultilineTag",
+    "--line-break-after-multiline-tag",
+    "1.27"
+  ),
   new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
   new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
