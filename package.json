@@ -232,7 +232,7 @@
     "vsce-package": "vsce package -o djlint.vsix"
   },
   "devDependencies": {
-    "@types/node": "16.18.29",
+    "@types/node": "16.18.30",
     "@types/vscode": "1.72.0",
     "@typescript-eslint/eslint-plugin": "5.59.6",
     "@typescript-eslint/parser": "5.59.5",
