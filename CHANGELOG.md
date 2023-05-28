@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.5.1] - 2023-05-28
+
+- Add support for `--no-line-after-yaml` option added in djLint v1.29.0.
+
 ## [2023.5.0] - 2023-05-13
 
 - Add support for CLI arguments added in djLint 1.26.0 & 1.27.0.
