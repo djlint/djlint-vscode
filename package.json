@@ -181,6 +181,11 @@
           "default": null,
           "description": "Max attribute length. Requires djLint ≥ 1.25."
         },
+        "djlint.noLineAfterYaml": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not add a blank line after yaml front matter. Requires djLint ≥ 1.29."
+        },
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
