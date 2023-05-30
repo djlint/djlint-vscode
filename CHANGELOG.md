@@ -1,5 +1,11 @@
 # Changelog
 
+## [2023.5.2] - 2023-05-30
+
+- Change `djlint.configuration` option type from `string | null` to `string`.
+- Minor refactoring.
+- Switch from webpack to esbuild.
+
 ## [2023.5.1] - 2023-05-28
 
 - Add support for `--no-line-after-yaml` option added in djLint v1.29.0.
