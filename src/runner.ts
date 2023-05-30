@@ -1,6 +1,6 @@
 import { spawn } from "child_process";
-import * as vscode from "vscode";
-import { CliArg } from "./args";
+import vscode from "vscode";
+import type { CliArg } from "./args";
 import { getErrorMsg } from "./errorHandler";
 import { getPythonExec } from "./python";
 
@@ -11,7 +11,7 @@ export async function runDjlint(
   formattingOptions?: vscode.FormattingOptions
 ): Promise<string> {
   const pythonExec = await getPythonExec(document, config);
-  return await new Promise<string>((resolve, reject) => {
+  return new Promise((resolve, reject) => {
     let stdout = "";
     let stderr = "";
     const childArgs = ["-m", "djlint", "-"].concat(

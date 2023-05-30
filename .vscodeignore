@@ -1,5 +1,5 @@
 **
-!dist/*.js
+!out/extension.js
 !CHANGELOG.md
 !icon.png
 !LICENSE

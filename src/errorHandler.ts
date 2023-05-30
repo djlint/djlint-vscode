@@ -7,6 +7,10 @@ const argsMap = new Map(
 );
 
 export function getErrorMsg(stderr: string): string | null {
+  if (!stderr) {
+    return null;
+  }
+
   if (stderr.endsWith("No module named djlint")) {
     return "djLint is not installed for the current active Python interpreter.";
   }
@@ -16,13 +20,13 @@ export function getErrorMsg(stderr: string): string | null {
     return null;
   }
 
-  const noSuchOption = stderr.match(noSuchOptionRegex);
+  const noSuchOption = noSuchOptionRegex.exec(stderr);
   if (noSuchOption) {
     const arg = argsMap.get(noSuchOption[1]);
     if (arg) {
       return `Your version of djLint does not support the ${
         arg.vscodeName
-      } option. Disable it in the settings or update djLint ≥ ${
+      } option. Disable it in the settings or update djLint to ≥ ${
         arg.minVersion ?? "undefined"
       }.`;
     }

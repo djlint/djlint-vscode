@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import vscode from "vscode";
 import { supportedLanguages } from "./constants";
 import { Formatter } from "./formatter";
 import { refreshDiagnostics } from "./linter";
@@ -11,7 +11,7 @@ export function activate(context: vscode.ExtensionContext): void {
       collection
     );
   }
-  const diagListener = (doc: vscode.TextDocument) =>
+  const diagListener = (doc: vscode.TextDocument): undefined =>
     void refreshDiagnostics(doc, collection);
   context.subscriptions.push(
     vscode.workspace.onDidOpenTextDocument(diagListener),

@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import type vscode from "vscode";
 
 export abstract class CliArg {
   readonly vscodeName: string;
@@ -8,7 +8,9 @@ export abstract class CliArg {
   constructor(vscodeName: string, cliName: string, minVersion?: string) {
     this.vscodeName = vscodeName;
     this.cliName = cliName;
-    this.minVersion = minVersion;
+    if (minVersion !== undefined) {
+      this.minVersion = minVersion;
+    }
   }
 
   abstract build(
@@ -28,24 +30,20 @@ class BoolArg extends CliArg {
 class NumberOrNullArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
     const value = config.get<number | null>(this.vscodeName);
-    return value !== undefined && value !== null
-      ? [this.cliName, value.toString()]
-      : [];
+    return value != null ? [this.cliName, value.toString()] : [];
   }
 }
 
 class StringArrayArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
     const value = config.get<string[]>(this.vscodeName);
-    return value !== undefined && value.length !== 0
-      ? [this.cliName, value.join(",")]
-      : [];
+    return value?.length ? [this.cliName, value.join(",")] : [];
   }
 }
 
-class StringOrNullArg extends CliArg {
+class StringArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
-    const value = config.get<string | null>(this.vscodeName);
+    const value = config.get<string>(this.vscodeName);
     return value ? [this.cliName, value] : [];
   }
 }
@@ -120,7 +118,7 @@ class UseEditorIndentationArg extends CliArg {
 }
 
 const commonArgs: CliArg[] = [
-  new StringOrNullArg("configuration", "--configuration", "1.13"),
+  new StringArg("configuration", "--configuration", "1.13"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
   new ProfileArg(),

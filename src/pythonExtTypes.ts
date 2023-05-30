@@ -1,17 +1,17 @@
-import { Uri } from "vscode";
+import type vscode from "vscode";
 
 export interface IExtensionApi {
   readonly environments: {
-    getActiveEnvironmentPath(resource: Uri): EnvironmentPath;
-    resolveEnvironment(
+    getActiveEnvironmentPath: (resource: vscode.Uri) => EnvironmentPath;
+    resolveEnvironment: (
       environment: EnvironmentPath
-    ): Promise<ResolvedEnvironment | undefined>;
+    ) => Promise<ResolvedEnvironment | undefined>;
   };
 }
 
 interface ResolvedEnvironment {
   readonly executable: {
-    readonly uri: Uri | undefined;
+    readonly uri: vscode.Uri | undefined;
   };
 }
 

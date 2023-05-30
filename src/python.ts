@@ -1,5 +1,5 @@
-import * as vscode from "vscode";
-import { IExtensionApi } from "./pythonExtTypes";
+import vscode from "vscode";
+import type { IExtensionApi } from "./pythonExtTypes";
 
 export async function getPythonExec(
   document: vscode.TextDocument,

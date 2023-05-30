@@ -1,4 +1,4 @@
-import * as vscode from "vscode";
+import vscode from "vscode";
 import { lintingArgs } from "./args";
 import { supportedLanguages } from "./constants";
 import { runDjlint } from "./runner";
