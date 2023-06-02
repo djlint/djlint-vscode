@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2023.6.0] - 2023-06-02
 
 - Add support for `--no-function-formatting` and `--no-set-formatting` options added in djLint v1.30.2.
 
