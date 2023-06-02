@@ -157,7 +157,9 @@ export const formattingArgs = commonArgs.concat(
   ),
   new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
+  new BoolArg("noFunctionFormatting", "--no-function-formatting", "1.30.2"),
   new BoolArg("noLineAfterYaml", "--no-line-after-yaml", "1.29"),
+  new BoolArg("noSetFormatting", "--no-set-formatting", "1.30.2"),
   new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
   new UseEditorIndentationArg()

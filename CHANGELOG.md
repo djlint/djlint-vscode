@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Add support for `--no-function-formatting` and `--no-set-formatting` options added in djLint v1.30.2.
+
 ## [2023.5.2] - 2023-05-30
 
 - Change `djlint.configuration` option type from `string | null` to `string`.

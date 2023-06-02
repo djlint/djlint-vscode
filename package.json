@@ -187,10 +187,20 @@
           "default": null,
           "description": "Max attribute length. Requires djLint ≥ 1.25."
         },
+        "djlint.noFunctionFormatting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not attempt to format function contents. Requires djLint ≥ 1.30.2."
+        },
         "djlint.noLineAfterYaml": {
           "type": "boolean",
           "default": false,
           "description": "Do not add a blank line after yaml front matter. Requires djLint ≥ 1.29."
+        },
+        "djlint.noSetFormatting": {
+          "type": "boolean",
+          "default": false,
+          "description": "Do not attempt to format set contents. Requires djLint ≥ 1.30.2."
         },
         "djlint.preserveBlankLines": {
           "type": "boolean",
