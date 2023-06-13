@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.6.1] - 2023-06-13
+
+- Add support for `--max-blank-lines` option added in djLint v1.31.0.
+
 ## [2023.6.0] - 2023-06-02
 
 - Add support for `--no-function-formatting` and `--no-set-formatting` options added in djLint v1.30.2.
