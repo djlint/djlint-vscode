@@ -171,14 +171,6 @@
           "default": false,
           "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27."
         },
-        "djlint.maxLineLength": {
-          "type": [
-            "integer",
-            null
-          ],
-          "default": null,
-          "description": "Max line length. Requires djLint ≥ 1.25."
-        },
         "djlint.maxAttributeLength": {
           "type": [
             "integer",
@@ -186,6 +178,22 @@
           ],
           "default": null,
           "description": "Max attribute length. Requires djLint ≥ 1.25."
+        },
+        "djlint.maxBlankLines": {
+          "type": [
+            "integer",
+            null
+          ],
+          "default": null,
+          "description": "Consolidate blank lines down to x lines. Requires djLint ≥ 1.31."
+        },
+        "djlint.maxLineLength": {
+          "type": [
+            "integer",
+            null
+          ],
+          "default": null,
+          "description": "Max line length. Requires djLint ≥ 1.25."
         },
         "djlint.noFunctionFormatting": {
           "type": "boolean",

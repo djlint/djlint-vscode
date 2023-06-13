@@ -155,8 +155,9 @@ export const formattingArgs = commonArgs.concat(
     "--line-break-after-multiline-tag",
     "1.27"
   ),
-  new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
+  new NumberOrNullArg("maxBlankLines", "--max-blank-lines", "1.31"),
+  new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new BoolArg("noFunctionFormatting", "--no-function-formatting", "1.30.2"),
   new BoolArg("noLineAfterYaml", "--no-line-after-yaml", "1.29"),
   new BoolArg("noSetFormatting", "--no-set-formatting", "1.30.2"),
