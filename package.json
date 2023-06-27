@@ -257,6 +257,7 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "4.0.2",
     "@types/node": "16.18.37",
     "@types/vscode": "1.72.0",
     "@typescript-eslint/eslint-plugin": "5.60.1",
