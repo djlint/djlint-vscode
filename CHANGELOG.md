@@ -1,5 +1,12 @@
 # Changelog
 
+## [2023.6.2] - 2023-06-30
+
+- Replace `djlint.guessProfile` setting with more flexible `djlint.languages` setting, which allows to control for which files types and with which `--profile` parameter djLint runs.
+- Change logic of setting current working directory to support relative `djlint.configuration` path.
+- Improve the error message that djLint is not installed.
+- Add event handlers for changing `djlint.enableLinting` setting.
+
 ## [2023.6.1] - 2023-06-13
 
 - Add support for `--max-blank-lines` option added in djLint v1.31.0.

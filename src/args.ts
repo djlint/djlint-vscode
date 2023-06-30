@@ -8,7 +8,7 @@ export abstract class CliArg {
   constructor(vscodeName: string, cliName: string, minVersion?: string) {
     this.vscodeName = vscodeName;
     this.cliName = cliName;
-    if (minVersion !== undefined) {
+    if (minVersion != null) {
       this.minVersion = minVersion;
     }
   }
@@ -70,34 +70,16 @@ class LintArg extends CliArg {
 
 class ProfileArg extends CliArg {
   constructor() {
-    super("guessProfile", "--profile");
+    super("languages", "--profile");
   }
 
   build(
     config: vscode.WorkspaceConfiguration,
     document: vscode.TextDocument
   ): string[] {
-    if (!config.get<boolean>(this.vscodeName)) {
-      return [];
-    }
-    switch (document.languageId) {
-      case "django-html":
-        return [this.cliName, "django"];
-      case "handlebars":
-      case "hbs":
-      case "mustache":
-        return [this.cliName, "handlebars"];
-      case "jinja":
-      case "jinja-html":
-        return [this.cliName, "jinja"];
-      case "nj":
-      case "njk":
-      case "nunjucks":
-      case "twig":
-        return [this.cliName, "nunjucks"];
-      default:
-        return [];
-    }
+    const languages = config.get<Record<string, string>>(this.vscodeName);
+    const profile = languages?.[document.languageId];
+    return profile ? [this.cliName, profile] : [];
   }
 }
 

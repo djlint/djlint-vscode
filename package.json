@@ -22,17 +22,7 @@
     "Linters"
   ],
   "activationEvents": [
-    "onLanguage:html",
-    "onLanguage:django-html",
-    "onLanguage:handlebars",
-    "onLanguage:hbs",
-    "onLanguage:mustache",
-    "onLanguage:jinja",
-    "onLanguage:jinja-html",
-    "onLanguage:nj",
-    "onLanguage:njk",
-    "onLanguage:nunjucks",
-    "onLanguage:twig"
+    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -116,11 +106,6 @@
           "default": false,
           "description": "Also format contents of <script> tags. Requires djLint ≥ 1.9."
         },
-        "djlint.guessProfile": {
-          "type": "boolean",
-          "default": true,
-          "description": "Automatically set djLint's profile setting according to language ID. Disable to get it from the djLint config file."
-        },
         "djlint.ignore": {
           "type": "array",
           "items": {
@@ -165,6 +150,36 @@
           ],
           "default": null,
           "description": "JS indent level. Requires djLint ≥ 1.25."
+        },
+        "djlint.languages": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "enum": [
+              "",
+              "django",
+              "jinja",
+              "nunjucks",
+              "handlebars",
+              "golang",
+              "angular",
+              "html"
+            ]
+          },
+          "default": {
+            "django-html": "django",
+            "jinja": "jinja",
+            "jinja-html": "jinja",
+            "nj": "nunjucks",
+            "njk": "nunjucks",
+            "nunjucks": "nunjucks",
+            "twig": "nunjucks",
+            "handlebars": "handlebars",
+            "hbs": "handlebars",
+            "mustache": "handlebars",
+            "html": "html"
+          },
+          "description": "Language ID and corresponding --profile for languages for which djLint should be enabled. Leave the second column blank if you want to get the --profile from the djLint config file."
         },
         "djlint.lineBreakAfterMultilineTag": {
           "type": "boolean",

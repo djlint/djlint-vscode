@@ -2,12 +2,47 @@ import { spawn } from "child_process";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { getErrorMsg } from "./errorHandler";
-import { getPythonExec } from "./python";
+import type { IExtensionApi } from "./pythonExtTypes";
+
+async function getPythonExec(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration
+): Promise<string> {
+  if (config.get<boolean>("useVenv")) {
+    const pythonExtension =
+      vscode.extensions.getExtension<IExtensionApi>("ms-python.python");
+    if (pythonExtension) {
+      if (!pythonExtension.isActive) {
+        await pythonExtension.activate();
+      }
+      const api = pythonExtension.exports;
+      const environment = await api.environments.resolveEnvironment(
+        api.environments.getActiveEnvironmentPath(document.uri)
+      );
+      const pythonExecUri = environment?.executable.uri;
+      if (pythonExecUri) {
+        return pythonExecUri.fsPath;
+      }
+      const errMsg = "Failed to get Python interpreter from Python extension.";
+      void vscode.window.showErrorMessage(errMsg);
+      throw new Error(errMsg);
+    }
+  }
+
+  const pythonPath = config.get<string>("pythonPath");
+  if (pythonPath) {
+    return pythonPath;
+  }
+
+  const errMsg = "Invalid djlint.pythonPath setting.";
+  void vscode.window.showErrorMessage(errMsg);
+  throw new Error(errMsg);
+}
 
 function buildChildArgs(
-  args: CliArg[],
-  config: vscode.WorkspaceConfiguration,
   document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+  args: CliArg[],
   formattingOptions?: vscode.FormattingOptions
 ): string[] {
   return ["-m", "djlint", "-"].concat(
@@ -61,13 +96,13 @@ async function runChildProcess(
 }
 
 export async function runDjlint(
-  config: vscode.WorkspaceConfiguration,
   document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
   args: CliArg[],
   formattingOptions?: vscode.FormattingOptions
 ): Promise<string> {
   const pythonExec = await getPythonExec(document, config);
-  const childArgs = buildChildArgs(args, config, document, formattingOptions);
+  const childArgs = buildChildArgs(document, config, args, formattingOptions);
   const childOptions = buildChildOptions(childArgs, document);
   return runChildProcess(pythonExec, childArgs, childOptions, document);
 }
