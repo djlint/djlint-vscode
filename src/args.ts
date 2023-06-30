@@ -117,8 +117,14 @@ class UseEditorIndentationArg extends CliArg {
   }
 }
 
+export const configurationArg = new StringArg(
+  "configuration",
+  "--configuration",
+  "1.13"
+);
+
 const commonArgs: CliArg[] = [
-  new StringArg("configuration", "--configuration", "1.13"),
+  configurationArg,
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
   new ProfileArg(),
