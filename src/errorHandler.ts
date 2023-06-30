@@ -12,7 +12,7 @@ export function getErrorMsg(stderr: string): string | null {
   }
 
   if (stderr.endsWith("No module named djlint")) {
-    return "djLint is not installed for the current active Python interpreter. Install it with `pip install djlint`.";
+    return "djLint is not installed for the current active Python interpreter. Install it with `python -m pip install -U djlint`.";
   }
 
   // Workaround for djLint < 1.18
