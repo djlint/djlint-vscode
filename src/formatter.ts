@@ -15,13 +15,11 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     this.register();
 
     this.context.subscriptions.push(
-      vscode.workspace.onDidChangeConfiguration(
-        (e: vscode.ConfigurationChangeEvent) => {
-          if (e.affectsConfiguration(`${configSection}.languages`)) {
-            this.register();
-          }
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        if (e.affectsConfiguration(`${configSection}.languages`)) {
+          this.register();
         }
-      )
+      })
     );
   }
 
