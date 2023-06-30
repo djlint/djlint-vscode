@@ -4,30 +4,40 @@ import { configurationArg, type CliArg } from "./args";
 import { getErrorMsg } from "./errorHandler";
 import { getPythonExec } from "./python";
 
-export async function runDjlint(
+function buildChildArgs(
+  args: CliArg[],
   config: vscode.WorkspaceConfiguration,
   document: vscode.TextDocument,
-  args: CliArg[],
   formattingOptions?: vscode.FormattingOptions
+): string[] {
+  return ["-m", "djlint", "-"].concat(
+    args.flatMap((arg) => arg.build(config, document, formattingOptions))
+  );
+}
+
+function buildChildOptions(
+  childArgs: string[],
+  document: vscode.TextDocument
+): { cwd: string } {
+  if (childArgs.includes(configurationArg.cliName)) {
+    const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (cwd) {
+      return { cwd: cwd.uri.fsPath };
+    }
+  }
+  const cwd = vscode.Uri.joinPath(document.uri, "..");
+  return { cwd: cwd.fsPath };
+}
+
+async function runChildProcess(
+  pythonExec: string,
+  childArgs: string[],
+  childOptions: { cwd: string },
+  document: vscode.TextDocument
 ): Promise<string> {
-  const pythonExec = await getPythonExec(document, config);
   return new Promise((resolve, reject) => {
     let stdout = "";
     let stderr = "";
-    const childArgs = ["-m", "djlint", "-"].concat(
-      args.flatMap((arg) => arg.build(config, document, formattingOptions))
-    );
-    let childOptions;
-    if (childArgs.includes(configurationArg.cliName)) {
-      const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
-      if (cwd) {
-        childOptions = { cwd: cwd.uri.fsPath };
-      }
-    }
-    if (!childOptions) {
-      const cwd = vscode.Uri.joinPath(document.uri, "..");
-      childOptions = { cwd: cwd.fsPath };
-    }
     const child = spawn(pythonExec, childArgs, childOptions);
     child.stdin.write(document.getText());
     child.stdin.end();
@@ -48,4 +58,16 @@ export async function runDjlint(
       }
     });
   });
+}
+
+export async function runDjlint(
+  config: vscode.WorkspaceConfiguration,
+  document: vscode.TextDocument,
+  args: CliArg[],
+  formattingOptions?: vscode.FormattingOptions
+): Promise<string> {
+  const pythonExec = await getPythonExec(document, config);
+  const childArgs = buildChildArgs(args, config, document, formattingOptions);
+  const childOptions = buildChildOptions(childArgs, document);
+  return runChildProcess(pythonExec, childArgs, childOptions, document);
 }
