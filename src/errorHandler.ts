@@ -24,10 +24,8 @@ export function getErrorMsg(stderr: string, pythonExec: string): string | null {
   if (noSuchOption) {
     const arg = argsMap.get(noSuchOption[1]);
     if (arg) {
-      const updateCmd = arg.minVersion
-        ? `${pythonExec} -m pip install -U djlint>=${arg.minVersion}`
-        : `${pythonExec} -m pip install -U djlint`;
-      return `Your version of djLint does not support the \`djlint.${arg.vscodeName}\` option. Disable it in the settings or update djLint with the \`${updateCmd}\` command.`;
+      const option = arg.vscodeName ? `djlint.${arg.vscodeName}` : arg.cliName;
+      return `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint with the \`${pythonExec} -m pip install -U djlint>=${arg.minVersion}\` command.`;
     }
   }
 

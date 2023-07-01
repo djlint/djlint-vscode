@@ -3,14 +3,12 @@ import type vscode from "vscode";
 export abstract class CliArg {
   readonly vscodeName: string;
   readonly cliName: string;
-  readonly minVersion?: string;
+  readonly minVersion: string;
 
-  constructor(vscodeName: string, cliName: string, minVersion?: string) {
+  constructor(vscodeName: string, cliName: string, minVersion: string) {
     this.vscodeName = vscodeName;
     this.cliName = cliName;
-    if (minVersion != null) {
-      this.minVersion = minVersion;
-    }
+    this.minVersion = minVersion;
   }
 
   abstract build(
@@ -21,7 +19,7 @@ export abstract class CliArg {
 }
 
 class SimpleArg extends CliArg {
-  constructor(cliName: string, minVersion?: string) {
+  constructor(cliName: string, minVersion: string) {
     super("", cliName, minVersion);
   }
 
@@ -75,7 +73,7 @@ class LinterOutputFormatArg extends CliArg {
 
 class ProfileArg extends CliArg {
   constructor() {
-    super("languages", "--profile");
+    super("languages", "--profile", "0.4.5");
   }
 
   build(
@@ -90,7 +88,7 @@ class ProfileArg extends CliArg {
 
 class UseEditorIndentationArg extends CliArg {
   constructor() {
-    super("useEditorIndentation", "--indent");
+    super("useEditorIndentation", "--indent", "0.4.3");
   }
 
   build(
@@ -112,23 +110,22 @@ export const configurationArg = new StringArg(
 
 const commonArgs: CliArg[] = [
   configurationArg,
-  new SimpleArg("--quiet"),
-  new BoolArg("requirePragma", "--require-pragma"),
-  new BoolArg("useGitignore", "--use-gitignore"),
+  new SimpleArg("--quiet", "0.0.9"),
+  new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
+  new BoolArg("useGitignore", "--use-gitignore", "0.5.9"),
   new ProfileArg(),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
 ];
 
 export const lintingArgs = commonArgs.concat(
-  new SimpleArg("--lint"),
   new LinterOutputFormatArg(),
-  new StringArrayArg("ignore", "--ignore"),
+  new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20")
 );
 
 export const formattingArgs = commonArgs.concat(
-  new SimpleArg("--reformat"),
+  new SimpleArg("--reformat", "0.0.9"),
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new BoolArg(
     "formatAttributeTemplateTags",
