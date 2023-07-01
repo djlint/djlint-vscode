@@ -1,5 +1,10 @@
 # Changelog
 
+## [2023.7.0] - 2023-07-01
+
+- Add a new, more reliable linter output parser. It requires djLint ≥ 1.25, but you can use the old parser by disabling `djlint.useNewLinterOutputParser`.
+- Improve error messages by adding a command to update djLint.
+
 ## [2023.6.2] - 2023-06-30
 
 - Replace `djlint.guessProfile` setting with more flexible `djlint.languages` setting, which allows to control for which files types and with which `--profile` parameter djLint runs.
