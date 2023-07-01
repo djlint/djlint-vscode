@@ -177,7 +177,7 @@
             "handlebars": "handlebars",
             "hbs": "handlebars",
             "mustache": "handlebars",
-            "html": "html"
+            "html": ""
           },
           "description": "Language ID and corresponding --profile for languages for which djLint should be enabled. Leave the second column blank if you want to get the --profile from the djLint config file."
         },
