@@ -84,7 +84,7 @@ async function runChildProcess(
     });
     child.on("close", () => {
       stderr = stderr.trim();
-      const errMsg = getErrorMsg(stderr);
+      const errMsg = getErrorMsg(stderr, pythonExec);
       if (errMsg) {
         void vscode.window.showErrorMessage(errMsg);
         reject(new Error(stderr));

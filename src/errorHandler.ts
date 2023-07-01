@@ -6,13 +6,13 @@ const argsMap = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg])
 );
 
-export function getErrorMsg(stderr: string): string | null {
+export function getErrorMsg(stderr: string, pythonExec: string): string | null {
   if (!stderr) {
     return null;
   }
 
   if (stderr.endsWith("No module named djlint")) {
-    return "djLint is not installed for the current active Python interpreter. Install it with `python -m pip install -U djlint`.";
+    return `djLint is not installed for the current active Python interpreter. Install it with \`${pythonExec} -m pip install -U djlint\`.`;
   }
 
   // Workaround for djLint < 1.18
