@@ -15,7 +15,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 If you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` will use the `djLint` installed in the currently activated Python environment, unless you have the `djlint.useVenv` extension setting disabled.
 
-The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/). Please do not change the `linter_output_format` setting, otherwise linter will work incorrectly.
+The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 
 Add this to your `settings.json` to format the default enabled languages with `djLint`:
 

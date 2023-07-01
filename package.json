@@ -255,6 +255,11 @@
           "default": false,
           "description": "Use .gitignore file to extend excludes."
         },
+        "djlint.useNewLinterOutputParser": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the linter_output_format setting in the djLint configuration file. Requires djLint ≥ 1.25."
+        },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,

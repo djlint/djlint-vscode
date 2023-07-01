@@ -4,7 +4,10 @@ import { configSection, getConfig } from "./config";
 import { runDjlint } from "./runner";
 
 export class Linter {
-  protected static readonly parseRegex = /^([A-Z]+\d+)\s+(\d+):(\d+)\s+(.+)$/gm;
+  protected static readonly outputRegex =
+    /^<filename>(?<filename>.*)<\/filename><line>(?<line>\d+):(?<column>\d+)<\/line><code>(?<code>.+)<\/code><message>(?<message>.+)<\/message>$/gm;
+  protected static readonly oldOutputRegex =
+    /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gm;
   protected readonly collection: vscode.DiagnosticCollection;
   protected readonly context: vscode.ExtensionContext;
 
@@ -66,12 +69,18 @@ export class Linter {
     }
 
     const diags = [];
-    const matches = stdout.matchAll(Linter.parseRegex);
-    for (const match of matches) {
-      const line = parseInt(match[2]) - 1;
-      const column = parseInt(match[3]);
+    const regex = config.get<boolean>("useNewLinterOutputParser")
+      ? Linter.outputRegex
+      : Linter.oldOutputRegex;
+    for (const match of stdout.matchAll(regex)) {
+      const groups = match.groups;
+      if (groups == null) {
+        continue;
+      }
+      const line = parseInt(groups["line"]) - 1;
+      const column = parseInt(groups["column"]);
       const range = new vscode.Range(line, column, line, column);
-      const message = `${match[4]} (${match[1]})`;
+      const message = `${groups["message"]} (${groups["code"]})`;
       const diag = new vscode.Diagnostic(range, message);
       diags.push(diag);
     }
