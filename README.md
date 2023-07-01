@@ -25,6 +25,15 @@ Add this to your `settings.json` to format the default enabled languages with `d
 }
 ```
 
+### Usage with djLint installed with pipx
+
+[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application. You can see where it creates the venv with the `pipx environment --value PIPX_LOCAL_VENVS` command. For me it is `/home/user/.local/pipx/venvs`. This way I can set these settings:
+
+```json
+"djlint.useVenv": false,
+"djlint.pythonPath": "/home/user/.local/pipx/venvs/djlint/bin/python",
+```
+
 ## Known issues
 
 - Non-ASCII characters turn into `?` on Windows after formatting. To fix this, update `djLint` to v1.1.1 or higher.
