@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.7.1] - 2023-07-01
+
+- Remove `--profile` for `html` language ID in `djlint.languages` setting.
+
 ## [2023.7.0] - 2023-07-01
 
 - Add a new, more reliable linter output parser. It requires djLint ≥ 1.25, but you can use the old parser by disabling `djlint.useNewLinterOutputParser`.
