@@ -1,5 +1,11 @@
 # Changelog
 
+## [2023.7.2] - 2023-07-02
+
+- Replace `djlint.languages` with `djlint.formatLanguages` and language-overridable `djlint.enableLinting` and `djlint.profile`.
+- Add logging via VS Code output channels.
+- Improve error handling and overall stability.
+
 ## [2023.7.1] - 2023-07-01
 
 - Remove `--profile` for `html` language ID in `djlint.languages` setting.

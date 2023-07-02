@@ -2,7 +2,7 @@
   "name": "djlint",
   "displayName": "djLint",
   "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
-  "version": "2023.7.1",
+  "version": "2023.7.2",
   "publisher": "monosans",
   "license": "MIT",
   "homepage": "https://github.com/monosans/djlint-vscode",
@@ -165,7 +165,7 @@
             "mustache",
             "html"
           ],
-          "description": "Language IDS for which djLint should be registered as a formatter."
+          "description": "Language IDs for which djLint should be registered as a formatter."
         },
         "djlint.formatJs": {
           "type": "boolean",
@@ -178,7 +178,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Codes to ignore."
+          "description": "Codes to ignore. Requires djLint ≥ 0.1.5."
         },
         "djlint.ignoreBlocks": {
           "type": "array",
@@ -295,17 +295,17 @@
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
-          "description": "Only format or lint files that start with a comment with the text 'djlint:on'."
+          "description": "Only format or lint files that start with a comment with the text 'djlint:on'. Requires djLint ≥ 0.5.8."
         },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
-          "description": "Get the number of indent spaces from VS Code (see the editor.tabSize setting). Disable to get it from the djLint config file."
+          "description": "Get the number of indent spaces from VS Code (see the editor.tabSize setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3."
         },
         "djlint.useGitignore": {
           "type": "boolean",
           "default": false,
-          "description": "Use .gitignore file to extend excludes."
+          "description": "Use .gitignore file to extend excludes. Requires djLint ≥ 0.5.9."
         },
         "djlint.useNewLinterOutputParser": {
           "type": "boolean",
