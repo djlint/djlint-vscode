@@ -10,27 +10,27 @@ export class Linter {
     /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gm;
   protected readonly collection: vscode.DiagnosticCollection;
 
-  constructor(protected readonly context: vscode.ExtensionContext) {
+  constructor(
+    protected readonly context: vscode.ExtensionContext,
+    protected readonly outputChannel: vscode.LogOutputChannel
+  ) {
     this.collection = vscode.languages.createDiagnosticCollection("djLint");
     this.context.subscriptions.push(this.collection);
   }
 
   async activate(): Promise<void> {
-    const diagListener = async (doc: vscode.TextDocument): Promise<void> =>
-      this.lintDocument(doc);
+    const diagListener = async (doc: vscode.TextDocument): Promise<void> => {
+      try {
+        await this.lintDocument(doc);
+      } catch {}
+    };
 
     this.context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(diagListener),
       vscode.workspace.onDidSaveTextDocument(diagListener),
       vscode.workspace.onDidCloseTextDocument((doc) =>
         this.collection.delete(doc.uri)
-      ),
-      vscode.window.onDidChangeVisibleTextEditors(async (visibleEditors) => {
-        const unlintedEditors = visibleEditors.filter(
-          (editor) => !this.collection.has(editor.document.uri)
-        );
-        await this.lintEditors(unlintedEditors);
-      })
+      )
     );
 
     await this.lintEditors(vscode.window.visibleTextEditors);
@@ -39,9 +39,11 @@ export class Linter {
   protected async lintEditors(
     editors: readonly vscode.TextEditor[]
   ): Promise<void> {
-    for (const editor of editors) {
-      await this.lintDocument(editor.document);
-    }
+    try {
+      for (const editor of editors) {
+        await this.lintDocument(editor.document);
+      }
+    } catch {}
   }
 
   protected async lintDocument(document: vscode.TextDocument): Promise<void> {
@@ -52,7 +54,12 @@ export class Linter {
       return;
     }
 
-    const stdout = await runDjlint(document, config, lintingArgs);
+    const stdout = await runDjlint(
+      document,
+      config,
+      lintingArgs,
+      this.outputChannel
+    );
 
     const diags = [];
     const regex = config.get<boolean>("useNewLinterOutputParser")

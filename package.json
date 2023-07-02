@@ -15,7 +15,7 @@
   },
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.72.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
     "Formatters",
@@ -331,7 +331,7 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.0.2",
     "@types/node": "16.18.38",
-    "@types/vscode": "1.72.0",
+    "@types/vscode": "1.74.0",
     "@typescript-eslint/eslint-plugin": "5.60.1",
     "@typescript-eslint/parser": "5.60.1",
     "@vscode/vsce": "2.19.0",

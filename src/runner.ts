@@ -1,7 +1,7 @@
 import { spawn } from "child_process";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
-import { getErrorMsg } from "./errorHandler";
+import { checkErrors, ErrorWithUserMessage } from "./errors";
 import type { IExtensionApi } from "./pythonExtTypes";
 
 async function getPythonExec(
@@ -23,9 +23,8 @@ async function getPythonExec(
       if (pythonExecUri) {
         return pythonExecUri.fsPath;
       }
-      const errMsg = "Failed to get Python interpreter from Python extension.";
-      void vscode.window.showErrorMessage(errMsg);
-      throw new Error(errMsg);
+      const msg = "Failed to get Python interpreter from Python extension.";
+      throw new ErrorWithUserMessage(msg, msg);
     }
   }
 
@@ -34,9 +33,8 @@ async function getPythonExec(
     return pythonPath;
   }
 
-  const errMsg = "Invalid djlint.pythonPath setting.";
-  void vscode.window.showErrorMessage(errMsg);
-  throw new Error(errMsg);
+  const msg = "Invalid djlint.pythonPath setting.";
+  throw new ErrorWithUserMessage(msg, msg);
 }
 
 function buildChildArgs(
@@ -83,13 +81,11 @@ async function runChildProcess(
       stderr += data;
     });
     child.on("close", () => {
-      stderr = stderr.trim();
-      const errMsg = getErrorMsg(stderr, pythonExec);
-      if (errMsg) {
-        void vscode.window.showErrorMessage(errMsg);
-        reject(new Error(stderr));
-      } else {
+      try {
+        checkErrors(stderr, pythonExec);
         resolve(stdout);
+      } catch (e) {
+        reject(e);
       }
     });
   });
@@ -99,10 +95,21 @@ export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
   args: CliArg[],
+  outputChannel: vscode.LogOutputChannel,
   formattingOptions?: vscode.FormattingOptions
 ): Promise<string> {
-  const pythonExec = await getPythonExec(document, config);
-  const childArgs = buildChildArgs(document, config, args, formattingOptions);
-  const childOptions = buildChildOptions(childArgs, document);
-  return runChildProcess(pythonExec, childArgs, childOptions, document);
+  try {
+    const pythonExec = await getPythonExec(document, config);
+    const childArgs = buildChildArgs(document, config, args, formattingOptions);
+    const childOptions = buildChildOptions(childArgs, document);
+    return await runChildProcess(pythonExec, childArgs, childOptions, document);
+  } catch (e) {
+    if (e instanceof Error) {
+      const userMessage =
+        e instanceof ErrorWithUserMessage ? e.userMessage : e.message;
+      void vscode.window.showErrorMessage(userMessage);
+      outputChannel.error(e);
+    }
+    throw e;
+  }
 }

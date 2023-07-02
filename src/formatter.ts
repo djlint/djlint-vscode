@@ -6,7 +6,10 @@ import { runDjlint } from "./runner";
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   protected providerDisposable: vscode.Disposable | undefined;
 
-  constructor(protected readonly context: vscode.ExtensionContext) {}
+  constructor(
+    protected readonly context: vscode.ExtensionContext,
+    protected readonly outputChannel: vscode.LogOutputChannel
+  ) {}
 
   activate(): void {
     this.register();
@@ -28,11 +31,14 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
 
     let stdout;
     try {
-      stdout = await runDjlint(document, config, formattingArgs, options);
+      stdout = await runDjlint(
+        document,
+        config,
+        formattingArgs,
+        this.outputChannel,
+        options
+      );
     } catch {
-      return [];
-    }
-    if (!stdout.trim()) {
       return [];
     }
 
