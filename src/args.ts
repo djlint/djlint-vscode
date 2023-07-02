@@ -67,21 +67,6 @@ class LinterOutputFormatArg extends CliArg {
   }
 }
 
-class ProfileArg extends CliArg {
-  constructor() {
-    super("languages", "--profile", "0.4.5");
-  }
-
-  build(
-    config: vscode.WorkspaceConfiguration,
-    document: vscode.TextDocument
-  ): string[] {
-    const languages = config.get<Record<string, string>>(this.vscodeName);
-    const profile = languages?.[document.languageId];
-    return profile ? [this.cliName, profile] : [];
-  }
-}
-
 class UseEditorIndentationArg extends CliArg {
   constructor() {
     super("useEditorIndentation", "--indent", "0.4.3");
@@ -109,7 +94,7 @@ const commonArgs: CliArg[] = [
   new SimpleArg("--quiet", "0.0.9"),
   new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
   new BoolArg("useGitignore", "--use-gitignore", "0.5.9"),
-  new ProfileArg(),
+  new StringArg("profile", "--profile", "0.4.5"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
 ];

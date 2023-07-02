@@ -13,7 +13,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
 
     this.context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
-        if (e.affectsConfiguration(`${configSection}.languages`)) {
+        if (e.affectsConfiguration(`${configSection}.formatLanguages`)) {
           this.register();
         }
       })
@@ -24,7 +24,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     document: vscode.TextDocument,
     options: vscode.FormattingOptions
   ): Promise<vscode.TextEdit[]> {
-    const config = getConfig();
+    const config = getConfig(document);
 
     let stdout;
     try {
@@ -43,12 +43,12 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   }
 
   protected register(): void {
-    const languages = getConfig().get<Record<string, string>>("languages");
+    const languages = getConfig().get<string[]>("formatLanguages");
     this.providerDisposable?.dispose();
     if (languages != null) {
       this.providerDisposable =
         vscode.languages.registerDocumentFormattingEditProvider(
-          Object.keys(languages),
+          languages,
           this
         );
       this.context.subscriptions.push(this.providerDisposable);

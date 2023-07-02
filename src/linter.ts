@@ -1,6 +1,6 @@
 import vscode from "vscode";
 import { lintingArgs } from "./args";
-import { configSection, getConfig } from "./config";
+import { getConfig } from "./config";
 import { runDjlint } from "./runner";
 
 export class Linter {
@@ -16,12 +16,8 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const diagListener = async (doc: vscode.TextDocument): Promise<void> => {
-      const config = getConfig();
-      if (this.lintingEnabled(config)) {
-        await this.lintDocument(doc, config);
-      }
-    };
+    const diagListener = async (doc: vscode.TextDocument): Promise<void> =>
+      this.lintDocument(doc);
 
     this.context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(diagListener),
@@ -29,50 +25,34 @@ export class Linter {
       vscode.workspace.onDidCloseTextDocument((doc) =>
         this.collection.delete(doc.uri)
       ),
-      vscode.workspace.onDidChangeConfiguration(async (e) => {
-        if (e.affectsConfiguration(`${configSection}.enableLinting`)) {
-          const config = getConfig();
-          if (this.lintingEnabled(config)) {
-            await this.lintVisibleEditors(config);
-          } else {
-            this.collection.clear();
-          }
-        }
+      vscode.window.onDidChangeVisibleTextEditors(async (visibleEditors) => {
+        const unlintedEditors = visibleEditors.filter(
+          (editor) => !this.collection.has(editor.document.uri)
+        );
+        await this.lintEditors(unlintedEditors);
       })
     );
 
-    const config = getConfig();
-    if (this.lintingEnabled(config)) {
-      await this.lintVisibleEditors(config);
+    await this.lintEditors(vscode.window.visibleTextEditors);
+  }
+
+  protected async lintEditors(
+    editors: readonly vscode.TextEditor[]
+  ): Promise<void> {
+    for (const editor of editors) {
+      await this.lintDocument(editor.document);
     }
   }
 
-  protected async lintVisibleEditors(
-    config: vscode.WorkspaceConfiguration
-  ): Promise<void> {
-    for (const editor of vscode.window.visibleTextEditors) {
-      await this.lintDocument(editor.document, config);
-    }
-  }
+  protected async lintDocument(document: vscode.TextDocument): Promise<void> {
+    const config = getConfig(document);
 
-  protected async lintDocument(
-    document: vscode.TextDocument,
-    config: vscode.WorkspaceConfiguration
-  ): Promise<void> {
-    const languages = config.get<Record<string, string>>("languages");
-    if (
-      languages == null ||
-      !Object.keys(languages).includes(document.languageId)
-    ) {
+    if (!config.get<boolean>("enableLinting")) {
+      this.collection.delete(document.uri);
       return;
     }
 
-    let stdout;
-    try {
-      stdout = await runDjlint(document, config, lintingArgs);
-    } catch {
-      return;
-    }
+    const stdout = await runDjlint(document, config, lintingArgs);
 
     const diags = [];
     const regex = config.get<boolean>("useNewLinterOutputParser")
@@ -91,11 +71,5 @@ export class Linter {
       diags.push(diag);
     }
     this.collection.set(document.uri, diags);
-  }
-
-  protected lintingEnabled(
-    config: vscode.WorkspaceConfiguration
-  ): boolean | undefined {
-    return config.get<boolean>("enableLinting");
   }
 }

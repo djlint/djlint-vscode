@@ -26,6 +26,51 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configurationDefaults": {
+      "[django-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "django"
+      },
+      "[jinja]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[jinja-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[nj]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[njk]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[nunjucks]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[twig]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[handlebars]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[hbs]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[mustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[html]": {
+        "djlint.enableLinting": true
+      }
+    },
     "configuration": {
       "properties": {
         "djlint.blankLineAfterTag": {
@@ -72,7 +117,8 @@
         },
         "djlint.enableLinting": {
           "type": "boolean",
-          "default": true,
+          "default": false,
+          "scope": "language-overridable",
           "description": "Lint for common issues."
         },
         "djlint.exclude": {
@@ -100,6 +146,26 @@
           "type": "boolean",
           "default": false,
           "description": "Also format contents of <style> tags. Requires djLint ≥ 1.9."
+        },
+        "djlint.formatLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "django-html",
+            "jinja",
+            "jinja-html",
+            "nj",
+            "njk",
+            "nunjucks",
+            "twig",
+            "handlebars",
+            "hbs",
+            "mustache",
+            "html"
+          ],
+          "description": "Language IDS for which djLint should be registered as a formatter."
         },
         "djlint.formatJs": {
           "type": "boolean",
@@ -150,36 +216,6 @@
           ],
           "default": null,
           "description": "JS indent level. Requires djLint ≥ 1.25."
-        },
-        "djlint.languages": {
-          "type": "object",
-          "additionalProperties": {
-            "type": "string",
-            "enum": [
-              "",
-              "django",
-              "jinja",
-              "nunjucks",
-              "handlebars",
-              "golang",
-              "angular",
-              "html"
-            ]
-          },
-          "default": {
-            "django-html": "django",
-            "jinja": "jinja",
-            "jinja-html": "jinja",
-            "nj": "nunjucks",
-            "njk": "nunjucks",
-            "nunjucks": "nunjucks",
-            "twig": "nunjucks",
-            "handlebars": "handlebars",
-            "hbs": "handlebars",
-            "mustache": "handlebars",
-            "html": ""
-          },
-          "description": "Language ID and corresponding --profile for languages for which djLint should be enabled. Leave the second column blank if you want to get the --profile from the djLint config file."
         },
         "djlint.lineBreakAfterMultilineTag": {
           "type": "boolean",
@@ -234,6 +270,22 @@
           "type": "boolean",
           "default": false,
           "description": "Preserve leading space. Requires djLint ≥ 1.2."
+        },
+        "djlint.profile": {
+          "type": "string",
+          "enum": [
+            "",
+            "django",
+            "jinja",
+            "nunjucks",
+            "handlebars",
+            "golang",
+            "angular",
+            "html"
+          ],
+          "default": "",
+          "scope": "language-overridable",
+          "description": "Enable defaults by template language. Requires djLint ≥ 0.4.5."
         },
         "djlint.pythonPath": {
           "type": "string",
