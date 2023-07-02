@@ -8,10 +8,8 @@ const argsMap = new Map(
 );
 
 export class ErrorWithUserMessage extends Error {
-  userMessage: string;
-  constructor(message: string, userMessage: string) {
+  constructor(message: string, readonly userMessage: string) {
     super(message);
-    this.userMessage = userMessage;
   }
 }
 
