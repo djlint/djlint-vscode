@@ -1,15 +1,11 @@
 import type vscode from "vscode";
 
 export abstract class CliArg {
-  readonly vscodeName: string;
-  readonly cliName: string;
-  readonly minVersion: string;
-
-  constructor(vscodeName: string, cliName: string, minVersion: string) {
-    this.vscodeName = vscodeName;
-    this.cliName = cliName;
-    this.minVersion = minVersion;
-  }
+  constructor(
+    readonly vscodeName: string,
+    readonly cliName: string,
+    readonly minVersion: string
+  ) {}
 
   abstract build(
     config: vscode.WorkspaceConfiguration,

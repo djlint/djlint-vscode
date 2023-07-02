@@ -4,12 +4,9 @@ import { configSection, getConfig } from "./config";
 import { runDjlint } from "./runner";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
-  protected readonly context: vscode.ExtensionContext;
   protected providerDisposable: vscode.Disposable | undefined;
 
-  constructor(context: vscode.ExtensionContext) {
-    this.context = context;
-  }
+  constructor(protected readonly context: vscode.ExtensionContext) {}
 
   activate(): void {
     this.register();

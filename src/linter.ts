@@ -9,10 +9,8 @@ export class Linter {
   protected static readonly oldOutputRegex =
     /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gm;
   protected readonly collection: vscode.DiagnosticCollection;
-  protected readonly context: vscode.ExtensionContext;
 
-  constructor(context: vscode.ExtensionContext) {
-    this.context = context;
+  constructor(protected readonly context: vscode.ExtensionContext) {
     this.collection = vscode.languages.createDiagnosticCollection("djLint");
     this.context.subscriptions.push(this.collection);
   }
