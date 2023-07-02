@@ -16,8 +16,12 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const diagListener = async (doc: vscode.TextDocument): Promise<void> =>
-      this.lintDocument(doc);
+    const diagListener = async (doc: vscode.TextDocument): Promise<void> => {
+      const config = getConfig();
+      if (this.lintingEnabled(config)) {
+        await this.lintDocument(doc, config);
+      }
+    };
 
     this.context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(diagListener),
@@ -27,8 +31,9 @@ export class Linter {
       ),
       vscode.workspace.onDidChangeConfiguration(async (e) => {
         if (e.affectsConfiguration(`${configSection}.enableLinting`)) {
-          if (getConfig().get<boolean>("enableLinting")) {
-            await this.lintVisibleEditors();
+          const config = getConfig();
+          if (this.lintingEnabled(config)) {
+            await this.lintVisibleEditors(config);
           } else {
             this.collection.clear();
           }
@@ -36,21 +41,24 @@ export class Linter {
       })
     );
 
-    await this.lintVisibleEditors();
-  }
-
-  protected async lintVisibleEditors(): Promise<void> {
-    for (const editor of vscode.window.visibleTextEditors) {
-      await this.lintDocument(editor.document);
-    }
-  }
-
-  protected async lintDocument(document: vscode.TextDocument): Promise<void> {
     const config = getConfig();
-    if (!config.get<boolean>("enableLinting")) {
-      return;
+    if (this.lintingEnabled(config)) {
+      await this.lintVisibleEditors(config);
     }
+  }
 
+  protected async lintVisibleEditors(
+    config: vscode.WorkspaceConfiguration
+  ): Promise<void> {
+    for (const editor of vscode.window.visibleTextEditors) {
+      await this.lintDocument(editor.document, config);
+    }
+  }
+
+  protected async lintDocument(
+    document: vscode.TextDocument,
+    config: vscode.WorkspaceConfiguration
+  ): Promise<void> {
     const languages = config.get<Record<string, string>>("languages");
     if (
       languages == null ||
@@ -83,5 +91,11 @@ export class Linter {
       diags.push(diag);
     }
     this.collection.set(document.uri, diags);
+  }
+
+  protected lintingEnabled(
+    config: vscode.WorkspaceConfiguration
+  ): boolean | undefined {
+    return config.get<boolean>("enableLinting");
   }
 }
