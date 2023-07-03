@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.7.3] - 2023-07-03
+
+- Use [execa](https://github.com/sindresorhus/execa) for running djLint.
+
 ## [2023.7.2] - 2023-07-02
 
 - Replace `djlint.languages` with `djlint.formatLanguages` and language-overridable `djlint.enableLinting` and `djlint.profile`.
