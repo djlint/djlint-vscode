@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { execa } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { checkErrors, ErrorWithUserMessage } from "./errors";
@@ -37,58 +37,14 @@ async function getPythonExec(
   throw new ErrorWithUserMessage(msg, msg);
 }
 
-function buildChildArgs(
-  document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration,
-  args: CliArg[],
-  formattingOptions?: vscode.FormattingOptions
-): string[] {
-  return ["-m", "djlint", "-"].concat(
-    args.flatMap((arg) => arg.build(config, document, formattingOptions))
-  );
-}
-
-function buildChildOptions(
-  childArgs: string[],
-  document: vscode.TextDocument
-): { cwd: string } {
+function getCwd(childArgs: string[], document: vscode.TextDocument): string {
   if (childArgs.includes(configurationArg.cliName)) {
     const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
     if (cwd) {
-      return { cwd: cwd.uri.fsPath };
+      return cwd.uri.fsPath;
     }
   }
-  const cwd = vscode.Uri.joinPath(document.uri, "..");
-  return { cwd: cwd.fsPath };
-}
-
-async function runChildProcess(
-  pythonExec: string,
-  childArgs: string[],
-  childOptions: { cwd: string },
-  document: vscode.TextDocument
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    let stdout = "";
-    let stderr = "";
-    const child = spawn(pythonExec, childArgs, childOptions);
-    child.stdin.write(document.getText());
-    child.stdin.end();
-    child.stdout.on("data", (data) => {
-      stdout += data;
-    });
-    child.stderr.on("data", (data) => {
-      stderr += data;
-    });
-    child.on("close", () => {
-      try {
-        checkErrors(stderr, pythonExec);
-        resolve(stdout);
-      } catch (e) {
-        reject(e);
-      }
-    });
-  });
+  return vscode.Uri.joinPath(document.uri, "..").fsPath;
 }
 
 export async function runDjlint(
@@ -100,9 +56,18 @@ export async function runDjlint(
 ): Promise<string> {
   try {
     const pythonExec = await getPythonExec(document, config);
-    const childArgs = buildChildArgs(document, config, args, formattingOptions);
-    const childOptions = buildChildOptions(childArgs, document);
-    return await runChildProcess(pythonExec, childArgs, childOptions, document);
+    const childArgs = ["-m", "djlint", "-"].concat(
+      args.flatMap((arg) => arg.build(config, document, formattingOptions))
+    );
+    const cwd = getCwd(childArgs, document);
+    const { stdout, stderr } = await execa(pythonExec, childArgs, {
+      input: document.getText(),
+      reject: false,
+      stripFinalNewline: false,
+      cwd: cwd,
+    });
+    checkErrors(stderr, pythonExec);
+    return stdout;
   } catch (e) {
     if (e instanceof Error) {
       const userMessage =
