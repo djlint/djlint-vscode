@@ -42,5 +42,5 @@ export function checkErrors(stderr: string, pythonExec: string): void {
     }
   }
 
-  throw new ErrorWithUserMessage(stderr, stderr);
+  throw new Error(stderr);
 }

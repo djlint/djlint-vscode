@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { execa, ExecaReturnValue, type ExecaError } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { checkErrors, ErrorWithUserMessage } from "./errors";
@@ -24,7 +24,7 @@ async function getPythonExec(
         return pythonExecUri.fsPath;
       }
       const msg = "Failed to get Python interpreter from Python extension.";
-      throw new ErrorWithUserMessage(msg, msg);
+      throw new Error(msg);
     }
   }
 
@@ -34,7 +34,7 @@ async function getPythonExec(
   }
 
   const msg = "Invalid djlint.pythonPath setting.";
-  throw new ErrorWithUserMessage(msg, msg);
+  throw new Error(msg);
 }
 
 function getCwd(childArgs: string[], document: vscode.TextDocument): string {
@@ -59,15 +59,23 @@ export async function runDjlint(
     const childArgs = ["-m", "djlint", "-"].concat(
       args.flatMap((arg) => arg.build(config, document, formattingOptions))
     );
-    const cwd = getCwd(childArgs, document);
-    const { stdout, stderr } = await execa(pythonExec, childArgs, {
+    const childOptions = {
       input: document.getText(),
-      reject: false,
       stripFinalNewline: false,
-      cwd: cwd,
-    });
-    checkErrors(stderr, pythonExec);
-    return stdout;
+      cwd: getCwd(childArgs, document),
+    };
+    let result: ExecaError | ExecaReturnValue;
+    try {
+      result = await execa(pythonExec, childArgs, childOptions);
+    } catch (e) {
+      const error = e as ExecaError;
+      if ((error.exitCode as number | null | undefined) == null) {
+        throw error;
+      }
+      result = error;
+    }
+    checkErrors(result.stderr, pythonExec);
+    return result.stdout;
   } catch (e) {
     if (e instanceof Error) {
       const userMessage =
