@@ -1,4 +1,4 @@
-import { execa, ExecaReturnValue, type ExecaError } from "execa";
+import { execa, type ExecaError, type ExecaReturnValue } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { checkErrors, ErrorWithUserMessage } from "./errors";
