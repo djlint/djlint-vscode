@@ -1,76 +1,32 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "version": "2023.7.2",
-  "publisher": "monosans",
-  "license": "MIT",
-  "homepage": "https://github.com/monosans/djlint-vscode",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/monosans/djlint-vscode"
-  },
-  "bugs": {
-    "url": "https://github.com/monosans/djlint-vscode/issues"
-  },
-  "icon": "icon.png",
-  "engines": {
-    "vscode": "^1.74.0"
-  },
+  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "categories": [
     "Formatters",
     "Linters"
   ],
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "homepage": "https://github.com/monosans/djlint-vscode",
+  "bugs": {
+    "url": "https://github.com/monosans/djlint-vscode/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/monosans/djlint-vscode"
+  },
+  "license": "MIT",
+  "publisher": "monosans",
   "main": "./out/extension.js",
+  "scripts": {
+    "build": "npm run esbuild-base -- --sourcemap",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16.14",
+    "format": "prettier --write .",
+    "lint": "eslint . && tsc --noEmit",
+    "vscode:prepublish": "npm run esbuild-base -- --minify",
+    "watch": "npm run esbuild-base -- --sourcemap --watch"
+  },
   "contributes": {
-    "configurationDefaults": {
-      "[django-html]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "django"
-      },
-      "[jinja]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "jinja"
-      },
-      "[jinja-html]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "jinja"
-      },
-      "[nj]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "nunjucks"
-      },
-      "[njk]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "nunjucks"
-      },
-      "[nunjucks]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "nunjucks"
-      },
-      "[twig]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "nunjucks"
-      },
-      "[handlebars]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
-      "[hbs]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
-      "[mustache]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
-      "[html]": {
-        "djlint.enableLinting": true
-      }
-    },
     "configuration": {
       "properties": {
         "djlint.blankLineAfterTag": {
@@ -319,16 +275,56 @@
           "description": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the djlint.pythonPath setting will be used."
         }
       }
+    },
+    "configurationDefaults": {
+      "[django-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "django"
+      },
+      "[jinja]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[jinja-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[nj]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[njk]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[nunjucks]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[twig]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
+      "[handlebars]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[hbs]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[mustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[html]": {
+        "djlint.enableLinting": true
+      }
     }
   },
-  "scripts": {
-    "vscode:prepublish": "npm run esbuild-base -- --minify",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16.14",
-    "build": "npm run esbuild-base -- --sourcemap",
-    "watch": "npm run esbuild-base -- --sourcemap --watch",
-    "lint": "eslint . && tsc --noEmit",
-    "format": "prettier --write ."
-  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "dependencies": {
     "execa": "7.1.1"
   },
@@ -346,68 +342,8 @@
     "prettier": "2.8.8",
     "typescript": "5.1.6"
   },
-  "eslintConfig": {
-    "ignorePatterns": [
-      "out/"
-    ],
-    "extends": [
-      "plugin:@typescript-eslint/all",
-      "prettier"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-      "ecmaVersion": 6,
-      "sourceType": "module",
-      "project": "./tsconfig.json"
-    },
-    "plugins": [
-      "@typescript-eslint"
-    ],
-    "root": true,
-    "rules": {
-      "@typescript-eslint/ban-ts-comment": "off",
-      "@typescript-eslint/explicit-member-accessibility": [
-        "error",
-        {
-          "accessibility": "no-public"
-        }
-      ],
-      "@typescript-eslint/init-declarations": "off",
-      "@typescript-eslint/lines-between-class-members": "off",
-      "@typescript-eslint/no-confusing-void-expression": [
-        "error",
-        {
-          "ignoreArrowShorthand": true
-        }
-      ],
-      "@typescript-eslint/no-magic-numbers": "off",
-      "@typescript-eslint/parameter-properties": [
-        "error",
-        {
-          "prefer": "parameter-property"
-        }
-      ],
-      "@typescript-eslint/prefer-readonly-parameter-types": "off",
-      "@typescript-eslint/strict-boolean-expressions": [
-        "error",
-        {
-          "allowNullableBoolean": true,
-          "allowNullableString": true,
-          "allowNullableNumber": true
-        }
-      ],
-      "curly": "error",
-      "eqeqeq": [
-        "error",
-        "always",
-        {
-          "null": "ignore"
-        }
-      ],
-      "one-var": [
-        "error",
-        "never"
-      ]
-    }
-  }
+  "engines": {
+    "vscode": "^1.74.0"
+  },
+  "icon": "icon.png"
 }
