@@ -289,6 +289,7 @@
         },
         "djlint.pythonPath": {
           "type": "string",
+          "minLength": 1,
           "default": "python",
           "description": "Path to the desired Python interpreter. Only used if djlint.useVenv is disabled or the Python extension is not installed."
         },
