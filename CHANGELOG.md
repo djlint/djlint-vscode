@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.7.5] - 2023-07-07
+
+- Make sure files with git scheme are not linted.
+
 ## [2023.7.4] - 2023-07-07
 
 - Improve error handling.
