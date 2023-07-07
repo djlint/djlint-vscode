@@ -19,15 +19,19 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const diagListener = async (doc: vscode.TextDocument): Promise<void> => {
+    const tryLint = async (doc: vscode.TextDocument): Promise<void> => {
       try {
         await this.lintDocument(doc);
       } catch {}
     };
 
     this.context.subscriptions.push(
-      vscode.workspace.onDidOpenTextDocument(diagListener),
-      vscode.workspace.onDidSaveTextDocument(diagListener),
+      vscode.workspace.onDidOpenTextDocument(async (doc) => {
+        if (doc.uri.scheme !== "git") {
+          await tryLint(doc);
+        }
+      }),
+      vscode.workspace.onDidSaveTextDocument(tryLint),
       vscode.workspace.onDidCloseTextDocument((doc) =>
         this.collection.delete(doc.uri)
       )
