@@ -1,7 +1,7 @@
-import { execa, type ExecaError, type ExecaReturnValue } from "execa";
+import { execa, type ExecaError } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
-import { checkErrors, ErrorWithUserMessage } from "./errors";
+import { checkErrors, ErrorMessageWrapper } from "./errors";
 import type { IExtensionApi } from "./pythonExtTypes";
 
 async function getPythonExec(
@@ -64,23 +64,19 @@ export async function runDjlint(
       stripFinalNewline: false,
       cwd: getCwd(childArgs, document),
     };
-    let result: ExecaError | ExecaReturnValue;
     try {
-      result = await execa(pythonExec, childArgs, childOptions);
+      return (await execa(pythonExec, childArgs, childOptions)).stdout;
     } catch (e) {
-      const error = e as ExecaError;
-      if ((error.exitCode as number | null | undefined) == null) {
-        throw error;
-      }
-      result = error;
+      checkErrors(e as ExecaError, pythonExec);
+      return (e as ExecaError).stdout;
     }
-    checkErrors(result.stderr, pythonExec);
-    return result.stdout;
   } catch (e) {
     if (e instanceof Error) {
-      const userMessage =
-        e instanceof ErrorWithUserMessage ? e.userMessage : e.message;
-      void vscode.window.showErrorMessage(userMessage);
+      void vscode.window.showErrorMessage(e.message);
+      if (e instanceof ErrorMessageWrapper) {
+        outputChannel.error(e.originalError);
+        throw e.originalError;
+      }
       outputChannel.error(e);
     }
     throw e;
