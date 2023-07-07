@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.7.4] - 2023-07-07
+
+- Improve error handling.
+
 ## [2023.7.3] - 2023-07-03
 
 - Use [execa](https://github.com/sindresorhus/execa) for running djLint.
