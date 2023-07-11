@@ -1,9 +1,9 @@
 import type { ExecaError } from "execa";
 import { formattingArgs, lintingArgs } from "./args";
 
-const goodStderrRegex = /(?:^$|Linting\s+\d+\/\d+\s+files)/;
-const noModuleNamedDjlintRegex = /No\s+module\s+named\s+djlint/;
-const noSuchOptionRegex = /No\s+such\s+option:\s*(\S+)/;
+const goodStderrRegex = /(?:^$|Linting\s+\d+\/\d+\s+files)/u;
+const noModuleNamedDjlintRegex = /No\s+module\s+named\s+djlint/u;
+const noSuchOptionRegex = /No\s+such\s+option:\s*(?<option>\S+)/u;
 const argsMap = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg])
 );
@@ -27,9 +27,9 @@ export function checkErrors(error: ExecaError, pythonExec: string): void {
       throw new ErrorMessageWrapper(error, errMsg);
     }
 
-    const noSuchOption = noSuchOptionRegex.exec(stderr);
+    const noSuchOption = noSuchOptionRegex.exec(stderr)?.groups?.["option"];
     if (noSuchOption) {
-      const arg = argsMap.get(noSuchOption[1]);
+      const arg = argsMap.get(noSuchOption);
       if (arg) {
         const option = arg.vscodeName
           ? `djlint.${arg.vscodeName}`

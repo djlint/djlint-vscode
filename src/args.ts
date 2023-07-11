@@ -34,7 +34,7 @@ class BoolArg extends CliArg {
 class NumberOrNullArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
     const value = config.get<number | null>(this.vscodeName);
-    return value != null ? [this.cliName, value.toString()] : [];
+    return value == null ? [] : [this.cliName, value.toString()];
   }
 }
 

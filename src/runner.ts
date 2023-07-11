@@ -60,9 +60,9 @@ export async function runDjlint(
       args.flatMap((arg) => arg.build(config, document, formattingOptions))
     );
     const childOptions = {
+      cwd: getCwd(childArgs, document),
       input: document.getText(),
       stripFinalNewline: false,
-      cwd: getCwd(childArgs, document),
     };
     try {
       return (await execa(pythonExec, childArgs, childOptions)).stdout;

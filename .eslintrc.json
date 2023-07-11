@@ -1,12 +1,12 @@
 {
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 6,
-    "project": "./tsconfig.json",
+    "ecmaVersion": 2020,
+    "project": true,
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
-  "extends": ["plugin:@typescript-eslint/all", "prettier"],
+  "extends": ["eslint:all", "plugin:@typescript-eslint/all", "prettier"],
   "rules": {
     "curly": "error",
     "eqeqeq": [
@@ -16,8 +16,33 @@
         "null": "ignore"
       }
     ],
+    "func-style": ["error", "declaration"],
+    "id-length": "off",
+    "max-classes-per-file": "off",
+    "max-params": "off",
+    "max-statements": "off",
+    "no-await-in-loop": "off",
+    "no-continue": "off",
+    "no-empty": [
+      "error",
+      {
+        "allowEmptyCatch": true
+      }
+    ],
+    "no-eq-null": "off",
+    "no-new": "off",
+    "no-ternary": "off",
+    "no-void": "off",
     "one-var": ["error", "never"],
-    "@typescript-eslint/ban-ts-comment": "off",
+    "prefer-destructuring": "off",
+    "radix": ["error", "as-needed"],
+    "sort-imports": "off",
+    "@typescript-eslint/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": false
+      }
+    ],
     "@typescript-eslint/explicit-member-accessibility": [
       "error",
       {
@@ -49,6 +74,7 @@
       }
     ]
   },
+  "reportUnusedDisableDirectives": true,
   "ignorePatterns": ["out/"],
   "root": true
 }
