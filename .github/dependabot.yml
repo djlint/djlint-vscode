@@ -1,10 +1,20 @@
 version: 2
 updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: daily
+      time: "04:30"
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: daily
       time: "04:30"
+    groups:
+      typescript-eslint:
+        patterns:
+          - "@typescript-eslint/eslint-plugin"
+          - "@typescript-eslint/parser"
     ignore:
       - dependency-name: "@types/node"
         update-types:
