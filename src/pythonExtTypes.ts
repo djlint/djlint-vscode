@@ -4,7 +4,7 @@ export interface IExtensionApi {
   readonly environments: {
     getActiveEnvironmentPath: (resource: vscode.Uri) => EnvironmentPath;
     resolveEnvironment: (
-      environment: EnvironmentPath
+      environment: EnvironmentPath,
     ) => Promise<ResolvedEnvironment | undefined>;
   };
 }

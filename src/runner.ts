@@ -6,7 +6,7 @@ import type { IExtensionApi } from "./pythonExtTypes";
 
 async function getPythonExec(
   document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration
+  config: vscode.WorkspaceConfiguration,
 ): Promise<string> {
   if (config.get<boolean>("useVenv")) {
     const pythonExtension =
@@ -17,7 +17,7 @@ async function getPythonExec(
       }
       const api = pythonExtension.exports;
       const environment = await api.environments.resolveEnvironment(
-        api.environments.getActiveEnvironmentPath(document.uri)
+        api.environments.getActiveEnvironmentPath(document.uri),
       );
       const pythonExecUri = environment?.executable.uri;
       if (pythonExecUri) {
@@ -52,12 +52,12 @@ export async function runDjlint(
   config: vscode.WorkspaceConfiguration,
   args: CliArg[],
   outputChannel: vscode.LogOutputChannel,
-  formattingOptions?: vscode.FormattingOptions
+  formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
   try {
     const pythonExec = await getPythonExec(document, config);
     const childArgs = ["-m", "djlint", "-"].concat(
-      args.flatMap((arg) => arg.build(config, document, formattingOptions))
+      args.flatMap((arg) => arg.build(config, document, formattingOptions)),
     );
     const childOptions = {
       cwd: getCwd(childArgs, document),

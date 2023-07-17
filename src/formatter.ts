@@ -8,7 +8,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
 
   constructor(
     protected readonly context: vscode.ExtensionContext,
-    protected readonly outputChannel: vscode.LogOutputChannel
+    protected readonly outputChannel: vscode.LogOutputChannel,
   ) {}
 
   activate(): void {
@@ -19,13 +19,13 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         if (e.affectsConfiguration(`${configSection}.formatLanguages`)) {
           this.register();
         }
-      })
+      }),
     );
   }
 
   async provideDocumentFormattingEdits(
     document: vscode.TextDocument,
-    options: vscode.FormattingOptions
+    options: vscode.FormattingOptions,
   ): Promise<vscode.TextEdit[]> {
     const config = getConfig(document);
 
@@ -36,7 +36,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         config,
         formattingArgs,
         this.outputChannel,
-        options
+        options,
       );
     } catch {
       return [];
@@ -55,7 +55,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
       this.providerDisposable =
         vscode.languages.registerDocumentFormattingEditProvider(
           languages,
-          this
+          this,
         );
       this.context.subscriptions.push(this.providerDisposable);
     }

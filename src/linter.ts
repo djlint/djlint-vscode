@@ -12,7 +12,7 @@ export class Linter {
 
   constructor(
     protected readonly context: vscode.ExtensionContext,
-    protected readonly outputChannel: vscode.LogOutputChannel
+    protected readonly outputChannel: vscode.LogOutputChannel,
   ) {
     this.collection = vscode.languages.createDiagnosticCollection("djLint");
     this.context.subscriptions.push(this.collection);
@@ -33,15 +33,15 @@ export class Linter {
       }),
       vscode.workspace.onDidSaveTextDocument(tryLint),
       vscode.workspace.onDidCloseTextDocument((doc) =>
-        this.collection.delete(doc.uri)
-      )
+        this.collection.delete(doc.uri),
+      ),
     );
 
     await this.lintEditors(vscode.window.visibleTextEditors);
   }
 
   protected async lintEditors(
-    editors: readonly vscode.TextEditor[]
+    editors: readonly vscode.TextEditor[],
   ): Promise<void> {
     try {
       for (const editor of editors) {
@@ -62,7 +62,7 @@ export class Linter {
       document,
       config,
       lintingArgs,
-      this.outputChannel
+      this.outputChannel,
     );
 
     const diags = [];

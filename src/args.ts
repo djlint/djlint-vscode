@@ -4,13 +4,13 @@ export abstract class CliArg {
   constructor(
     readonly vscodeName: string,
     readonly cliName: string,
-    readonly minVersion: string
+    readonly minVersion: string,
   ) {}
 
   abstract build(
     config: vscode.WorkspaceConfiguration,
     document: vscode.TextDocument,
-    formattingOptions?: vscode.FormattingOptions
+    formattingOptions?: vscode.FormattingOptions,
   ): string[];
 }
 
@@ -75,7 +75,7 @@ class UseEditorIndentationArg extends CliArg {
   build(
     config: vscode.WorkspaceConfiguration,
     _document: vscode.TextDocument,
-    formattingOptions: vscode.FormattingOptions
+    formattingOptions: vscode.FormattingOptions,
   ): string[] {
     return config.get<boolean>(this.vscodeName)
       ? [this.cliName, formattingOptions.tabSize.toString()]
@@ -86,7 +86,7 @@ class UseEditorIndentationArg extends CliArg {
 export const configurationArg = new StringArg(
   "configuration",
   "--configuration",
-  "1.13"
+  "1.13",
 );
 
 const commonArgs: CliArg[] = [
@@ -102,7 +102,7 @@ const commonArgs: CliArg[] = [
 export const lintingArgs = commonArgs.concat(
   new LinterOutputFormatArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
-  new StringArrayArg("include", "--include", "1.20")
+  new StringArrayArg("include", "--include", "1.20"),
 );
 
 export const formattingArgs = commonArgs.concat(
@@ -111,7 +111,7 @@ export const formattingArgs = commonArgs.concat(
   new BoolArg(
     "formatAttributeTemplateTags",
     "--format-attribute-template-tags",
-    "1.25"
+    "1.25",
   ),
   new BoolArg("formatCss", "--format-css", "1.9"),
   new BoolArg("formatJs", "--format-js", "1.9"),
@@ -126,7 +126,7 @@ export const formattingArgs = commonArgs.concat(
   new BoolArg(
     "lineBreakAfterMultilineTag",
     "--line-break-after-multiline-tag",
-    "1.27"
+    "1.27",
   ),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
   new NumberOrNullArg("maxBlankLines", "--max-blank-lines", "1.31"),
@@ -136,5 +136,5 @@ export const formattingArgs = commonArgs.concat(
   new StringArrayArg("customBlocks", "--custom-blocks", "1.25"),
   new StringArrayArg("customHtml", "--custom-html", "1.25"),
   new StringArrayArg("ignoreBlocks", "--ignore-blocks", "1.24"),
-  new UseEditorIndentationArg()
+  new UseEditorIndentationArg(),
 );

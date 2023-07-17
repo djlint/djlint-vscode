@@ -3,7 +3,7 @@ import { Formatter } from "./formatter";
 import { Linter } from "./linter";
 
 export async function activate(
-  context: vscode.ExtensionContext
+  context: vscode.ExtensionContext,
 ): Promise<void> {
   const outputChannel = vscode.window.createOutputChannel("djLint", {
     log: true,

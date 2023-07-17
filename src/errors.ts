@@ -5,11 +5,14 @@ const goodStderrRegex = /(?:^$|Linting\s+\d+\/\d+\s+files)/u;
 const noModuleNamedDjlintRegex = /No\s+module\s+named\s+djlint/u;
 const noSuchOptionRegex = /No\s+such\s+option:\s*(?<option>\S+)/u;
 const argsMap = new Map(
-  [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg])
+  [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
 
 export class ErrorMessageWrapper extends Error {
-  constructor(readonly originalError: Error, message: string) {
+  constructor(
+    readonly originalError: Error,
+    message: string,
+  ) {
     super(message);
   }
 }
