@@ -334,7 +334,7 @@
     "@types/vscode": "1.74.0",
     "@typescript-eslint/eslint-plugin": "6.0.0",
     "@typescript-eslint/parser": "6.0.0",
-    "esbuild": "0.18.12",
+    "esbuild": "0.18.13",
     "eslint": "8.44.0",
     "eslint-config-prettier": "8.8.0",
     "prettier": "2.8.8",
