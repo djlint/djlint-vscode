@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2023.7.5",
+  "version": "2023.7.6",
   "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "categories": [
     "Formatters",
@@ -336,7 +336,7 @@
     "@typescript-eslint/parser": "6.2.0",
     "esbuild": "0.18.17",
     "eslint": "8.45.0",
-    "eslint-config-prettier": "8.8.0",
+    "eslint-config-prettier": "8.9.0",
     "prettier": "3.0.0",
     "prettier-plugin-packagejson": "2.4.5",
     "typescript": "5.1.6"

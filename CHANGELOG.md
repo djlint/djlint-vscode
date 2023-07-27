@@ -1,5 +1,10 @@
 # Changelog
 
+## [2023.7.6] - 2023-07-27
+
+- Update dependencies.
+- Minor refactoring.
+
 ## [2023.7.5] - 2023-07-07
 
 - Make sure files with git scheme are not linted.
