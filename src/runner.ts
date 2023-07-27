@@ -2,7 +2,10 @@ import { execa, type ExecaError } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
-import type { IExtensionApi } from "./pythonExtTypes";
+import {
+  PVSC_EXTENSION_ID,
+  type PythonExtension,
+} from "@vscode/python-extension";
 
 async function getPythonExec(
   document: vscode.TextDocument,
@@ -10,7 +13,7 @@ async function getPythonExec(
 ): Promise<string> {
   if (config.get<boolean>("useVenv")) {
     const pythonExtension =
-      vscode.extensions.getExtension<IExtensionApi>("ms-python.python");
+      vscode.extensions.getExtension<PythonExtension>(PVSC_EXTENSION_ID);
     if (pythonExtension) {
       if (!pythonExtension.isActive) {
         await pythonExtension.activate();

@@ -326,6 +326,7 @@
     "onStartupFinished"
   ],
   "dependencies": {
+    "@vscode/python-extension": "1.0.1",
     "execa": "7.2.0"
   },
   "devDependencies": {
