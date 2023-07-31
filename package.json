@@ -20,7 +20,7 @@
   "main": "./out/extension.js",
   "scripts": {
     "build": "npm run esbuild-base -- --sourcemap",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16.14",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16.17",
     "format": "prettier --write .",
     "lint": "eslint . && tsc --noEmit",
     "vscode:prepublish": "npm run esbuild-base -- --minify",
@@ -326,13 +326,13 @@
     "onStartupFinished"
   ],
   "dependencies": {
-    "@vscode/python-extension": "1.0.1",
+    "@vscode/python-extension": "1.0.2",
     "execa": "7.2.0"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "@types/node": "16.18.39",
-    "@types/vscode": "1.74.0",
+    "@types/vscode": "1.78.0",
     "@typescript-eslint/eslint-plugin": "6.2.0",
     "@typescript-eslint/parser": "6.2.0",
     "esbuild": "0.18.17",
@@ -343,7 +343,7 @@
     "typescript": "5.1.6"
   },
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.78.0"
   },
   "icon": "icon.png"
 }
