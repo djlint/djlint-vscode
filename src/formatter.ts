@@ -4,20 +4,25 @@ import { configSection, getConfig } from "./config";
 import { runDjlint } from "./runner";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
-  protected providerDisposable: vscode.Disposable | undefined;
+  readonly #context: vscode.ExtensionContext;
+  readonly #outputChannel: vscode.LogOutputChannel;
+  #providerDisposable: vscode.Disposable | undefined;
 
   constructor(
-    protected readonly context: vscode.ExtensionContext,
-    protected readonly outputChannel: vscode.LogOutputChannel,
-  ) {}
+    context: vscode.ExtensionContext,
+    outputChannel: vscode.LogOutputChannel,
+  ) {
+    this.#context = context;
+    this.#outputChannel = outputChannel;
+  }
 
   activate(): void {
-    this.register();
+    this.#register();
 
-    this.context.subscriptions.push(
+    this.#context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration((e) => {
         if (e.affectsConfiguration(`${configSection}.formatLanguages`)) {
-          this.register();
+          this.#register();
         }
       }),
     );
@@ -35,7 +40,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         document,
         config,
         formattingArgs,
-        this.outputChannel,
+        this.#outputChannel,
         options,
       );
     } catch {
@@ -48,16 +53,16 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     return [vscode.TextEdit.replace(range, stdout)];
   }
 
-  protected register(): void {
+  #register(): void {
     const languages = getConfig().get<string[]>("formatLanguages");
-    this.providerDisposable?.dispose();
+    this.#providerDisposable?.dispose();
     if (languages != null) {
-      this.providerDisposable =
+      this.#providerDisposable =
         vscode.languages.registerDocumentFormattingEditProvider(
           languages,
           this,
         );
-      this.context.subscriptions.push(this.providerDisposable);
+      this.#context.subscriptions.push(this.#providerDisposable);
     }
   }
 }
