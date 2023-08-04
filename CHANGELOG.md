@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.8.1] - 2023-08-04
+
+- Use tab instead of 2 spaces for printing errors.
+
 ## [2023.8.0] - 2023-08-04
 
 - Set minimum required VSCode version to 1.78.0.
