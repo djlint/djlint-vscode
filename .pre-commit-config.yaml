@@ -20,7 +20,5 @@ repos:
     rev: v3.0.1
     hooks:
       - id: prettier
-        additional_dependencies:
-          - prettier
-          - "@ianvs/prettier-plugin-sort-imports"
-          - prettier-plugin-packagejson
+        args:
+          - --no-config
