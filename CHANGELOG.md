@@ -1,5 +1,12 @@
 # Changelog
 
+## [2023.8.0] - 2023-08-04
+
+- Set minimum required VSCode version to 1.78.0.
+- Improve errors output and logs.
+- Use [@vscode/python-extension](https://www.npmjs.com/package/@vscode/python-extension).
+- Minor refactoring.
+
 ## [2023.7.6] - 2023-07-27
 
 - Update dependencies.
