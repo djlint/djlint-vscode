@@ -28,6 +28,7 @@
       }
     ],
     "no-eq-null": "off",
+    "no-ex-assign": "off",
     "no-new": "off",
     "no-ternary": "off",
     "no-void": "off",

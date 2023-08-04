@@ -71,12 +71,17 @@ export async function runDjlint(
     return res.stdout;
   } catch (e) {
     if (e instanceof Error) {
-      void vscode.window.showErrorMessage(e.message);
+      void vscode.window
+        .showErrorMessage(e.message, "Details")
+        .then((value) => {
+          if (value != null) {
+            outputChannel.show();
+          }
+        });
       if (e instanceof ErrorMessageWrapper) {
-        outputChannel.error(e.originalError);
-        throw e.originalError;
+        e = e.originalError;
       }
-      outputChannel.error(e);
+      outputChannel.error(JSON.stringify(e, null, 2));
     }
     throw e;
   }
