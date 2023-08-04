@@ -71,13 +71,11 @@ export async function runDjlint(
     return res.stdout;
   } catch (e) {
     if (e instanceof Error) {
-      void vscode.window
-        .showErrorMessage(e.message, "Details")
-        .then((value) => {
-          if (value != null) {
-            outputChannel.show();
-          }
-        });
+      void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
+        if (item != null) {
+          outputChannel.show();
+        }
+      });
       if (e instanceof ErrorMessageWrapper) {
         e = e.originalError;
       }
