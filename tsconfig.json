@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    "allowUnreachableCode": false,
+    "allowUnusedLabels": false,
     "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitOverride": true,
@@ -12,6 +14,7 @@
     "module": "CommonJS",
 
     "newLine": "lf",
+    "noEmit": true,
     "removeComments": true,
 
     "esModuleInterop": true,
@@ -20,6 +23,6 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
 
-    "skipLibCheck": true,
+    "skipLibCheck": true
   }
 }
