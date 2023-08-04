@@ -19,7 +19,7 @@ export class ErrorMessageWrapper extends Error {
 
 export function checkErrors(error: ExecaError, pythonExec: string): void {
   if ((error.exitCode as number | null | undefined) != null) {
-    const stderr = error.stderr;
+    const { stderr } = error;
 
     if (goodStderrRegex.test(stderr)) {
       return;

@@ -21,8 +21,6 @@
     "max-classes-per-file": "off",
     "max-params": "off",
     "max-statements": "off",
-    "no-await-in-loop": "off",
-    "no-continue": "off",
     "no-empty": [
       "error",
       {
@@ -34,7 +32,6 @@
     "no-ternary": "off",
     "no-void": "off",
     "one-var": ["error", "never"],
-    "prefer-destructuring": "off",
     "radix": ["error", "as-needed"],
     "sort-imports": "off",
     "@typescript-eslint/ban-ts-comment": [

@@ -1,24 +1,18 @@
-import { execa, type ExecaError } from "execa";
+import { PythonExtension } from "@vscode/python-extension";
+import { execa } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
+import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
-import {
-  PVSC_EXTENSION_ID,
-  type PythonExtension,
-} from "@vscode/python-extension";
 
 async function getPythonExec(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
 ): Promise<string> {
   if (config.get<boolean>("useVenv")) {
-    const pythonExtension =
-      vscode.extensions.getExtension<PythonExtension>(PVSC_EXTENSION_ID);
-    if (pythonExtension) {
-      if (!pythonExtension.isActive) {
-        await pythonExtension.activate();
-      }
-      const api = pythonExtension.exports;
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const api = await PythonExtension.api().catch(() => {});
+    if (api) {
       const environment = await api.environments.resolveEnvironment(
         api.environments.getActiveEnvironmentPath(document.uri),
       );
@@ -36,7 +30,7 @@ async function getPythonExec(
     return pythonPath;
   }
 
-  const msg = "Invalid djlint.pythonPath setting.";
+  const msg = `Invalid ${configSection}.pythonPath setting.`;
   throw new Error(msg);
 }
 
@@ -59,20 +53,22 @@ export async function runDjlint(
 ): Promise<string> {
   try {
     const pythonExec = await getPythonExec(document, config);
-    const childArgs = ["-m", "djlint", "-"].concat(
-      args.flatMap((arg) => arg.build(config, document, formattingOptions)),
-    );
+    const childArgs = [
+      "-m",
+      "djlint",
+      "-",
+      ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
+    ];
     const childOptions = {
       cwd: getCwd(childArgs, document),
       input: document.getText(),
       stripFinalNewline: false,
     };
-    try {
-      return (await execa(pythonExec, childArgs, childOptions)).stdout;
-    } catch (e) {
-      checkErrors(e as ExecaError, pythonExec);
-      return (e as ExecaError).stdout;
-    }
+    const res = await execa(pythonExec, childArgs, childOptions).catch((e) => {
+      checkErrors(e, pythonExec);
+      return e;
+    });
+    return res.stdout;
   } catch (e) {
     if (e instanceof Error) {
       void vscode.window.showErrorMessage(e.message);

@@ -47,6 +47,7 @@ export class Linter {
   async #lintEditors(editors: readonly vscode.TextEditor[]): Promise<void> {
     try {
       for (const editor of editors) {
+        // eslint-disable-next-line no-await-in-loop
         await this.#lintDocument(editor.document);
       }
     } catch {}
@@ -71,17 +72,15 @@ export class Linter {
     const regex = config.get<boolean>("useNewLinterOutputParser")
       ? Linter.#outputRegex
       : Linter.#oldOutputRegex;
-    for (const match of stdout.matchAll(regex)) {
-      const groups = match.groups;
-      if (groups == null) {
-        continue;
+    for (const { groups } of stdout.matchAll(regex)) {
+      if (groups) {
+        const line = Number.parseInt(groups["line"]) - 1;
+        const column = Number.parseInt(groups["column"]);
+        const range = new vscode.Range(line, column, line, column);
+        const message = `${groups["message"]} (${groups["code"]})`;
+        const diag = new vscode.Diagnostic(range, message);
+        diags.push(diag);
       }
-      const line = parseInt(groups["line"]) - 1;
-      const column = parseInt(groups["column"]);
-      const range = new vscode.Range(line, column, line, column);
-      const message = `${groups["message"]} (${groups["code"]})`;
-      const diag = new vscode.Diagnostic(range, message);
-      diags.push(diag);
     }
     this.#collection.set(document.uri, diags);
   }

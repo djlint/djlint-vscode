@@ -99,13 +99,15 @@ const commonArgs: CliArg[] = [
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
 ];
 
-export const lintingArgs = commonArgs.concat(
+export const lintingArgs = [
+  ...commonArgs,
   new LinterOutputFormatArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
-);
+];
 
-export const formattingArgs = commonArgs.concat(
+export const formattingArgs = [
+  ...commonArgs,
   new SimpleArg("--reformat", "0.0.9"),
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new BoolArg(
@@ -137,4 +139,4 @@ export const formattingArgs = commonArgs.concat(
   new StringArrayArg("customHtml", "--custom-html", "1.25"),
   new StringArrayArg("ignoreBlocks", "--ignore-blocks", "1.24"),
   new UseEditorIndentationArg(),
-);
+];
