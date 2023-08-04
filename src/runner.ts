@@ -79,7 +79,7 @@ export async function runDjlint(
       if (e instanceof ErrorMessageWrapper) {
         e = e.originalError;
       }
-      outputChannel.error(JSON.stringify(e, null, 2));
+      outputChannel.error(JSON.stringify(e, null, "\t"));
     }
     throw e;
   }
