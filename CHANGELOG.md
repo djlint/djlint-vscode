@@ -1,5 +1,10 @@
 # Changelog
 
+## [2023.8.2] - 2023-08-05
+
+- Remove empty output channel logs.
+- Reduce extension size by minifying package.json.
+
 ## [2023.8.1] - 2023-08-04
 
 - Use tab instead of 2 spaces for printing errors.
