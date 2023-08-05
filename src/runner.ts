@@ -1,5 +1,5 @@
 import { PythonExtension } from "@vscode/python-extension";
-import { execa } from "execa";
+import { execa, type ExecaError } from "execa";
 import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
@@ -51,36 +51,37 @@ export async function runDjlint(
   outputChannel: vscode.LogOutputChannel,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
-  try {
-    const pythonExec = await getPythonExec(document, config);
-    const childArgs = [
-      "-m",
-      "djlint",
-      "-",
-      ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
-    ];
-    const childOptions = {
-      cwd: getCwd(childArgs, document),
-      input: document.getText(),
-      stripFinalNewline: false,
-    };
-    const res = await execa(pythonExec, childArgs, childOptions).catch((e) => {
+  const pythonExec = await getPythonExec(document, config).catch((e: Error) => {
+    void vscode.window.showErrorMessage(e.message);
+    throw e;
+  });
+  const childArgs = [
+    "-m",
+    "djlint",
+    "-",
+    ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
+  ];
+  const childOptions = {
+    cwd: getCwd(childArgs, document),
+    input: document.getText(),
+    stripFinalNewline: false,
+  };
+  const res = await execa(pythonExec, childArgs, childOptions)
+    .catch((e) => {
       checkErrors(e, pythonExec);
       return e;
-    });
-    return res.stdout;
-  } catch (e) {
-    if (e instanceof Error) {
+    })
+    .catch((e: ErrorMessageWrapper<ExecaError> | ExecaError) => {
       void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
         if (item != null) {
           outputChannel.show();
         }
       });
       if (e instanceof ErrorMessageWrapper) {
-        e = e.originalError;
+        e = e.wrappedError;
       }
       outputChannel.error(JSON.stringify(e, null, "\t"));
-    }
-    throw e;
-  }
+      throw e;
+    });
+  return res.stdout;
 }

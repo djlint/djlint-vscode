@@ -8,9 +8,9 @@ const argsMap = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
 
-export class ErrorMessageWrapper extends Error {
+export class ErrorMessageWrapper<TError extends Error> extends Error {
   constructor(
-    readonly originalError: Error,
+    readonly wrappedError: TError,
     message: string,
   ) {
     super(message);

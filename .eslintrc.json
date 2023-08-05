@@ -19,6 +19,7 @@
     "func-style": ["error", "declaration"],
     "id-length": "off",
     "max-classes-per-file": "off",
+    "max-lines-per-function": "off",
     "max-params": "off",
     "max-statements": "off",
     "no-empty": [
@@ -30,6 +31,7 @@
     "no-eq-null": "off",
     "no-ex-assign": "off",
     "no-new": "off",
+    "no-param-reassign": "off",
     "no-ternary": "off",
     "no-void": "off",
     "one-var": ["error", "never"],
