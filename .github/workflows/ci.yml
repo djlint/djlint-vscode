@@ -18,7 +18,7 @@ jobs:
           node-version: lts/*
           cache: npm
       - run: npm ci
-      - run: npx eslint .
+      - run: npx eslint --ext .mjs,.ts .
   run-pre-commit:
     runs-on: ubuntu-latest
     steps:
