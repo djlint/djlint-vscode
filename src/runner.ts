@@ -37,7 +37,7 @@ async function getPythonExec(
 }
 
 function getCwd(
-  childArgs: string[],
+  childArgs: readonly string[],
   document: vscode.TextDocument,
   outputChannel: vscode.LogOutputChannel,
 ): Record<string, never> | { cwd: string } {
@@ -63,7 +63,7 @@ function getCwd(
 export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-  args: CliArg[],
+  args: readonly CliArg[],
   outputChannel: vscode.LogOutputChannel,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
