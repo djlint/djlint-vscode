@@ -1,6 +1,6 @@
 import { PythonExtension } from "@vscode/python-extension";
 import { execa, type ExecaError } from "execa";
-import vscode from "vscode";
+import vscode, { workspace } from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
@@ -39,6 +39,7 @@ async function getPythonExec(
 function getCwd(
   childArgs: string[],
   document: vscode.TextDocument,
+  outputChannel: vscode.LogOutputChannel,
 ): Record<string, never> | { cwd: string } {
   if (childArgs.includes(configurationArg.cliName)) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
@@ -53,6 +54,9 @@ function getCwd(
     const parentFolder = vscode.Uri.joinPath(document.uri, "..");
     return { cwd: parentFolder.fsPath };
   }
+  outputChannel.warn(
+    `Unsupported scheme "${document.uri.scheme}" for "${document.uri.fsPath}". Cwd will not be set.`,
+  );
   return {};
 }
 
