@@ -82,11 +82,12 @@ export async function runDjlint(
     input: document.getText(),
     stripFinalNewline: false,
   };
-  const res = await execa(pythonExec, childArgs, childOptions)
+  return execa(pythonExec, childArgs, childOptions)
     .catch((e) => {
       checkErrors(e, pythonExec);
       return e;
     })
+    .then(({ stdout }) => stdout)
     .catch((e: ErrorMessageWrapper<ExecaError> | ExecaError) => {
       void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
         if (item != null) {
@@ -99,5 +100,4 @@ export async function runDjlint(
       outputChannel.error(JSON.stringify(e, null, "\t"));
       throw e;
     });
-  return res.stdout;
 }

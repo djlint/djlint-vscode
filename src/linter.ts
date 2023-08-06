@@ -23,37 +23,35 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const tryLint = async (doc: vscode.TextDocument): Promise<void> => {
+    const maybeLint = async (document: vscode.TextDocument): Promise<void> => {
       try {
-        await this.#lintDocument(doc);
+        await this.#lint(document);
       } catch {}
     };
 
     this.#context.subscriptions.push(
-      vscode.workspace.onDidOpenTextDocument(async (doc) => {
-        if (doc.uri.scheme !== "git") {
-          await tryLint(doc);
-        }
-      }),
-      vscode.workspace.onDidSaveTextDocument(tryLint),
-      vscode.workspace.onDidCloseTextDocument((doc) =>
-        this.#collection.delete(doc.uri),
+      vscode.workspace.onDidOpenTextDocument(maybeLint),
+      vscode.workspace.onDidSaveTextDocument(maybeLint),
+      vscode.workspace.onDidCloseTextDocument(({ uri }) =>
+        this.#collection.delete(uri),
       ),
     );
 
-    await this.#lintEditors(vscode.window.visibleTextEditors);
+    await this.#lintMany(
+      vscode.window.visibleTextEditors.map(({ document }) => document),
+    );
   }
 
-  async #lintEditors(editors: readonly vscode.TextEditor[]): Promise<void> {
+  async #lintMany(documents: Iterable<vscode.TextDocument>): Promise<void> {
     try {
-      for (const editor of editors) {
+      for (const document of documents) {
         // eslint-disable-next-line no-await-in-loop
-        await this.#lintDocument(editor.document);
+        await this.#lint(document);
       }
     } catch {}
   }
 
-  async #lintDocument(document: vscode.TextDocument): Promise<void> {
+  async #lint(document: vscode.TextDocument): Promise<void> {
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
