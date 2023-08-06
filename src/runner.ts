@@ -5,7 +5,7 @@ import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
 
-const supportedUriSchemes = new Set(["file"]);
+const supportedCwdUriSchemes = new Set(["file"]);
 
 async function getPythonExec(
   document: vscode.TextDocument,
@@ -45,12 +45,12 @@ function getCwd(
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (
       workspaceFolder != null &&
-      supportedUriSchemes.has(workspaceFolder.uri.scheme)
+      supportedCwdUriSchemes.has(workspaceFolder.uri.scheme)
     ) {
       return { cwd: workspaceFolder.uri.fsPath };
     }
   }
-  if (supportedUriSchemes.has(document.uri.scheme)) {
+  if (supportedCwdUriSchemes.has(document.uri.scheme)) {
     const parentFolder = vscode.Uri.joinPath(document.uri, "..");
     return { cwd: parentFolder.fsPath };
   }
