@@ -5,7 +5,7 @@ import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
 
-const supportedUriSchemes = new Set(["file", "vscode-vfs"]);
+const supportedUriSchemes = new Set(["file"]);
 
 async function getPythonExec(
   document: vscode.TextDocument,
