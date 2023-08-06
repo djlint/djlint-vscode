@@ -4,6 +4,7 @@ import vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
+import { noop } from "./utils";
 
 const supportedCwdUriSchemes = new Set(["file"]);
 
@@ -12,8 +13,7 @@ async function getPythonExec(
   config: vscode.WorkspaceConfiguration,
 ): Promise<string> {
   if (config.get<boolean>("useVenv")) {
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
-    const api = await PythonExtension.api().catch(() => {});
+    const api = await PythonExtension.api().catch(noop);
     if (api) {
       const environment = await api.environments.resolveEnvironment(
         api.environments.getActiveEnvironmentPath(document.uri),

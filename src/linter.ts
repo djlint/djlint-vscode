@@ -2,6 +2,7 @@ import vscode from "vscode";
 import { lintingArgs } from "./args";
 import { getConfig } from "./config";
 import { runDjlint } from "./runner";
+import { noop } from "./utils";
 
 export class Linter {
   static readonly #outputRegex =
@@ -23,11 +24,8 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const maybeLint = async (document: vscode.TextDocument): Promise<void> => {
-      try {
-        await this.#lint(document);
-      } catch {}
-    };
+    const maybeLint = async (document: vscode.TextDocument): Promise<void> =>
+      this.#lint(document).catch(noop);
 
     this.#context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(maybeLint),
