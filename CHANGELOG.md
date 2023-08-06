@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.8.5] - 2023-08-06
+
+- Don't set cwd for vscode-vfs.
+
 ## [2023.8.4] - 2023-08-06
 
 - Add unsupported cwd scheme logs.
