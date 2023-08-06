@@ -5,6 +5,8 @@ import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
 
+const supportedUriSchemes = new Set(["file", "vscode-vfs"]);
+
 async function getPythonExec(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -34,14 +36,24 @@ async function getPythonExec(
   throw new Error(msg);
 }
 
-function getCwd(childArgs: string[], document: vscode.TextDocument): string {
+function getCwd(
+  childArgs: string[],
+  document: vscode.TextDocument,
+): Record<string, never> | { cwd: string } {
   if (childArgs.includes(configurationArg.cliName)) {
-    const cwd = vscode.workspace.getWorkspaceFolder(document.uri);
-    if (cwd) {
-      return cwd.uri.fsPath;
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (
+      workspaceFolder != null &&
+      supportedUriSchemes.has(workspaceFolder.uri.scheme)
+    ) {
+      return { cwd: workspaceFolder.uri.fsPath };
     }
   }
-  return vscode.Uri.joinPath(document.uri, "..").fsPath;
+  if (supportedUriSchemes.has(document.uri.scheme)) {
+    const parentFolder = vscode.Uri.joinPath(document.uri, "..");
+    return { cwd: parentFolder.fsPath };
+  }
+  return {};
 }
 
 export async function runDjlint(
@@ -62,7 +74,7 @@ export async function runDjlint(
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
   const childOptions = {
-    cwd: getCwd(childArgs, document),
+    ...getCwd(childArgs, document),
     input: document.getText(),
     stripFinalNewline: false,
   };
