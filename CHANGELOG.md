@@ -1,8 +1,12 @@
 # Changelog
 
+## [2023.8.4] - 2023-08-06
+
+- Add unsupported cwd scheme logs.
+
 ## [2023.8.3] - 2023-08-06
 
-- Add cwd scheme check (#323)
+- Add cwd scheme check (#323).
 
 ## [2023.8.2] - 2023-08-05
 
