@@ -78,7 +78,7 @@ export async function runDjlint(
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
   const childOptions = {
-    ...getCwd(childArgs, document),
+    ...getCwd(childArgs, document, outputChannel),
     input: document.getText(),
     stripFinalNewline: false,
   };
