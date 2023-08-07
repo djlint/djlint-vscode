@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.8.7] - 2023-08-07
+
+- Fix not all documents being linted on extension activation.
+
 ## [2023.8.6] - 2023-08-07
 
 - Lint only documents with `file` or `vscode-vfs` URI scheme. (#323)
