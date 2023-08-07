@@ -4,6 +4,8 @@ import { getConfig } from "./config";
 import { runDjlint } from "./runner";
 import { noop } from "./utils";
 
+const supportedUriSchemes = new Set(["file", "vscode-vfs"]);
+
 export class Linter {
   static readonly #outputRegex =
     /^<filename>(?<filename>.*)<\/filename><line>(?<line>\d+):(?<column>\d+)<\/line><code>(?<code>.+)<\/code><message>(?<message>.+)<\/message>$/gmu;
@@ -50,6 +52,13 @@ export class Linter {
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
+    if (!supportedUriSchemes.has(document.uri.scheme)) {
+      this.#outputChannel.debug(
+        `Not linting "${document.uri.toString()}" due to unsupported URI scheme.`,
+      );
+      return;
+    }
+
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
