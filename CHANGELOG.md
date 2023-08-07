@@ -1,5 +1,10 @@
 # Changelog
 
+## [2023.8.6] - 2023-08-07
+
+- Lint only documents with `file` or `vscode-vfs` URI scheme. (#323)
+- Add more unsupported cwd URI scheme logs. (#323)
+
 ## [2023.8.5] - 2023-08-06
 
 - Don't set cwd for vscode-vfs.
@@ -10,7 +15,7 @@
 
 ## [2023.8.3] - 2023-08-06
 
-- Add cwd scheme check (#323).
+- Add cwd scheme check. (#323)
 
 ## [2023.8.2] - 2023-08-05
 
