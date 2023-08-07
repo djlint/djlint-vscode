@@ -6,8 +6,6 @@ import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";
 import { noop } from "./utils";
 
-const supportedCwdUriSchemes = new Set(["file"]);
-
 async function getPythonExec(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -43,19 +41,22 @@ function getCwd(
 ): Record<string, never> | { cwd: string } {
   if (childArgs.includes(configurationArg.cliName)) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-    if (
-      workspaceFolder != null &&
-      supportedCwdUriSchemes.has(workspaceFolder.uri.scheme)
-    ) {
-      return { cwd: workspaceFolder.uri.fsPath };
+    if (workspaceFolder != null) {
+      if (workspaceFolder.uri.scheme === "file") {
+        return { cwd: workspaceFolder.uri.fsPath };
+      }
+      outputChannel.warn(
+        `Unsupported URI scheme of "${workspaceFolder.uri.toString()}". Cwd will not be set.`,
+      );
+      return {};
     }
   }
-  if (supportedCwdUriSchemes.has(document.uri.scheme)) {
+  if (document.uri.scheme === "file") {
     const parentFolder = vscode.Uri.joinPath(document.uri, "..");
     return { cwd: parentFolder.fsPath };
   }
   outputChannel.warn(
-    `Unsupported scheme "${document.uri.scheme}" for "${document.uri.fsPath}". Cwd will not be set.`,
+    `Unsupported URI scheme of "${document.uri.toString()}". Cwd will not be set.`,
   );
   return {};
 }
