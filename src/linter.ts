@@ -37,9 +37,7 @@ export class Linter {
       ),
     );
 
-    await this.#lintMany(
-      vscode.window.visibleTextEditors.map(({ document }) => document),
-    );
+    await this.#lintMany(vscode.workspace.textDocuments);
   }
 
   async #lintMany(documents: Iterable<vscode.TextDocument>): Promise<void> {
