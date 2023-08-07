@@ -31,7 +31,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   async provideDocumentFormattingEdits(
     document: vscode.TextDocument,
     options: vscode.FormattingOptions,
-  ): Promise<vscode.TextEdit[]> {
+  ): Promise<vscode.TextEdit[] | undefined> {
     const config = getConfig(document);
 
     let stdout;
@@ -44,7 +44,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         options,
       );
     } catch {
-      return [];
+      return;
     }
 
     const lastLineId = document.lineCount - 1;
