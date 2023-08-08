@@ -20,6 +20,7 @@
 
     "checkJs": true,
 
+    "allowSyntheticDefaultImports": false,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
 

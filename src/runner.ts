@@ -1,6 +1,6 @@
 import { PythonExtension } from "@vscode/python-extension";
 import { execa, type ExecaError } from "execa";
-import vscode from "vscode";
+import * as vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
 import { checkErrors, ErrorMessageWrapper } from "./errors";

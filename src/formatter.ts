@@ -1,4 +1,4 @@
-import vscode from "vscode";
+import * as vscode from "vscode";
 import { formattingArgs } from "./args";
 import { configSection, getConfig } from "./config";
 import { runDjlint } from "./runner";

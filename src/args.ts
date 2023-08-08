@@ -1,4 +1,4 @@
-import type vscode from "vscode";
+import type * as vscode from "vscode";
 
 export abstract class CliArg {
   constructor(

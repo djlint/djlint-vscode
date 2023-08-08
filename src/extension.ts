@@ -1,4 +1,4 @@
-import vscode from "vscode";
+import * as vscode from "vscode";
 import { Formatter } from "./formatter";
 import { Linter } from "./linter";
 
