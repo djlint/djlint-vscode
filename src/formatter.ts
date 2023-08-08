@@ -44,7 +44,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         options,
       );
     } catch {
-      return;
+      return void 0;
     }
 
     const lastLineId = document.lineCount - 1;

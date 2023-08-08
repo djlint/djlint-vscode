@@ -8,7 +8,6 @@
   "plugins": ["@typescript-eslint"],
   "extends": ["eslint:all", "plugin:@typescript-eslint/all", "prettier"],
   "rules": {
-    "consistent-return": "off",
     "curly": "error",
     "eqeqeq": [
       "error",
