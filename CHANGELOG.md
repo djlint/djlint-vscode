@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.8.8] - 2023-08-19
+
+- Bump bundled `execa` from 7.2.0 to 8.0.0.
+
 ## [2023.8.7] - 2023-08-07
 
 - Fix not all documents being linted on extension activation.
