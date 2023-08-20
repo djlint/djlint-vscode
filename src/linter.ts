@@ -37,14 +37,12 @@ export class Linter {
       ),
     );
 
-    await this.#lintMany(vscode.workspace.textDocuments);
-  }
-
-  async #lintMany(documents: Iterable<vscode.TextDocument>): Promise<void> {
     try {
-      for (const document of documents) {
-        // eslint-disable-next-line no-await-in-loop
-        await this.#lint(document);
+      for (const document of vscode.workspace.textDocuments) {
+        if (!this.#collection.has(document.uri)) {
+          // eslint-disable-next-line no-await-in-loop
+          await this.#lint(document);
+        }
       }
     } catch {}
   }
