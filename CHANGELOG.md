@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.8.10] - 2023-08-20
+
+- Add a check to ensure the document has not been linted yet when activating the extension.
+
 ## [2023.8.9] - 2023-08-19
 
 - Bump bundled `execa` from 8.0.0 to 8.0.1.
