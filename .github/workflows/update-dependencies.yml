@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - cmd: npm update --lockfile-version 3
+          - cmd: npm update --package-lock-only --lockfile-version 3
             commit-msg: Update package-lock.json
             branch: update/npm-lock
           - cmd: pipx run pre-commit autoupdate
