@@ -8,10 +8,12 @@ const argsMap = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
 
+// eslint-disable-next-line unicorn/custom-error-definition
 export class ErrorMessageWrapper<TError extends Error> extends Error {
   constructor(
     readonly wrappedError: TError,
     message: string,
+    // eslint-disable-next-line unicorn/custom-error-definition
   ) {
     super(message);
   }

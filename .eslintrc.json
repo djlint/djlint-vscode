@@ -6,7 +6,12 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint"],
-  "extends": ["eslint:all", "plugin:@typescript-eslint/all", "prettier"],
+  "extends": [
+    "eslint:all",
+    "plugin:unicorn/all",
+    "plugin:@typescript-eslint/all",
+    "prettier"
+  ],
   "rules": {
     "curly": "error",
     "eqeqeq": [
@@ -72,7 +77,25 @@
         "allowNullableString": true,
         "allowNullableNumber": true
       }
-    ]
+    ],
+    "unicorn/catch-error-name": [
+      "error",
+      {
+        "name": "e"
+      }
+    ],
+    "unicorn/explicit-length-check": "off",
+    "unicorn/filename-case": [
+      "error",
+      {
+        "case": "snakeCase"
+      }
+    ],
+    "unicorn/no-keyword-prefix": "off",
+    "unicorn/no-null": "off",
+    "unicorn/prefer-json-parse-buffer": "off",
+    "unicorn/prefer-top-level-await": "off",
+    "unicorn/prevent-abbreviations": "off"
   },
   "reportUnusedDisableDirectives": true,
   "ignorePatterns": ["out/"],
