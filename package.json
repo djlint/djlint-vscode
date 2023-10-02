@@ -332,7 +332,7 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.1.0",
     "@total-typescript/ts-reset": "0.5.1",
-    "@types/node": "16.18.54",
+    "@types/node": "16.18.55",
     "@types/vscode": "1.78.0",
     "@typescript-eslint/eslint-plugin": "6.7.3",
     "@typescript-eslint/parser": "6.7.3",
