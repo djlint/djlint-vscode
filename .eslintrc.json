@@ -25,7 +25,6 @@
     "id-length": "off",
     "max-classes-per-file": "off",
     "max-lines-per-function": "off",
-    "max-params": "off",
     "max-statements": "off",
     "no-empty": [
       "error",
@@ -56,6 +55,7 @@
     ],
     "@typescript-eslint/init-declarations": "off",
     "@typescript-eslint/lines-between-class-members": "off",
+    "@typescript-eslint/max-params": "off",
     "@typescript-eslint/no-confusing-void-expression": [
       "error",
       {
