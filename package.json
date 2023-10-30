@@ -339,7 +339,7 @@
     "esbuild": "0.19.5",
     "eslint": "8.52.0",
     "eslint-config-prettier": "9.0.0",
-    "eslint-plugin-unicorn": "48.0.1",
+    "eslint-plugin-unicorn": "49.0.0",
     "prettier": "3.0.3",
     "prettier-plugin-packagejson": "2.4.6",
     "typescript": "5.2.2"
