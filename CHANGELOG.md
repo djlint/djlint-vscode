@@ -1,5 +1,9 @@
 # Changelog
 
+## [2023.11.0] - 2023-11-19
+
+- Rebuild with esbuild v0.19.6.
+
 ## [2023.8.10] - 2023-08-20
 
 - Add a check to ensure the document has not been linted yet when activating the extension.
