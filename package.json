@@ -22,7 +22,7 @@
     "build": "npm run esbuild-base -- --sourcemap",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node16.17",
     "format": "prettier --write .",
-    "lint": "eslint --ext .mjs,.ts . && tsc --noEmit",
+    "lint": "eslint --ext .mjs,.ts --max-warnings 0 . && tsc --noEmit",
     "vscode:prepublish": "node ./build/minify_package_json.mjs && npm run esbuild-base -- --minify",
     "watch": "npm run esbuild-base -- --sourcemap --watch"
   },
