@@ -1,32 +1,18 @@
 {
+  "extends": "@tsconfig/strictest",
   "exclude": ["out/"],
   "compilerOptions": {
-    "allowUnreachableCode": false,
-    "allowUnusedLabels": false,
-    "exactOptionalPropertyTypes": true,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "strict": true,
+    "noUncheckedIndexedAccess": false,
 
-    "module": "CommonJS",
+    "module": "commonjs",
 
     "newLine": "lf",
     "noEmit": true,
     "removeComments": true,
 
-    "checkJs": true,
-
     "allowSyntheticDefaultImports": false,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
 
-    "target": "ES2020",
-    "useDefineForClassFields": true,
-
-    "skipLibCheck": true
+    "target": "es2020",
+    "useDefineForClassFields": true
   }
 }
