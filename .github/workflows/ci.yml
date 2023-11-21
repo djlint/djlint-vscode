@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pipx run pre-commit run --all-files
+      - run: pipx run pre-commit run --all-files --show-diff-on-failure
   run-tsc:
     runs-on: ubuntu-latest
     steps:
