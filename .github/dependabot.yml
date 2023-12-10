@@ -4,17 +4,26 @@ updates:
     directory: /
     schedule:
       interval: daily
-      time: "04:30"
+      time: "02:30"
+    groups:
+      minor:
+        patterns:
+          - "*"
+        update-types:
+          - minor
+          - patch
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: daily
-      time: "04:30"
+      time: "02:30"
     groups:
-      typescript-eslint:
+      minor:
         patterns:
-          - "@typescript-eslint/eslint-plugin"
-          - "@typescript-eslint/parser"
+          - "*"
+        update-types:
+          - minor
+          - patch
     ignore:
       - dependency-name: "@types/node"
         update-types:
