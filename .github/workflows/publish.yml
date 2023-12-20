@@ -12,6 +12,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+          check-latest: true
       - run: npm ci
       - run: npx --yes @vscode/vsce publish
         env:
@@ -24,6 +25,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+          check-latest: true
       - run: npm ci
       - run: npx --yes ovsx publish
         env:

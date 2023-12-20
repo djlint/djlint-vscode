@@ -17,6 +17,7 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+          check-latest: true
       - run: npm ci
       - run: npx eslint --ext .mjs,.ts --max-warnings 0 .
   run-pre-commit:
@@ -32,5 +33,6 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: npm
+          check-latest: true
       - run: npm ci
       - run: npx tsc --noEmit
