@@ -1,6 +1,6 @@
 # djlint-vscode
 
-[![CI](https://github.com/monosans/djlint-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/monosans/djlint-vscode/actions/workflows/ci.yml)
+[![CI](https://github.com/djlint/djlint-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/djlint/djlint-vscode/actions/workflows/ci.yml)
 [![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/monosans.djlint?label=Visual%20Studio%20Marketplace%20installs&logo=visualstudio)](https://marketplace.visualstudio.com/items?itemName=monosans.djlint)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/monosans/djlint?label=Open%20VSX%20downloads&logo=vscodium)](https://open-vsx.org/extension/monosans/djlint)
 
@@ -46,4 +46,4 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ## License
 
-[MIT](https://github.com/monosans/djlint-vscode/blob/main/LICENSE)
+[MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)

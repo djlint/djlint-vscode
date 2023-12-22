@@ -7,13 +7,13 @@
     "Formatters",
     "Linters"
   ],
-  "homepage": "https://github.com/monosans/djlint-vscode",
+  "homepage": "https://github.com/djlint/djlint-vscode",
   "bugs": {
-    "url": "https://github.com/monosans/djlint-vscode/issues"
+    "url": "https://github.com/djlint/djlint-vscode/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/monosans/djlint-vscode"
+    "url": "https://github.com/djlint/djlint-vscode"
   },
   "license": "MIT",
   "publisher": "monosans",
