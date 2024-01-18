@@ -13,6 +13,6 @@
     "allowSyntheticDefaultImports": false,
 
     "target": "es2020",
-    "useDefineForClassFields": true
-  }
+    "useDefineForClassFields": true,
+  },
 }
