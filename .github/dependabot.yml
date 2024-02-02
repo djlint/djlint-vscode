@@ -4,12 +4,12 @@ updates:
     directory: /
     schedule:
       interval: daily
-      time: "02:30"
+      time: "00:30"
   - package-ecosystem: npm
     directory: /
     schedule:
       interval: daily
-      time: "02:30"
+      time: "00:30"
     groups:
       npm-semver-minor:
         patterns:
