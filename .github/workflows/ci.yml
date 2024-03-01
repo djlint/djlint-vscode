@@ -32,7 +32,7 @@ jobs:
         with:
           app_id: ${{ secrets.APP_ID }}
           private_key: ${{ secrets.PRIVATE_KEY }}
-      - if: ${{ failure() && steps.run-pre-commit.conclusion == 'failure' }}
+      - if: ${{ failure() && steps.generate-token.conclusion == 'success' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ steps.generate-token.outputs.token }}
