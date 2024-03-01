@@ -19,7 +19,27 @@ jobs:
           cache: npm
           check-latest: true
       - run: npm ci
-      - run: npx eslint --ext .mjs,.ts --max-warnings 0 .
+      - id: run-eslint
+        run: npx eslint --ext .mjs,.ts --max-warnings 0 .
+      - if: ${{ failure() && steps.run-eslint.conclusion == 'failure' }}
+        run: npx eslint --ext .mjs,.ts --fix --max-warnings 0 .
+      - id: generate-token
+        if: ${{ failure() && steps.run-eslint.conclusion == 'failure' }}
+        uses: tibdex/github-app-token@v2
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.PRIVATE_KEY }}
+      - if: ${{ failure() && steps.generate-token.conclusion == 'success' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ steps.generate-token.outputs.token }}
+          commit-message: Run ESLint
+          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+          branch: eslint/${{ github.ref_name }}
+          delete-branch: true
+          title: Run ESLint
+          body:
   run-pre-commit:
     runs-on: ubuntu-latest
     steps:
