@@ -335,7 +335,7 @@
     "@tsconfig/strictest": "2.0.3",
     "@types/node": "16.18.89",
     "@types/vscode": "1.78.0",
-    "esbuild": "0.20.1",
+    "esbuild": "0.20.2",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-unicorn": "51.0.1",
