@@ -54,7 +54,6 @@
       }
     ],
     "@typescript-eslint/init-declarations": "off",
-    "@typescript-eslint/lines-between-class-members": "off",
     "@typescript-eslint/max-params": "off",
     "@typescript-eslint/no-confusing-void-expression": [
       "error",
