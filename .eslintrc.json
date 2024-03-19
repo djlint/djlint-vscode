@@ -78,6 +78,7 @@
         "allowNullableNumber": true
       }
     ],
+    "@typescript-eslint/use-unknown-in-catch-callback-variable": "off",
     "unicorn/catch-error-name": [
       "error",
       {
