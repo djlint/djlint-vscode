@@ -11,6 +11,7 @@
     "removeComments": true,
 
     "allowSyntheticDefaultImports": false,
+    "forceConsistentCasingInFileNames": true,
 
     "target": "es2020",
     "useDefineForClassFields": true
