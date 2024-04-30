@@ -19,51 +19,12 @@ jobs:
           cache: npm
           check-latest: true
       - run: npm ci
-      - id: run-eslint-check
-        run: npx eslint --ext .mjs,.ts --max-warnings 0 .
-      - id: run-eslint-fix
-        if: ${{ !cancelled() && steps.run-eslint-check.conclusion == 'failure' }}
-        run: npx eslint --ext .mjs,.ts --fix --max-warnings 0 .
-      - id: generate-token
-        if: ${{ !cancelled() && steps.run-eslint-fix.conclusion != 'skipped' }}
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIVATE_KEY }}
-      - if: ${{ !cancelled() && steps.generate-token.conclusion == 'success' }}
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ steps.generate-token.outputs.token }}
-          commit-message: Run ESLint
-          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          branch: eslint/${{ github.ref_name }}
-          delete-branch: true
-          title: Run ESLint
-          body:
+      - run: npx eslint --ext .mjs,.ts --max-warnings 0 .
   run-pre-commit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - id: run-pre-commit
-        run: pipx run pre-commit run --all-files
-      - id: generate-token
-        if: ${{ !cancelled() && steps.run-pre-commit.conclusion == 'failure' }}
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.PRIVATE_KEY }}
-      - if: ${{ !cancelled() && steps.generate-token.conclusion == 'success' }}
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ steps.generate-token.outputs.token }}
-          commit-message: Run pre-commit
-          committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
-          branch: pre-commit/${{ github.ref_name }}
-          delete-branch: true
-          title: Run pre-commmit
-          body:
+      - run: pipx run pre-commit run --all-files
   run-tsc:
     runs-on: ubuntu-latest
     steps:
