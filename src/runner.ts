@@ -84,11 +84,11 @@ export async function runDjlint(
     stripFinalNewline: false,
   };
   return execa(pythonExec, childArgs, childOptions)
-    .catch((e) => {
+    .catch((e: ExecaError) => {
       checkErrors(e, pythonExec);
       return e;
     })
-    .then(({ stdout }) => stdout)
+    .then(({ stdout }) => stdout as string)
     .catch((e: ErrorMessageWrapper<ExecaError> | ExecaError) => {
       void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
         if (item != null) {
@@ -99,6 +99,7 @@ export async function runDjlint(
         e = e.wrappedError;
       }
       outputChannel.error(JSON.stringify(e, null, "\t"));
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
       throw e;
     });
 }

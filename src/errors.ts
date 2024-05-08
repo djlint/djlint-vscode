@@ -21,7 +21,7 @@ export class ErrorMessageWrapper<TError extends Error> extends Error {
 
 export function checkErrors(error: ExecaError, pythonExec: string): void {
   if ((error.exitCode as number | null | undefined) != null) {
-    const { stderr } = error;
+    const { stderr } = error as { stderr: string };
 
     if (goodStderrRegex.test(stderr)) {
       return;
@@ -45,5 +45,6 @@ export function checkErrors(error: ExecaError, pythonExec: string): void {
     }
   }
 
+  // eslint-disable-next-line @typescript-eslint/only-throw-error
   throw error;
 }
