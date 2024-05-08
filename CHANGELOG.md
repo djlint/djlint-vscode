@@ -1,5 +1,9 @@
 # Changelog
 
+## [2024.5.0] - 2024-05-08
+
+- Bump bundled `execa` from 8.0.1 to 9.0.0.
+
 ## [2023.11.0] - 2023-11-19
 
 - Rebuild with esbuild v0.19.6.
