@@ -1,5 +1,5 @@
-import type { ExecaError } from "execa";
 import { formattingArgs, lintingArgs } from "./args";
+import type { CustomExecaError } from "./runner";
 
 const goodStderrRegex = /(?:^$|Linting\s+\d+\/\d+\s+files)/u;
 const noModuleNamedDjlintRegex = /No\s+module\s+named\s+djlint/u;
@@ -19,9 +19,9 @@ export class ErrorMessageWrapper<TError extends Error> extends Error {
   }
 }
 
-export function checkErrors(error: ExecaError, pythonExec: string): void {
-  if ((error.exitCode as number | null | undefined) != null) {
-    const { stderr } = error as { stderr: string };
+export function checkErrors(error: CustomExecaError, pythonExec: string): void {
+  if (error.exitCode != null) {
+    const { stderr } = error;
 
     if (goodStderrRegex.test(stderr)) {
       return;

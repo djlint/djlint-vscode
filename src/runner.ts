@@ -61,6 +61,18 @@ function getCwd(
   return {};
 }
 
+type ChildOptions =
+  | {
+      input: string;
+      stripFinalNewline: boolean;
+      cwd: string;
+    }
+  | {
+      input: string;
+      stripFinalNewline: boolean;
+    };
+export type CustomExecaError = ExecaError<ChildOptions>;
+
 export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -78,18 +90,18 @@ export async function runDjlint(
     "-",
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
-  const childOptions = {
+  const childOptions: ChildOptions = {
     ...getCwd(childArgs, document, outputChannel),
     input: document.getText(),
     stripFinalNewline: false,
   };
   return execa(pythonExec, childArgs, childOptions)
-    .catch((e: ExecaError) => {
+    .catch((e: CustomExecaError) => {
       checkErrors(e, pythonExec);
       return e;
     })
-    .then(({ stdout }) => stdout as string)
-    .catch((e: ErrorMessageWrapper<ExecaError> | ExecaError) => {
+    .then(({ stdout }) => stdout)
+    .catch((e: CustomExecaError | ErrorMessageWrapper<CustomExecaError>) => {
       void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
         if (item != null) {
           outputChannel.show();
