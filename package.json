@@ -327,7 +327,7 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.5",
-    "execa": "9.0.2"
+    "execa": "9.1.0"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.2.1",
@@ -342,7 +342,7 @@
     "prettier": "3.2.5",
     "prettier-plugin-packagejson": "2.5.0",
     "typescript": "5.4.5",
-    "typescript-eslint": "7.8.0"
+    "typescript-eslint": "7.9.0"
   },
   "engines": {
     "vscode": "^1.78.0"
