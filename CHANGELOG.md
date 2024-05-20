@@ -1,5 +1,10 @@
 # Changelog
 
+## [2024.5.3] - 2024-05-20
+
+- Bump `execa` to 9.1.0.
+- Require VSCode 1.88 or higher.
+
 ## [2024.5.2] - 2024-05-20
 
 - Downgrade `execa` to 8.0.1.
