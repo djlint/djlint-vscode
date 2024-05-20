@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2024.5.1",
+  "version": "2024.5.2",
   "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "categories": [
     "Formatters",

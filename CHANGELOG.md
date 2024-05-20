@@ -1,5 +1,9 @@
 # Changelog
 
+## [2024.5.2] - 2024-05-20
+
+- Downgrade `execa` to 8.0.1.
+
 ## [2024.5.1] - 2024-05-16
 
 - Rebuild with esbuild v0.21.3.
