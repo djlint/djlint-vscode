@@ -342,7 +342,7 @@
     "prettier": "3.2.5",
     "prettier-plugin-packagejson": "2.5.0",
     "typescript": "5.4.5",
-    "typescript-eslint": "7.10.0"
+    "typescript-eslint": "7.11.0"
   },
   "engines": {
     "vscode": "^1.88.0"
