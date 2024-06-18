@@ -318,7 +318,7 @@
         "djlint.profile": "handlebars"
       },
       "[html]": {
-        "djlint.enableLinting": true
+        "djlint.enableLinting": false
       }
     }
   },
