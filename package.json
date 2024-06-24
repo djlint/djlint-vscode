@@ -327,13 +327,13 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.5",
-    "execa": "9.2.0"
+    "execa": "9.3.0"
   },
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "4.2.1",
     "@total-typescript/ts-reset": "0.5.1",
     "@tsconfig/strictest": "2.0.5",
-    "@types/node": "18.19.38",
+    "@types/node": "18.19.39",
     "@types/vscode": "1.88.0",
     "esbuild": "0.21.5",
     "eslint": "8.57.0",
