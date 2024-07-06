@@ -89,7 +89,7 @@ export const configurationArg = new StringArg(
   "1.13",
 );
 
-const commonArgs: readonly CliArg[] = [
+const commonArgs = [
   configurationArg,
   new SimpleArg("--quiet", "0.0.9"),
   new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
@@ -97,16 +97,16 @@ const commonArgs: readonly CliArg[] = [
   new StringArg("profile", "--profile", "0.4.5"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
-];
+] as const;
 
-export const lintingArgs: readonly CliArg[] = [
+export const lintingArgs = [
   ...commonArgs,
   new LinterOutputFormatArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
-];
+] as const;
 
-export const formattingArgs: readonly CliArg[] = [
+export const formattingArgs = [
   ...commonArgs,
   new SimpleArg("--reformat", "0.0.9"),
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
@@ -139,4 +139,4 @@ export const formattingArgs: readonly CliArg[] = [
   new StringArrayArg("customHtml", "--custom-html", "1.25"),
   new StringArrayArg("ignoreBlocks", "--ignore-blocks", "1.24"),
   new UseEditorIndentationArg(),
-];
+] as const;
