@@ -4,7 +4,10 @@ import { getConfig } from "./config";
 import { runDjlint } from "./runner";
 import { noop } from "./utils";
 
-const supportedUriSchemes = new Set(["file", "vscode-vfs"]);
+const supportedUriSchemes: ReadonlySet<string> = new Set([
+  "file",
+  "vscode-vfs",
+]);
 
 export class Linter {
   static readonly #outputRegex =
