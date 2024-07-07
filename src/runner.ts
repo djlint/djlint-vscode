@@ -3,7 +3,7 @@ import { execa, type ExecaError } from "execa";
 import * as vscode from "vscode";
 import { configurationArg, type CliArg } from "./args";
 import { configSection } from "./config";
-import { checkErrors, ErrorMessageWrapper } from "./errors";
+import { checkErrors } from "./errors";
 import { noop } from "./utils";
 
 async function getPythonExec(
@@ -96,22 +96,8 @@ export async function runDjlint(
     stripFinalNewline: false,
   };
   return execa(pythonExec, childArgs, childOptions)
-    .catch((e: CustomExecaError) => {
-      checkErrors(e, pythonExec);
-      return e;
-    })
-    .then(({ stdout }) => stdout)
-    .catch((e: CustomExecaError | ErrorMessageWrapper<CustomExecaError>) => {
-      void vscode.window.showErrorMessage(e.message, "Details").then((item) => {
-        if (item != null) {
-          outputChannel.show();
-        }
-      });
-      if (e instanceof ErrorMessageWrapper) {
-        e = e.wrappedError;
-      }
-      outputChannel.error(JSON.stringify(e, null, "\t"));
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw e;
-    });
+    .catch((e: CustomExecaError) =>
+      checkErrors(e, outputChannel, config, pythonExec),
+    )
+    .then(({ stdout }) => stdout);
 }

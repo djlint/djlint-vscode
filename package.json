@@ -254,6 +254,11 @@
           "default": false,
           "description": "Only format or lint files that start with a comment with the text 'djlint:on'. Requires djLint ≥ 0.5.8."
         },
+        "djlint.showInstallError": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show error message when djLint is not installed."
+        },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
