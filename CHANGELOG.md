@@ -1,5 +1,12 @@
 # Changelog
 
+## [2024.7.0] - 2024-07-07
+
+- Allow ignoring install errors by disabling `djlint.showInstallError` setting.
+- Require VSCode 1.90 or newer.
+- Bump `execa` to v9.3.0.
+- Bump `esbuild` to v0.23.0.
+
 ## [2024.6.0] - 2024-06-07
 
 - Bump `execa` to 9.2.0.
