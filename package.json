@@ -17,13 +17,14 @@
   },
   "license": "MIT",
   "publisher": "monosans",
+  "type": "module",
   "main": "./out/extension.js",
   "scripts": {
     "build": "npm run esbuild-base -- --sourcemap",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node20.9",
     "format": "prettier --write .",
-    "lint": "eslint --ext .mjs,.ts --max-warnings 0 . && tsc --noEmit",
-    "vscode:prepublish": "node ./build/minify_package_json.mjs && npm run esbuild-base -- --minify",
+    "lint": "eslint --max-warnings 0 . && tsc --noEmit",
+    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
     "watch": "npm run esbuild-base -- --sourcemap --watch"
   },
   "contributes": {
@@ -335,13 +336,16 @@
     "execa": "9.3.0"
   },
   "devDependencies": {
+    "@eslint/js": "9.9.0",
     "@ianvs/prettier-plugin-sort-imports": "4.3.1",
     "@total-typescript/ts-reset": "0.5.1",
     "@tsconfig/strictest": "2.0.5",
-    "@types/node": "20.14.14",
+    "@types/eslint-config-prettier": "6.11.3",
+    "@types/eslint__js": "8.42.3",
+    "@types/node": "20.14.15",
     "@types/vscode": "1.90.0",
     "esbuild": "0.23.0",
-    "eslint": "8.57.0",
+    "eslint": "9.9.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-unicorn": "55.0.0",
     "prettier": "3.3.3",

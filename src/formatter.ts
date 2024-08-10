@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
-import { formattingArgs } from "./args";
-import { configSection, getConfig } from "./config";
-import { runDjlint } from "./runner";
+import { formattingArgs } from "./args.js";
+import { configSection, getConfig } from "./config.js";
+import { runDjlint } from "./runner.js";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;

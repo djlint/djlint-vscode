@@ -3,8 +3,9 @@
   "exclude": ["out/"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
+    "useUnknownInCatchVariables": true,
 
-    "module": "commonjs",
+    "module": "node16",
 
     "newLine": "lf",
     "noEmit": true,

@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { formattingArgs, lintingArgs, type CliArg } from "./args";
-import type { CustomExecaError } from "./runner";
+import { formattingArgs, lintingArgs, type CliArg } from "./args.js";
+import type { CustomExecaError } from "./runner.js";
 
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),

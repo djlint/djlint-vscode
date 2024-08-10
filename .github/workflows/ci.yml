@@ -19,7 +19,7 @@ jobs:
           cache: npm
           check-latest: true
       - run: npm ci
-      - run: npx eslint --ext .mjs,.ts --max-warnings 0 .
+      - run: npx eslint --max-warnings 0 .
   run-pre-commit:
     runs-on: ubuntu-latest
     steps:
