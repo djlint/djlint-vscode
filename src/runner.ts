@@ -1,10 +1,10 @@
 import { PythonExtension } from "@vscode/python-extension";
 import { execa, type ExecaError } from "execa";
 import * as vscode from "vscode";
-import { configurationArg, type CliArg } from "./args";
-import { configSection } from "./config";
-import { checkErrors } from "./errors";
-import { noop } from "./utils";
+import { configurationArg, type CliArg } from "./args.js";
+import { configSection } from "./config.js";
+import { checkErrors } from "./errors.js";
+import { noop } from "./utils.js";
 
 async function getPythonExec(
   document: vscode.TextDocument,

@@ -1,8 +1,8 @@
 import * as vscode from "vscode";
-import { lintingArgs } from "./args";
-import { getConfig } from "./config";
-import { runDjlint } from "./runner";
-import { noop } from "./utils";
+import { lintingArgs } from "./args.js";
+import { getConfig } from "./config.js";
+import { runDjlint } from "./runner.js";
+import { noop } from "./utils.js";
 
 const supportedUriSchemes: ReadonlySet<string> = new Set([
   "file",

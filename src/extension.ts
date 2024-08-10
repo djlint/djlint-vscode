@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-import { Formatter } from "./formatter";
-import { Linter } from "./linter";
+import { Formatter } from "./formatter.js";
+import { Linter } from "./linter.js";
 
 export async function activate(
   context: vscode.ExtensionContext,
