@@ -333,7 +333,7 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.5",
-    "execa": "9.3.0"
+    "execa": "9.3.1"
   },
   "devDependencies": {
     "@eslint/js": "9.9.0",
@@ -351,7 +351,7 @@
     "prettier": "3.3.3",
     "prettier-plugin-packagejson": "2.5.1",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.0.1"
+    "typescript-eslint": "8.1.0"
   },
   "engines": {
     "vscode": "^1.90.0"
