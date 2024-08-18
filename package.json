@@ -344,14 +344,14 @@
     "@types/eslint__js": "8.42.3",
     "@types/node": "20.14.15",
     "@types/vscode": "1.90.0",
-    "esbuild": "0.23.0",
+    "esbuild": "0.23.1",
     "eslint": "9.9.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-unicorn": "55.0.0",
     "prettier": "3.3.3",
     "prettier-plugin-packagejson": "2.5.1",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.0.1"
+    "typescript-eslint": "8.1.0"
   },
   "engines": {
     "vscode": "^1.90.0"

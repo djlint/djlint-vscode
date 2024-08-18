@@ -7,7 +7,6 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["out/"] },
   eslint.configs.all,
-  // @ts-expect-error
   eslintPluginUnicorn.configs["flat/all"],
   ...tseslint.configs.all,
   eslintConfigPrettier,
