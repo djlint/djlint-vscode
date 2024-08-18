@@ -333,7 +333,7 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.5",
-    "execa": "9.3.0"
+    "execa": "9.3.1"
   },
   "devDependencies": {
     "@eslint/js": "9.9.0",
@@ -342,7 +342,7 @@
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
     "@types/eslint__js": "8.42.3",
-    "@types/node": "20.14.15",
+    "@types/node": "20.16.0",
     "@types/vscode": "1.90.0",
     "esbuild": "0.23.1",
     "eslint": "9.9.0",
