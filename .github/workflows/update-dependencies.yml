@@ -16,7 +16,7 @@ jobs:
           - cmd: npm update --package-lock-only --lockfile-version 3
             commit-msg: Update package-lock.json
             branch: update/npm-lock
-          - cmd: pipx run pre-commit autoupdate
+          - cmd: curl -LsSf https://astral.sh/uv/install.sh | sh && uv tool run pre-commit autoupdate
             commit-msg: Update .pre-commit-config.yaml
             branch: update/pre-commit-config
       fail-fast: false
