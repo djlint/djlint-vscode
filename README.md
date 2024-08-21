@@ -27,11 +27,20 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ### Usage with djLint installed with pipx
 
-[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application. You can see where it creates the venv with the `pipx environment --value PIPX_LOCAL_VENVS` command. For me it is `/home/user/.local/pipx/venvs`. This way I can set these settings:
+[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application. You can see where it creates the venv with the `pipx environment --value PIPX_LOCAL_VENVS` command. For me it is `/home/user/.local/share/pipx/venvs`. This way I can set these settings:
 
 ```json
 "djlint.useVenv": false,
-"djlint.pythonPath": "/home/user/.local/pipx/venvs/djlint/bin/python",
+"djlint.pythonPath": "/home/user/.local/share/pipx/venvs/djlint/bin/python",
+```
+
+### Usage with djLint installed with uv
+
+[uv](https://pypi.org/project/uv/) creates a separate venv for each application. You can see where it creates the venv with the `uv tool dir` command. For me it is `/home/user/.local/share/share/uv/tools`. This way I can set these settings:
+
+```json
+"djlint.useVenv": false,
+"djlint.pythonPath": "/home/user/.local/share/share/uv/tools/djlint/bin/python",
 ```
 
 ## Known issues
