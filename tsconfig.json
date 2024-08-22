@@ -1,6 +1,6 @@
 {
   "extends": "@tsconfig/strictest/tsconfig.json",
-  "exclude": ["out/"],
+  "exclude": ["dist/"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
     "useUnknownInCatchVariables": true,

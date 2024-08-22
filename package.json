@@ -18,14 +18,14 @@
   "license": "MIT",
   "publisher": "monosans",
   "type": "module",
-  "main": "./out/extension.js",
+  "main": "./dist/extension.cjs",
   "scripts": {
-    "build": "npm run esbuild-base -- --sourcemap",
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node20.9",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node20.9",
     "format": "prettier --write .",
-    "lint": "eslint --max-warnings 0 . && tsc --noEmit",
-    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
-    "watch": "npm run esbuild-base -- --sourcemap --watch"
+    "lint": "eslint --max-warnings 0 . && tsc",
+    "vscode:prepublish": "node ./build/minify-package-json.js && npm run esbuild-base -- --minify",
+    "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
+    "watch:tsc": "tsc --watch"
   },
   "contributes": {
     "configuration": {
