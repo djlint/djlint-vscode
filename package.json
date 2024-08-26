@@ -338,7 +338,7 @@
   "devDependencies": {
     "@eslint/js": "9.9.1",
     "@ianvs/prettier-plugin-sort-imports": "4.3.1",
-    "@total-typescript/ts-reset": "0.5.1",
+    "@total-typescript/ts-reset": "0.6.0",
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
     "@types/eslint__js": "8.42.3",
@@ -349,9 +349,9 @@
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-unicorn": "55.0.0",
     "prettier": "3.3.3",
-    "prettier-plugin-packagejson": "2.5.1",
+    "prettier-plugin-packagejson": "2.5.2",
     "typescript": "5.5.4",
-    "typescript-eslint": "8.2.0"
+    "typescript-eslint": "8.3.0"
   },
   "engines": {
     "vscode": "^1.90.0"
