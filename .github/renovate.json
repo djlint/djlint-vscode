@@ -22,6 +22,16 @@
     {
       "matchUpdateTypes": ["lockFileMaintenance", "patch", "pin"],
       "automerge": true
+    },
+    {
+      "matchPackageNames": ["@types/node"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["@types/vscode"],
+      "matchUpdateTypes": ["major", "minor"],
+      "enabled": false
     }
   ],
   "pre-commit": {
