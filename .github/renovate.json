@@ -34,8 +34,11 @@
       "enabled": false
     }
   ],
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
   "pre-commit": {
     "enabled": true
   },
-  "schedule": ["at any time"]
+  "semanticCommits": "enabled",
+"schedule": ["at any time"]
 }
