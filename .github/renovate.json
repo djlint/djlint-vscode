@@ -40,5 +40,5 @@
     "enabled": true
   },
   "semanticCommits": "enabled",
-"schedule": ["at any time"]
+  "schedule": ["at any time"]
 }
