@@ -24,7 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: pipx run pre-commit run --all-files
+      - uses: astral-sh/setup-uv@v3
+      - run: uv tool run --from pre-commit@latest --with pre-commit-uv --no-cache --python 3.12 pre-commit run --all-files
   run-tsc:
     runs-on: ubuntu-latest
     steps:
