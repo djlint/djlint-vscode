@@ -16,6 +16,10 @@
       "automerge": true
     },
     {
+      "matchManagers": ["pre-commit"],
+      "automerge": true
+    },
+    {
       "matchUpdateTypes": ["minor"],
       "matchCurrentVersion": "!/^0/",
       "automerge": true
@@ -25,11 +29,13 @@
       "automerge": true
     },
     {
+      "matchCategories": ["js"],
       "matchPackageNames": ["@types/node"],
       "matchUpdateTypes": ["major"],
       "enabled": false
     },
     {
+      "matchCategories": ["js"],
       "matchPackageNames": ["@types/vscode"],
       "matchUpdateTypes": ["major", "minor"],
       "enabled": false
