@@ -1,5 +1,9 @@
 # Changelog
 
+## [2024.10.0] - 2024-10-28
+
+- Rebuild with updated dependencies.
+
 ## [2024.7.0] - 2024-07-07
 
 - Allow ignoring install errors by disabling `djlint.showInstallError` setting.
