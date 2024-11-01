@@ -8,7 +8,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint itself with the `python -m pip install -U djlint` command.
+1. Install djLint itself with the `pip install -U djlint` command.
 1. Install djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
 ## Usage
