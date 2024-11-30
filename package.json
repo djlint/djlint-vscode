@@ -76,7 +76,7 @@
           "type": "boolean",
           "default": false,
           "scope": "language-overridable",
-          "description": "Lint for common issues."
+          "description": "Override and enable linting for languages not linted by default."
         },
         "djlint.exclude": {
           "type": "array",
