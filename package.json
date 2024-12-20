@@ -344,7 +344,7 @@
     "@types/eslint__js": "8.42.3",
     "@types/node": "20.17.10",
     "@types/vscode": "1.90.0",
-    "esbuild": "0.24.0",
+    "esbuild": "0.24.1",
     "eslint": "9.17.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-plugin-unicorn": "56.0.1",
