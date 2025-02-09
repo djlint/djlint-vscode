@@ -22,4 +22,5 @@ repos:
     hooks:
       - id: prettier
         args:
+          - --object-wrap=collapse
           - --no-config

@@ -62,15 +62,8 @@ function getCwd(
 }
 
 type ChildOptions =
-  | {
-      input: string;
-      stripFinalNewline: boolean;
-      cwd: string;
-    }
-  | {
-      input: string;
-      stripFinalNewline: boolean;
-    };
+  | { input: string; stripFinalNewline: boolean; cwd: string }
+  | { input: string; stripFinalNewline: boolean };
 export type CustomExecaError = ExecaError<ChildOptions>;
 
 export async function runDjlint(

@@ -4,13 +4,8 @@
     {
       "label": "watch",
       "dependsOn": ["npm: watch:tsc", "npm: watch:esbuild"],
-      "presentation": {
-        "reveal": "never"
-      },
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      }
+      "presentation": { "reveal": "never" },
+      "group": { "kind": "build", "isDefault": true }
     },
     {
       "type": "npm",
@@ -19,10 +14,7 @@
       "problemMatcher": "$esbuild-watch",
       "isBackground": true,
       "label": "npm: watch:esbuild",
-      "presentation": {
-        "group": "watch",
-        "reveal": "never"
-      }
+      "presentation": { "group": "watch", "reveal": "never" }
     },
     {
       "type": "npm",
@@ -31,10 +23,7 @@
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
       "label": "npm: watch:tsc",
-      "presentation": {
-        "group": "watch",
-        "reveal": "never"
-      }
+      "presentation": { "group": "watch", "reveal": "never" }
     }
   ]
 }
