@@ -1,6 +1,6 @@
 # Changelog
 
-## [2025.0.0] - 2025-2-14
+## [2025.0.0] - 2025-02-14
 
 - Improve settings description and fix typos.
 
