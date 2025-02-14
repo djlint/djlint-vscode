@@ -36,7 +36,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add an additional blank line after {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
+          "description": "Add an additional blank line after `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
         },
         "djlint.blankLineBeforeTag": {
           "type": "array",
@@ -44,12 +44,12 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add an additional blank line before {% <tag> ... %} tag groups. Requires djLint ≥ 1.25."
+          "description": "Add an additional blank line before `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
         },
         "djlint.closeVoidTags": {
           "type": "boolean",
           "default": false,
-          "description": "Add closing mark on known void tags. Ex: <img> becomse <img />. Requires djLint ≥ 1.26."
+          "description": "Add closing mark on known void tags. Ex: `<img>` becomes `<img />`. Requires djLint ≥ 1.26."
         },
         "djlint.configuration": {
           "type": "string",
@@ -102,7 +102,7 @@
         "djlint.formatCss": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of <style> tags. Requires djLint ≥ 1.9."
+          "description": "Also format contents of `<style>` tags. Requires djLint ≥ 1.9."
         },
         "djlint.formatLanguages": {
           "type": "array",
@@ -127,7 +127,7 @@
         "djlint.formatJs": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of <script> tags. Requires djLint ≥ 1.9."
+          "description": "Also format contents of `<script>` tags. Requires djLint ≥ 1.9."
         },
         "djlint.ignore": {
           "type": "array",
@@ -221,12 +221,12 @@
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve blank lines. Requires djLint ≥ 1.3."
+          "description": "Attempt to preserve blank lines. Requires djLint ≥ 1.3."
         },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve leading space. Requires djLint ≥ 1.2."
+          "description": "Attempt to preserve leading space on text. Requires djLint ≥ 1.2."
         },
         "djlint.profile": {
           "type": "string",
@@ -248,12 +248,12 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "description": "Path to the desired Python interpreter. Only used if djlint.useVenv is disabled or the Python extension is not installed."
+          "description": "Path to the desired Python interpreter. Only used if `djlint.useVenv` is disabled or the Python extension is not installed."
         },
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
-          "description": "Only format or lint files that start with a comment with the text 'djlint:on'. Requires djLint ≥ 0.5.8."
+          "description": "Only format or lint files that start with a comment with the text `djlint:on`. Requires djLint ≥ 0.5.8."
         },
         "djlint.showInstallError": {
           "type": "boolean",
@@ -263,7 +263,7 @@
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
-          "description": "Get the number of indent spaces from VS Code (see the editor.tabSize setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3."
+          "description": "Get the number of indent spaces from VS Code (see the `editor.tabSize` setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3."
         },
         "djlint.useGitignore": {
           "type": "boolean",
@@ -273,12 +273,12 @@
         "djlint.useNewLinterOutputParser": {
           "type": "boolean",
           "default": true,
-          "description": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the linter_output_format setting in the djLint configuration file. Requires djLint ≥ 1.25."
+          "description": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the `linter_output_format` setting in the djLint configuration file. Requires djLint ≥ 1.25."
         },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "description": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the djlint.pythonPath setting will be used."
+          "description": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `djlint.pythonPath` setting will be used."
         }
       }
     },
