@@ -7,8 +7,8 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist/"] },
   eslint.configs.all,
-  eslintPluginUnicorn.configs["flat/all"],
-  ...tseslint.configs.all,
+  eslintPluginUnicorn.configs.all,
+  tseslint.configs.all,
   eslintConfigPrettier,
   {
     languageOptions: { ecmaVersion: 2023, parserOptions: { project: true } },
