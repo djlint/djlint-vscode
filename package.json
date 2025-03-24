@@ -341,7 +341,7 @@
     "@total-typescript/ts-reset": "0.6.1",
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
-    "@types/node": "20.17.25",
+    "@types/node": "20.17.26",
     "@types/vscode": "1.90.0",
     "esbuild": "0.25.1",
     "eslint": "9.23.0",
