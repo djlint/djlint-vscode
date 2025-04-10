@@ -345,7 +345,7 @@
     "@types/vscode": "1.90.0",
     "esbuild": "0.25.2",
     "eslint": "9.24.0",
-    "eslint-config-prettier": "10.1.1",
+    "eslint-config-prettier": "10.1.2",
     "eslint-plugin-unicorn": "58.0.0",
     "prettier": "3.5.3",
     "prettier-plugin-packagejson": "2.5.10",
