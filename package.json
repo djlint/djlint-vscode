@@ -76,7 +76,7 @@
           "type": "boolean",
           "default": false,
           "scope": "language-overridable",
-          "description": "Lint for common issues."
+          "description": "Lint for common issues. Don't enable globally, instead enable for each language individually."
         },
         "djlint.exclude": {
           "type": "array",
