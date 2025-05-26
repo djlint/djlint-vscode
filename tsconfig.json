@@ -5,7 +5,7 @@
     "noUncheckedIndexedAccess": false,
     "useUnknownInCatchVariables": true,
 
-    "module": "node16",
+    "module": "nodenext",
 
     "newLine": "lf",
     "noEmit": true,

@@ -1,5 +1,10 @@
 # Changelog
 
+## [2025.5.0] - 2025-05-26
+
+- Fix Markdown syntax in settings description.
+- Drop support for VSCode < 1.95.
+
 ## [2025.0.0] - 2025-02-14
 
 - Improve settings description and fix typos.

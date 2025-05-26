@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2025.0.0",
+  "version": "2025.5.0",
   "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "categories": [
     "Formatters",
@@ -20,7 +20,7 @@
   "type": "module",
   "main": "./dist/extension.cjs",
   "scripts": {
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node20.9",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node20.18",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
@@ -36,7 +36,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add an additional blank line after `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
+          "markdownDescription": "Add an additional blank line after `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
         },
         "djlint.blankLineBeforeTag": {
           "type": "array",
@@ -44,12 +44,12 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add an additional blank line before `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
+          "markdownDescription": "Add an additional blank line before `{% <tag> ... %}` tag groups. Requires djLint ≥ 1.25."
         },
         "djlint.closeVoidTags": {
           "type": "boolean",
           "default": false,
-          "description": "Add closing mark on known void tags. Ex: `<img>` becomes `<img />`. Requires djLint ≥ 1.26."
+          "markdownDescription": "Add closing mark on known void tags. Ex: `<img>` becomes `<img />`. Requires djLint ≥ 1.26."
         },
         "djlint.configuration": {
           "type": "string",
@@ -102,7 +102,7 @@
         "djlint.formatCss": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of `<style>` tags. Requires djLint ≥ 1.9."
+          "markdownDescription": "Also format contents of `<style>` tags. Requires djLint ≥ 1.9."
         },
         "djlint.formatLanguages": {
           "type": "array",
@@ -127,7 +127,7 @@
         "djlint.formatJs": {
           "type": "boolean",
           "default": false,
-          "description": "Also format contents of `<script>` tags. Requires djLint ≥ 1.9."
+          "markdownDescription": "Also format contents of `<script>` tags. Requires djLint ≥ 1.9."
         },
         "djlint.ignore": {
           "type": "array",
@@ -248,12 +248,12 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "description": "Path to the desired Python interpreter. Only used if `djlint.useVenv` is disabled or the Python extension is not installed."
+          "markdownDescription": "Path to the desired Python interpreter. Only used if `#djlint.useVenv#` is disabled or the Python extension is not installed."
         },
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
-          "description": "Only format or lint files that start with a comment with the text `djlint:on`. Requires djLint ≥ 0.5.8."
+          "markdownDescription": "Only format or lint files that start with a comment with the text `djlint:on`. Requires djLint ≥ 0.5.8."
         },
         "djlint.showInstallError": {
           "type": "boolean",
@@ -263,7 +263,7 @@
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
-          "description": "Get the number of indent spaces from VS Code (see the `editor.tabSize` setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3."
+          "markdownDescription": "Get the number of indent spaces from VS Code (see the `#editor.tabSize#` setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3."
         },
         "djlint.useGitignore": {
           "type": "boolean",
@@ -273,12 +273,12 @@
         "djlint.useNewLinterOutputParser": {
           "type": "boolean",
           "default": true,
-          "description": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the `linter_output_format` setting in the djLint configuration file. Requires djLint ≥ 1.25."
+          "markdownDescription": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the `linter_output_format` setting in the djLint configuration file. Requires djLint ≥ 1.25."
         },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "description": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `djlint.pythonPath` setting will be used."
+          "markdownDescription": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `#djlint.pythonPath#` setting will be used."
         }
       }
     },
@@ -342,7 +342,7 @@
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
     "@types/node": "20.17.50",
-    "@types/vscode": "1.90.0",
+    "@types/vscode": "1.95.0",
     "esbuild": "0.25.4",
     "eslint": "9.27.0",
     "eslint-config-prettier": "10.1.5",
@@ -353,7 +353,7 @@
     "typescript-eslint": "8.32.1"
   },
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.95.0"
   },
   "icon": "icon.png"
 }
