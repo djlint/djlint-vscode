@@ -11,8 +11,14 @@ export default tseslint.config(
   tseslint.configs.all,
   eslintConfigPrettier,
   {
-    languageOptions: { ecmaVersion: 2023, parserOptions: { project: true } },
-    linterOptions: { reportUnusedDisableDirectives: "error" },
+    languageOptions: {
+      ecmaVersion: 2022,
+      parserOptions: { projectService: true },
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: "error",
+      reportUnusedInlineConfigs: "error",
+    },
     rules: {
       "@typescript-eslint/ban-ts-comment": [
         "error",

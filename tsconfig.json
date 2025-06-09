@@ -1,20 +1,9 @@
 {
-  "extends": "@tsconfig/strictest/tsconfig.json",
+  "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node20/tsconfig"],
   "exclude": ["dist/"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
-    "useUnknownInCatchVariables": true,
-
-    "module": "nodenext",
-
-    "newLine": "lf",
     "noEmit": true,
-    "removeComments": true,
-
-    "allowSyntheticDefaultImports": false,
-    "forceConsistentCasingInFileNames": true,
-
-    "target": "es2023",
-    "useDefineForClassFields": true
+    "allowSyntheticDefaultImports": false
   }
 }
