@@ -5,7 +5,7 @@ import eslintPluginUnicorn from "eslint-plugin-unicorn";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist/"] },
+  { ignores: ["dist"] },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,

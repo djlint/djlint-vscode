@@ -1,6 +1,6 @@
 {
   "extends": ["@tsconfig/strictest/tsconfig", "@tsconfig/node20/tsconfig"],
-  "exclude": ["dist/"],
+  "exclude": ["dist"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
     "noEmit": true,
