@@ -7,6 +7,7 @@ import tseslint from "typescript-eslint";
 export default tseslint.config(
   { ignores: ["dist"] },
   eslint.configs.all,
+  // @ts-expect-error
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
   eslintConfigPrettier,
