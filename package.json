@@ -280,6 +280,11 @@
           "default": true,
           "markdownDescription": "Use an isolated Python environment with djLint automatically installed. When enabled, the extension will create and manage its own Python virtual environment. Disable to use the system Python or configured Python path."
         },
+        "djlint.usePyodide": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Use Pyodide (WebAssembly Python) as a fallback when Python is not available on the system. This allows the extension to work even without Python installed, but may be slower than native Python execution."
+        },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
