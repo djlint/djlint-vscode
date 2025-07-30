@@ -55,7 +55,18 @@ class DjlintNotInstalledHandler {
 
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed for the current active Python interpreter. Install it with the \`${pythonExec} -m pip install -U djlint\` command.`;
+      const useIsolatedEnvironment = config.get<boolean>("useIsolatedEnvironment");
+      const usePyodide = config.get<boolean>("usePyodide");
+      
+      let errMsg: string;
+      if (useIsolatedEnvironment) {
+        errMsg = `djLint is not installed for the current active Python interpreter. The isolated environment feature is disabled or failed. You have several options: 1) Enable "djlint.useIsolatedEnvironment" setting (recommended), 2) Install djLint manually with \`${pythonExec} -m pip install -U djlint\`, or 3) Enable "djlint.usePyodide" for WebAssembly fallback.`;
+      } else if (usePyodide) {
+        errMsg = `djLint is not installed for the current active Python interpreter. You can: 1) Install djLint with \`${pythonExec} -m pip install -U djlint\`, 2) Enable "djlint.useIsolatedEnvironment" setting, or the extension will fall back to Pyodide (WebAssembly Python).`;
+      } else {
+        errMsg = `djLint is not installed for the current active Python interpreter. Install it with the \`${pythonExec} -m pip install -U djlint\` command, enable "djlint.useIsolatedEnvironment" setting, or enable "djlint.usePyodide" for WebAssembly fallback.`;
+      }
+      
       void vscode.window
         .showErrorMessage(
           errMsg,
