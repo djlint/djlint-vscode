@@ -42,6 +42,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
         formattingArgs,
         this.#outputChannel,
         options,
+        this.#context.extensionPath,
       );
     } catch {
       return void 0;

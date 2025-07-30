@@ -70,6 +70,8 @@ export class Linter {
       config,
       lintingArgs,
       this.#outputChannel,
+      void 0,
+      this.#context.extensionPath,
     );
 
     const diags = [];

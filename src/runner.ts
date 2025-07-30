@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { configurationArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
+import { IsolatedDjlintRunner } from "./isolated-runner.js";
 import { noop } from "./utils.js";
 
 async function getPythonExec(
@@ -66,16 +67,45 @@ type ChildOptions =
   | { input: string; stripFinalNewline: boolean };
 export type CustomExecaError = ExecaError<ChildOptions>;
 
+// Global isolated djlint runner instance
+let globalIsolatedRunner: IsolatedDjlintRunner | null = null;
+
+function getIsolatedRunner(
+  outputChannel: vscode.LogOutputChannel,
+  extensionPath: string,
+): IsolatedDjlintRunner {
+  globalIsolatedRunner ??= new IsolatedDjlintRunner(outputChannel, extensionPath);
+  return globalIsolatedRunner;
+}
+
 export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
   args: readonly CliArg[],
   outputChannel: vscode.LogOutputChannel,
   formattingOptions?: vscode.FormattingOptions,
+  extensionPath?: string,
 ): Promise<string> {
-  const pythonExec = await getPythonExec(document, config).catch((e: Error) => {
-    void vscode.window.showErrorMessage(e.message);
-    throw e;
+  // Try isolated runner first (new self-contained approach)
+  if (extensionPath) {
+    try {
+      const isolatedRunner = getIsolatedRunner(outputChannel, extensionPath);
+      return await isolatedRunner.runDjlint(
+        document.getText(),
+        args,
+        document,
+        config,
+        formattingOptions,
+      );
+    } catch (e: unknown) {
+      outputChannel.warn(`Isolated djLint execution failed, falling back to system Python: ${String(e)}`);
+    }
+  }
+  
+  // Fallback to original Python executable approach
+  const pythonExec = await getPythonExec(document, config).catch((e_: Error) => {
+    void vscode.window.showErrorMessage(e_.message);
+    throw e_;
   });
   const childArgs = [
     "-m",
@@ -89,8 +119,15 @@ export async function runDjlint(
     stripFinalNewline: false,
   };
   return execa(pythonExec, childArgs, childOptions)
-    .catch((e: CustomExecaError) =>
-      checkErrors(e, outputChannel, config, pythonExec),
+    .catch((e_: CustomExecaError) =>
+      checkErrors(e_, outputChannel, config, pythonExec),
     )
     .then(({ stdout }) => stdout);
+}
+
+export function disposeIsolatedRunner(): void {
+  if (globalIsolatedRunner) {
+    globalIsolatedRunner.dispose();
+    globalIsolatedRunner = null;
+  }
 }
