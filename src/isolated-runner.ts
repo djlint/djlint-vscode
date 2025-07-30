@@ -153,8 +153,14 @@ export class IsolatedDjlintRunner {
 
   private async installDjlint(): Promise<void> {
     // Install djLint in the virtual environment
-    await execa(this.djlintPath, ["-m", "pip", "install", "-U", "djlint"], {
-      timeout: 60_000,
-    });
+    try {
+      await execa(this.djlintPath, ["-m", "pip", "install", "-U", "djlint"], {
+        // 2 minutes timeout for installation
+        timeout: 120_000, 
+      });
+    } catch (e: unknown) {
+      this.outputChannel.error(`Failed to install djLint in isolated environment: ${String(e)}`);
+      throw new Error(`Failed to install djLint in isolated environment. Check your internet connection and try again.`);
+    }
   }
 }

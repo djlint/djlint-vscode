@@ -86,8 +86,8 @@ export async function runDjlint(
   formattingOptions?: vscode.FormattingOptions,
   extensionPath?: string,
 ): Promise<string> {
-  // Try isolated runner first (new self-contained approach)
-  if (extensionPath) {
+  // Try isolated runner first (new self-contained approach) if enabled
+  if (extensionPath && config.get<boolean>("useIsolatedEnvironment")) {
     try {
       const isolatedRunner = getIsolatedRunner(outputChannel, extensionPath);
       return await isolatedRunner.runDjlint(

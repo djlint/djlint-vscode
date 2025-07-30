@@ -55,7 +55,11 @@ class DjlintNotInstalledHandler {
 
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed for the current active Python interpreter. Install it with the \`${pythonExec} -m pip install -U djlint\` command.`;
+      const useIsolatedEnvironment = config.get<boolean>("useIsolatedEnvironment");
+      const errMsg = useIsolatedEnvironment 
+        ? `djLint is not installed for the current active Python interpreter. The isolated environment feature is disabled or failed. You can either: 1) Enable "djlint.useIsolatedEnvironment" setting (recommended), or 2) Install djLint manually with \`${pythonExec} -m pip install -U djlint\`.`
+        : `djLint is not installed for the current active Python interpreter. Install it with the \`${pythonExec} -m pip install -U djlint\` command, or enable "djlint.useIsolatedEnvironment" setting to have the extension manage djLint automatically.`;
+      
       void vscode.window
         .showErrorMessage(
           errMsg,

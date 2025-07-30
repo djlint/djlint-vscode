@@ -275,10 +275,15 @@
           "default": true,
           "markdownDescription": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the `linter_output_format` setting in the djLint configuration file. Requires djLint ≥ 1.25."
         },
+        "djlint.useIsolatedEnvironment": {
+          "type": "boolean",
+          "default": true,
+          "markdownDescription": "Use an isolated Python environment with djLint automatically installed. When enabled, the extension will create and manage its own Python virtual environment. Disable to use the system Python or configured Python path."
+        },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `#djlint.pythonPath#` setting will be used."
+          "markdownDescription": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `#djlint.pythonPath#` setting will be used. Only used when `#djlint.useIsolatedEnvironment#` is disabled."
         }
       }
     },
