@@ -342,7 +342,7 @@
     "@tsconfig/node20": "20.1.6",
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
-    "@types/node": "20.19.10",
+    "@types/node": "20.19.11",
     "@types/vscode": "1.95.0",
     "esbuild": "0.25.9",
     "eslint": "9.33.0",
