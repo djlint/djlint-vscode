@@ -20,7 +20,7 @@
   "type": "module",
   "main": "./dist/extension.cjs",
   "scripts": {
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node20.18",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.15.1",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
@@ -339,11 +339,11 @@
     "@eslint/js": "9.35.0",
     "@ianvs/prettier-plugin-sort-imports": "4.7.0",
     "@total-typescript/ts-reset": "0.6.1",
-    "@tsconfig/node20": "20.1.6",
+    "@tsconfig/node22": "22.0.2",
     "@tsconfig/strictest": "2.0.5",
     "@types/eslint-config-prettier": "6.11.3",
-    "@types/node": "20.19.13",
-    "@types/vscode": "1.95.0",
+    "@types/node": "22.18.1",
+    "@types/vscode": "1.101.0",
     "esbuild": "0.25.9",
     "eslint": "9.35.0",
     "eslint-config-prettier": "10.1.8",
@@ -354,7 +354,7 @@
     "typescript-eslint": "8.42.0"
   },
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.101.0"
   },
   "icon": "icon.png"
 }
