@@ -96,9 +96,10 @@ export class Linter {
     }
 
     const diags = [];
-    const regex = config.get<boolean>("useNewLinterOutputParser")
+    const baseRegex = config.get<boolean>("useNewLinterOutputParser")
       ? Linter.#outputRegex
       : Linter.#oldOutputRegex;
+    const regex = new RegExp(baseRegex.source, baseRegex.flags);
     for (const { groups } of stdout.matchAll(regex)) {
       if (groups) {
         const line = Number.parseInt(groups["line"]) - 1;
