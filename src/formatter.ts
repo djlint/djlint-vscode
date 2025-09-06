@@ -6,6 +6,7 @@ import { runDjlint } from "./runner.js";
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
+  readonly #runningControllers: Map<string, AbortController>;
   #providerDisposable: vscode.Disposable | undefined;
 
   constructor(
@@ -14,6 +15,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   ) {
     this.#context = context;
     this.#outputChannel = outputChannel;
+    this.#runningControllers = new Map();
   }
 
   activate(): void {
@@ -31,20 +33,30 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   async provideDocumentFormattingEdits(
     document: vscode.TextDocument,
     options: vscode.FormattingOptions,
+    token: vscode.CancellationToken,
   ): Promise<vscode.TextEdit[] | undefined> {
     const config = getConfig(document);
 
-    let stdout;
+    const key = document.uri.toString();
+    this.#runningControllers.get(key)?.abort();
+    const controller = new AbortController();
+    this.#runningControllers.set(key, controller);
+    token.onCancellationRequested(() => controller.abort());
+
+    let stdout: string;
     try {
       stdout = await runDjlint(
         document,
         config,
         formattingArgs,
         this.#outputChannel,
+        controller,
         options,
       );
     } catch {
       return void 0;
+    } finally {
+      this.#runningControllers.delete(key);
     }
 
     const lastLineId = document.lineCount - 1;

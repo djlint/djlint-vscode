@@ -124,14 +124,6 @@ class NoSuchOptionHandler {
   }
 }
 
-function unknownErrorHandler(
-  e: Error,
-  outputChannel: vscode.LogOutputChannel,
-): never {
-  showError(e, outputChannel);
-  throw e;
-}
-
 const errorHandlers = [
   NotAnErrorHandler,
   DjlintNotInstalledHandler,
@@ -154,5 +146,9 @@ export function checkErrors(
     }
   }
 
-  return unknownErrorHandler(e, outputChannel);
+  if (!e.isCanceled) {
+    showError(e, outputChannel);
+  }
+  // eslint-disable-next-line @typescript-eslint/only-throw-error
+  throw e;
 }

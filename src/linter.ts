@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { lintingArgs } from "./args.js";
 import { getConfig } from "./config.js";
-import { runDjlint } from "./runner.js";
+import { runDjlint, type CustomExecaError } from "./runner.js";
 import { noop } from "./utils.js";
 
 const supportedUriSchemes: ReadonlySet<string> = new Set([
@@ -17,6 +17,7 @@ export class Linter {
   readonly #collection: vscode.DiagnosticCollection;
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
+  readonly #runningControllers: Map<string, AbortController>;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -26,6 +27,7 @@ export class Linter {
     context.subscriptions.push(this.#collection);
     this.#context = context;
     this.#outputChannel = outputChannel;
+    this.#runningControllers = new Map();
   }
 
   async activate(): Promise<void> {
@@ -35,9 +37,12 @@ export class Linter {
     this.#context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(maybeLint),
       vscode.workspace.onDidSaveTextDocument(maybeLint),
-      vscode.workspace.onDidCloseTextDocument(({ uri }) =>
-        this.#collection.delete(uri),
-      ),
+      vscode.workspace.onDidCloseTextDocument(({ uri }) => {
+        this.#collection.delete(uri);
+        const key = uri.toString();
+        this.#runningControllers.get(key)?.abort();
+        this.#runningControllers.delete(key);
+      }),
     );
 
     try {
@@ -51,13 +56,6 @@ export class Linter {
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
-    if (!supportedUriSchemes.has(document.uri.scheme)) {
-      this.#outputChannel.debug(
-        `Not linting "${document.uri.toString()}" due to unsupported URI scheme.`,
-      );
-      return;
-    }
-
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
@@ -65,12 +63,37 @@ export class Linter {
       return;
     }
 
-    const stdout = await runDjlint(
-      document,
-      config,
-      lintingArgs,
-      this.#outputChannel,
-    );
+    if (!supportedUriSchemes.has(document.uri.scheme)) {
+      this.#outputChannel.debug(
+        `Not linting "${document.uri.toString()}" (unsupported scheme)`,
+      );
+      return;
+    }
+
+    const key = document.uri.toString();
+    this.#runningControllers.get(key)?.abort();
+    const controller = new AbortController();
+    this.#runningControllers.set(key, controller);
+
+    let stdout: string;
+    try {
+      stdout = await runDjlint(
+        document,
+        config,
+        lintingArgs,
+        this.#outputChannel,
+        controller,
+      );
+    } catch (e) {
+      this.#collection.delete(document.uri);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
+      if ((e as CustomExecaError).isCanceled) {
+        return;
+      }
+      throw e;
+    } finally {
+      this.#runningControllers.delete(key);
+    }
 
     const diags = [];
     const regex = config.get<boolean>("useNewLinterOutputParser")

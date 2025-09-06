@@ -61,9 +61,12 @@ function getCwd(
   return {};
 }
 
-type ChildOptions =
-  | { input: string; stripFinalNewline: boolean; cwd: string }
-  | { input: string; stripFinalNewline: boolean };
+interface ChildOptions {
+  input: string;
+  stripFinalNewline: boolean;
+  cwd?: string;
+  cancelSignal: AbortSignal;
+}
 export type CustomExecaError = ExecaError<ChildOptions>;
 
 export async function runDjlint(
@@ -71,6 +74,7 @@ export async function runDjlint(
   config: vscode.WorkspaceConfiguration,
   args: readonly CliArg[],
   outputChannel: vscode.LogOutputChannel,
+  abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
   const pythonExec = await getPythonExec(document, config).catch((e: Error) => {
@@ -85,6 +89,7 @@ export async function runDjlint(
   ];
   const childOptions: ChildOptions = {
     ...getCwd(childArgs, document, outputChannel),
+    cancelSignal: abortController.signal,
     input: document.getText(),
     stripFinalNewline: false,
   };
