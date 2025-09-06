@@ -1,5 +1,12 @@
 # Changelog
 
+## [2025.9.0] - 2025-09-06
+
+- Cancel previous in-flight djLint runs per document to avoid race conditions and unnecessary work.
+- Avoid shared mutable state of RegExp objects in linter.
+- Drop support for VSCode < 1.101.
+- Update dependencies.
+
 ## [2025.5.0] - 2025-05-26
 
 - Fix Markdown syntax in settings description.
