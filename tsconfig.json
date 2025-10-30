@@ -4,6 +4,7 @@
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
     "noEmit": true,
+    "checkJs": true,
     "allowSyntheticDefaultImports": false
   }
 }
