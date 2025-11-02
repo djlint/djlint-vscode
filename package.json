@@ -344,7 +344,7 @@
     "@types/eslint-config-prettier": "6.11.3",
     "@types/node": "22.18.13",
     "@types/vscode": "1.101.0",
-    "esbuild": "0.25.11",
+    "esbuild": "0.25.12",
     "eslint": "9.38.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "62.0.0",
