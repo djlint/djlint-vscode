@@ -38,7 +38,7 @@ function getCwd(
   childArgs: readonly string[],
   document: vscode.TextDocument,
   outputChannel: vscode.LogOutputChannel,
-): Record<string, never> | { cwd: string } {
+): { cwd?: string } {
   if (childArgs.includes(configurationArg.cliName)) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (workspaceFolder != null) {
