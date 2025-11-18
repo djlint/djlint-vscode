@@ -30,6 +30,12 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     );
   }
 
+  dispose(): void {
+    for (const controller of this.#runningControllers.values()) {
+      controller.abort();
+    }
+  }
+
   async provideDocumentFormattingEdits(
     document: vscode.TextDocument,
     options: vscode.FormattingOptions,

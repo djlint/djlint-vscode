@@ -9,6 +9,12 @@ export async function activate(
     log: true,
   });
   context.subscriptions.push(outputChannel);
-  new Formatter(context, outputChannel).activate();
-  await new Linter(context, outputChannel).activate();
+
+  const formatter = new Formatter(context, outputChannel);
+  formatter.activate();
+  context.subscriptions.push(formatter);
+
+  const linter = new Linter(context, outputChannel);
+  await linter.activate();
+  context.subscriptions.push(linter);
 }

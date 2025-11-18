@@ -55,6 +55,12 @@ export class Linter {
     } catch {}
   }
 
+  dispose(): void {
+    for (const controller of this.#runningControllers.values()) {
+      controller.abort();
+    }
+  }
+
   async #lint(document: vscode.TextDocument): Promise<void> {
     const config = getConfig(document);
 
