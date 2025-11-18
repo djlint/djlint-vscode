@@ -68,13 +68,15 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   #register(): void {
     const languages = getConfig().get<readonly string[]>("formatLanguages");
     this.#providerDisposable?.dispose();
-    if (languages != null) {
+    if (languages?.length) {
       this.#providerDisposable =
         vscode.languages.registerDocumentFormattingEditProvider(
           languages,
           this,
         );
       this.#context.subscriptions.push(this.#providerDisposable);
+    } else {
+      this.#providerDisposable = void 0;
     }
   }
 }
