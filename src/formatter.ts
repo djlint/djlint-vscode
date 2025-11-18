@@ -31,9 +31,12 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   }
 
   dispose(): void {
+    this.#providerDisposable?.dispose();
+    this.#providerDisposable = void 0;
     for (const controller of this.#runningControllers.values()) {
       controller.abort();
     }
+    this.#runningControllers.clear();
   }
 
   async provideDocumentFormattingEdits(
@@ -74,15 +77,8 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   #register(): void {
     const languages = getConfig().get<readonly string[]>("formatLanguages");
     this.#providerDisposable?.dispose();
-    if (languages?.length) {
-      this.#providerDisposable =
-        vscode.languages.registerDocumentFormattingEditProvider(
-          languages,
-          this,
-        );
-      this.#context.subscriptions.push(this.#providerDisposable);
-    } else {
-      this.#providerDisposable = void 0;
-    }
+    this.#providerDisposable = languages?.length
+      ? vscode.languages.registerDocumentFormattingEditProvider(languages, this)
+      : void 0;
   }
 }

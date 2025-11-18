@@ -59,6 +59,7 @@ export class Linter {
     for (const controller of this.#runningControllers.values()) {
       controller.abort();
     }
+    this.#runningControllers.clear();
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
