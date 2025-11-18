@@ -1,5 +1,9 @@
 # Changelog
 
+## [2025.11.0] - 2025-11-18
+
+- Abort running djLint processes on extension deactivation.
+
 ## [2025.9.0] - 2025-09-06
 
 - Cancel previous in-flight djLint runs per document to avoid race conditions and unnecessary work.
