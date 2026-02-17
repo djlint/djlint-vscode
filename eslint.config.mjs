@@ -67,7 +67,7 @@ export default defineConfig(
       "no-ternary": "off",
       "no-void": "off",
       "one-var": ["error", "never"],
-      radix: ["error", "as-needed"],
+      radix: "off",
       "sort-imports": "off",
       "unicorn/catch-error-name": ["error", { name: "e" }],
       "unicorn/explicit-length-check": "off",
