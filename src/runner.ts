@@ -6,6 +6,13 @@ import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
 import { noop } from "./utils.js";
 
+interface RunnerExec {
+  exec: string;
+  installCommand: string;
+  prefixArgs: readonly string[];
+  updateCommandForVersion: (minVersion: string) => string;
+}
+
 async function getPythonExec(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -32,6 +39,31 @@ async function getPythonExec(
 
   const msg = `Invalid ${configSection}.pythonPath setting.`;
   throw new Error(msg);
+}
+
+async function getDjlintExec(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+): Promise<RunnerExec> {
+  const executablePath = config.get<string>("executablePath")?.trim();
+  if (executablePath) {
+    return {
+      exec: executablePath,
+      installCommand: "Install or reinstall djLint for that executable path.",
+      prefixArgs: [],
+      updateCommandForVersion: (minVersion) =>
+        `Update djLint in that executable path to a version >= ${minVersion}.`,
+    };
+  }
+
+  const pythonExec = await getPythonExec(document, config);
+  return {
+    exec: pythonExec,
+    installCommand: `${pythonExec} -m pip install -U djlint`,
+    prefixArgs: ["-m", "djlint"],
+    updateCommandForVersion: (minVersion) =>
+      `${pythonExec} -m pip install -U djlint>=${minVersion}`,
+  };
 }
 
 function getCwd(
@@ -77,13 +109,12 @@ export async function runDjlint(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
-  const pythonExec = await getPythonExec(document, config).catch((e: Error) => {
+  const runnerExec = await getDjlintExec(document, config).catch((e: Error) => {
     void vscode.window.showErrorMessage(e.message);
     throw e;
   });
   const childArgs = [
-    "-m",
-    "djlint",
+    ...runnerExec.prefixArgs,
     "-",
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
@@ -93,9 +124,12 @@ export async function runDjlint(
     input: document.getText(),
     stripFinalNewline: false,
   };
-  return execa(pythonExec, childArgs, childOptions)
+  return execa(runnerExec.exec, childArgs, childOptions)
     .catch((e: CustomExecaError) =>
-      checkErrors(e, outputChannel, config, pythonExec),
+      checkErrors(e, outputChannel, config, {
+        installCommand: runnerExec.installCommand,
+        updateCommandForVersion: runnerExec.updateCommandForVersion,
+      }),
     )
     .then(({ stdout }) => stdout);
 }

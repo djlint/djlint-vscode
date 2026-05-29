@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Add `djlint.executablePath` setting to run djLint from a specific binary path instead of `python -m djlint`.
+
 ## [2025.11.0] - 2025-11-18
 
 - Abort running djLint processes on extension deactivation.
