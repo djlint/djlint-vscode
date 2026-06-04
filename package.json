@@ -78,6 +78,12 @@
           "scope": "language-overridable",
           "description": "Lint for common issues. Don't enable globally, instead enable for each language individually."
         },
+        "djlint.executablePath": {
+          "type": "string",
+          "minLength": 1,
+          "default": "djlint",
+          "markdownDescription": "Path to the djLint executable. Used when `#djlint.useVenv#` is disabled, before falling back to `#djlint.pythonPath#`."
+        },
         "djlint.exclude": {
           "type": "array",
           "items": {
@@ -248,7 +254,8 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "markdownDescription": "Path to the desired Python interpreter. Only used if `#djlint.useVenv#` is disabled or the Python extension is not installed."
+          "markdownDescription": "Path to the desired Python interpreter. Used as a fallback when `#djlint.useVenv#` is disabled and `#djlint.executablePath#` is not available.",
+          "markdownDeprecationMessage": "Prefer `#djlint.executablePath#` for direct djLint executables. `#djlint.pythonPath#` remains available as a Python fallback."
         },
         "djlint.requirePragma": {
           "type": "boolean",
@@ -278,7 +285,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment. The Python extension must be installed, if it is not installed, the `#djlint.pythonPath#` setting will be used."
+          "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` and `#djlint.pythonPath#` are ignored. Disable this to try `#djlint.executablePath#` (`djlint` from PATH by default) before falling back to `#djlint.pythonPath#`."
         }
       }
     },

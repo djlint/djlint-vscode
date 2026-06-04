@@ -6,6 +6,9 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
 
+const installDocsUrl = "https://djlint.com/docs/getting-started/";
+const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
+
 function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
   e: Error,
@@ -49,13 +52,12 @@ class DjlintNotInstalledHandler {
     e: Error,
     outputChannel: vscode.LogOutputChannel,
     config: vscode.WorkspaceConfiguration,
-    pythonExec: string,
   ): never {
     errorToOutputChannel(outputChannel, e);
 
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed for the current active Python interpreter. Install it with the \`${pythonExec} -m pip install -U djlint\` command.`;
+      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${installDocsUrl} or ${readmeUrl}.`;
       void vscode.window
         .showErrorMessage(
           errMsg,
@@ -106,16 +108,11 @@ class NoSuchOptionHandler {
     return option ? new this(option) : void 0;
   }
 
-  handle(
-    e: Error,
-    outputChannel: vscode.LogOutputChannel,
-    _config: vscode.WorkspaceConfiguration,
-    pythonExec: string,
-  ): never {
+  handle(e: Error, outputChannel: vscode.LogOutputChannel): never {
     const arg = argsMap.get(this.#option);
     if (arg) {
       const option = arg.vscodeName ? `djlint.${arg.vscodeName}` : arg.cliName;
-      const errMsg = `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint with the \`${pythonExec} -m pip install -U djlint>=${arg.minVersion}\` command.`;
+      const errMsg = `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
       showError(e, outputChannel, errMsg);
     } else {
       showError(e, outputChannel);
@@ -134,13 +131,12 @@ export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
   config: vscode.WorkspaceConfiguration,
-  pythonExec: string,
 ): CustomExecaError {
   if (e.exitCode != null) {
     for (const errorHandlerType of errorHandlers) {
       const errorHandler = errorHandlerType.check(e.stderr);
       if (errorHandler != null) {
-        errorHandler.handle(e, outputChannel, config, pythonExec);
+        errorHandler.handle(e, outputChannel, config);
         return e;
       }
     }

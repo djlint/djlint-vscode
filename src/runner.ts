@@ -6,10 +6,20 @@ import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
 import { noop } from "./utils.js";
 
-async function getPythonExec(
+interface RunnerCommand {
+  exec: string;
+  prefixArgs: readonly string[];
+}
+
+interface RunnerCommands {
+  fallback?: RunnerCommand;
+  primary: RunnerCommand;
+}
+
+async function getDjlintCommands(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-): Promise<string> {
+): Promise<RunnerCommands> {
   if (config.get<boolean>("useVenv")) {
     const api = await PythonExtension.api().catch(noop);
     if (api) {
@@ -18,19 +28,31 @@ async function getPythonExec(
       );
       const pythonExecUri = environment?.executable.uri;
       if (pythonExecUri) {
-        return pythonExecUri.fsPath;
+        return {
+          primary: { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] },
+        };
       }
       const msg = "Failed to get Python interpreter from Python extension.";
       throw new Error(msg);
     }
   }
 
-  const pythonPath = config.get<string>("pythonPath");
+  const executablePath = config.get<string>("executablePath")?.trim();
+  const pythonPath = config.get<string>("pythonPath")?.trim();
+  if (executablePath && pythonPath) {
+    return {
+      fallback: { exec: pythonPath, prefixArgs: ["-m", "djlint"] },
+      primary: { exec: executablePath, prefixArgs: [] },
+    };
+  }
+  if (executablePath) {
+    return { primary: { exec: executablePath, prefixArgs: [] } };
+  }
   if (pythonPath) {
-    return pythonPath;
+    return { primary: { exec: pythonPath, prefixArgs: ["-m", "djlint"] } };
   }
 
-  const msg = `Invalid ${configSection}.pythonPath setting.`;
+  const msg = `Invalid ${configSection}.executablePath and ${configSection}.pythonPath settings.`;
   throw new Error(msg);
 }
 
@@ -69,7 +91,8 @@ interface ChildOptions {
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
-export async function runDjlint(
+async function runDjlintCommand(
+  command: RunnerCommand,
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
   args: readonly CliArg[],
@@ -77,13 +100,8 @@ export async function runDjlint(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
-  const pythonExec = await getPythonExec(document, config).catch((e: Error) => {
-    void vscode.window.showErrorMessage(e.message);
-    throw e;
-  });
   const childArgs = [
-    "-m",
-    "djlint",
+    ...command.prefixArgs,
     "-",
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
@@ -93,9 +111,46 @@ export async function runDjlint(
     input: document.getText(),
     stripFinalNewline: false,
   };
-  return execa(pythonExec, childArgs, childOptions)
-    .catch((e: CustomExecaError) =>
-      checkErrors(e, outputChannel, config, pythonExec),
-    )
-    .then(({ stdout }) => stdout);
+  const { stdout } = await execa(command.exec, childArgs, childOptions);
+  return stdout;
+}
+
+export async function runDjlint(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+  args: readonly CliArg[],
+  outputChannel: vscode.LogOutputChannel,
+  abortController: AbortController,
+  formattingOptions?: vscode.FormattingOptions,
+): Promise<string> {
+  const commands = await getDjlintCommands(document, config).catch(
+    (e: Error) => {
+      void vscode.window.showErrorMessage(e.message);
+      throw e;
+    },
+  );
+  return runDjlintCommand(
+    commands.primary,
+    document,
+    config,
+    args,
+    outputChannel,
+    abortController,
+    formattingOptions,
+  ).catch(async (e: CustomExecaError) => {
+    if (commands.fallback != null && e.code === "ENOENT") {
+      return runDjlintCommand(
+        commands.fallback,
+        document,
+        config,
+        args,
+        outputChannel,
+        abortController,
+        formattingOptions,
+      ).catch(
+        (e_: CustomExecaError) => checkErrors(e_, outputChannel, config).stdout,
+      );
+    }
+    return checkErrors(e, outputChannel, config).stdout;
+  });
 }
