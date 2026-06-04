@@ -42,7 +42,7 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ```json
 "djlint.useVenv": false,
-"djlint.executablePath": "/home/user/.local/share/share/uv/tools/djlint/bin/djlint",
+"djlint.executablePath": "/home/user/.local/share/uv/tools/djlint/bin/djlint",
 ```
 
 ## Known issues
