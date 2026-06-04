@@ -124,8 +124,7 @@ async function runDjlintCommand(
   return stdout;
 }
 
-async function runDjlintWithFallback(
-  commands: RunnerCommands,
+export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
   args: readonly CliArg[],
@@ -133,6 +132,12 @@ async function runDjlintWithFallback(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
+  const commands = await getDjlintCommands(document, config).catch(
+    (e: Error) => {
+      void vscode.window.showErrorMessage(e.message);
+      throw e;
+    },
+  );
   return runDjlintCommand(
     commands.primary,
     document,
@@ -157,29 +162,4 @@ async function runDjlintWithFallback(
     }
     return checkErrors(e, outputChannel, config).stdout;
   });
-}
-
-export async function runDjlint(
-  document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration,
-  args: readonly CliArg[],
-  outputChannel: vscode.LogOutputChannel,
-  abortController: AbortController,
-  formattingOptions?: vscode.FormattingOptions,
-): Promise<string> {
-  const commands = await getDjlintCommands(document, config).catch(
-    (e: Error) => {
-      void vscode.window.showErrorMessage(e.message);
-      throw e;
-    },
-  );
-  return runDjlintWithFallback(
-    commands,
-    document,
-    config,
-    args,
-    outputChannel,
-    abortController,
-    formattingOptions,
-  );
 }
