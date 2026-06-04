@@ -1,8 +1,8 @@
 # Changelog
 
-## [Unreleased]
+## [2026.6.0] - 2026-06-04
 
-- Add `djlint.executablePath` setting for use when `djlint.useVenv` is disabled before the `djlint.pythonPath` fallback.
+- Add `djlint.executablePath` setting for use when `djlint.useVenv` is disabled. `djlint.pythonPath` is now deprecated and is used as a fallback.
 
 ## [2025.11.0] - 2025-11-18
 
