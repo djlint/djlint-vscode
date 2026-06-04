@@ -27,20 +27,18 @@ async function getDjlintCommands(
   if (config.get<boolean>("useVenv")) {
     const api = await PythonExtension.api().catch(noop);
     if (api) {
-      const environment = await api.environments
-        .resolveEnvironment(
-          api.environments.getActiveEnvironmentPath(document.uri),
-        )
-        .catch(noop);
+      const environment = await api.environments.resolveEnvironment(
+        api.environments.getActiveEnvironmentPath(document.uri),
+      );
       const pythonExecUri = environment?.executable.uri;
       if (pythonExecUri) {
         return {
           primary: { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] },
         };
       }
+      const msg = "Failed to get Python interpreter from Python extension.";
+      throw new Error(msg);
     }
-    const msg = "Failed to get Python interpreter from Python extension.";
-    throw new Error(msg);
   }
 
   const executablePath = config.get<string>("executablePath")?.trim();
