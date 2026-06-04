@@ -8,6 +8,8 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
 
 const installDocsUrl = "https://djlint.com/docs/getting-started/";
 const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
+const extReadmeUrl =
+  "https://github.com/djlint/djLint-vscode/blob/main/README.md";
 
 function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
@@ -57,7 +59,7 @@ class DjlintNotInstalledHandler {
 
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${installDocsUrl} or ${readmeUrl}.`;
+      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${extReadmeUrl}.`;
       void vscode.window
         .showErrorMessage(
           errMsg,
