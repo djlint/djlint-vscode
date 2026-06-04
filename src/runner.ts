@@ -6,64 +6,60 @@ import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
 import { noop } from "./utils.js";
 
-interface RunnerExec {
+interface RunnerCommand {
   exec: string;
-  installCommand: string;
   prefixArgs: readonly string[];
-  updateCommandForVersion: (minVersion: string) => string;
 }
 
-async function getPythonExec(
+interface RunnerCommands {
+  fallback?: RunnerCommand;
+  primary: RunnerCommand;
+}
+
+interface ErrorWithCode extends Error {
+  code?: string;
+}
+
+async function getDjlintCommands(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-): Promise<string> {
+): Promise<RunnerCommands> {
   if (config.get<boolean>("useVenv")) {
     const api = await PythonExtension.api().catch(noop);
     if (api) {
-      const environment = await api.environments.resolveEnvironment(
-        api.environments.getActiveEnvironmentPath(document.uri),
-      );
+      const environment = await api.environments
+        .resolveEnvironment(
+          api.environments.getActiveEnvironmentPath(document.uri),
+        )
+        .catch(noop);
       const pythonExecUri = environment?.executable.uri;
       if (pythonExecUri) {
-        return pythonExecUri.fsPath;
+        return {
+          primary: { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] },
+        };
       }
-      const msg = "Failed to get Python interpreter from Python extension.";
-      throw new Error(msg);
     }
+    const msg = "Failed to get Python interpreter from Python extension.";
+    throw new Error(msg);
   }
 
-  const pythonPath = config.get<string>("pythonPath");
-  if (pythonPath) {
-    return pythonPath;
-  }
-
-  const msg = `Invalid ${configSection}.pythonPath setting.`;
-  throw new Error(msg);
-}
-
-async function getDjlintExec(
-  document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration,
-): Promise<RunnerExec> {
   const executablePath = config.get<string>("executablePath")?.trim();
-  if (executablePath) {
+  const pythonPath = config.get<string>("pythonPath")?.trim();
+  if (executablePath && pythonPath) {
     return {
-      exec: executablePath,
-      installCommand: "Install or reinstall djLint for that executable path.",
-      prefixArgs: [],
-      updateCommandForVersion: (minVersion) =>
-        `Update djLint in that executable path to a version >= ${minVersion}.`,
+      fallback: { exec: pythonPath, prefixArgs: ["-m", "djlint"] },
+      primary: { exec: executablePath, prefixArgs: [] },
     };
   }
+  if (executablePath) {
+    return { primary: { exec: executablePath, prefixArgs: [] } };
+  }
+  if (pythonPath) {
+    return { primary: { exec: pythonPath, prefixArgs: ["-m", "djlint"] } };
+  }
 
-  const pythonExec = await getPythonExec(document, config);
-  return {
-    exec: pythonExec,
-    installCommand: `${pythonExec} -m pip install -U djlint`,
-    prefixArgs: ["-m", "djlint"],
-    updateCommandForVersion: (minVersion) =>
-      `${pythonExec} -m pip install -U djlint>=${minVersion}`,
-  };
+  const msg = `Invalid ${configSection}.executablePath and ${configSection}.pythonPath settings.`;
+  throw new Error(msg);
 }
 
 function getCwd(
@@ -101,7 +97,13 @@ interface ChildOptions {
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
-export async function runDjlint(
+function isCommandNotFound(e: CustomExecaError): boolean {
+  const errorWithCode: ErrorWithCode = e;
+  return errorWithCode.code === "ENOENT";
+}
+
+async function runDjlintCommand(
+  command: RunnerCommand,
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
   args: readonly CliArg[],
@@ -109,12 +111,8 @@ export async function runDjlint(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
-  const runnerExec = await getDjlintExec(document, config).catch((e: Error) => {
-    void vscode.window.showErrorMessage(e.message);
-    throw e;
-  });
   const childArgs = [
-    ...runnerExec.prefixArgs,
+    ...command.prefixArgs,
     "-",
     ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
   ];
@@ -124,12 +122,66 @@ export async function runDjlint(
     input: document.getText(),
     stripFinalNewline: false,
   };
-  return execa(runnerExec.exec, childArgs, childOptions)
-    .catch((e: CustomExecaError) =>
-      checkErrors(e, outputChannel, config, {
-        installCommand: runnerExec.installCommand,
-        updateCommandForVersion: runnerExec.updateCommandForVersion,
-      }),
-    )
-    .then(({ stdout }) => stdout);
+  const { stdout } = await execa(command.exec, childArgs, childOptions);
+  return stdout;
+}
+
+async function runDjlintWithFallback(
+  commands: RunnerCommands,
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+  args: readonly CliArg[],
+  outputChannel: vscode.LogOutputChannel,
+  abortController: AbortController,
+  formattingOptions?: vscode.FormattingOptions,
+): Promise<string> {
+  return runDjlintCommand(
+    commands.primary,
+    document,
+    config,
+    args,
+    outputChannel,
+    abortController,
+    formattingOptions,
+  ).catch(async (e: CustomExecaError) => {
+    if (commands.fallback != null && isCommandNotFound(e)) {
+      return runDjlintCommand(
+        commands.fallback,
+        document,
+        config,
+        args,
+        outputChannel,
+        abortController,
+        formattingOptions,
+      ).catch(
+        (e_: CustomExecaError) => checkErrors(e_, outputChannel, config).stdout,
+      );
+    }
+    return checkErrors(e, outputChannel, config).stdout;
+  });
+}
+
+export async function runDjlint(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+  args: readonly CliArg[],
+  outputChannel: vscode.LogOutputChannel,
+  abortController: AbortController,
+  formattingOptions?: vscode.FormattingOptions,
+): Promise<string> {
+  const commands = await getDjlintCommands(document, config).catch(
+    (e: Error) => {
+      void vscode.window.showErrorMessage(e.message);
+      throw e;
+    },
+  );
+  return runDjlintWithFallback(
+    commands,
+    document,
+    config,
+    args,
+    outputChannel,
+    abortController,
+    formattingOptions,
+  );
 }

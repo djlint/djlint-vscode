@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Add `djlint.executablePath` setting to run djLint from a specific binary path instead of `python -m djlint`.
+- Add `djlint.executablePath` setting for use when `djlint.useVenv` is disabled before the `djlint.pythonPath` fallback.
 
 ## [2025.11.0] - 2025-11-18
 

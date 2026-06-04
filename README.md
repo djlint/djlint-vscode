@@ -8,14 +8,14 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint itself with the `pip install -U djlint` command.
+1. Install djLint itself by following the [djLint getting started guide](https://djlint.com/docs/getting-started/) or the [djLint README](https://github.com/djlint/djLint/blob/master/README.md).
 1. Install djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
 ## Usage
 
-If you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` will use the `djLint` installed in the currently activated Python environment, unless you have the `djlint.useVenv` extension setting disabled.
+If `djlint.useVenv` is enabled and you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` uses the `djLint` installed in the currently activated Python environment.
 
-If you prefer to run a specific `djlint` binary directly (for example one installed by snap or in `$HOME/.local/bin`), set `djlint.executablePath`.
+If `djlint.useVenv` is disabled, the extension runs `djlint.executablePath` (`djlint` from PATH by default). If that executable is not available, it falls back to `djlint.pythonPath -m djlint`.
 
 The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 
@@ -23,34 +23,26 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ```json
 "[html][django-html][handlebars][hbs][mustache][jinja][jinja-html][nj][njk][nunjucks][twig]": {
-  "editor.defaultFormatter": "jmag.djlint"
+  "editor.defaultFormatter": "monosans.djlint"
 }
 ```
 
 ### Usage with djLint installed with pipx
 
-[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application. You can see where it creates the venv with the `pipx environment --value PIPX_LOCAL_VENVS` command. For me it is `/home/user/.local/share/pipx/venvs`. This way I can set these settings:
+[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application and usually exposes a `djlint` executable. Disable `djlint.useVenv` and point `djlint.executablePath` at that executable if it is not already available on PATH:
 
 ```json
 "djlint.useVenv": false,
-"djlint.pythonPath": "/home/user/.local/share/pipx/venvs/djlint/bin/python",
+"djlint.executablePath": "/home/user/.local/bin/djlint",
 ```
-
-### Usage with an explicit djLint executable path
-
-```json
-"djlint.executablePath": "/home/jmag/.local/bin/djlint",
-```
-
-When this is set, the extension will execute that binary directly and ignore `djlint.useVenv` and `djlint.pythonPath`.
 
 ### Usage with djLint installed with uv
 
-[uv](https://pypi.org/project/uv/) creates a separate venv for each application. You can see where it creates the venv with the `uv tool dir` command. For me it is `/home/user/.local/share/share/uv/tools`. This way I can set these settings:
+[uv](https://pypi.org/project/uv/) creates a separate venv for each application. Disable `djlint.useVenv` and point `djlint.executablePath` at the generated `djlint` executable:
 
 ```json
 "djlint.useVenv": false,
-"djlint.pythonPath": "/home/user/.local/share/share/uv/tools/djlint/bin/python",
+"djlint.executablePath": "/home/user/.local/share/share/uv/tools/djlint/bin/djlint",
 ```
 
 ## Known issues

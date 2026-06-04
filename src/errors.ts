@@ -2,14 +2,12 @@ import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type CliArg } from "./args.js";
 import type { CustomExecaError } from "./runner.js";
 
-interface ErrorCommands {
-  installCommand: string;
-  updateCommandForVersion: (minVersion: string) => string;
-}
-
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
+
+const installDocsUrl = "https://djlint.com/docs/getting-started/";
+const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
 
 function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
@@ -54,13 +52,12 @@ class DjlintNotInstalledHandler {
     e: Error,
     outputChannel: vscode.LogOutputChannel,
     config: vscode.WorkspaceConfiguration,
-    commands: ErrorCommands,
   ): never {
     errorToOutputChannel(outputChannel, e);
 
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. Install it with \`${commands.installCommand}\`.`;
+      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${installDocsUrl} or ${readmeUrl}.`;
       void vscode.window
         .showErrorMessage(
           errMsg,
@@ -111,16 +108,11 @@ class NoSuchOptionHandler {
     return option ? new this(option) : void 0;
   }
 
-  handle(
-    e: Error,
-    outputChannel: vscode.LogOutputChannel,
-    _config: vscode.WorkspaceConfiguration,
-    commands: ErrorCommands,
-  ): never {
+  handle(e: Error, outputChannel: vscode.LogOutputChannel): never {
     const arg = argsMap.get(this.#option);
     if (arg) {
       const option = arg.vscodeName ? `djlint.${arg.vscodeName}` : arg.cliName;
-      const errMsg = `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint with \`${commands.updateCommandForVersion(arg.minVersion)}\`.`;
+      const errMsg = `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
       showError(e, outputChannel, errMsg);
     } else {
       showError(e, outputChannel);
@@ -139,13 +131,12 @@ export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
   config: vscode.WorkspaceConfiguration,
-  commands: ErrorCommands,
 ): CustomExecaError {
   if (e.exitCode != null) {
     for (const errorHandlerType of errorHandlers) {
       const errorHandler = errorHandlerType.check(e.stderr);
       if (errorHandler != null) {
-        errorHandler.handle(e, outputChannel, config, commands);
+        errorHandler.handle(e, outputChannel, config);
         return e;
       }
     }
