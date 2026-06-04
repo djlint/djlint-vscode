@@ -16,10 +16,6 @@ interface RunnerCommands {
   primary: RunnerCommand;
 }
 
-interface ErrorWithCode extends Error {
-  code?: string;
-}
-
 async function getDjlintCommands(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -95,11 +91,6 @@ interface ChildOptions {
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
-function isCommandNotFound(e: CustomExecaError): boolean {
-  const errorWithCode: ErrorWithCode = e;
-  return errorWithCode.code === "ENOENT";
-}
-
 async function runDjlintCommand(
   command: RunnerCommand,
   document: vscode.TextDocument,
@@ -147,7 +138,7 @@ export async function runDjlint(
     abortController,
     formattingOptions,
   ).catch(async (e: CustomExecaError) => {
-    if (commands.fallback != null && isCommandNotFound(e)) {
+    if (commands.fallback != null && e.code === "ENOENT") {
       return runDjlintCommand(
         commands.fallback,
         document,
