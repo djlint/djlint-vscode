@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026.6.1] - 2026-06-05
+
+- Lower the minimum vscode version to 1.105.1
+
 ## [2026.6.0] - 2026-06-04
 
 - Add `djlint.executablePath` setting for use when `djlint.useVenv` is disabled. `djlint.pythonPath` is now deprecated and is used as a fallback.
