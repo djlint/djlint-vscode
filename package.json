@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2026.6.1",
+  "version": "2026.6.2",
   "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
   "categories": [
     "Formatters",
@@ -82,7 +82,7 @@
           "type": "string",
           "minLength": 1,
           "default": "djlint",
-          "markdownDescription": "Path to the djLint executable. Used when `#djlint.useVenv#` is disabled, before falling back to `#djlint.pythonPath#`."
+          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled, before falling back to `#djlint.pythonPath#`."
         },
         "djlint.exclude": {
           "type": "array",
@@ -254,7 +254,7 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "markdownDescription": "Path to the desired Python interpreter. Used as a fallback when `#djlint.useVenv#` is disabled and `#djlint.executablePath#` is not available.",
+          "markdownDescription": "Path to the desired Python interpreter. Relative paths are resolved from the workspace root. Used as a fallback when `#djlint.useVenv#` is disabled and `#djlint.executablePath#` is not available.",
           "markdownDeprecationMessage": "Prefer `#djlint.executablePath#` for direct djLint executables. `#djlint.pythonPath#` remains available as a Python fallback."
         },
         "djlint.requirePragma": {

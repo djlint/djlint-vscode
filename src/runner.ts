@@ -1,3 +1,4 @@
+import path from "node:path";
 import { PythonExtension } from "@vscode/python-extension";
 import { execa, type ExecaError } from "execa";
 import * as vscode from "vscode";
@@ -14,6 +15,26 @@ interface RunnerCommand {
 interface RunnerCommands {
   fallback?: RunnerCommand;
   primary: RunnerCommand;
+}
+
+function isRelativePathLike(exec: string): boolean {
+  return /[\\/]/u.test(exec) && !path.isAbsolute(exec);
+}
+
+function resolveConfiguredExecutablePath(
+  exec: string,
+  document: vscode.TextDocument,
+): string {
+  if (!isRelativePathLike(exec)) {
+    return exec;
+  }
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+  if (workspaceFolder?.uri.scheme !== "file") {
+    return exec;
+  }
+
+  return path.resolve(workspaceFolder.uri.fsPath, exec);
 }
 
 async function getDjlintCommands(
@@ -41,15 +62,31 @@ async function getDjlintCommands(
   const pythonPath = config.get<string>("pythonPath")?.trim();
   if (executablePath && pythonPath) {
     return {
-      fallback: { exec: pythonPath, prefixArgs: ["-m", "djlint"] },
-      primary: { exec: executablePath, prefixArgs: [] },
+      fallback: {
+        exec: resolveConfiguredExecutablePath(pythonPath, document),
+        prefixArgs: ["-m", "djlint"],
+      },
+      primary: {
+        exec: resolveConfiguredExecutablePath(executablePath, document),
+        prefixArgs: [],
+      },
     };
   }
   if (executablePath) {
-    return { primary: { exec: executablePath, prefixArgs: [] } };
+    return {
+      primary: {
+        exec: resolveConfiguredExecutablePath(executablePath, document),
+        prefixArgs: [],
+      },
+    };
   }
   if (pythonPath) {
-    return { primary: { exec: pythonPath, prefixArgs: ["-m", "djlint"] } };
+    return {
+      primary: {
+        exec: resolveConfiguredExecutablePath(pythonPath, document),
+        prefixArgs: ["-m", "djlint"],
+      },
+    };
   }
 
   const msg = `Invalid ${configSection}.executablePath and ${configSection}.pythonPath settings.`;

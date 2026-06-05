@@ -1,5 +1,9 @@
 # Changelog
 
+## [2026.6.2] - 2026-06-05
+
+- Resolve relative `djlint.executablePath` and `djlint.pythonPath` from the workspace root.
+
 ## [2026.6.1] - 2026-06-05
 
 - Lower the minimum vscode version to 1.105.1
