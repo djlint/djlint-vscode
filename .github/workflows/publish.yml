@@ -3,7 +3,9 @@ on:
   push:
     tags:
       - v*
-  workflow_dispatch:
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   publish-vsce:
     runs-on: ubuntu-24.04
