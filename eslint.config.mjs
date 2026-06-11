@@ -76,6 +76,7 @@ export default defineConfig(
       "unicorn/prefer-json-parse-buffer": "off",
       "unicorn/prefer-top-level-await": "off",
       "unicorn/prevent-abbreviations": "off",
+      "unicorn/try-complexity": "off",
     },
   },
 );
