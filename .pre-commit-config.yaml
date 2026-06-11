@@ -27,3 +27,7 @@ repos:
         args:
           - --object-wrap=collapse
           - --no-config
+  - repo: https://github.com/zizmorcore/zizmor-pre-commit
+    rev: v1.25.2
+    hooks:
+      - id: zizmor
