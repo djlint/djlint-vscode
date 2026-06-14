@@ -349,7 +349,7 @@
     "@tsconfig/node22": "22.0.5",
     "@tsconfig/strictest": "2.0.8",
     "@types/eslint-config-prettier": "6.11.3",
-    "@types/node": "22.19.20",
+    "@types/node": "22.19.21",
     "@types/vscode": "1.105.0",
     "esbuild": "0.28.1",
     "eslint": "10.4.1",
