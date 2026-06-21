@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [2026.6.3] - 2026-06-21
 
 - Add settings for djLint attribute JavaScript/JSON formatting and preserving class attribute newlines.
 
