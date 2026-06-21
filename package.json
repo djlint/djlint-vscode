@@ -100,6 +100,24 @@
           "default": [],
           "description": "Add additional paths to the default exclude. Requires djLint ≥ 1.25."
         },
+        "djlint.formatAttributeJsJson": {
+          "type": "boolean",
+          "default": false,
+          "description": "Format JavaScript and JSON code inside HTML attributes. Requires djLint ≥ 1.37.0."
+        },
+        "djlint.formatAttributeJsJsonMinProps": {
+          "type": [
+            "integer",
+            null
+          ],
+          "default": null,
+          "description": "Minimum number of properties required in a JavaScript/JSON object for attribute formatting. Requires djLint ≥ 1.37.0."
+        },
+        "djlint.formatAttributeJsJsonPattern": {
+          "type": "string",
+          "default": "",
+          "description": "Regex pattern for JavaScript/JSON attributes to format. Requires djLint ≥ 1.37.0."
+        },
         "djlint.formatAttributeTemplateTags": {
           "type": "boolean",
           "default": false,
@@ -228,6 +246,11 @@
           "type": "boolean",
           "default": false,
           "description": "Attempt to preserve blank lines. Requires djLint ≥ 1.3."
+        },
+        "djlint.preserveClassNewlines": {
+          "type": "boolean",
+          "default": false,
+          "description": "Preserve line breaks inside multiline class attributes. Requires djLint ≥ 1.39.0."
         },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",

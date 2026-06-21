@@ -110,6 +110,17 @@ export const formattingArgs = [
   ...commonArgs,
   new SimpleArg("--reformat", "0.0.9"),
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
+  new BoolArg("formatAttributeJsJson", "--format-attribute-js-json", "1.37"),
+  new NumberOrNullArg(
+    "formatAttributeJsJsonMinProps",
+    "--format-attribute-js-json-min-props",
+    "1.37",
+  ),
+  new StringArg(
+    "formatAttributeJsJsonPattern",
+    "--format-attribute-js-json-pattern",
+    "1.37",
+  ),
   new BoolArg(
     "formatAttributeTemplateTags",
     "--format-attribute-template-tags",
@@ -122,6 +133,7 @@ export const formattingArgs = [
   new BoolArg("noLineAfterYaml", "--no-line-after-yaml", "1.29"),
   new BoolArg("noSetFormatting", "--no-set-formatting", "1.30.2"),
   new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
+  new BoolArg("preserveClassNewlines", "--preserve-class-newlines", "1.39"),
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),

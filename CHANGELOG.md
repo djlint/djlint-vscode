@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add settings for djLint attribute JavaScript/JSON formatting and preserving class attribute newlines.
+
 ## [2026.6.2] - 2026-06-05
 
 - Resolve relative `djlint.executablePath` and `djlint.pythonPath` from the workspace root.
