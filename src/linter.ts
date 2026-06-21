@@ -1,8 +1,7 @@
 import * as vscode from "vscode";
 import { lintingArgs } from "./args.js";
 import { getConfig } from "./config.js";
-import { runDjlint, type CustomExecaError } from "./runner.js";
-import { noop } from "./utils.js";
+import { isCustomExecaError, runDjlint } from "./runner.js";
 
 const supportedUriSchemes: ReadonlySet<string> = new Set([
   "file",
@@ -31,8 +30,11 @@ export class Linter {
   }
 
   async activate(): Promise<void> {
-    const maybeLint = async (document: vscode.TextDocument): Promise<void> =>
-      this.#lint(document).catch(noop);
+    const maybeLint = async (document: vscode.TextDocument): Promise<void> => {
+      try {
+        await this.#lint(document);
+      } catch {}
+    };
 
     this.#context.subscriptions.push(
       vscode.workspace.onDidOpenTextDocument(maybeLint),
@@ -93,8 +95,7 @@ export class Linter {
       );
     } catch (e) {
       this.#collection.delete(document.uri);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion
-      if ((e as CustomExecaError).isCanceled) {
+      if (isCustomExecaError(e) && e.isCanceled) {
         return;
       }
       throw e;
