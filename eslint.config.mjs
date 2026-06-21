@@ -74,6 +74,7 @@ export default defineConfig(
       "unicorn/explicit-length-check": "off",
       "unicorn/no-keyword-prefix": "off",
       "unicorn/no-null": "off",
+      "unicorn/no-unreadable-new-expression": "off",
       "unicorn/prefer-json-parse-buffer": "off",
       "unicorn/prefer-top-level-await": "off",
       "unicorn/prevent-abbreviations": "off",
