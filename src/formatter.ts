@@ -71,6 +71,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     const lastLineId = document.lineCount - 1;
     const lastLineLength = document.lineAt(lastLineId).text.length;
     const range = new vscode.Range(0, 0, lastLineId, lastLineLength);
+    // eslint-disable-next-line unicorn/no-unsafe-string-replacement
     return [vscode.TextEdit.replace(range, stdout)];
   }
 

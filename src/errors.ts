@@ -24,19 +24,21 @@ function showError(
   userMessage?: string,
 ): void {
   errorToOutputChannel(outputChannel, e);
-  void vscode.window
-    .showErrorMessage(userMessage ?? e.message, "Details")
-    .then((item) => {
-      if (item != null) {
-        outputChannel.show();
-      }
-    });
+  void (async (): Promise<void> => {
+    const item = await vscode.window.showErrorMessage(
+      userMessage ?? e.message,
+      "Details",
+    );
+    if (item != null) {
+      outputChannel.show();
+    }
+  })();
 }
 
 class NotAnErrorHandler {
   static check(stderr: string): NotAnErrorHandler | undefined {
     return /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(stderr)
-      ? new this()
+      ? new NotAnErrorHandler()
       : void 0;
   }
 
@@ -46,7 +48,9 @@ class NotAnErrorHandler {
 
 class DjlintNotInstalledHandler {
   static check(stderr: string): DjlintNotInstalledHandler | undefined {
-    return /No\s+module\s+named\s+djlint/u.test(stderr) ? new this() : void 0;
+    return /No\s+module\s+named\s+djlint/u.test(stderr)
+      ? new DjlintNotInstalledHandler()
+      : void 0;
   }
 
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
@@ -60,38 +64,37 @@ class DjlintNotInstalledHandler {
     const configName = "showInstallError";
     if (config.get<boolean>(configName)) {
       const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${extReadmeUrl}.`;
-      void vscode.window
-        .showErrorMessage(
+      void (async (): Promise<void> => {
+        const choice = await vscode.window.showErrorMessage(
           errMsg,
           "Do not show again (workspace)",
           "Do not show again (global)",
           "Details",
-        )
-        .then((choice) => {
-          // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
-          switch (choice) {
-            case "Do not show again (workspace)": {
-              void config.update(
-                configName,
-                false,
-                vscode.ConfigurationTarget.Workspace,
-              );
-              break;
-            }
-            case "Do not show again (global)": {
-              void config.update(
-                configName,
-                false,
-                vscode.ConfigurationTarget.Global,
-              );
-              break;
-            }
-            case "Details": {
-              outputChannel.show();
-              break;
-            }
+        );
+        // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
+        switch (choice) {
+          case "Do not show again (workspace)": {
+            void config.update(
+              configName,
+              false,
+              vscode.ConfigurationTarget.Workspace,
+            );
+            break;
           }
-        });
+          case "Do not show again (global)": {
+            void config.update(
+              configName,
+              false,
+              vscode.ConfigurationTarget.Global,
+            );
+            break;
+          }
+          case "Details": {
+            outputChannel.show();
+            break;
+          }
+        }
+      })();
     }
     throw e;
   }
@@ -107,7 +110,7 @@ class NoSuchOptionHandler {
   static check(stderr: string): NoSuchOptionHandler | undefined {
     const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(stderr)
       ?.groups?.["option"];
-    return option ? new this(option) : void 0;
+    return option ? new NoSuchOptionHandler(option) : void 0;
   }
 
   handle(e: Error, outputChannel: vscode.LogOutputChannel): never {

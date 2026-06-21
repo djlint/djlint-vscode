@@ -1,11 +1,10 @@
 import path from "node:path";
 import { PythonExtension } from "@vscode/python-extension";
-import { execa, type ExecaError } from "execa";
+import { execa, ExecaError } from "execa";
 import * as vscode from "vscode";
 import { configurationArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
-import { noop } from "./utils.js";
 
 interface RunnerCommand {
   exec: string;
@@ -42,7 +41,10 @@ async function getDjlintCommands(
   config: vscode.WorkspaceConfiguration,
 ): Promise<RunnerCommands> {
   if (config.get<boolean>("useVenv")) {
-    const api = await PythonExtension.api().catch(noop);
+    let api;
+    try {
+      api = await PythonExtension.api();
+    } catch {}
     if (api) {
       const environment = await api.environments.resolveEnvironment(
         api.environments.getActiveEnvironmentPath(document.uri),
@@ -128,6 +130,10 @@ interface ChildOptions {
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
+export function isCustomExecaError(e: unknown): e is CustomExecaError {
+  return e instanceof ExecaError;
+}
+
 async function runDjlintCommand(
   command: RunnerCommand,
   document: vscode.TextDocument,
@@ -160,34 +166,51 @@ export async function runDjlint(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
-  const commands = await getDjlintCommands(document, config).catch(
-    (e: Error) => {
-      void vscode.window.showErrorMessage(e.message);
+  let commands;
+  try {
+    commands = await getDjlintCommands(document, config);
+  } catch (e) {
+    void vscode.window.showErrorMessage(
+      e instanceof Error ? e.message : String(e),
+    );
+    throw e;
+  }
+
+  try {
+    return await runDjlintCommand(
+      commands.primary,
+      document,
+      config,
+      args,
+      outputChannel,
+      abortController,
+      formattingOptions,
+    );
+  } catch (e) {
+    if (!isCustomExecaError(e)) {
       throw e;
-    },
-  );
-  return runDjlintCommand(
-    commands.primary,
-    document,
-    config,
-    args,
-    outputChannel,
-    abortController,
-    formattingOptions,
-  ).catch(async (e: CustomExecaError) => {
-    if (commands.fallback != null && e.code === "ENOENT") {
-      return runDjlintCommand(
-        commands.fallback,
-        document,
-        config,
-        args,
-        outputChannel,
-        abortController,
-        formattingOptions,
-      ).catch(
-        (e_: CustomExecaError) => checkErrors(e_, outputChannel, config).stdout,
-      );
     }
+
+    if (commands.fallback != null && e.code === "ENOENT") {
+      try {
+        return await runDjlintCommand(
+          commands.fallback,
+          document,
+          config,
+          args,
+          outputChannel,
+          abortController,
+          formattingOptions,
+        );
+      } catch (e_) {
+        if (!isCustomExecaError(e_)) {
+          throw e_;
+        }
+
+        return checkErrors(e_, outputChannel, config).stdout;
+      }
+    }
+
     return checkErrors(e, outputChannel, config).stdout;
-  });
+  }
 }
