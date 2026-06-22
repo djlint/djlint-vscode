@@ -109,14 +109,15 @@ export class Linter {
       : Linter.#oldOutputRegex;
     const regex = new RegExp(baseRegex.source, baseRegex.flags);
     for (const { groups } of stdout.matchAll(regex)) {
-      if (groups) {
-        const line = Number.parseInt(groups["line"]) - 1;
-        const column = Number.parseInt(groups["column"]);
-        const range = new vscode.Range(line, column, line, column);
-        const message = `${groups["message"]} (${groups["code"]})`;
-        const diag = new vscode.Diagnostic(range, message);
-        diags.push(diag);
+      if (!groups) {
+        continue;
       }
+      const line = Number.parseInt(groups["line"]) - 1;
+      const column = Number.parseInt(groups["column"]);
+      const range = new vscode.Range(line, column, line, column);
+      const message = `${groups["message"]} (${groups["code"]})`;
+      const diag = new vscode.Diagnostic(range, message);
+      diags.push(diag);
     }
     this.#collection.set(document.uri, diags);
   }
