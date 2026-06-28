@@ -35,115 +35,73 @@ function showError(
   })();
 }
 
-class NotAnErrorHandler {
-  static check(stderr: string): NotAnErrorHandler | undefined {
-    return /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(stderr)
-      ? new NotAnErrorHandler()
-      : void 0;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  handle(): void {}
-}
-
-class DjlintNotInstalledHandler {
-  static check(stderr: string): DjlintNotInstalledHandler | undefined {
-    return /No\s+module\s+named\s+djlint/u.test(stderr)
-      ? new DjlintNotInstalledHandler()
-      : void 0;
-  }
-
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
-  handle(
-    e: Error,
-    outputChannel: vscode.LogOutputChannel,
-    config: vscode.WorkspaceConfiguration,
-  ): never {
-    errorToOutputChannel(outputChannel, e);
-
-    const configName = "showInstallError";
-    if (config.get<boolean>(configName)) {
-      const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${extReadmeUrl}.`;
-      void (async (): Promise<void> => {
-        const choice = await vscode.window.showErrorMessage(
-          errMsg,
-          "Do not show again (workspace)",
-          "Do not show again (global)",
-          "Details",
-        );
-        // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
-        switch (choice) {
-          case "Do not show again (workspace)": {
-            void config.update(
-              configName,
-              false,
-              vscode.ConfigurationTarget.Workspace,
-            );
-            break;
-          }
-          case "Do not show again (global)": {
-            void config.update(
-              configName,
-              false,
-              vscode.ConfigurationTarget.Global,
-            );
-            break;
-          }
-          case "Details": {
-            outputChannel.show();
-            break;
-          }
-        }
-      })();
-    }
-    throw e;
-  }
-}
-
-class NoSuchOptionHandler {
-  readonly #option: string;
-
-  private constructor(option: string) {
-    this.#option = option;
-  }
-
-  static check(stderr: string): NoSuchOptionHandler | undefined {
-    const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(stderr)
-      ?.groups?.["option"];
-    return option ? new NoSuchOptionHandler(option) : void 0;
-  }
-
-  handle(e: Error, outputChannel: vscode.LogOutputChannel): never {
-    const arg = argsMap.get(this.#option);
-    if (arg) {
-      const option = arg.vscodeName ? `djlint.${arg.vscodeName}` : arg.cliName;
-      const errMsg = `Your version of djLint does not support the \`${option}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
-      showError(e, outputChannel, errMsg);
-    } else {
-      showError(e, outputChannel);
-    }
-    throw e;
-  }
-}
-
-const errorHandlers = [
-  NotAnErrorHandler,
-  DjlintNotInstalledHandler,
-  NoSuchOptionHandler,
-] as const;
-
 export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
   config: vscode.WorkspaceConfiguration,
 ): CustomExecaError {
   if (e.exitCode != null) {
-    for (const errorHandlerType of errorHandlers) {
-      const errorHandler = errorHandlerType.check(e.stderr);
-      if (errorHandler != null) {
-        errorHandler.handle(e, outputChannel, config);
-        return e;
+    if (/(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)) {
+      return e;
+    }
+
+    if (/No\s+module\s+named\s+djlint/u.test(e.stderr)) {
+      errorToOutputChannel(outputChannel, e);
+
+      const configName = "showInstallError";
+      if (config.get<boolean>(configName)) {
+        const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${extReadmeUrl}.`;
+        void (async (): Promise<void> => {
+          const choice = await vscode.window.showErrorMessage(
+            errMsg,
+            "Do not show again (workspace)",
+            "Do not show again (global)",
+            "Details",
+          );
+          // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
+          switch (choice) {
+            case "Do not show again (workspace)": {
+              void config.update(
+                configName,
+                false,
+                vscode.ConfigurationTarget.Workspace,
+              );
+              break;
+            }
+            case "Do not show again (global)": {
+              void config.update(
+                configName,
+                false,
+                vscode.ConfigurationTarget.Global,
+              );
+              break;
+            }
+            case "Details": {
+              outputChannel.show();
+              break;
+            }
+          }
+        })();
       }
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      throw e;
+    }
+
+    const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(e.stderr)
+      ?.groups?.["option"];
+    if (option) {
+      const arg = argsMap.get(option);
+      if (arg) {
+        const optionName = arg.vscodeName
+          ? `djlint.${arg.vscodeName}`
+          : arg.cliName;
+        const errMsg = `Your version of djLint does not support the \`${optionName}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
+        showError(e, outputChannel, errMsg);
+      } else {
+        showError(e, outputChannel);
+      }
+      // eslint-disable-next-line @typescript-eslint/only-throw-error
+      throw e;
     }
   }
 
