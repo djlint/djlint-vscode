@@ -171,6 +171,7 @@ export async function runDjlint(
     commands = await getDjlintCommands(document, config);
   } catch (e) {
     void vscode.window.showErrorMessage(
+      // eslint-disable-next-line unicorn/prefer-error-is-error
       e instanceof Error ? e.message : String(e),
     );
     throw e;
