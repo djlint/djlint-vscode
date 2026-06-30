@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: tombi-format
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.8.4
+    rev: v3.8.5
     hooks:
       - id: prettier
         args:
