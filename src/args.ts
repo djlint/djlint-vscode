@@ -135,6 +135,7 @@ export const formattingArgs = [
   new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
   new BoolArg("preserveClassNewlines", "--preserve-class-newlines", "1.39"),
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
+  new BoolArg("singleAttributePerLine", "--single-attribute-per-line", "1.40"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),
   new BoolArg(

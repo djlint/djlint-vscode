@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add support for `--single-attribute-per-line` option added in djLint v1.40.
+
 ## [2026.6.3] - 2026-06-21
 
 - Add settings for djLint attribute JavaScript/JSON formatting and preserving class attribute newlines.

@@ -290,6 +290,11 @@
           "default": true,
           "description": "Show error message when djLint is not installed."
         },
+        "djlint.singleAttributePerLine": {
+          "type": "boolean",
+          "default": false,
+          "description": "When an opening tag wraps, put each attribute on its own line. Requires djLint ≥ 1.40."
+        },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
