@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## [2026.7.0] - 2026-07-01
 
 - Add support for `--single-attribute-per-line` option added in djLint v1.40.
 
