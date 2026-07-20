@@ -1,5 +1,14 @@
 # Changelog
 
+## [2026.7.1] - 2026-07-20
+
+- Raise minimal required VSCode version to `v1.107.0`.
+- Add `djlint.rules` setting for the `--rules` option added in djLint v1.41.
+- Add `askama`, `tera` and `liquid` profiles added in djLint v1.42 to the `djlint.profile` setting.
+- Register the formatter and enable linting by default for Askama, Tera, Liquid, Jekyll and Go template language IDs (`askama-html`, `tera`, `liquid`, `jekyll`, `go-template`, `go-tmpl`, `gotemplate`, `GoTemplate`, `gohtml`, `GoHTML`, `gotmpl`, `hugo-html`).
+- Register the formatter and enable linting by default for additional Jinja, Nunjucks and Mustache language IDs (`jinja2`, `html-hubl`, `hubl-html`, `html-nunjucks`, `htmlmustache`, `spacebars`).
+- Remove the `nj` language ID from the defaults, as no published extension provides it.
+
 ## [2026.7.0] - 2026-07-01
 
 - Add support for `--single-attribute-per-line` option added in djLint v1.40.

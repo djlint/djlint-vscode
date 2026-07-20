@@ -89,6 +89,8 @@ export const configurationArg = new StringArg(
   "1.13",
 );
 
+export const rulesArg = new StringArg("rules", "--rules", "1.41");
+
 const commonArgs = [
   configurationArg,
   new SimpleArg("--quiet", "0.0.9"),
@@ -102,6 +104,7 @@ const commonArgs = [
 export const lintingArgs = [
   ...commonArgs,
   new LinterOutputFormatArg(),
+  rulesArg,
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
 ] as const;

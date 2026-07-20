@@ -1,8 +1,8 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2026.7.0",
-  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache)",
+  "version": "2026.7.1",
+  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache, Askama, Tera, Liquid, Go templates)",
   "categories": [
     "Formatters",
     "Linters"
@@ -20,7 +20,7 @@
   "type": "module",
   "main": "./dist/extension.cjs",
   "scripts": {
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.19.0",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.21.1",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
@@ -137,13 +137,30 @@
             "django-html",
             "jinja",
             "jinja-html",
-            "nj",
+            "jinja2",
+            "html-hubl",
+            "hubl-html",
+            "html-nunjucks",
             "njk",
             "nunjucks",
             "twig",
             "handlebars",
             "hbs",
             "mustache",
+            "htmlmustache",
+            "spacebars",
+            "askama-html",
+            "tera",
+            "liquid",
+            "jekyll",
+            "go-template",
+            "go-tmpl",
+            "gotemplate",
+            "GoTemplate",
+            "gohtml",
+            "GoHTML",
+            "gotmpl",
+            "hugo-html",
             "html"
           ],
           "description": "Language IDs for which djLint should be registered as a formatter."
@@ -263,6 +280,9 @@
             "",
             "django",
             "jinja",
+            "askama",
+            "tera",
+            "liquid",
             "nunjucks",
             "handlebars",
             "golang",
@@ -271,7 +291,7 @@
           ],
           "default": "",
           "scope": "language-overridable",
-          "description": "Enable defaults by template language. Requires djLint ≥ 0.4.5."
+          "description": "Enable defaults by template language. Requires djLint ≥ 0.4.5; the askama, tera and liquid profiles require djLint ≥ 1.42."
         },
         "djlint.pythonPath": {
           "type": "string",
@@ -284,6 +304,11 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "Only format or lint files that start with a comment with the text `djlint:on`. Requires djLint ≥ 0.5.8."
+        },
+        "djlint.rules": {
+          "type": "string",
+          "default": "",
+          "description": "Path to a custom rules file in .djlint_rules.yaml format. The path can be relative to the workspace root. Requires djLint ≥ 1.41."
         },
         "djlint.showInstallError": {
           "type": "boolean",
@@ -330,7 +355,19 @@
         "djlint.enableLinting": true,
         "djlint.profile": "jinja"
       },
-      "[nj]": {
+      "[jinja2]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[html-hubl]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[hubl-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "jinja"
+      },
+      "[html-nunjucks]": {
         "djlint.enableLinting": true,
         "djlint.profile": "nunjucks"
       },
@@ -358,6 +395,62 @@
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
       },
+      "[htmlmustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[spacebars]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[askama-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "askama"
+      },
+      "[tera]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "tera"
+      },
+      "[liquid]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "liquid"
+      },
+      "[jekyll]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "liquid"
+      },
+      "[go-template]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[go-tmpl]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[gotemplate]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[GoTemplate]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[gohtml]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[GoHTML]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[gotmpl]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
+      "[hugo-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "golang"
+      },
       "[html]": {
         "djlint.enableLinting": true
       }
@@ -377,7 +470,7 @@
     "@tsconfig/node22": "22.0.5",
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.1",
-    "@types/vscode": "1.105.0",
+    "@types/vscode": "1.107.0",
     "esbuild": "0.28.1",
     "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
@@ -388,7 +481,7 @@
     "typescript-eslint": "8.64.0"
   },
   "engines": {
-    "vscode": "^1.105.1"
+    "vscode": "^1.107.0"
   },
   "icon": "icon.png"
 }

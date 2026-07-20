@@ -2,7 +2,7 @@ import path from "node:path";
 import { PythonExtension } from "@vscode/python-extension";
 import { execa, ExecaError } from "execa";
 import * as vscode from "vscode";
-import { configurationArg, type CliArg } from "./args.js";
+import { configurationArg, rulesArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
 import { checkErrors } from "./errors.js";
 
@@ -100,7 +100,10 @@ function getCwd(
   document: vscode.TextDocument,
   outputChannel: vscode.LogOutputChannel,
 ): { cwd?: string } {
-  if (childArgs.includes(configurationArg.cliName)) {
+  if (
+    childArgs.includes(configurationArg.cliName) ||
+    childArgs.includes(rulesArg.cliName)
+  ) {
     const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (workspaceFolder != null) {
       if (workspaceFolder.uri.scheme === "file") {
