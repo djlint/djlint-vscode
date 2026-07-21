@@ -4,7 +4,7 @@
 [![Visual Studio Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/monosans.djlint.svg?label=Visual%20Studio%20Marketplace%20installs&logo=visualstudio)](https://marketplace.visualstudio.com/items?itemName=monosans.djlint)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/monosans/djlint?label=Open%20VSX%20downloads&logo=vscodium)](https://open-vsx.org/extension/monosans/djlint)
 
-Visual Studio Code extension for formatting and linting HTML templates (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache, Askama, Tera, Liquid, Go templates) using [djLint](https://djlint.com).
+Visual Studio Code extension for formatting and linting HTML templates (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go templates, Mustache, Tera, Askama) using [djLint](https://djlint.com).
 
 ## Installation
 
@@ -22,7 +22,7 @@ The extension can be configured through the settings in VS Code. Some options ca
 Add this to your `settings.json` to format the default enabled languages with `djLint`:
 
 ```json
-"[html][django-html][handlebars][hbs][mustache][htmlmustache][spacebars][jinja][jinja-html][jinja2][html-hubl][hubl-html][html-nunjucks][njk][nunjucks][twig][askama-html][tera][liquid][jekyll][go-template][go-tmpl][gotemplate][GoTemplate][gohtml][GoHTML][gotmpl][hugo-html]": {
+"[django-html][jinja][jinja-html][jinja2][html-hubl][hubl-html][twig][html-nunjucks][njk][nunjucks][handlebars][hbs][spacebars][liquid][jekyll][go-template][go-tmpl][gotemplate][GoTemplate][gohtml][GoHTML][gotmpl][hugo-html][mustache][htmlmustache][tera][askama-html][html]": {
   "editor.defaultFormatter": "monosans.djlint"
 }
 ```

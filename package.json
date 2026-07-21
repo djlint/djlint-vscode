@@ -2,10 +2,26 @@
   "name": "djlint",
   "displayName": "djLint",
   "version": "2026.7.1",
-  "description": "HTML template formatter and linter (Django, Jinja, Nunjucks, Twig, Handlebars, Mustache, Askama, Tera, Liquid, Go templates)",
+  "description": "HTML template formatter and linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go templates, Mustache, Tera, Askama)",
   "categories": [
     "Formatters",
     "Linters"
+  ],
+  "keywords": [
+    "djlint",
+    "django",
+    "jinja",
+    "twig",
+    "nunjucks",
+    "handlebars",
+    "liquid",
+    "go template",
+    "golang",
+    "hugo",
+    "helm",
+    "mustache",
+    "tera",
+    "askama"
   ],
   "homepage": "https://github.com/djlint/djlint-vscode",
   "bugs": {
@@ -140,17 +156,13 @@
             "jinja2",
             "html-hubl",
             "hubl-html",
+            "twig",
             "html-nunjucks",
             "njk",
             "nunjucks",
-            "twig",
             "handlebars",
             "hbs",
-            "mustache",
-            "htmlmustache",
             "spacebars",
-            "askama-html",
-            "tera",
             "liquid",
             "jekyll",
             "go-template",
@@ -161,6 +173,10 @@
             "GoHTML",
             "gotmpl",
             "hugo-html",
+            "mustache",
+            "htmlmustache",
+            "tera",
+            "askama-html",
             "html"
           ],
           "description": "Language IDs for which djLint should be registered as a formatter."
@@ -280,13 +296,13 @@
             "",
             "django",
             "jinja",
-            "askama",
-            "tera",
-            "liquid",
             "nunjucks",
             "handlebars",
+            "liquid",
             "golang",
             "angular",
+            "tera",
+            "askama",
             "html"
           ],
           "default": "",
@@ -367,6 +383,10 @@
         "djlint.enableLinting": true,
         "djlint.profile": "jinja"
       },
+      "[twig]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "nunjucks"
+      },
       "[html-nunjucks]": {
         "djlint.enableLinting": true,
         "djlint.profile": "nunjucks"
@@ -379,10 +399,6 @@
         "djlint.enableLinting": true,
         "djlint.profile": "nunjucks"
       },
-      "[twig]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "nunjucks"
-      },
       "[handlebars]": {
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
@@ -391,25 +407,9 @@
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
       },
-      "[mustache]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
-      "[htmlmustache]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
       "[spacebars]": {
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
-      },
-      "[askama-html]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "askama"
-      },
-      "[tera]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "tera"
       },
       "[liquid]": {
         "djlint.enableLinting": true,
@@ -450,6 +450,22 @@
       "[hugo-html]": {
         "djlint.enableLinting": true,
         "djlint.profile": "golang"
+      },
+      "[mustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[htmlmustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[tera]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "tera"
+      },
+      "[askama-html]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "askama"
       },
       "[html]": {
         "djlint.enableLinting": true
