@@ -1,4 +1,5 @@
 import { expect, test, vi } from "vitest";
+import type { EngineSelectionDeps } from "../select.js";
 
 /*
  * The untouched getEngine() in select.ts pulls in SubprocessEngine ->
@@ -15,16 +16,10 @@ interface FakeEngine {
 }
 
 function deps(
-  over: Partial<{
-    importStrategy: "fromEnvironment" | "useBundled";
-    isTrusted: boolean;
-  }> = {},
-): {
-  importStrategy: "fromEnvironment" | "useBundled";
-  isTrusted: boolean;
-  makeSubprocess: () => FakeEngine;
-  makePyodide: () => FakeEngine;
-} {
+  over: Partial<
+    Pick<EngineSelectionDeps<FakeEngine>, "importStrategy" | "isTrusted">
+  > = {},
+): EngineSelectionDeps<FakeEngine> {
   return {
     importStrategy: "fromEnvironment",
     isTrusted: true,
