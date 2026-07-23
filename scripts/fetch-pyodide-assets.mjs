@@ -41,12 +41,25 @@ const DJLINT_DEPENDS = [
 // C-extension / stock wheels djLint needs that Pyodide DOES ship.
 const STOCK = ["regex", "pyyaml", "click", "six"];
 
-async function get(url) {
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`${res.status} fetching ${url}`);
+async function get(url, attempts = 4) {
+  for (let i = 1; i <= attempts; i += 1) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) {
+        throw new Error(`${res.status} fetching ${url}`);
+      }
+      return Buffer.from(await res.arrayBuffer());
+    } catch (e) {
+      if (i >= attempts) {
+        throw e;
+      }
+      console.warn(`retry ${i}/${attempts} for ${url}: ${e.message}`);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000 * i);
+      });
+    }
   }
-  return Buffer.from(await res.arrayBuffer());
+  throw new Error(`failed to fetch ${url}`);
 }
 
 function sha256(buf) {
