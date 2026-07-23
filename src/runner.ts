@@ -7,6 +7,7 @@ import { DjlintUnavailableError } from "./engine/types.js";
 import { checkErrors } from "./errors.js";
 import {
   getEnvironmentProvider,
+  resetUnavailableEnvironmentProviders,
   type EnvironmentProvider,
   type PythonEnvironmentDetails,
 } from "./python/environment.js";
@@ -81,12 +82,15 @@ the injected `deps`, so it is unit-testable in isolation.
 
 1. `djlint.path` — the first configured executable that `probe()` confirms
    works, run directly.
-2. The deprecated `djlint.executablePath`, but only when the user changed it
-   from its old default (`"djlint"`) — same shape as (1).
-3. `djlint.interpreter` — the first non-empty entry. If `provider` can
-   resolve it to an environment, that environment's own launch command/args
-   are used (with `-m djlint` appended); otherwise the entry itself is used
-   as the interpreter verbatim.
+2. The deprecated `djlint.executablePath`, when explicitly set (as decided
+   by the caller via `config.inspect()` — see `isExplicitlySet()`) — same
+   shape as (1).
+3. `djlint.interpreter` — each non-empty entry, tried in order. If
+   `provider` can resolve an entry to an environment, that environment's own
+   launch command/args are used (with `-m djlint` appended); otherwise the
+   entry itself is used as the interpreter verbatim. Either way, the
+   resulting command's executable must also pass `probe()` for the entry to
+   be accepted; an entry that fails is skipped in favor of the next one.
 4. The active Python environment from `provider`, unless the deprecated
    `djlint.useVenv` is explicitly `false`.
 5. `djlint` on PATH, if `probe()` confirms it works.
@@ -104,11 +108,7 @@ export async function resolveDjlintCommand(
   }
 
   const executablePath = deps.executablePath?.trim();
-  if (
-    executablePath &&
-    executablePath !== "djlint" &&
-    (await deps.probe(executablePath))
-  ) {
+  if (executablePath && (await deps.probe(executablePath))) {
     return { exec: executablePath, prefixArgs: [] };
   }
 
@@ -117,16 +117,22 @@ export async function resolveDjlintCommand(
     if (!entry) {
       continue;
     }
+
+    let resolved: RunnerCommand | null = null;
     if (deps.provider) {
-      const resolved = toEnvironmentRunnerCommand(
-        // eslint-disable-next-line no-await-in-loop -- only the first non-empty entry is ever consulted; the loop exists solely to skip blank entries.
-        await deps.provider.resolveInterpreter(entry),
-      );
-      if (resolved) {
-        return resolved;
-      }
+      // eslint-disable-next-line no-await-in-loop -- candidates must be resolved/probed in order; the first one that works wins.
+      const details = await deps.provider.resolveInterpreter(entry);
+      resolved = toEnvironmentRunnerCommand(details);
     }
-    return { exec: entry, prefixArgs: ["-m", "djlint"] };
+    const candidate: RunnerCommand = resolved ?? {
+      exec: entry,
+      prefixArgs: ["-m", "djlint"],
+    };
+
+    // eslint-disable-next-line no-await-in-loop -- see above.
+    if (await deps.probe(candidate.exec)) {
+      return candidate;
+    }
   }
 
   if (deps.useVenv !== false && deps.provider) {
@@ -160,9 +166,13 @@ const commandCache = new Map<DjlintCommandCacheKey, RunnerCommand>();
 result. Call whenever something that could change which djLint runs
 changes: a relevant setting (`djlint.path`, `djlint.interpreter`,
 `djlint.executablePath`, `djlint.useVenv`, `djlint.importStrategy`) or the
-active Python environment. */
+active Python environment. Also un-latches a memoized "no Python environment
+provider available" result (see `resetUnavailableEnvironmentProviders()`),
+so a transient activation failure doesn't stay pinned for the rest of the
+session. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
+  resetUnavailableEnvironmentProviders();
 }
 
 /** Thin memoizing layer around `resolveDjlintCommand()`: the first
@@ -209,6 +219,27 @@ function resolutionScopeKey(
   return vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString();
 }
 
+/** Whether `section` has been explicitly set by the user at some scope
+`config.get()` would honor, as opposed to `config` merely reporting back its
+own registered default. Needed for deprecated settings such as
+`djlint.executablePath`, whose default value ("djlint") is itself a value a
+user could legitimately opt in to: a bare `value !== defaultValue` string
+comparison would wrongly treat that user as never having set it. Mirrors
+the pattern ruff-vscode's `getPreferredWorkspaceSetting()` uses
+(`src/common/settings.ts`), narrowed to the scopes this extension's
+resource-scoped settings can actually be set at. */
+export function isExplicitlySet(
+  config: vscode.WorkspaceConfiguration,
+  section: string,
+): boolean {
+  const inspected = config.inspect<string>(section);
+  return (
+    inspected?.globalValue !== void 0 ||
+    inspected?.workspaceValue !== void 0 ||
+    inspected?.workspaceFolderValue !== void 0
+  );
+}
+
 async function getDjlintCommand(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -219,6 +250,7 @@ async function getDjlintCommand(
   }
 
   const rawExecutablePath = config.get<string>("executablePath");
+  const isExecutablePathExplicit = isExplicitlySet(config, "executablePath");
   const interpreter = (config.get<string[]>("interpreter") ?? []).map((raw) =>
     normalize(raw),
   );
@@ -234,7 +266,9 @@ async function getDjlintCommand(
   return resolveDjlintCommandCached(
     {
       executablePath:
-        rawExecutablePath == null ? void 0 : normalize(rawExecutablePath),
+        !isExecutablePathExplicit || rawExecutablePath == null
+          ? void 0
+          : normalize(rawExecutablePath),
       interpreter,
       path: (config.get<string[]>("path") ?? []).map((raw) => normalize(raw)),
       probe: probeExecutable,

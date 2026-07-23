@@ -85,21 +85,56 @@ async function resolveOrUnavailable<T>(
   return result ?? unavailable;
 }
 
+/** Disposables registered by `EnvironmentProvider.initialize()` (see the
+`tryActivate*` factories below), owned collectively by whichever provider
+successfully activates. `extension.ts` pushes `disposeEnvironmentProviders`
+into `context.subscriptions` so these VS Code listeners are cleaned up on
+deactivate instead of leaking. */
+const providerDisposables: vscode.Disposable[] = [];
+
+/** Disposes every listener registered so far via `EnvironmentProvider.initialize()`
+(see `providerDisposables`) and forgets them. Intended to be called exactly
+once, on extension deactivate. */
+export function disposeEnvironmentProviders(): void {
+  for (const disposable of providerDisposables) {
+    disposable.dispose();
+  }
+  providerDisposables.length = 0;
+}
+
 /** Wraps a `tryActivate`-style factory so it runs at most once: the
 in-flight (or resolved) promise is memoized synchronously, so concurrent
 callers share one activation attempt instead of racing. A `null` result
 (extension absent, disabled, or failed to activate) is cached as
-"unavailable" so we don't keep retrying on every call. */
+"unavailable" so we don't keep retrying on every call — until
+`resetIfUnavailable()` clears that latched failure (see
+`resetUnavailableEnvironmentProviders`), letting a later call retry
+activation from scratch. A successfully-activated provider is never reset:
+`resetIfUnavailable()` only ever discards a memoized "unavailable" outcome,
+so a real provider's `initialize()` (and its listener registration) never
+runs more than once. */
 function lazyInit<T>(
   factory: (outputChannel: vscode.LogOutputChannel) => Promise<T | null>,
-): { get: (outputChannel: vscode.LogOutputChannel) => Promise<T | null> } {
+): {
+  get: (outputChannel: vscode.LogOutputChannel) => Promise<T | null>;
+  resetIfUnavailable: () => void;
+} {
   let pending: Promise<T | typeof unavailable> | undefined;
+  let lastResult: T | typeof unavailable | undefined;
 
   return {
     async get(outputChannel): Promise<T | null> {
       pending ??= resolveOrUnavailable(factory, outputChannel);
       const result = await pending;
+      lastResult = result;
       return result === unavailable ? null : result;
+    },
+    resetIfUnavailable(): void {
+      if (lastResult !== unavailable) {
+        return;
+      }
+      pending = void 0;
+      lastResult = void 0;
     },
   };
 }
@@ -173,7 +208,9 @@ async function tryActivateClassicPythonExtension(
   outputChannel.info("Initializing the Python extension");
   try {
     const api = await PythonExtensionApi.api();
-    return new ClassicPythonExtension(api, outputChannel);
+    const provider = new ClassicPythonExtension(api, outputChannel);
+    await provider.initialize(providerDisposables);
+    return provider;
   } catch (e) {
     outputChannel.warn(`The Python extension is not available: ${String(e)}`);
     return null;
@@ -326,7 +363,12 @@ async function tryActivatePythonEnvironmentsExtension(
     return null;
   }
 
-  return new PythonEnvironmentsExtension(extension.exports, outputChannel);
+  const provider = new PythonEnvironmentsExtension(
+    extension.exports,
+    outputChannel,
+  );
+  await provider.initialize(providerDisposables);
+  return provider;
 }
 
 const pythonEnvironmentsExtension = lazyInit(
@@ -348,4 +390,19 @@ export async function getEnvironmentProvider(
     (await getPythonEnvironmentsExtension(outputChannel)) ??
     (await getClassicPythonExtension(outputChannel))
   );
+}
+
+/** Un-latches a previously memoized "no provider available" outcome for
+either provider, so the next `getEnvironmentProvider()` call retries
+activation from scratch instead of staying pinned to a transient failure
+(e.g. the Python extension still installing) for the rest of the session.
+A provider that DID activate successfully is left untouched — this never
+forces a working provider to re-activate or re-register its listeners. Safe
+to call unconditionally; wired into `resolveDjlintCommand`'s cache
+invalidation path (`invalidateDjlintCommandCache()` in `runner.ts`) so a
+retry is attempted whenever anything else that could affect djLint
+resolution changes. */
+export function resetUnavailableEnvironmentProviders(): void {
+  pythonEnvironmentsExtension.resetIfUnavailable();
+  classicPythonExtension.resetIfUnavailable();
 }

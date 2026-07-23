@@ -108,7 +108,7 @@
           "type": "string",
           "minLength": 1,
           "default": "djlint",
-          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled.",
+          "markdownDescription": "Path to the djLint executable, used only when explicitly set. Relative paths are resolved from the workspace root. Tried before `#djlint.interpreter#` and the active environment, regardless of `#djlint.useVenv#`.",
           "markdownDeprecationMessage": "**Deprecated**: use `#djlint.path#` instead.",
           "deprecationMessage": "Deprecated: use djlint.path instead.",
           "scope": "resource"
@@ -425,7 +425,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` is ignored. Disable this to use `#djlint.executablePath#` (`djlint` from PATH by default).",
+          "markdownDescription": "Use the Python executable from the current active environment as a fallback when `#djlint.path#`, `#djlint.executablePath#`, and `#djlint.interpreter#` don't resolve. Disable this to skip that fallback and use `djlint` from PATH instead.",
           "markdownDeprecationMessage": "**Deprecated**: use `#djlint.interpreter#` and `#djlint.importStrategy#` instead.",
           "deprecationMessage": "Deprecated: use djlint.interpreter and djlint.importStrategy instead.",
           "scope": "resource"

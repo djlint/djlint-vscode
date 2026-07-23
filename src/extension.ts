@@ -3,7 +3,10 @@ import { configSection } from "./config.js";
 import { disposeEngine } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
-import { onDidChangeActivePythonEnvironment } from "./python/environment.js";
+import {
+  disposeEnvironmentProviders,
+  onDidChangeActivePythonEnvironment,
+} from "./python/environment.js";
 import { invalidateDjlintCommandCache } from "./runner.js";
 
 export async function activate(
@@ -30,6 +33,8 @@ export async function activate(
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
+    // Owns the `onDidChangeActiveEnvironmentPath` / `onDidChangeEnvironment` listeners an `EnvironmentProvider.initialize()` call registers (see src/python/environment.ts), so they're disposed on deactivate instead of leaking.
+    { dispose: disposeEnvironmentProviders },
     vscode.workspace.onDidGrantWorkspaceTrust(disposeEngine),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
