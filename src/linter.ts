@@ -1,7 +1,6 @@
 import * as vscode from "vscode";
-import { lintingArgs } from "./args.js";
 import { getConfig } from "./config.js";
-import { isCustomExecaError, runDjlint } from "./runner.js";
+import { getEngine } from "./engine/select.js";
 
 const supportedUriSchemes: ReadonlySet<string> = new Set([
   "file",
@@ -9,14 +8,10 @@ const supportedUriSchemes: ReadonlySet<string> = new Set([
 ]);
 
 export class Linter {
-  static readonly #outputRegex =
-    /^<filename>(?<filename>.*)<\/filename><line>(?<line>\d+):(?<column>\d+)<\/line><code>(?<code>.+)<\/code><message>(?<message>.+)<\/message>$/gmu;
-  static readonly #oldOutputRegex =
-    /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
   readonly #collection: vscode.DiagnosticCollection;
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #runningControllers: Map<string, AbortController>;
+  readonly #running: Map<string, vscode.CancellationTokenSource>;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -26,7 +21,7 @@ export class Linter {
     context.subscriptions.push(this.#collection);
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#runningControllers = new Map();
+    this.#running = new Map();
   }
 
   async activate(): Promise<void> {
@@ -42,8 +37,10 @@ export class Linter {
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
         this.#collection.delete(uri);
         const key = uri.toString();
-        this.#runningControllers.get(key)?.abort();
-        this.#runningControllers.delete(key);
+        const source = this.#running.get(key);
+        source?.cancel();
+        source?.dispose();
+        this.#running.delete(key);
       }),
     );
 
@@ -58,10 +55,11 @@ export class Linter {
   }
 
   dispose(): void {
-    for (const controller of this.#runningControllers.values()) {
-      controller.abort();
+    for (const source of this.#running.values()) {
+      source.cancel();
+      source.dispose();
     }
-    this.#runningControllers.clear();
+    this.#running.clear();
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
@@ -80,45 +78,41 @@ export class Linter {
     }
 
     const key = document.uri.toString();
-    this.#runningControllers.get(key)?.abort();
-    const controller = new AbortController();
-    this.#runningControllers.set(key, controller);
+    this.#running.get(key)?.cancel();
+    const source = new vscode.CancellationTokenSource();
+    this.#running.set(key, source);
 
-    let stdout: string;
+    let diagnostics;
     try {
-      stdout = await runDjlint(
+      diagnostics = await getEngine(this.#outputChannel).lint(
         document,
         config,
-        lintingArgs,
-        this.#outputChannel,
-        controller,
+        source.token,
       );
     } catch (e) {
       this.#collection.delete(document.uri);
-      if (isCustomExecaError(e) && e.isCanceled) {
+      if (source.token.isCancellationRequested) {
         return;
       }
       throw e;
     } finally {
-      this.#runningControllers.delete(key);
+      source.dispose();
+      if (this.#running.get(key) === source) {
+        this.#running.delete(key);
+      }
     }
 
-    const diags = [];
-    const baseRegex = config.get<boolean>("useNewLinterOutputParser")
-      ? Linter.#outputRegex
-      : Linter.#oldOutputRegex;
-    const regex = new RegExp(baseRegex.source, baseRegex.flags);
-    for (const { groups } of stdout.matchAll(regex)) {
-      if (!groups) {
-        continue;
-      }
-      const line = Number.parseInt(groups["line"]) - 1;
-      const column = Number.parseInt(groups["column"]);
-      const range = new vscode.Range(line, column, line, column);
-      const message = `${groups["message"]} (${groups["code"]})`;
-      const diag = new vscode.Diagnostic(range, message);
-      diags.push(diag);
-    }
-    this.#collection.set(document.uri, diags);
+    this.#collection.set(
+      document.uri,
+      diagnostics.map((d) => {
+        const range = new vscode.Range(
+          d.line - 1,
+          d.column,
+          d.line - 1,
+          d.column,
+        );
+        return new vscode.Diagnostic(range, `${d.message} (${d.code})`);
+      }),
+    );
   }
 }

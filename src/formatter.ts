@@ -1,12 +1,11 @@
 import * as vscode from "vscode";
-import { formattingArgs } from "./args.js";
 import { configSection, getConfig } from "./config.js";
-import { runDjlint } from "./runner.js";
+import { getEngine } from "./engine/select.js";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #runningControllers: Map<string, AbortController>;
+  readonly #running: Map<string, vscode.CancellationTokenSource>;
   #providerDisposable: vscode.Disposable | undefined;
 
   constructor(
@@ -15,7 +14,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   ) {
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#runningControllers = new Map();
+    this.#running = new Map();
   }
 
   activate(): void {
@@ -33,10 +32,11 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   dispose(): void {
     this.#providerDisposable?.dispose();
     this.#providerDisposable = void 0;
-    for (const controller of this.#runningControllers.values()) {
-      controller.abort();
+    for (const source of this.#running.values()) {
+      source.cancel();
+      source.dispose();
     }
-    this.#runningControllers.clear();
+    this.#running.clear();
   }
 
   async provideDocumentFormattingEdits(
@@ -47,25 +47,28 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     const config = getConfig(document);
 
     const key = document.uri.toString();
-    this.#runningControllers.get(key)?.abort();
-    const controller = new AbortController();
-    this.#runningControllers.set(key, controller);
-    token.onCancellationRequested(() => controller.abort());
+    this.#running.get(key)?.cancel();
+    const source = new vscode.CancellationTokenSource();
+    this.#running.set(key, source);
+    token.onCancellationRequested(() => {
+      source.cancel();
+    });
 
     let stdout: string;
     try {
-      stdout = await runDjlint(
+      stdout = await getEngine(this.#outputChannel).format(
         document,
         config,
-        formattingArgs,
-        this.#outputChannel,
-        controller,
         options,
+        source.token,
       );
     } catch {
       return void 0;
     } finally {
-      this.#runningControllers.delete(key);
+      source.dispose();
+      if (this.#running.get(key) === source) {
+        this.#running.delete(key);
+      }
     }
 
     const lastLineId = document.lineCount - 1;

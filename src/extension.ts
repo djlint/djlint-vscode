@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { disposeEngine } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
 
@@ -8,7 +9,7 @@ export async function activate(
   const outputChannel = vscode.window.createOutputChannel("djLint", {
     log: true,
   });
-  context.subscriptions.push(outputChannel);
+  context.subscriptions.push(outputChannel, { dispose: disposeEngine });
 
   const formatter = new Formatter(context, outputChannel);
   formatter.activate();
