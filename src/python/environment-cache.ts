@@ -24,9 +24,7 @@ function scopeKey(key: EnvironmentCacheKey): string | typeof workspaceKey {
 
 /** A small per-scope cache of the last-seen value, used to de-duplicate
 change-event notifications that report no actual change. */
-export function createEnvironmentChangeCache<
-  T,
->(): EnvironmentChangeCache<T> {
+export function createEnvironmentChangeCache<T>(): EnvironmentChangeCache<T> {
   const values = new Map<string | typeof workspaceKey, T>();
 
   return {

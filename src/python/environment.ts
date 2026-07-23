@@ -1,13 +1,13 @@
 import { isDeepStrictEqual } from "node:util";
-import {
-  PythonExtension as PythonExtensionApi,
-  type ResolvedEnvironment,
-} from "@vscode/python-extension";
 import type {
   DidChangeEnvironmentEventArgs,
   PythonEnvironment,
   PythonEnvironmentApi,
 } from "@vscode/python-environments";
+import {
+  PythonExtension as PythonExtensionApi,
+  type ResolvedEnvironment,
+} from "@vscode/python-extension";
 import * as vscode from "vscode";
 import {
   createEnvironmentChangeCache,
@@ -25,11 +25,7 @@ export interface PythonCommand {
 export interface PythonEnvironmentDetails {
   command: PythonCommand | null;
   sysPrefix: string;
-  version: {
-    major: number;
-    minor: number;
-    patch: number | null;
-  } | null;
+  version: { major: number; minor: number; patch: number | null } | null;
 }
 
 /** Resolves Python environments from a single source (the Python
@@ -96,9 +92,7 @@ callers share one activation attempt instead of racing. A `null` result
 "unavailable" so we don't keep retrying on every call. */
 function lazyInit<T>(
   factory: (outputChannel: vscode.LogOutputChannel) => Promise<T | null>,
-): {
-  get: (outputChannel: vscode.LogOutputChannel) => Promise<T | null>;
-} {
+): { get: (outputChannel: vscode.LogOutputChannel) => Promise<T | null> } {
   let pending: Promise<T | typeof unavailable> | undefined;
 
   return {
@@ -156,7 +150,9 @@ class ClassicPythonExtension implements EnvironmentProvider {
     path: string,
   ): Promise<PythonEnvironmentDetails | null> {
     const environment = await this.api.environments.resolveEnvironment(path);
-    return environment == null ? null : toClassicEnvironmentDetails(environment);
+    return environment == null
+      ? null
+      : toClassicEnvironmentDetails(environment);
   }
 
   async getActiveEnvironment(
@@ -165,7 +161,9 @@ class ClassicPythonExtension implements EnvironmentProvider {
     const environment = await this.api.environments.resolveEnvironment(
       this.api.environments.getActiveEnvironmentPath(uri),
     );
-    return environment == null ? null : toClassicEnvironmentDetails(environment);
+    return environment == null
+      ? null
+      : toClassicEnvironmentDetails(environment);
   }
 }
 
@@ -234,7 +232,9 @@ class PythonEnvironmentsExtension implements EnvironmentProvider {
 
     this.#activeEnvironments.remember(uri?.toString(), details);
     if (details != null) {
-      this.outputChannel.debug(`Resolved Python environment: '${details.sysPrefix}'`);
+      this.outputChannel.debug(
+        `Resolved Python environment: '${details.sysPrefix}'`,
+      );
     }
     return details;
   }

@@ -22,11 +22,7 @@ export function parsePythonVersion(version: string): PythonVersion | null {
   );
   if (withPatch?.groups != null) {
     const { major, minor, patch } = withPatch.groups;
-    return {
-      major: Number(major),
-      minor: Number(minor),
-      patch: Number(patch),
-    };
+    return { major: Number(major), minor: Number(minor), patch: Number(patch) };
   }
 
   const withoutPatch = /^(?<major>\d+)\.(?<minor>\d+)/u.exec(version);
