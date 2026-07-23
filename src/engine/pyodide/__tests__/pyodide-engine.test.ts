@@ -1,7 +1,5 @@
-import { existsSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
-import * as esbuild from "esbuild";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import {
   FORMAT_EXPECTED,
@@ -9,6 +7,13 @@ import {
   LINT_EXPECTED,
   LINT_INPUT,
 } from "../../__tests__/fixtures/basic.html.js";
+import {
+  buildWorker,
+  fakeConfig,
+  fakeDocument,
+  fakeFormattingOptions,
+  fakeToken,
+} from "../../__tests__/pyodide-harness.js";
 import { PyodideEngine } from "../index.js";
 
 // `index.ts` imports the vscode module (for CancellationError); it does not
@@ -17,37 +22,14 @@ vi.mock("vscode", () => ({ CancellationError: class extends Error {} }));
 
 // Real Pyodide-in-Node integration/parity test. Requires the bundled runtime
 // (`npm run assets`); skipped gracefully when the assets are absent.
-const assetsDir = resolve("assets/pyodide");
-const hasAssets = existsSync(join(assetsDir, "pyodide.mjs"));
-
-const doc = (text: string): any => ({ getText: () => text });
-const config: any = {
-  get: (key: string) => (key === "profile" ? "django" : undefined),
-};
-const fmtOptions: any = { tabSize: 4, insertSpaces: true };
-const token: any = {
-  isCancellationRequested: false,
-  onCancellationRequested: () => ({ dispose() {} }),
-};
+const assetsDir = path.resolve("assets/pyodide");
+const hasAssets = existsSync(path.join(assetsDir, "pyodide.mjs"));
 
 describe.skipIf(!hasAssets)("PyodideEngine (real Pyodide in Node)", () => {
   let engine: PyodideEngine;
 
   beforeAll(async () => {
-    const workerPath = join(
-      mkdtempSync(join(tmpdir(), "djlint-worker-")),
-      "worker.cjs",
-    );
-    await esbuild.build({
-      entryPoints: ["src/engine/pyodide/worker.ts"],
-      bundle: true,
-      outfile: workerPath,
-      format: "cjs",
-      platform: "node",
-      target: "node22",
-      external: ["vscode"],
-    });
-    engine = new PyodideEngine(workerPath, assetsDir);
+    engine = new PyodideEngine(await buildWorker(), assetsDir);
   }, 120_000);
 
   afterAll(() => {
@@ -56,16 +38,20 @@ describe.skipIf(!hasAssets)("PyodideEngine (real Pyodide in Node)", () => {
 
   test("format matches golden djLint output", async () => {
     const out = await engine.format(
-      doc(FORMAT_INPUT),
-      config,
-      fmtOptions,
-      token,
+      fakeDocument(FORMAT_INPUT),
+      fakeConfig("django"),
+      fakeFormattingOptions,
+      fakeToken,
     );
     expect(out).toBe(FORMAT_EXPECTED);
   }, 120_000);
 
   test("lint returns structured diagnostics", async () => {
-    const diagnostics = await engine.lint(doc(LINT_INPUT), config, token);
+    const diagnostics = await engine.lint(
+      fakeDocument(LINT_INPUT),
+      fakeConfig("django"),
+      fakeToken,
+    );
     expect(diagnostics).toEqual(LINT_EXPECTED);
   }, 120_000);
 });
