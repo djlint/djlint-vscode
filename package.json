@@ -38,11 +38,12 @@
   "scripts": {
     "assets": "node scripts/build-djlint-wheel.mjs && node scripts/fetch-pyodide-assets.mjs",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.21.1",
+    "esbuild-worker": "esbuild ./src/engine/pyodide/worker.ts --bundle --outfile=dist/pyodide-worker.cjs --format=cjs --platform=node --target=node22.21.1",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify",
+    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run assets && npm run esbuild-base -- --minify && npm run esbuild-worker -- --minify",
     "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
     "watch:tsc": "tsc --watch"
   },

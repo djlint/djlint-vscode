@@ -8,8 +8,9 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint itself by following the [djLint getting started guide](https://djlint.com/docs/getting-started/) or the [djLint README](https://github.com/djlint/djLint/blob/master/README.md).
-1. Install djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+Install the djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+
+That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version or custom Python-module rules), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and only falls back to the bundled runtime when no external djLint is found. The `djlint.importStrategy` setting controls this (`fromEnvironment`, the default, or `useBundled` to always use the bundled runtime).
 
 ## Usage
 
@@ -57,4 +58,6 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ## License
 
-[MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)
+The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
+
+The VSIX also bundles a self-contained djLint runtime (Pyodide + djLint + its dependencies) so it works without a separate install. djLint is licensed under GPL-3.0-or-later; see [THIRD_PARTY.md](THIRD_PARTY.md) for the full list of bundled components, their licenses, and the written offer of source.
