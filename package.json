@@ -539,6 +539,7 @@
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.1",
     "@types/vscode": "1.107.0",
+    "@vscode/python-environments": "1.0.0",
     "esbuild": "0.28.1",
     "eslint": "10.7.0",
     "eslint-config-prettier": "10.1.8",
