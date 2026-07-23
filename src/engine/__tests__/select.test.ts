@@ -2,12 +2,14 @@ import { expect, test, vi } from "vitest";
 import type { EngineSelectionDeps } from "../select.js";
 
 /*
- * The untouched getEngine() in select.ts pulls in SubprocessEngine ->
- * runner.ts -> the "vscode" module, which isn't available outside VS Code.
- * Stub that one hop so this file can exercise the pure selectEngine() in
- * isolation, with no dependency on VS Code at all.
+ * getEngine() in select.ts pulls in the two engines + config + the "vscode"
+ * module, none of which resolve outside VS Code. Stub those hops so this file
+ * can exercise the pure selectEngine() in isolation.
  */
+vi.mock("vscode", () => ({}));
 vi.mock("../subprocess/index.js", () => ({}));
+vi.mock("../pyodide/index.js", () => ({}));
+vi.mock("../../config.js", () => ({}));
 
 const { selectEngine } = await import("../select.js");
 

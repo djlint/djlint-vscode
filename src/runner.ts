@@ -168,6 +168,7 @@ export async function runDjlint(
   outputChannel: vscode.LogOutputChannel,
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
+  hasFallback = false,
 ): Promise<string> {
   let commands;
   try {
@@ -211,10 +212,10 @@ export async function runDjlint(
           throw e_;
         }
 
-        return checkErrors(e_, outputChannel, config).stdout;
+        return checkErrors(e_, outputChannel, config, hasFallback).stdout;
       }
     }
 
-    return checkErrors(e, outputChannel, config).stdout;
+    return checkErrors(e, outputChannel, config, hasFallback).stdout;
   }
 }

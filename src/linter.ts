@@ -84,7 +84,7 @@ export class Linter {
 
     let diagnostics;
     try {
-      diagnostics = await getEngine(this.#outputChannel).lint(
+      diagnostics = await getEngine(this.#context, this.#outputChannel).lint(
         document,
         config,
         source.token,

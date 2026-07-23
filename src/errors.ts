@@ -39,7 +39,18 @@ export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
   config: vscode.WorkspaceConfiguration,
+  hasFallback = false,
 ): CustomExecaError {
+  // With a bundled fallback, surface "djLint unavailable" quietly (log only, no popup) so the caller can switch to the bundled runtime.
+  if (
+    hasFallback &&
+    (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr))
+  ) {
+    errorToOutputChannel(outputChannel, e);
+    // eslint-disable-next-line @typescript-eslint/only-throw-error
+    throw e;
+  }
+
   if (e.exitCode != null) {
     if (/(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)) {
       return e;

@@ -56,7 +56,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
 
     let stdout: string;
     try {
-      stdout = await getEngine(this.#outputChannel).format(
+      stdout = await getEngine(this.#context, this.#outputChannel).format(
         document,
         config,
         options,
