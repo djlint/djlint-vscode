@@ -58,16 +58,19 @@ subprocess.
   `pathspec`/`json5`/`editorconfig`/`jsbeautifier`/`cssbeautifier` are pure
   `py3-none-any`; the **djLint pure-python wheel is producible in-house** because the
   mypyc build hook is `enable-by-default = false`
-  ([djlint pyproject.toml:104](../../../../djlint/pyproject.toml#L104)). Pyodide 0.29 =
-  CPython 3.13, so the `tomli`/`typing-extensions` (py<3.11) branch is dead.
+  ([djlint pyproject.toml:104](../../../../djlint/pyproject.toml#L104)). The latest
+  Pyodide (314.0.2) = CPython 3.14, so the `tomli`/`typing-extensions` (py<3.11)
+  branch is dead; its package repo ships `regex` 2026.3.32 and `pyyaml` 6.0.3, both
+  satisfying djLint.
 - **Structured lint output** `{code,line,match,message}` maps straight into
   `vscode.Diagnostic`; djLint's 1-based line / 0-based column already match what the
   extension consumes ([src/linter.ts:115-117](../../../src/linter.ts#L115-L117)).
-- **Precedent — the maintainer's own code.** The djlint.com playground already runs
-  djLint formatting in Pyodide in a browser web worker
+- **Precedent — the maintainer's own code.** The djlint.com playground runs djLint
+  formatting in Pyodide in a browser web worker
   ([djlint docs/src/static/js/worker.js](../../../../djlint/docs/src/static/js/worker.js)):
-  it loads Pyodide 0.29.x, `micropip.install("djlint")`, then calls
-  `formatter(Config("."), html)` directly. This is strong prior art (see §3.1).
+  it loads Pyodide, `micropip.install("djlint")`, then calls `formatter(Config(...),
+  html)` directly. (This effort also refactored it to the latest Pyodide 314.x and the
+  safe value-passing pattern below.) Strong prior art — see §3.1.
 - **Bundle size:** ~10 MB compressed added to the VSIX (Pyodide core + stdlib + a few
   wheels) — comfortably under any plausible marketplace limit.
 
@@ -83,17 +86,19 @@ proves and what it leaves open directly shapes this design:
   `CONFIG_ARGS` table mapping the same VS Code-style option names to `Config` kwargs —
   a proven reference for §6 (though it covers only the **formatting** options).
 - **Leaves open (⇒ what Phase 0 must cover):**
-  1. It runs in a **plain website worker** via `importScripts(<CDN>)` **online** — not
-     the VS Code **extension-host** worker, and not **offline** from bundled assets.
-     The unproven surface is specifically: offline asset `fetch` + CORS from the
-     extension resource origin inside the extension-host worker.
+  1. It runs in a **plain website worker** loading Pyodide **online from the CDN** (now
+     an ESM module worker importing `pyodide.mjs`) — not the VS Code **extension-host**
+     worker, and not **offline** from bundled assets. The unproven surface is
+     specifically: offline asset `fetch` + CORS from the extension resource origin
+     inside the extension-host worker.
   2. It only **formats**; linting via `linter(config, html, "-", "-")` is un-exercised
      by prior art (validated by code-reading only). The spike/Phase 1 must exercise it.
-  3. It builds the `Config(...)` call by **string-interpolating** option values into
-     Python source (`Config("."${configArguments})`) and uses `Config(".")`. The
-     extension will instead use `Config("-")` (stdin semantics, matching today's
-     `djlint -` pipe) and pass values via `pyodide.globals.set` / `toPy` as a dict —
-     avoiding Python-source escaping/injection bugs.
+- **Patterns to mirror (already applied to the refactored playground):** call the
+  library API directly with `Config("-")` (stdin semantics, matching today's `djlint -`
+  pipe); build a JS object of options and pass it via `pyodide.toPy` as a dict
+  (`Config("-", **options)`) rather than string-interpolating values into Python source
+  — avoiding escaping/injection bugs. The `CONFIG_ARGS` table in the worker is the
+  proven option-name → `Config`-kwarg map to reuse (§6).
 
 ### Caveats the design must close
 1. **The VS Code extension-host worker + offline bundled assets is unproven.**
@@ -262,13 +267,13 @@ This bypasses click argv parsing, the stdin/stdout streams, the progressbar,
   `--max-line-length N` → `max_line_length=N`). List options stay comma-joined strings
   (Config splits them internally).
 - **Proven reference:** the djlint.com worker's `CONFIG_ARGS` table
-  ([djlint docs/src/static/js/worker.js:13-50](../../../../djlint/docs/src/static/js/worker.js#L13-L50))
+  ([djlint docs/src/static/js/worker.js:4-33](../../../../djlint/docs/src/static/js/worker.js#L4-L33))
   already encodes this option-name → `Config`-kwarg mapping for the formatting options;
   model `buildKwargs()` on it (and extend with the linting options it omits).
-- **Pass values safely.** Unlike the playground (which string-interpolates values into
-  Python source), build a JS object of kwargs and hand it to Python via
-  `pyodide.globals.set` / `toPy`, then `Config('-', **opts_dict)`. No Python-source
-  concatenation — avoids escaping/injection bugs on arbitrary user config strings.
+- **Pass values safely** (as the refactored playground now does): build a JS object of
+  kwargs and hand it to Python via `pyodide.toPy` as a dict, then `Config('-',
+  **opts_dict)`. No Python-source concatenation — avoids escaping/injection bugs on
+  arbitrary user config strings.
 - Skip CLI-only args for the kwargs path: `--quiet`, `--linter-output-format`
   (structured output is native), and `--reformat` (implied by calling `formatter()`).
 - Unify lint output: `SubprocessEngine.lint` parses CLI stdout into `LintDiagnostic[]`
@@ -284,9 +289,9 @@ This bypasses click argv parsing, the stdin/stdout streams, the progressbar,
   [djlint settings.py:1365](../../../../djlint/src/djlint/settings.py#L1365) and
   [djlint lint.py:89-90](../../../../djlint/src/djlint/lint.py#L89-L90).
 - **Pin together:** djLint version + Pyodide version + Emscripten wheel ABI of
-  `regex`/`pyyaml`/`click`. Align on the Pyodide version the docs playground already
-  tracks (currently 0.29.x) so both use the same known-good runtime. Bundle those
-  wheels locally and `loadPackage` from a trimmed local `pyodide-lock.json` — no
+  `regex`/`pyyaml`/`click`. Align on the Pyodide version the docs playground tracks
+  (currently 314.x / CPython 3.14) so both use the same known-good runtime. Bundle
+  those wheels locally and `loadPackage` from a trimmed local `pyodide-lock.json` — no
   `micropip`, no network.
 - **CI gate:** before bumping djLint, verify the pinned Pyodide's prebuilt
   `regex`/`pyyaml`/`click` versions still satisfy djLint's constraints (micropip
