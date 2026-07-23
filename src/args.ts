@@ -7,11 +7,26 @@ export abstract class CliArg {
     readonly minVersion: string,
   ) {}
 
+  /** The djLint `Config` kwarg name for this flag, e.g. `--max-line-length`
+  -> `max_line_length`. */
+  get kwargName(): string {
+    return this.cliName.replace(/^--/u, "").replaceAll("-", "_");
+  }
+
   abstract build(
     config: vscode.WorkspaceConfiguration,
     document: vscode.TextDocument,
     formattingOptions?: vscode.FormattingOptions,
   ): string[];
+
+  /** The djLint `Config(**kwargs)` equivalent of `build()`, or `undefined`
+  when this flag has no library-API counterpart (CLI-only) or the value is
+  absent/empty, mirroring `build()`'s emission conditions. */
+  abstract buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+    document: vscode.TextDocument,
+    formattingOptions?: vscode.FormattingOptions,
+  ): [string, unknown] | undefined;
 }
 
 class SimpleArg extends CliArg {
@@ -22,12 +37,23 @@ class SimpleArg extends CliArg {
   build(): string[] {
     return [this.cliName];
   }
+
+  // CLI-only: e.g. --reformat is implied by calling formatter(), --quiet has no library-API counterpart.
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  buildKwarg(): undefined {}
 }
 
 class BoolArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
     const value = config.get<boolean>(this.vscodeName);
     return value ? [this.cliName] : [];
+  }
+
+  buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+  ): [string, unknown] | undefined {
+    const value = config.get<boolean>(this.vscodeName);
+    return value ? [this.kwargName, true] : void 0;
   }
 }
 
@@ -36,6 +62,13 @@ class NumberOrNullArg extends CliArg {
     const value = config.get<number | null>(this.vscodeName);
     return value == null ? [] : [this.cliName, value.toString()];
   }
+
+  buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+  ): [string, unknown] | undefined {
+    const value = config.get<number | null>(this.vscodeName);
+    return value == null ? void 0 : [this.kwargName, value];
+  }
 }
 
 class StringArrayArg extends CliArg {
@@ -43,12 +76,26 @@ class StringArrayArg extends CliArg {
     const value = config.get<string[]>(this.vscodeName);
     return value?.length ? [this.cliName, value.join(",")] : [];
   }
+
+  buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+  ): [string, unknown] | undefined {
+    const value = config.get<string[]>(this.vscodeName);
+    return value?.length ? [this.kwargName, value.join(",")] : void 0;
+  }
 }
 
 class StringArg extends CliArg {
   build(config: vscode.WorkspaceConfiguration): string[] {
     const value = config.get<string>(this.vscodeName);
     return value ? [this.cliName, value] : [];
+  }
+
+  buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+  ): [string, unknown] | undefined {
+    const value = config.get<string>(this.vscodeName);
+    return value ? [this.kwargName, value] : void 0;
   }
 }
 
@@ -65,6 +112,10 @@ class LinterOutputFormatArg extends CliArg {
         ]
       : [];
   }
+
+  // CLI-only: structured output is native to the library API, so there is no kwarg to emit.
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  buildKwarg(): undefined {}
 }
 
 class UseEditorIndentationArg extends CliArg {
@@ -80,6 +131,17 @@ class UseEditorIndentationArg extends CliArg {
     return config.get<boolean>(this.vscodeName)
       ? [this.cliName, formattingOptions.tabSize.toString()]
       : [];
+  }
+
+  buildKwarg(
+    config: vscode.WorkspaceConfiguration,
+    _document: vscode.TextDocument,
+    formattingOptions?: vscode.FormattingOptions,
+  ): [string, unknown] | undefined {
+    if (formattingOptions == null || !config.get<boolean>(this.vscodeName)) {
+      return void 0;
+    }
+    return [this.kwargName, formattingOptions.tabSize];
   }
 }
 
