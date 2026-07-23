@@ -1,12 +1,17 @@
 import path from "node:path";
-import { PythonExtension } from "@vscode/python-extension";
 import { execa, ExecaError } from "execa";
 import * as vscode from "vscode";
 import { configurationArg, rulesArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
+import { DjlintUnavailableError } from "./engine/types.js";
 import { checkErrors } from "./errors.js";
+import {
+  getEnvironmentProvider,
+  type EnvironmentProvider,
+  type PythonEnvironmentDetails,
+} from "./python/environment.js";
 
-interface RunnerCommand {
+export interface RunnerCommand {
   exec: string;
   prefixArgs: readonly string[];
 }
@@ -31,38 +36,161 @@ function resolveConfiguredExecutablePath(
   return path.resolve(workspaceFolder.uri.fsPath, exec);
 }
 
-async function getDjlintCommand(
+/** Trims a configured executable/interpreter entry and, if it looks like a
+relative filesystem path, resolves it against the workspace root. Empty (or
+whitespace-only) entries come back as `""` so callers can filter them out
+uniformly. */
+function normalizeConfiguredExecutable(
+  raw: string,
   document: vscode.TextDocument,
-  config: vscode.WorkspaceConfiguration,
+): string {
+  const trimmed = raw.trim();
+  return trimmed ? resolveConfiguredExecutablePath(trimmed, document) : trimmed;
+}
+
+/** Converts a resolved Python environment into the exec+args shape the
+runner needs, appending `-m djlint` to the interpreter's own launch
+command/args (which may themselves be non-empty, e.g. for conda/uv-managed
+environments). Returns `null` when the environment has no runnable
+command. */
+function toEnvironmentRunnerCommand(
+  details: PythonEnvironmentDetails | null,
+): RunnerCommand | null {
+  if (details?.command == null) {
+    return null;
+  }
+  return {
+    exec: details.command.executable,
+    prefixArgs: [...details.command.args, "-m", "djlint"],
+  };
+}
+
+export interface ResolveDjlintCommandDeps {
+  path: readonly string[];
+  executablePath: string | undefined;
+  interpreter: readonly string[];
+  useVenv: boolean | undefined;
+  provider: EnvironmentProvider | null;
+  uri: vscode.Uri | undefined;
+  probe: (exec: string) => Promise<boolean>;
+}
+
+/** Pure decision: which djLint command to run, mirroring ruff-vscode's
+`findRuffBinaryPath` resolution order. No VS Code/execa dependency beyond
+the injected `deps`, so it is unit-testable in isolation.
+
+1. `djlint.path` — the first configured executable that `probe()` confirms
+   works, run directly.
+2. The deprecated `djlint.executablePath`, but only when the user changed it
+   from its old default (`"djlint"`) — same shape as (1).
+3. `djlint.interpreter` — the first non-empty entry. If `provider` can
+   resolve it to an environment, that environment's own launch command/args
+   are used (with `-m djlint` appended); otherwise the entry itself is used
+   as the interpreter verbatim.
+4. The active Python environment from `provider`, unless the deprecated
+   `djlint.useVenv` is explicitly `false`.
+5. `djlint` on PATH, if `probe()` confirms it works.
+6. Otherwise `DjlintUnavailableError`, so the caller can fall back to the
+   bundled runtime. */
+export async function resolveDjlintCommand(
+  deps: ResolveDjlintCommandDeps,
 ): Promise<RunnerCommand> {
-  if (config.get<boolean>("useVenv")) {
-    let api;
-    try {
-      api = await PythonExtension.api();
-    } catch {}
-    if (api) {
-      const environment = await api.environments.resolveEnvironment(
-        api.environments.getActiveEnvironmentPath(document.uri),
-      );
-      const pythonExecUri = environment?.executable.uri;
-      if (pythonExecUri) {
-        return { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] };
-      }
-      const msg = "Failed to get Python interpreter from Python extension.";
-      throw new Error(msg);
+  for (const rawExec of deps.path) {
+    const exec = rawExec.trim();
+    // eslint-disable-next-line no-await-in-loop -- candidates must be probed in order; the first one that works wins.
+    if (exec && (await deps.probe(exec))) {
+      return { exec, prefixArgs: [] };
     }
   }
 
-  const executablePath = config.get<string>("executablePath")?.trim();
-  if (executablePath) {
-    return {
-      exec: resolveConfiguredExecutablePath(executablePath, document),
-      prefixArgs: [],
-    };
+  const executablePath = deps.executablePath?.trim();
+  if (
+    executablePath &&
+    executablePath !== "djlint" &&
+    (await deps.probe(executablePath))
+  ) {
+    return { exec: executablePath, prefixArgs: [] };
   }
 
-  const msg = `Invalid ${configSection}.executablePath setting.`;
-  throw new Error(msg);
+  for (const rawEntry of deps.interpreter) {
+    const entry = rawEntry.trim();
+    if (!entry) {
+      continue;
+    }
+    if (deps.provider) {
+      const resolved = toEnvironmentRunnerCommand(
+        // eslint-disable-next-line no-await-in-loop -- only the first non-empty entry is ever consulted; the loop exists solely to skip blank entries.
+        await deps.provider.resolveInterpreter(entry),
+      );
+      if (resolved) {
+        return resolved;
+      }
+    }
+    return { exec: entry, prefixArgs: ["-m", "djlint"] };
+  }
+
+  if (deps.useVenv !== false && deps.provider) {
+    const active = toEnvironmentRunnerCommand(
+      await deps.provider.getActiveEnvironment(deps.uri),
+    );
+    if (active) {
+      return active;
+    }
+  }
+
+  if (await deps.probe("djlint")) {
+    return { exec: "djlint", prefixArgs: [] };
+  }
+
+  throw new DjlintUnavailableError(
+    `Could not find djLint. Set ${configSection}.path, ${configSection}.interpreter, or install djLint so it is available on PATH.`,
+  );
+}
+
+/** Runtime `probe`: attempts to spawn `exec --version` and reports whether
+the process could be launched at all (regardless of its exit code), which is
+enough to tell a missing/unresolvable executable from a real one. */
+async function probeExecutable(exec: string): Promise<boolean> {
+  try {
+    const result = await execa(exec, ["--version"], { reject: false });
+    return result.exitCode !== void 0;
+  } catch {
+    return false;
+  }
+}
+
+async function getDjlintCommand(
+  document: vscode.TextDocument,
+  config: vscode.WorkspaceConfiguration,
+  outputChannel: vscode.LogOutputChannel,
+): Promise<RunnerCommand> {
+  function normalize(raw: string): string {
+    return normalizeConfiguredExecutable(raw, document);
+  }
+
+  const rawExecutablePath = config.get<string>("executablePath");
+  const interpreter = (config.get<string[]>("interpreter") ?? []).map((raw) =>
+    normalize(raw),
+  );
+  const useVenv = config.get<boolean>("useVenv");
+
+  // Only activate the Python (Environments) extension when this resolution could actually use it: either djlint.interpreter has an entry to resolve, or the active environment step (guarded by the deprecated useVenv) is still in play. This keeps a "djlint.path only, useVenv: false" setup from paying for an extension it never asked for.
+  const requiresProvider =
+    interpreter.some((entry) => entry !== "") || useVenv !== false;
+  const provider = requiresProvider
+    ? await getEnvironmentProvider(outputChannel)
+    : null;
+
+  return resolveDjlintCommand({
+    executablePath:
+      rawExecutablePath == null ? void 0 : normalize(rawExecutablePath),
+    interpreter,
+    path: (config.get<string[]>("path") ?? []).map((raw) => normalize(raw)),
+    probe: probeExecutable,
+    provider,
+    uri: document.uri,
+    useVenv,
+  });
 }
 
 function getCwd(
@@ -146,12 +274,17 @@ export async function runDjlint(
 ): Promise<string> {
   let command;
   try {
-    command = await getDjlintCommand(document, config);
+    command = await getDjlintCommand(document, config, outputChannel);
   } catch (e) {
-    void vscode.window.showErrorMessage(
-      // eslint-disable-next-line unicorn/prefer-error-is-error
-      e instanceof Error ? e.message : String(e),
-    );
+    // With a bundled fallback, stay quiet (log only) so the caller can switch engines instead of showing a popup for a condition that will self-resolve.
+    if (hasFallback && e instanceof DjlintUnavailableError) {
+      outputChannel.debug(`${e.message} Using the bundled runtime.`);
+    } else {
+      void vscode.window.showErrorMessage(
+        // eslint-disable-next-line unicorn/prefer-error-is-error
+        e instanceof Error ? e.message : String(e),
+      );
+    }
     throw e;
   }
 

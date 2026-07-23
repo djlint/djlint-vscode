@@ -109,6 +109,8 @@
           "minLength": 1,
           "default": "djlint",
           "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled.",
+          "markdownDeprecationMessage": "**Deprecated**: use `#djlint.path#` instead.",
+          "deprecationMessage": "Deprecated: use djlint.path instead.",
           "scope": "resource"
         },
         "djlint.exclude": {
@@ -272,6 +274,15 @@
           "description": "JS indent level. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
+        "djlint.interpreter": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Path(s) to a Python interpreter to run djLint from (`python -m djlint`), tried in order until one succeeds. Takes precedence over the active environment. When empty, the active environment from the Python Environments (or Python) extension is used. Ignored when `#djlint.path#` resolves.",
+          "scope": "machine-overridable"
+        },
         "djlint.lineBreakAfterMultilineTag": {
           "type": "boolean",
           "default": false,
@@ -322,6 +333,15 @@
           "default": false,
           "description": "Do not attempt to format set contents. Requires djLint ≥ 1.30.2.",
           "scope": "resource"
+        },
+        "djlint.path": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Path(s) to the djLint executable, tried in order until one succeeds. Relative paths are resolved from the workspace root. Takes precedence over `#djlint.interpreter#`.",
+          "scope": "machine-overridable"
         },
         "djlint.preserveBlankLines": {
           "type": "boolean",
@@ -406,6 +426,8 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` is ignored. Disable this to use `#djlint.executablePath#` (`djlint` from PATH by default).",
+          "markdownDeprecationMessage": "**Deprecated**: use `#djlint.interpreter#` and `#djlint.importStrategy#` instead.",
+          "deprecationMessage": "Deprecated: use djlint.interpreter and djlint.importStrategy instead.",
           "scope": "resource"
         }
       }
@@ -560,6 +582,8 @@
       "restrictedConfigurations": [
         "djlint.executablePath",
         "djlint.importStrategy",
+        "djlint.interpreter",
+        "djlint.path",
         "djlint.useVenv",
         "djlint.configuration",
         "djlint.rules"

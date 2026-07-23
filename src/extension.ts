@@ -3,6 +3,7 @@ import { configSection } from "./config.js";
 import { disposeEngine } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
+import { onDidChangeActivePythonEnvironment } from "./python/environment.js";
 
 export async function activate(
   context: vscode.ExtensionContext,
@@ -12,7 +13,13 @@ export async function activate(
   });
 
   // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload — this also clears a FallbackEngine that latched onto the bundled runtime, letting a newly installed djLint take over.
-  const engineSettings = ["importStrategy", "useVenv", "executablePath"];
+  const engineSettings = [
+    "executablePath",
+    "importStrategy",
+    "interpreter",
+    "path",
+    "useVenv",
+  ];
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
@@ -26,6 +33,8 @@ export async function activate(
         disposeEngine();
       }
     }),
+    // The active interpreter can also change from outside VS Code's settings (switching environments via the Python extension's UI), so this needs its own listener rather than folding into the config-change one above.
+    onDidChangeActivePythonEnvironment(disposeEngine),
   );
 
   const formatter = new Formatter(context, outputChannel);
