@@ -483,7 +483,7 @@
     "@eslint/js": "10.0.1",
     "@ianvs/prettier-plugin-sort-imports": "4.7.1",
     "@total-typescript/ts-reset": "0.6.1",
-    "@tsconfig/node22": "22.0.5",
+    "@tsconfig/node24": "24.0.0",
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.1",
     "@types/vscode": "1.107.0",
