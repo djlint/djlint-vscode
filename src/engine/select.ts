@@ -31,7 +31,7 @@ export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
 is unavailable, transparently switches to a lazily-created secondary (bundled
 Pyodide) for that call and every call after — logging one info line instead of
 the old blocking "not installed" error. */
-class FallbackEngine implements DjlintEngine {
+export class FallbackEngine implements DjlintEngine {
   #secondary: DjlintEngine | undefined;
   #switched = false;
 

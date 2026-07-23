@@ -52,6 +52,9 @@ export class PyodideEngine implements DjlintEngine {
   dispose(): void {
     void this.#worker?.terminate();
     this.#worker = void 0;
+    for (const pending of this.#pending.values()) {
+      pending.reject(new Error("djLint engine disposed"));
+    }
     this.#pending.clear();
   }
 
@@ -97,6 +100,7 @@ export class PyodideEngine implements DjlintEngine {
     return new Promise((resolve, reject) => {
       const cancel = token.onCancellationRequested(() => {
         this.#pending.delete(id);
+        cancel.dispose();
         reject(new vscode.CancellationError());
       });
       this.#pending.set(id, {

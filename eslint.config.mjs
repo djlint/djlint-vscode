@@ -96,6 +96,7 @@ export default defineConfig(
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
       "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/require-await": "off",
       "capitalized-comments": "off",
       "func-style": "off",
       "no-undefined": "off",

@@ -78,7 +78,10 @@ async function pypiWheel(pkg) {
   }
   const buf = await get(url.url);
   const expected = url.digests?.sha256;
-  if (expected && sha256(buf) !== expected) {
+  if (!expected) {
+    throw new Error(`PyPI provided no sha256 digest for ${url.filename}`);
+  }
+  if (sha256(buf) !== expected) {
     throw new Error(`sha256 mismatch for ${url.filename} against PyPI digest`);
   }
   writeFileSync(`${OUT}/${url.filename}`, buf);

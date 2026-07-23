@@ -223,7 +223,7 @@
           ],
           "default": "fromEnvironment",
           "scope": "window",
-          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `useBundled` always uses the bundled runtime."
+          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `useBundled` always uses the bundled runtime. Note: the bundled runtime applies djLint settings from VS Code but does not read project config files (`pyproject.toml [tool.djlint]`, `.djlintrc`); install djLint if you rely on those."
         },
         "djlint.include": {
           "type": "array",
@@ -347,7 +347,7 @@
         "djlint.showInstallError": {
           "type": "boolean",
           "default": true,
-          "description": "Show error message when djLint is not installed."
+          "description": "Show error message when djLint is not installed. Superseded by the bundled runtime: when djLint is not found the extension now falls back to it silently instead of showing this error."
         },
         "djlint.singleAttributePerLine": {
           "type": "boolean",

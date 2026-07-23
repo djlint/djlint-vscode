@@ -10,7 +10,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 Install the djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
-That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version or custom Python-module rules), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and only falls back to the bundled runtime when no external djLint is found. The `djlint.importStrategy` setting controls this (`fromEnvironment`, the default, or `useBundled` to always use the bundled runtime).
+That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version, custom Python-module rules, or project config files such as `pyproject.toml [tool.djlint]` / `.djlintrc` — which the bundled runtime does not read), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and only falls back to the bundled runtime when no external djLint is found. The `djlint.importStrategy` setting controls this (`fromEnvironment`, the default, or `useBundled` to always use the bundled runtime).
 
 ## Usage
 

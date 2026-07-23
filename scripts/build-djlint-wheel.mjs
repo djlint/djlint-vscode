@@ -52,7 +52,10 @@ async function downloadFromPypi() {
   }
   const buf = Buffer.from(await (await fetch(url.url)).arrayBuffer());
   const expected = url.digests?.sha256;
-  if (expected && createHash("sha256").update(buf).digest("hex") !== expected) {
+  if (!expected) {
+    throw new Error(`PyPI provided no sha256 digest for ${url.filename}`);
+  }
+  if (createHash("sha256").update(buf).digest("hex") !== expected) {
     throw new Error(`sha256 mismatch for ${url.filename} against PyPI digest`);
   }
   writeFileSync(`${OUT}/${url.filename}`, buf);

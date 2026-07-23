@@ -46,7 +46,9 @@ export function checkErrors(
     hasFallback &&
     (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr))
   ) {
-    errorToOutputChannel(outputChannel, e);
+    outputChannel.debug(
+      `External djLint not available (${e.shortMessage}); using the bundled runtime.`,
+    );
     // eslint-disable-next-line @typescript-eslint/only-throw-error
     throw e;
   }
