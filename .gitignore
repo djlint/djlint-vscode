@@ -343,3 +343,9 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/jetbrains+all,linux,macos,node,vim,visualstudiocode,windows
+
+# Provisioned Pyodide runtime + wheels (fetched by `npm run assets`, bundled at package time)
+/assets/pyodide/
+
+# Subagent-driven-development scratch (ledger, briefs, reports, review packages)
+/.superpowers/
