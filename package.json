@@ -209,6 +209,20 @@
           "default": false,
           "description": "Do not fix case on known html tags. Requires djLint ≥ 1.23."
         },
+        "djlint.importStrategy": {
+          "type": "string",
+          "enum": [
+            "fromEnvironment",
+            "useBundled"
+          ],
+          "enumDescriptions": [
+            "Use djLint from the environment, falling back to the bundled version if it is not found.",
+            "Always use the version of djLint bundled with the extension."
+          ],
+          "default": "fromEnvironment",
+          "scope": "window",
+          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `useBundled` always uses the bundled runtime."
+        },
         "djlint.include": {
           "type": "array",
           "items": {
@@ -502,5 +516,16 @@
   "engines": {
     "vscode": "^1.107.0"
   },
-  "icon": "icon.png"
+  "icon": "icon.png",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "djlint.executablePath",
+        "djlint.pythonPath",
+        "djlint.configuration",
+        "djlint.rules"
+      ]
+    }
+  }
 }
