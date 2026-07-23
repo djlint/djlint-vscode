@@ -11,13 +11,18 @@ export async function activate(
     log: true,
   });
 
-  // Rebuild the cached engine (on next use) when workspace trust or importStrategy changes, so the choice applies without a window reload.
+  // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload — this also clears a FallbackEngine that latched onto the bundled runtime, letting a newly installed djLint take over.
+  const engineSettings = ["importStrategy", "useVenv", "executablePath"];
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
     vscode.workspace.onDidGrantWorkspaceTrust(disposeEngine),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration(`${configSection}.importStrategy`)) {
+      if (
+        engineSettings.some((key) =>
+          e.affectsConfiguration(`${configSection}.${key}`),
+        )
+      ) {
         disposeEngine();
       }
     }),

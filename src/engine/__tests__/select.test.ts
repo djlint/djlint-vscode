@@ -50,15 +50,16 @@ test("untrusted + useBundled → pyodide (both conditions)", () => {
   ).toBe("pyo");
 });
 
-test("fromEnvironmentStrict → subprocess, ignoring trust", () => {
+test("fromEnvironmentStrict (trusted) → subprocess", () => {
   expect(
     selectEngine(deps({ importStrategy: "fromEnvironmentStrict" })).kind,
   ).toBe("sub");
-  expect(
-    selectEngine(
-      deps({ importStrategy: "fromEnvironmentStrict", isTrusted: false }),
-    ).kind,
-  ).toBe("sub");
+});
+
+test("untrusted always → pyodide, even in strict mode (never execute env tools)", () => {
+  const d = deps({ importStrategy: "fromEnvironmentStrict", isTrusted: false });
+  expect(selectEngine(d).kind).toBe("pyo");
+  expect(d.makeSubprocess).not.toHaveBeenCalled();
 });
 
 test("fromEnvironment (trusted) asks for a subprocess WITH fallback", () => {

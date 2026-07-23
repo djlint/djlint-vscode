@@ -50,7 +50,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     this.#running.get(key)?.cancel();
     const source = new vscode.CancellationTokenSource();
     this.#running.set(key, source);
-    token.onCancellationRequested(() => {
+    const cancellation = token.onCancellationRequested(() => {
       source.cancel();
     });
 
@@ -65,6 +65,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     } catch {
       return void 0;
     } finally {
+      cancellation.dispose();
       source.dispose();
       if (this.#running.get(key) === source) {
         this.#running.delete(key);

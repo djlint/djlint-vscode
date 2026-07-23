@@ -100,6 +100,7 @@ interface ChildOptions {
   stripFinalNewline: boolean;
   cwd?: string;
   cancelSignal: AbortSignal;
+  env: NodeJS.ProcessEnv;
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
@@ -124,6 +125,9 @@ async function runDjlintCommand(
   const childOptions: ChildOptions = {
     ...getCwd(childArgs, document, outputChannel),
     cancelSignal: abortController.signal,
+    // PYTHONSAFEPATH (3.11+) drops the unsafe sys.path[0] entry, so a stray djlint.py beside the document cannot shadow the real module on `-m`.
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- environment variable name
+    env: { ...process.env, PYTHONSAFEPATH: "1" },
     input: document.getText(),
     stripFinalNewline: false,
   };

@@ -23,21 +23,19 @@ export interface EngineSelectionDeps<T> {
 setting and workspace-trust state. No VS Code dependency, so it is
 unit-testable in isolation.
 
+- An untrusted workspace ALWAYS gets the sandboxed bundled runtime, whatever
+  the strategy: we never execute an environment tool on untrusted content.
 - `useBundled`: always the bundled runtime.
 - `fromEnvironmentStrict`: the environment djLint, no fallback — an error
   surfaces if it is unavailable (guarantees the configured instance runs).
 - `fromEnvironment` (default): the environment djLint with a silent fallback
-  to the bundled runtime; in an untrusted workspace it uses the sandboxed
-  bundled runtime instead of executing an environment tool. */
+  to the bundled runtime. */
 export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
-  if (deps.importStrategy === "useBundled") {
+  if (!deps.isTrusted || deps.importStrategy === "useBundled") {
     return deps.makePyodide();
   }
   if (deps.importStrategy === "fromEnvironmentStrict") {
     return deps.makeSubprocess({ fallback: false });
-  }
-  if (!deps.isTrusted) {
-    return deps.makePyodide();
   }
   return deps.makeSubprocess({ fallback: true });
 }
@@ -49,6 +47,7 @@ the old blocking "not installed" error. */
 export class FallbackEngine implements DjlintEngine {
   #secondary: DjlintEngine | undefined;
   #switched = false;
+  #disposed = false;
 
   constructor(
     private readonly primary: DjlintEngine,
@@ -105,11 +104,16 @@ export class FallbackEngine implements DjlintEngine {
   }
 
   dispose(): void {
+    this.#disposed = true;
     this.primary.dispose();
     this.#secondary?.dispose();
   }
 
   #secondaryEngine(): DjlintEngine {
+    // Dispose is terminal: never build a secondary (and its Pyodide worker) for an engine already invalidated mid-call.
+    if (this.#disposed) {
+      throw new vscode.CancellationError();
+    }
     this.#secondary ??= this.makeSecondary();
     return this.#secondary;
   }

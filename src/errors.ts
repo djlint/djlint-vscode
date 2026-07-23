@@ -15,7 +15,8 @@ function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
   e: Error,
 ): void {
-  outputChannel.error(JSON.stringify(e, null, "\t"));
+  // Pass the Error itself: JSON.stringify(Error) drops message and stack.
+  outputChannel.error(e);
 }
 
 function showError(

@@ -102,6 +102,11 @@ export class Linter {
       }
     }
 
+    // A newer run for this document may have superseded us while awaiting.
+    if (this.#running.has(key) || source.token.isCancellationRequested) {
+      return;
+    }
+
     this.#collection.set(
       document.uri,
       diagnostics.map((d) => {
@@ -111,7 +116,19 @@ export class Linter {
           d.line - 1,
           d.column,
         );
-        return new vscode.Diagnostic(range, `${d.message} (${d.code})`);
+        const diagnostic = new vscode.Diagnostic(
+          range,
+          d.message,
+          vscode.DiagnosticSeverity.Warning,
+        );
+        diagnostic.source = "djLint";
+        diagnostic.code = {
+          target: vscode.Uri.parse(
+            `https://djlint.com/docs/linter/#${d.code.toLowerCase()}`,
+          ),
+          value: d.code,
+        };
+        return diagnostic;
       }),
     );
   }

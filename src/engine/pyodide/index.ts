@@ -15,6 +15,7 @@ first use and reused for the engine's lifetime. */
 export class PyodideEngine implements DjlintEngine {
   #worker: Worker | undefined;
   #seq = 0;
+  #disposed = false;
   readonly #pending = new Map<number, Pending>();
 
   constructor(
@@ -50,15 +51,24 @@ export class PyodideEngine implements DjlintEngine {
   }
 
   dispose(): void {
+    this.#disposed = true;
     void this.#worker?.terminate();
     this.#worker = void 0;
+    this.#rejectPending(new Error("djLint engine disposed"));
+  }
+
+  #rejectPending(reason: Error): void {
     for (const pending of this.#pending.values()) {
-      pending.reject(new Error("djLint engine disposed"));
+      pending.reject(reason);
     }
     this.#pending.clear();
   }
 
   #ensure(): Worker {
+    // Dispose is terminal: never resurrect a worker for a disposed engine.
+    if (this.#disposed) {
+      throw new vscode.CancellationError();
+    }
     if (this.#worker) {
       return this.#worker;
     }
@@ -78,10 +88,15 @@ export class PyodideEngine implements DjlintEngine {
       }
     });
     worker.on("error", (e) => {
-      for (const pending of this.#pending.values()) {
-        pending.reject(e);
+      this.#rejectPending(e);
+      this.#worker = void 0;
+    });
+    // A worker can also die WITHOUT an "error" (WebAssembly heap abort, explicit exit, bootstrap failure); without this every pending RPC would hang forever.
+    worker.on("exit", (code) => {
+      if (this.#disposed) {
+        return;
       }
-      this.#pending.clear();
+      this.#rejectPending(new Error(`djLint Pyodide worker exited (${code})`));
       this.#worker = void 0;
     });
     this.#worker = worker;
