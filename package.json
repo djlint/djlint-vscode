@@ -111,7 +111,7 @@
           "markdownDescription": "Path to the djLint executable, used only when explicitly set. Relative paths are resolved from the workspace root. Tried before `#djlint.interpreter#` and the active environment, regardless of `#djlint.useVenv#`.",
           "markdownDeprecationMessage": "**Deprecated**: use `#djlint.path#` instead.",
           "deprecationMessage": "Deprecated: use djlint.path instead.",
-          "scope": "resource"
+          "scope": "machine-overridable"
         },
         "djlint.exclude": {
           "type": "array",
@@ -289,6 +289,44 @@
           "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27.",
           "scope": "resource"
         },
+        "djlint.lintLanguages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "django-html",
+            "jinja",
+            "jinja-html",
+            "jinja2",
+            "html-hubl",
+            "hubl-html",
+            "twig",
+            "html-nunjucks",
+            "njk",
+            "nunjucks",
+            "handlebars",
+            "hbs",
+            "spacebars",
+            "liquid",
+            "jekyll",
+            "go-template",
+            "go-tmpl",
+            "gotemplate",
+            "GoTemplate",
+            "gohtml",
+            "GoHTML",
+            "gotmpl",
+            "hugo-html",
+            "mustache",
+            "htmlmustache",
+            "tera",
+            "askama-html",
+            "html"
+          ],
+          "markdownDescription": "Language IDs djLint will lint. Combined with `#djlint.enableLinting#`, so enabling linting globally (rather than per language) still only lints these languages.",
+          "scope": "window"
+        },
         "djlint.maxAttributeLength": {
           "type": [
             "integer",
@@ -395,8 +433,8 @@
         "djlint.showInstallError": {
           "type": "boolean",
           "default": true,
-          "description": "Show error message when djLint is not installed. Superseded by the bundled runtime: when djLint is not found the extension now falls back to it silently instead of showing this error.",
-          "scope": "resource"
+          "markdownDescription": "Show an error message when djLint is not found in the configured environment and `#djlint.importStrategy#` is `fromEnvironmentStrict` (no bundled fallback available). With the default `fromEnvironment` (or `useBundled`) strategy, the bundled runtime is used silently instead and this setting has no effect.",
+          "scope": "window"
         },
         "djlint.singleAttributePerLine": {
           "type": "boolean",
@@ -428,7 +466,7 @@
           "markdownDescription": "Use the Python executable from the current active environment as a fallback when `#djlint.path#`, `#djlint.executablePath#`, and `#djlint.interpreter#` don't resolve. Disable this to skip that fallback and use `djlint` from PATH instead.",
           "markdownDeprecationMessage": "**Deprecated**: use `#djlint.interpreter#` and `#djlint.importStrategy#` instead.",
           "deprecationMessage": "Deprecated: use djlint.interpreter and djlint.importStrategy instead.",
-          "scope": "resource"
+          "scope": "machine-overridable"
         }
       }
     },

@@ -18,12 +18,18 @@ def _make_config(options):
     return Config("-", **opts)
 
 
-def _djlint_format(src, options):
+def _djlint_format(src, options, filename="-"):
+    # filename is accepted (and currently unused) for symmetry with
+    # _djlint_lint and in case a future djlint.formatter() gains filepath-
+    # sensitive behavior (e.g. per-file rules).
     return formatter(_make_config(options), src)
 
 
-def _djlint_lint(src, options):
-    errors = linter(_make_config(options), src, "-", "-")["-"]
+def _djlint_lint(src, options, filename="-"):
+    # djLint's linter() matches per-file-ignores patterns against the
+    # filepath argument, so a real filename (not the "-" stdin placeholder)
+    # is required for that feature to work.
+    errors = linter(_make_config(options), src, filename, filename)[filename]
     result = []
     for error in errors:
         line, _, column = str(error["line"]).partition(":")

@@ -64,7 +64,7 @@ export function checkErrors(
 
       const configName = "showInstallError";
       if (config.get<boolean>(configName)) {
-        const errMsg = `djLint is not installed or cannot be executed with the current extension settings. See installation instructions at ${extReadmeUrl}.`;
+        const errMsg = `djLint was not found in the configured environment (djlint.importStrategy is "fromEnvironmentStrict", so the bundled runtime is not used as a fallback). See installation instructions at ${extReadmeUrl}, or set djlint.importStrategy to "fromEnvironment" (or "useBundled") to use the djLint bundled with this extension instead.`;
         void (async (): Promise<void> => {
           const choice = await vscode.window.showErrorMessage(
             errMsg,

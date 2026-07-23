@@ -11,7 +11,10 @@ import {
   fakeToken,
 } from "./pyodide-harness.js";
 
-vi.mock("vscode", () => ({ CancellationError: class extends Error {} }));
+vi.mock("vscode", () => ({
+  CancellationError: class extends Error {},
+  workspace: { asRelativePath: (uri: any): string => uri.fsPath },
+}));
 
 const assetsDir = path.resolve("assets/pyodide");
 const hasAssets = existsSync(path.join(assetsDir, "pyodide.mjs"));

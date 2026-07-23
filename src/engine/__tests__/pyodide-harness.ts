@@ -22,7 +22,10 @@ export async function buildWorker(): Promise<string> {
 }
 
 export function fakeDocument(text: string): any {
-  return { getText: () => text };
+  return {
+    getText: () => text,
+    uri: { scheme: "file", fsPath: "/workspace/fixture.html" },
+  };
 }
 
 export function fakeConfig(profile: string): any {

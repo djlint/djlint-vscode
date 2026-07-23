@@ -31,10 +31,10 @@ async function handle(req: WorkerRequest): Promise<WorkerResponse> {
     const opts = py.toPy(req.opts);
     try {
       if (req.kind === "format") {
-        const result: string = py.format(req.src, opts);
+        const result: string = py.format(req.src, opts, req.filename);
         return { id: req.id, ok: true, result };
       }
-      const proxy = py.lint(req.src, opts);
+      const proxy = py.lint(req.src, opts, req.filename);
       const result = proxy.toJs({
         dict_converter: Object.fromEntries,
       }) as LintDiagnostic[];

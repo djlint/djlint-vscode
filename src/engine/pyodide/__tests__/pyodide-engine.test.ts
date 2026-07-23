@@ -16,9 +16,13 @@ import {
 } from "../../__tests__/pyodide-harness.js";
 import { PyodideEngine } from "../index.js";
 
-// `index.ts` imports the vscode module (for CancellationError); it does not
-// exist in the vitest node env, so stub the only runtime symbol used.
-vi.mock("vscode", () => ({ CancellationError: class extends Error {} }));
+// `index.ts` imports the vscode module (for CancellationError and
+// workspace.asRelativePath); it does not exist in the vitest node env, so
+// stub the runtime symbols used.
+vi.mock("vscode", () => ({
+  CancellationError: class extends Error {},
+  workspace: { asRelativePath: (uri: any): string => uri.fsPath },
+}));
 
 // Real Pyodide-in-Node integration/parity test. Requires the bundled runtime
 // (`npm run assets`); skipped gracefully when the assets are absent.
