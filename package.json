@@ -593,5 +593,8 @@
       "supported": "limited",
       "description": "A djLint installed in your environment cannot be used in a virtual workspace; the bundled runtime is used instead, and project config files are not read."
     }
-  }
+  },
+  "extensionKind": [
+    "workspace"
+  ]
 }
