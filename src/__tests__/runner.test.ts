@@ -1,4 +1,4 @@
-import { expect, test, vi } from "vitest";
+import { beforeEach, expect, test, vi } from "vitest";
 import type {
   EnvironmentProvider,
   PythonEnvironmentDetails,
@@ -20,9 +20,20 @@ vi.mock("../python/environment.js", () => ({
   getEnvironmentProvider: vi.fn(),
 }));
 
-const { resolveDjlintCommand } = await import("../runner.js");
+const {
+  resolveDjlintCommand,
+  resolveDjlintCommandCached,
+  invalidateDjlintCommandCache,
+} = await import("../runner.js");
 const { DjlintUnavailableError } = await import("../engine/types.js");
 type ResolveDjlintCommandDeps = Parameters<typeof resolveDjlintCommand>[0];
+
+// resolveDjlintCommandCached() shares a module-level cache across every test
+// in this file; start each test from a clean slate so caching tests can't
+// leak into (or be polluted by) one another.
+beforeEach(() => {
+  invalidateDjlintCommandCache();
+});
 
 function deps(
   over: Partial<ResolveDjlintCommandDeps> = {},
@@ -255,4 +266,55 @@ test("active environment with no command falls through to the PATH fallback", as
     deps({ probe: vi.fn(async () => true), provider }),
   );
   expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+});
+
+test("resolveDjlintCommandCached: a second resolution for the same scope does not re-probe", async () => {
+  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const d = deps({ probe });
+
+  const first = await resolveDjlintCommandCached(d, "scope-a");
+  const second = await resolveDjlintCommandCached(d, "scope-a");
+
+  expect(first).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(second).toEqual(first);
+  expect(probe).toHaveBeenCalledTimes(1);
+});
+
+test("resolveDjlintCommandCached: invalidateDjlintCommandCache() forces a re-probe", async () => {
+  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const d = deps({ probe });
+
+  await resolveDjlintCommandCached(d, "scope-a");
+  invalidateDjlintCommandCache();
+  await resolveDjlintCommandCached(d, "scope-a");
+
+  expect(probe).toHaveBeenCalledTimes(2);
+});
+
+test("resolveDjlintCommandCached: different scopes are cached independently", async () => {
+  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const d = deps({ probe });
+
+  await resolveDjlintCommandCached(d, "scope-a");
+  await resolveDjlintCommandCached(d, "scope-b");
+  // undefined is the shared global scope, distinct from either named scope.
+  await resolveDjlintCommandCached(d, undefined);
+
+  expect(probe).toHaveBeenCalledTimes(3);
+});
+
+test("resolveDjlintCommandCached: a failed resolution is not cached", async () => {
+  const probe = vi.fn(async () => false);
+  const d = deps({ probe });
+
+  await expect(resolveDjlintCommandCached(d, "scope-a")).rejects.toBeInstanceOf(
+    DjlintUnavailableError,
+  );
+  await expect(resolveDjlintCommandCached(d, "scope-a")).rejects.toBeInstanceOf(
+    DjlintUnavailableError,
+  );
+
+  // Nothing was ever cached, so both resolutions independently reach (and
+  // fail) the PATH fallback probe: 1 probe call each x 2 resolutions.
+  expect(probe).toHaveBeenCalledTimes(2);
 });

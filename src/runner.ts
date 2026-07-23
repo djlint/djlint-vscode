@@ -147,6 +147,46 @@ export async function resolveDjlintCommand(
   );
 }
 
+/** Cache scope for a resolved djLint command: the document's workspace
+folder (stringified `vscode.Uri`), or `undefined` for the shared global
+scope when the document has no workspace folder. */
+export type DjlintCommandCacheKey = string | undefined;
+
+const commandCache = new Map<DjlintCommandCacheKey, RunnerCommand>();
+
+/** Clears every cached command resolution, forcing the next
+`resolveDjlintCommandCached()` call for each scope to re-run
+`resolveDjlintCommand()` (and therefore re-probe) instead of reusing a stale
+result. Call whenever something that could change which djLint runs
+changes: a relevant setting (`djlint.path`, `djlint.interpreter`,
+`djlint.executablePath`, `djlint.useVenv`, `djlint.importStrategy`) or the
+active Python environment. */
+export function invalidateDjlintCommandCache(): void {
+  commandCache.clear();
+}
+
+/** Thin memoizing layer around `resolveDjlintCommand()`: the first
+resolution for a given `scopeKey` probes/resolves as usual and, on success,
+its result is cached; every later call for the same scope returns the
+cached `RunnerCommand` without touching `deps.probe` or `deps.provider` at
+all — this is what keeps the format/lint hot path from spawning `--version`
+probes on every call. A failed resolution (`resolveDjlintCommand()`
+throwing) is never cached, so installing djLint mid-session, or fixing a
+broken `djlint.path`, is picked up on the very next call rather than being
+stuck behind a cached failure until an invalidation trigger fires. */
+export async function resolveDjlintCommandCached(
+  deps: ResolveDjlintCommandDeps,
+  scopeKey: DjlintCommandCacheKey,
+): Promise<RunnerCommand> {
+  const cached = commandCache.get(scopeKey);
+  if (cached != null) {
+    return cached;
+  }
+  const command = await resolveDjlintCommand(deps);
+  commandCache.set(scopeKey, command);
+  return command;
+}
+
 /** Runtime `probe`: attempts to spawn `exec --version` and reports whether
 the process could be launched at all (regardless of its exit code), which is
 enough to tell a missing/unresolvable executable from a real one. */
@@ -157,6 +197,16 @@ async function probeExecutable(exec: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+/** The cache scope for a document's resolved djLint command: its workspace
+folder, so different folders in a multi-root workspace (which may each have
+their own interpreter/virtualenv) resolve independently, or `undefined` —
+the shared global scope — when the document has no workspace folder. */
+function resolutionScopeKey(
+  document: vscode.TextDocument,
+): DjlintCommandCacheKey {
+  return vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString();
 }
 
 async function getDjlintCommand(
@@ -181,16 +231,19 @@ async function getDjlintCommand(
     ? await getEnvironmentProvider(outputChannel)
     : null;
 
-  return resolveDjlintCommand({
-    executablePath:
-      rawExecutablePath == null ? void 0 : normalize(rawExecutablePath),
-    interpreter,
-    path: (config.get<string[]>("path") ?? []).map((raw) => normalize(raw)),
-    probe: probeExecutable,
-    provider,
-    uri: document.uri,
-    useVenv,
-  });
+  return resolveDjlintCommandCached(
+    {
+      executablePath:
+        rawExecutablePath == null ? void 0 : normalize(rawExecutablePath),
+      interpreter,
+      path: (config.get<string[]>("path") ?? []).map((raw) => normalize(raw)),
+      probe: probeExecutable,
+      provider,
+      uri: document.uri,
+      useVenv,
+    },
+    resolutionScopeKey(document),
+  );
 }
 
 function getCwd(

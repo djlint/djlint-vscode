@@ -14,9 +14,16 @@ That's it — the extension ships with a self-contained djLint runtime, so you d
 
 ## Usage
 
-If `djlint.useVenv` is enabled and you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` uses the `djLint` installed in the currently activated Python environment.
+The extension looks for a djLint to run, in this order:
 
-If `djlint.useVenv` is disabled, the extension runs `djlint.executablePath` (`djlint` from PATH by default). A relative `djlint.executablePath` is resolved from the workspace root.
+1. `djlint.path` — path(s) to a djLint executable, tried in order until one works. Relative paths are resolved from the workspace root.
+2. `djlint.interpreter` — path(s) to a Python interpreter to run djLint from (`python -m djlint`), tried in order until one works.
+3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs), or the classic [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) if that one isn't installed.
+4. `djlint` on PATH.
+
+`djlint.path` and `djlint.interpreter` both default to `[]` (unset), so leaving them unset uses step 3, falling back to step 4 if neither Python extension is installed. If none of the above resolves to a working djLint, the extension falls back to its bundled runtime instead of failing — see [Installation](#installation) and `djlint.importStrategy` above.
+
+`djlint.executablePath` and `djlint.useVenv` are deprecated but still fully honored: a `djlint.executablePath` explicitly changed from its old default is tried right after `djlint.path`, and `djlint.useVenv` set to `false` skips step 3. Use `djlint.path` / `djlint.interpreter` (together with `djlint.importStrategy`) instead.
 
 The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 
@@ -30,20 +37,18 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ### Usage with djLint installed with pipx
 
-[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application and usually exposes a `djlint` executable. Disable `djlint.useVenv` and point `djlint.executablePath` at that executable if it is not already available on PATH:
+[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application and usually exposes a `djlint` executable. Point `djlint.path` at that executable if it is not already available on PATH:
 
 ```json
-"djlint.useVenv": false,
-"djlint.executablePath": "/home/user/.local/bin/djlint",
+"djlint.path": ["/home/user/.local/bin/djlint"],
 ```
 
 ### Usage with djLint installed with uv
 
-[uv](https://pypi.org/project/uv/) creates a separate venv for each application. Disable `djlint.useVenv` and point `djlint.executablePath` at the generated `djlint` executable:
+[uv](https://pypi.org/project/uv/) creates a separate venv for each application. Point `djlint.path` at the generated `djlint` executable:
 
 ```json
-"djlint.useVenv": false,
-"djlint.executablePath": "/home/user/.local/share/uv/tools/djlint/bin/djlint",
+"djlint.path": ["/home/user/.local/share/uv/tools/djlint/bin/djlint"],
 ```
 
 ## Known issues

@@ -4,6 +4,7 @@ import { disposeEngine } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
 import { onDidChangeActivePythonEnvironment } from "./python/environment.js";
+import { invalidateDjlintCommandCache } from "./runner.js";
 
 export async function activate(
   context: vscode.ExtensionContext,
@@ -20,6 +21,12 @@ export async function activate(
     "path",
     "useVenv",
   ];
+  // Also invalidates the cached djLint command (src/runner.ts) alongside the cached engine: they're independent module-level caches, so a fresh engine created after disposeEngine() would otherwise keep resolving to a stale command.
+  function invalidateResolution(): void {
+    disposeEngine();
+    invalidateDjlintCommandCache();
+  }
+
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
@@ -30,11 +37,11 @@ export async function activate(
           e.affectsConfiguration(`${configSection}.${key}`),
         )
       ) {
-        disposeEngine();
+        invalidateResolution();
       }
     }),
     // The active interpreter can also change from outside VS Code's settings (switching environments via the Python extension's UI), so this needs its own listener rather than folding into the config-change one above.
-    onDidChangeActivePythonEnvironment(disposeEngine),
+    onDidChangeActivePythonEnvironment(invalidateResolution),
   );
 
   const formatter = new Formatter(context, outputChannel);
