@@ -11,11 +11,6 @@ interface RunnerCommand {
   prefixArgs: readonly string[];
 }
 
-interface RunnerCommands {
-  fallback?: RunnerCommand;
-  primary: RunnerCommand;
-}
-
 function isRelativePathLike(exec: string): boolean {
   return /[\\/]/u.test(exec) && !path.isAbsolute(exec);
 }
@@ -36,10 +31,10 @@ function resolveConfiguredExecutablePath(
   return path.resolve(workspaceFolder.uri.fsPath, exec);
 }
 
-async function getDjlintCommands(
+async function getDjlintCommand(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-): Promise<RunnerCommands> {
+): Promise<RunnerCommand> {
   if (config.get<boolean>("useVenv")) {
     let api;
     try {
@@ -51,9 +46,7 @@ async function getDjlintCommands(
       );
       const pythonExecUri = environment?.executable.uri;
       if (pythonExecUri) {
-        return {
-          primary: { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] },
-        };
+        return { exec: pythonExecUri.fsPath, prefixArgs: ["-m", "djlint"] };
       }
       const msg = "Failed to get Python interpreter from Python extension.";
       throw new Error(msg);
@@ -61,37 +54,14 @@ async function getDjlintCommands(
   }
 
   const executablePath = config.get<string>("executablePath")?.trim();
-  const pythonPath = config.get<string>("pythonPath")?.trim();
-  if (executablePath && pythonPath) {
-    return {
-      fallback: {
-        exec: resolveConfiguredExecutablePath(pythonPath, document),
-        prefixArgs: ["-m", "djlint"],
-      },
-      primary: {
-        exec: resolveConfiguredExecutablePath(executablePath, document),
-        prefixArgs: [],
-      },
-    };
-  }
   if (executablePath) {
     return {
-      primary: {
-        exec: resolveConfiguredExecutablePath(executablePath, document),
-        prefixArgs: [],
-      },
-    };
-  }
-  if (pythonPath) {
-    return {
-      primary: {
-        exec: resolveConfiguredExecutablePath(pythonPath, document),
-        prefixArgs: ["-m", "djlint"],
-      },
+      exec: resolveConfiguredExecutablePath(executablePath, document),
+      prefixArgs: [],
     };
   }
 
-  const msg = `Invalid ${configSection}.executablePath and ${configSection}.pythonPath settings.`;
+  const msg = `Invalid ${configSection}.executablePath setting.`;
   throw new Error(msg);
 }
 
@@ -170,9 +140,9 @@ export async function runDjlint(
   formattingOptions?: vscode.FormattingOptions,
   hasFallback = false,
 ): Promise<string> {
-  let commands;
+  let command;
   try {
-    commands = await getDjlintCommands(document, config);
+    command = await getDjlintCommand(document, config);
   } catch (e) {
     void vscode.window.showErrorMessage(
       // eslint-disable-next-line unicorn/prefer-error-is-error
@@ -183,7 +153,7 @@ export async function runDjlint(
 
   try {
     return await runDjlintCommand(
-      commands.primary,
+      command,
       document,
       config,
       args,
@@ -194,26 +164,6 @@ export async function runDjlint(
   } catch (e) {
     if (!isCustomExecaError(e)) {
       throw e;
-    }
-
-    if (commands.fallback != null && e.code === "ENOENT") {
-      try {
-        return await runDjlintCommand(
-          commands.fallback,
-          document,
-          config,
-          args,
-          outputChannel,
-          abortController,
-          formattingOptions,
-        );
-      } catch (e_) {
-        if (!isCustomExecaError(e_)) {
-          throw e_;
-        }
-
-        return checkErrors(e_, outputChannel, config, hasFallback).stdout;
-      }
     }
 
     return checkErrors(e, outputChannel, config, hasFallback).stdout;

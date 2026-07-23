@@ -10,13 +10,13 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 Install the djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
-That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version, custom Python-module rules, or project config files such as `pyproject.toml [tool.djlint]` / `.djlintrc` — which the bundled runtime does not read), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and only falls back to the bundled runtime when no external djLint is found. The `djlint.importStrategy` setting controls this (`fromEnvironment`, the default, or `useBundled` to always use the bundled runtime).
+That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version, custom Python-module rules, or project config files such as `pyproject.toml [tool.djlint]` / `.djlintrc` — which the bundled runtime does not read), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and only falls back to the bundled runtime when no external djLint is found. The `djlint.importStrategy` setting controls this: `fromEnvironment` (the default) falls back to the bundled runtime, `fromEnvironmentStrict` reports an error instead of falling back (guaranteeing your configured djLint runs), and `useBundled` always uses the bundled runtime.
 
 ## Usage
 
 If `djlint.useVenv` is enabled and you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` uses the `djLint` installed in the currently activated Python environment.
 
-If `djlint.useVenv` is disabled, the extension runs `djlint.executablePath` (`djlint` from PATH by default). Relative `djlint.executablePath` and `djlint.pythonPath` values are resolved from the workspace root. If that executable is not available, it falls back to `djlint.pythonPath -m djlint`.
+If `djlint.useVenv` is disabled, the extension runs `djlint.executablePath` (`djlint` from PATH by default). A relative `djlint.executablePath` is resolved from the workspace root.
 
 The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 

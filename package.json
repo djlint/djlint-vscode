@@ -102,7 +102,7 @@
           "type": "string",
           "minLength": 1,
           "default": "djlint",
-          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled, before falling back to `#djlint.pythonPath#`."
+          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled."
         },
         "djlint.exclude": {
           "type": "array",
@@ -215,15 +215,17 @@
           "type": "string",
           "enum": [
             "fromEnvironment",
+            "fromEnvironmentStrict",
             "useBundled"
           ],
           "enumDescriptions": [
             "Use djLint from the environment, falling back to the bundled version if it is not found.",
+            "Use djLint from the environment; if it is not found, report an error instead of falling back to the bundled version. Ensures the exact djLint you configured is what runs.",
             "Always use the version of djLint bundled with the extension."
           ],
           "default": "fromEnvironment",
           "scope": "window",
-          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `useBundled` always uses the bundled runtime. Note: the bundled runtime applies djLint settings from VS Code but does not read project config files (`pyproject.toml [tool.djlint]`, `.djlintrc`); install djLint if you rely on those."
+          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `fromEnvironmentStrict` uses your installed djLint but reports an error instead of falling back, guaranteeing the exact instance you configured. `useBundled` always uses the bundled runtime. Note: the bundled runtime applies djLint settings from VS Code but does not read project config files (`pyproject.toml [tool.djlint]`, `.djlintrc`); install djLint if you rely on those."
         },
         "djlint.include": {
           "type": "array",
@@ -327,13 +329,6 @@
           "scope": "language-overridable",
           "description": "Enable defaults by template language. Requires djLint ≥ 0.4.5; the askama, tera and liquid profiles require djLint ≥ 1.42."
         },
-        "djlint.pythonPath": {
-          "type": "string",
-          "minLength": 1,
-          "default": "python",
-          "markdownDescription": "Path to the desired Python interpreter. Relative paths are resolved from the workspace root. Used as a fallback when `#djlint.useVenv#` is disabled and `#djlint.executablePath#` is not available.",
-          "markdownDeprecationMessage": "Prefer `#djlint.executablePath#` for direct djLint executables. `#djlint.pythonPath#` remains available as a Python fallback."
-        },
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
@@ -372,7 +367,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` and `#djlint.pythonPath#` are ignored. Disable this to try `#djlint.executablePath#` (`djlint` from PATH by default) before falling back to `#djlint.pythonPath#`."
+          "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` is ignored. Disable this to use `#djlint.executablePath#` (`djlint` from PATH by default)."
         }
       }
     },
@@ -524,7 +519,6 @@
       "supported": "limited",
       "restrictedConfigurations": [
         "djlint.executablePath",
-        "djlint.pythonPath",
         "djlint.configuration",
         "djlint.rules"
       ]

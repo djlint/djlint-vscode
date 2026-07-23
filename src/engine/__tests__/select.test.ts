@@ -50,6 +50,29 @@ test("untrusted + useBundled → pyodide (both conditions)", () => {
   ).toBe("pyo");
 });
 
+test("fromEnvironmentStrict → subprocess, ignoring trust", () => {
+  expect(
+    selectEngine(deps({ importStrategy: "fromEnvironmentStrict" })).kind,
+  ).toBe("sub");
+  expect(
+    selectEngine(
+      deps({ importStrategy: "fromEnvironmentStrict", isTrusted: false }),
+    ).kind,
+  ).toBe("sub");
+});
+
+test("fromEnvironment (trusted) asks for a subprocess WITH fallback", () => {
+  const d = deps();
+  selectEngine(d);
+  expect(d.makeSubprocess).toHaveBeenCalledWith({ fallback: true });
+});
+
+test("fromEnvironmentStrict asks for a subprocess WITHOUT fallback", () => {
+  const d = deps({ importStrategy: "fromEnvironmentStrict" });
+  selectEngine(d);
+  expect(d.makeSubprocess).toHaveBeenCalledWith({ fallback: false });
+});
+
 const doc: any = {};
 const config: any = {};
 const fmtOpts: any = {};

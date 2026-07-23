@@ -8,23 +8,38 @@ import {
   type LintDiagnostic,
 } from "./types.js";
 
+export type ImportStrategy =
+  "fromEnvironment" | "fromEnvironmentStrict" | "useBundled";
+
 export interface EngineSelectionDeps<T> {
-  importStrategy: "fromEnvironment" | "useBundled";
+  importStrategy: ImportStrategy;
   isTrusted: boolean;
-  makeSubprocess: () => T;
+  // `fallback: true` asks for the environment engine wrapped to fall back to the bundled runtime when djLint is unavailable.
+  makeSubprocess: (options: { fallback: boolean }) => T;
   makePyodide: () => T;
 }
 
-/** Pure decision: which engine factory to invoke, given the
-`djlint.importStrategy` setting and workspace-trust state. No VS Code
-dependency, so it is unit-testable in isolation. Runtime fallback (e.g. when
-the subprocess engine turns out to be unavailable) is handled at call time
-by the caller, not here. */
+/** Pure decision: which engine to build, given the `djlint.importStrategy`
+setting and workspace-trust state. No VS Code dependency, so it is
+unit-testable in isolation.
+
+- `useBundled`: always the bundled runtime.
+- `fromEnvironmentStrict`: the environment djLint, no fallback — an error
+  surfaces if it is unavailable (guarantees the configured instance runs).
+- `fromEnvironment` (default): the environment djLint with a silent fallback
+  to the bundled runtime; in an untrusted workspace it uses the sandboxed
+  bundled runtime instead of executing an environment tool. */
 export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
-  if (!deps.isTrusted || deps.importStrategy === "useBundled") {
+  if (deps.importStrategy === "useBundled") {
     return deps.makePyodide();
   }
-  return deps.makeSubprocess();
+  if (deps.importStrategy === "fromEnvironmentStrict") {
+    return deps.makeSubprocess({ fallback: false });
+  }
+  if (!deps.isTrusted) {
+    return deps.makePyodide();
+  }
+  return deps.makeSubprocess({ fallback: true });
 }
 
 /** Wraps a primary engine (subprocess) and, the first time it reports djLint
@@ -135,18 +150,17 @@ export function getEngine(
     return new PyodideEngine(workerPath, indexURL);
   }
   const importStrategy =
-    getConfig().get<"fromEnvironment" | "useBundled">("importStrategy") ??
-    "fromEnvironment";
+    getConfig().get<ImportStrategy>("importStrategy") ?? "fromEnvironment";
   state.cached = selectEngine<DjlintEngine>({
     importStrategy,
     isTrusted: vscode.workspace.isTrusted,
     makePyodide,
-    makeSubprocess: (): DjlintEngine =>
-      new FallbackEngine(
-        new SubprocessEngine(outputChannel, true),
-        makePyodide,
-        outputChannel,
-      ),
+    makeSubprocess: ({ fallback }): DjlintEngine => {
+      const subprocess = new SubprocessEngine(outputChannel, fallback);
+      return fallback
+        ? new FallbackEngine(subprocess, makePyodide, outputChannel)
+        : subprocess;
+    },
   });
   return state.cached;
 }
