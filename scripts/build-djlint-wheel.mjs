@@ -6,6 +6,7 @@
 // py3-none-any wheel from PyPI. Either way the result is a pure wheel Pyodide
 // can load.
 import { execFileSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   copyFileSync,
   mkdirSync,
@@ -50,6 +51,10 @@ async function downloadFromPypi() {
     throw new Error("PyPI has no pure-python djlint wheel");
   }
   const buf = Buffer.from(await (await fetch(url.url)).arrayBuffer());
+  const expected = url.digests?.sha256;
+  if (expected && createHash("sha256").update(buf).digest("hex") !== expected) {
+    throw new Error(`sha256 mismatch for ${url.filename} against PyPI digest`);
+  }
   writeFileSync(`${OUT}/${url.filename}`, buf);
   return url.filename;
 }

@@ -49,8 +49,25 @@ async function get(url) {
   return Buffer.from(await res.arrayBuffer());
 }
 
+function sha256(buf) {
+  return createHash("sha256").update(buf).digest("hex");
+}
+
 async function download(url, name) {
   writeFileSync(`${OUT}/${name}`, await get(url));
+}
+
+// Verify a download against an expected sha256 before writing it, so a
+// corrupted or tampered wheel never lands in the bundled runtime.
+async function downloadVerified(url, name, expectedSha) {
+  const buf = await get(url);
+  const actual = sha256(buf);
+  if (actual !== expectedSha) {
+    throw new Error(
+      `sha256 mismatch for ${name}: expected ${expectedSha}, got ${actual}`,
+    );
+  }
+  writeFileSync(`${OUT}/${name}`, buf);
 }
 
 async function pypiWheel(pkg) {
@@ -60,6 +77,10 @@ async function pypiWheel(pkg) {
     throw new Error(`no pure-python wheel for ${pkg}`);
   }
   const buf = await get(url.url);
+  const expected = url.digests?.sha256;
+  if (expected && sha256(buf) !== expected) {
+    throw new Error(`sha256 mismatch for ${url.filename} against PyPI digest`);
+  }
   writeFileSync(`${OUT}/${url.filename}`, buf);
   return { filename: url.filename, version: meta.info.version, buf };
 }
@@ -70,7 +91,7 @@ function lockEntry(name, version, fileName, buf, depends) {
     version,
     file_name: fileName,
     install_dir: "site",
-    sha256: createHash("sha256").update(buf).digest("hex"),
+    sha256: sha256(buf),
     package_type: "package",
     imports: [name],
     depends,
@@ -87,11 +108,13 @@ for (const f of CORE) {
 }
 const lock = JSON.parse(readFileSync(`${OUT}/pyodide-lock.json`, "utf8"));
 
-// 2. Stock wheels (file names come from the lock).
+// 2. Stock wheels (file names + sha256 come from the lock; verify each).
 for (const name of STOCK) {
-  await download(
-    `${CDN}/${lock.packages[name].file_name}`,
-    lock.packages[name].file_name,
+  const entry = lock.packages[name];
+  await downloadVerified(
+    `${CDN}/${entry.file_name}`,
+    entry.file_name,
+    entry.sha256,
   );
 }
 
