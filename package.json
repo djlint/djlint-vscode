@@ -383,12 +383,6 @@
           "description": "Use .gitignore file to extend excludes. Requires djLint ≥ 0.5.9.",
           "scope": "resource"
         },
-        "djlint.useNewLinterOutputParser": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Use a new, more reliable linter output parser. If you disable this setting, make sure that you have not changed the `linter_output_format` setting in the djLint configuration file. Requires djLint ≥ 1.25.",
-          "scope": "resource"
-        },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,

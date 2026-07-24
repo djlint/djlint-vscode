@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+import { LINTER_OUTPUT_FORMAT } from "./engine/subprocess/parse-lint-output.js";
 import { deriveStdinFilename } from "./stdin-filename.js";
 
 export abstract class CliArg {
@@ -106,18 +107,22 @@ class StringArg extends CliArg {
   }
 }
 
+/** Pins djLint's linter output to {@link LINTER_OUTPUT_FORMAT} whenever djLint
+supports `--linter-output-format` (>= 1.25, enforced by `minVersion` via
+`selectSupportedArgs()`), so `parseLinterOutput()` (see
+`engine/subprocess/parse-lint-output.ts`) can rely on the edge-case-proof
+pinned format instead of djLint's ambiguous legacy default. Always sent when
+supported -- not user-configurable, hence the empty `vscodeName`, matching
+`StdinFilenameArg`'s convention for CLI-only flags. Unrelated to the bundled
+Pyodide engine, which calls djLint's `linter()` library function directly and
+never goes through this CLI flag at all. */
 class LinterOutputFormatArg extends CliOnlyArg {
   constructor() {
-    super("useNewLinterOutputParser", "--linter-output-format", "1.25");
+    super("", "--linter-output-format", "1.25");
   }
 
-  build(config: vscode.WorkspaceConfiguration): string[] {
-    return config.get<boolean>(this.vscodeName)
-      ? [
-          this.cliName,
-          "<filename>{filename}</filename><line>{line}</line><code>{code}</code><message>{message}</message>",
-        ]
-      : [];
+  build(): string[] {
+    return [this.cliName, LINTER_OUTPUT_FORMAT];
   }
 }
 

@@ -44,10 +44,7 @@ export class SubprocessEngine implements DjlintEngine {
       this.outputChannel,
       controllerFor(token),
     );
-    return parseLinterOutput(
-      stdout,
-      config.get<boolean>("useNewLinterOutputParser") ?? true,
-    );
+    return parseLinterOutput(stdout);
   }
 
   // Nothing to dispose: each format/lint call owns its own AbortController.
