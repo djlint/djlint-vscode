@@ -28,6 +28,7 @@ const {
   resolveDjlintCommandCached,
   invalidateDjlintCommandCache,
   normalizeConfiguredExecutable,
+  classifyRunFailure,
   RESOLUTION_TTL_MS,
 } = await import("../runner.js");
 const { selectSupportedArgs } = await import("../version.js");
@@ -417,6 +418,76 @@ test("resolveDjlintCommandCached: a cache entry at least RESOLUTION_TTL_MS old i
   } finally {
     vi.useRealTimers();
   }
+});
+
+/** Minimal fake `CustomExecaError` -- just the fields `classifyRunFailure()`
+and its injected predicates could plausibly look at. `: any` (not `as any`):
+matches the pattern already used for fake vscode types in this file. */
+function fakeExecaError(over: Record<string, unknown> = {}): any {
+  return { exitCode: 1, shortMessage: "boom", stderr: "", stdout: "", ...over };
+}
+
+test("classifyRunFailure: a valid lint result short-circuits to 'lint-result' before either the fast check or a re-probe runs", async () => {
+  const e = fakeExecaError();
+  const isValidResult = vi.fn(() => true);
+  const isUnavailableFast = vi.fn(() => true);
+  const reprobe = vi.fn(async () => "1.42.3");
+
+  const result = await classifyRunFailure(
+    e,
+    isValidResult,
+    isUnavailableFast,
+    reprobe,
+  );
+
+  expect(result).toBe("lint-result");
+  expect(isUnavailableFast).not.toHaveBeenCalled();
+  expect(reprobe).not.toHaveBeenCalled();
+});
+
+test("classifyRunFailure: the fast unavailable shortcut short-circuits to 'unavailable' without re-probing", async () => {
+  const e = fakeExecaError({ code: "ENOENT" });
+  const reprobe = vi.fn(async () => "1.42.3");
+
+  const result = await classifyRunFailure(
+    e,
+    () => false,
+    () => true,
+    reprobe,
+  );
+
+  expect(result).toBe("unavailable");
+  expect(reprobe).not.toHaveBeenCalled();
+});
+
+test("classifyRunFailure: a genuine error re-probes and reports 'unavailable' when the re-probe finds no version (the Windows cross-platform backstop)", async () => {
+  // Simulates Windows: no ENOENT, no recognizable Python module-not-found
+  // message -- just an ordinary non-zero exit with a localized shell
+  // message -- so isUnavailableFast() alone would (incorrectly) say "not
+  // unavailable". The re-probe is what actually catches it.
+  const e = fakeExecaError({ stderr: "'djlint' n'est pas reconnu..." });
+
+  const result = await classifyRunFailure(
+    e,
+    () => false,
+    () => false,
+    async () => null,
+  );
+
+  expect(result).toBe("unavailable");
+});
+
+test("classifyRunFailure: a genuine error re-probes and reports 'error' when the re-probe still finds a version (djLint is still there)", async () => {
+  const e = fakeExecaError({ stderr: "No such option: --bogus" });
+
+  const result = await classifyRunFailure(
+    e,
+    () => false,
+    () => false,
+    async () => "1.42.3",
+  );
+
+  expect(result).toBe("error");
 });
 
 function fakeArg(over: {

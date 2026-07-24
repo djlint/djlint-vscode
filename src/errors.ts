@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type CliArg } from "./args.js";
-import { isDjlintUnavailable } from "./engine/subprocess/unavailable.js";
 import type { CustomExecaError } from "./runner.js";
 
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
@@ -35,24 +34,29 @@ function showError(
   })();
 }
 
+/** True when a failed djLint invocation's non-zero exit is actually a valid
+lint result, not a failure at all: djLint exits `1` and prints its normal
+"Linting N/M files" progress (or nothing) on stderr when it finds
+violations. Checked FIRST in `runner.ts`'s `classifyRunFailure()` -- before
+it ever considers whether djLint has become unavailable -- so the common
+"found issues" case never pays for an unavailability re-probe. Also reused
+by `checkErrors()` below (for whatever genuine error reaches it) so the two
+checks cannot drift apart. */
+export function isValidLintResult(e: CustomExecaError): boolean {
+  return (
+    e.exitCode != null && /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)
+  );
+}
+
 export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
 ): CustomExecaError {
-  // Surface "djLint unavailable" quietly (log only, no popup) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime.
-  if (isDjlintUnavailable(e)) {
-    outputChannel.debug(
-      `External djLint not available (${e.shortMessage}); using the bundled runtime.`,
-    );
-    // eslint-disable-next-line @typescript-eslint/only-throw-error
-    throw e;
+  if (isValidLintResult(e)) {
+    return e;
   }
 
   if (e.exitCode != null) {
-    if (/(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)) {
-      return e;
-    }
-
     const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(e.stderr)
       ?.groups?.["option"];
     if (option) {

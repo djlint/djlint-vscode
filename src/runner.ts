@@ -4,8 +4,9 @@ import * as vscode from "vscode";
 import { configurationArg, rulesArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
 import { RESOLUTION_TTL_MS } from "./engine/subprocess/constants.js";
+import { isDjlintUnavailable } from "./engine/subprocess/unavailable.js";
 import { DjlintUnavailableError } from "./engine/types.js";
-import { checkErrors } from "./errors.js";
+import { checkErrors, isValidLintResult } from "./errors.js";
 import {
   getActivePythonEnvironment,
   resetPythonEnvironmentProviderIfUnavailable,
@@ -378,6 +379,48 @@ async function runDjlintCommand(
   return stdout;
 }
 
+/** What `runDjlint()`'s catch should do with a genuine (post-resolution)
+djLint invocation failure. */
+export type RunFailureClassification = "error" | "lint-result" | "unavailable";
+
+/** Pure decision for a failed djLint invocation: is it actually a valid lint
+result, a djLint that has become unavailable, or a genuine error? No VS
+Code/execa dependency beyond the injected functions, so it is unit-testable
+in isolation -- `runDjlint()` itself is a thin wire-up around this.
+
+Order matters:
+1. `isValidResult(e)` first, BEFORE any re-probe -- djLint exiting `1` with
+   findings is the common case (e.g. every lint call that finds issues) and
+   must never pay for an extra `--version` spawn just to confirm djLint is
+   still there.
+2. `isUnavailableFast(e)` next -- the cheap, definite-unavailable shortcut
+   (`ENOENT` on Unix, or Python's English "No module named 'djlint'").
+3. Otherwise `reprobe()` -- the cross-platform backstop. Windows does not
+   report `ENOENT` for a missing executable (a bare missing command comes
+   back as an ordinary non-zero exit with a LOCALIZED shell "not
+   recognized" message, and a missing absolute path can even throw a plain
+   `TypeError`), so step 2 alone silently misses a djLint that vanished
+   there. Re-running the same `--version` probe used at resolution time is
+   platform- and locale-independent: if the resolved command can no longer
+   produce a version, djLint is gone, full stop. This step is only reached
+   for a genuine, still-undecided error, so the extra spawn is rare, not on
+   the hot path. */
+export async function classifyRunFailure(
+  e: CustomExecaError,
+  isValidResult: (e: CustomExecaError) => boolean,
+  isUnavailableFast: (e: CustomExecaError) => boolean,
+  reprobe: () => Promise<string | null>,
+): Promise<RunFailureClassification> {
+  if (isValidResult(e)) {
+    return "lint-result";
+  }
+  if (isUnavailableFast(e)) {
+    return "unavailable";
+  }
+  const version = await reprobe();
+  return version == null ? "unavailable" : "error";
+}
+
 export async function runDjlint(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -415,6 +458,28 @@ export async function runDjlint(
   } catch (e) {
     if (!isCustomExecaError(e)) {
       throw e;
+    }
+
+    const classification = await classifyRunFailure(
+      e,
+      isValidLintResult,
+      isDjlintUnavailable,
+      async () => probeExecutable(command.exec, command.prefixArgs),
+    );
+
+    if (classification === "lint-result") {
+      return e.stdout;
+    }
+
+    if (classification === "unavailable") {
+      // `djlint` resolved fine earlier (see getDjlintCommand() above) but is gone now -- uninstalled, a venv rebuilt out from under it, etc. Drop the cached command so the NEXT call re-resolves instead of reusing the now-vanished one for up to RESOLUTION_TTL_MS, and stay quiet (log only) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime instead of showing a popup for a condition that will self-resolve.
+      invalidateDjlintCommandCache();
+      outputChannel.debug(
+        `External djLint not available (${e.shortMessage}); using the bundled runtime.`,
+      );
+      throw new DjlintUnavailableError("External djLint is not available.", {
+        cause: e,
+      });
     }
 
     return checkErrors(e, outputChannel).stdout;
