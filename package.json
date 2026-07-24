@@ -113,7 +113,7 @@
         "djlint.executablePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Absolute path to the djLint executable. Relative paths are resolved from the workspace root. When empty, djLint is located from `#djlint.pythonPath#`, then the active Python environment, then PATH, then the bundled runtime.",
+          "markdownDescription": "Path to the `djlint` executable. Relative paths are resolved from the workspace root. When empty, djLint is located from `#djlint.pythonPath#`, then the active Python environment, then `djlint` on PATH, then the bundled runtime.",
           "scope": "machine-overridable"
         },
         "djlint.exclude": {

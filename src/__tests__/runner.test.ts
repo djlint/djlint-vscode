@@ -65,7 +65,6 @@ function fakeProvider(
   return {
     getActiveEnvironment: vi.fn(async () => null),
     initialize: vi.fn(async () => {}),
-    resolveInterpreter: vi.fn(async () => null),
     ...over,
   };
 }
@@ -495,4 +494,50 @@ test("selectSupportedArgs: names the djlint.* setting (not just the CLI flag) wh
 
   const [[message]] = outputChannel.warn.mock.calls;
   expect(message).toContain("djlint.rules");
+});
+
+// Regression coverage for the resolved-command cache (RESOLUTION_TTL_MS in
+// runner.ts) making runDjlintCommand() call selectSupportedArgs() with the
+// same version on every save/lint while the cache is warm: without dedupe,
+// the same "Skipping ..." warning would be logged again on every one of
+// those calls instead of once per resolved version.
+test("selectSupportedArgs: warns only once per resolved version across repeated calls (warm-cache simulation)", () => {
+  const outputChannel = fakeOutputChannel();
+  const unsupported = fakeArg({
+    cliName: "--stdin-filename",
+    minVersion: "1.43.0",
+  });
+
+  // Simulates runDjlintCommand() being invoked 3 times (e.g. 3 saves) while
+  // resolveDjlintCommandCached() keeps returning the same cached "1.42.3".
+  selectSupportedArgs([unsupported], "1.42.3", outputChannel);
+  selectSupportedArgs([unsupported], "1.42.3", outputChannel);
+  selectSupportedArgs([unsupported], "1.42.3", outputChannel);
+
+  expect(outputChannel.warn).toHaveBeenCalledTimes(1);
+});
+
+test("selectSupportedArgs: a different skipped option for the same version still warns separately", () => {
+  const outputChannel = fakeOutputChannel();
+  const first = fakeArg({ cliName: "--stdin-filename", minVersion: "1.43.0" });
+  const second = fakeArg({ cliName: "--rules", minVersion: "1.41" });
+
+  selectSupportedArgs([first], "1.0", outputChannel);
+  selectSupportedArgs([second], "1.0", outputChannel);
+
+  expect(outputChannel.warn).toHaveBeenCalledTimes(2);
+});
+
+test("selectSupportedArgs: invalidateDjlintCommandCache() lets a previously-warned (version, arg) pair warn again", () => {
+  const outputChannel = fakeOutputChannel();
+  const unsupported = fakeArg({
+    cliName: "--stdin-filename",
+    minVersion: "1.43.0",
+  });
+
+  selectSupportedArgs([unsupported], "1.42.3", outputChannel);
+  invalidateDjlintCommandCache();
+  selectSupportedArgs([unsupported], "1.42.3", outputChannel);
+
+  expect(outputChannel.warn).toHaveBeenCalledTimes(2);
 });

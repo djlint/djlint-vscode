@@ -177,6 +177,16 @@ interface CommandCacheEntry {
 
 const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 
+/** `${version}::${arg.cliName}` pairs `selectSupportedArgs()` has already
+warned about, so the same skipped option is not re-logged on every
+`runDjlintCommand()` call for as long as the resolved command stays cached
+(up to `RESOLUTION_TTL_MS`, i.e. potentially every save/lint in between).
+Cleared by `invalidateDjlintCommandCache()` — and therefore by the
+`djlint.restart` command, which calls it — so a freshly (re-)resolved
+version warns again rather than staying silent forever off a stale
+resolution. */
+const warnedSkippedArgs = new Set<string>();
+
 /** Clears every cached command resolution, forcing the next
 `resolveDjlintCommandCached()` call for each scope to re-run
 `resolveDjlintCommand()` (and therefore re-probe) instead of reusing a stale
@@ -186,12 +196,16 @@ changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
 active Python environment. Also un-latches a memoized "no Python environment
 provider available" result (see `resetUnavailableEnvironmentProviders()`),
 so a transient activation failure doesn't stay pinned for the rest of the
-session. This is also what the `djlint.restart` command runs (via
-`invalidateResolution()` in `extension.ts`) as a manual escape hatch — e.g.
-right after an in-place djLint upgrade, rather than waiting out
+session, and clears `selectSupportedArgs()`'s per-version skipped-arg
+warning dedupe (`warnedSkippedArgs`), so a version resolved anew warns about
+its unsupported args again instead of staying silent off the old
+resolution's dedupe state. This is also what the `djlint.restart` command
+runs (via `invalidateResolution()` in `extension.ts`) as a manual escape
+hatch — e.g. right after an in-place djLint upgrade, rather than waiting out
 `RESOLUTION_TTL_MS`. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
+  warnedSkippedArgs.clear();
   resetUnavailableEnvironmentProviders();
 }
 
@@ -329,7 +343,8 @@ export function isCustomExecaError(e: unknown): e is CustomExecaError {
 
 /** Filters `args` down to the ones `version` actually supports (i.e.
 `isVersionAtLeast(version, arg.minVersion)`), logging one
-`outputChannel.warn()` per skipped arg naming the option and the required
+`outputChannel.warn()` the first time a given `(version, arg)` pair is
+skipped — see `warnedSkippedArgs` — naming the option and the required
 `minVersion`. Pure aside from the logging side effect, so it is
 unit-testable with a fake `outputChannel` and no real `CliArg`/execa
 involved. This is what keeps a djLint older than, say,
@@ -346,12 +361,16 @@ export function selectSupportedArgs(
     if (isVersionAtLeast(version, arg.minVersion)) {
       return true;
     }
-    const optionName = arg.vscodeName
-      ? `djlint.${arg.vscodeName}`
-      : arg.cliName;
-    outputChannel.warn(
-      `Skipping ${optionName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
-    );
+    const warnKey = `${version}::${arg.cliName}`;
+    if (!warnedSkippedArgs.has(warnKey)) {
+      warnedSkippedArgs.add(warnKey);
+      const optionName = arg.vscodeName
+        ? `djlint.${arg.vscodeName}`
+        : arg.cliName;
+      outputChannel.warn(
+        `Skipping ${optionName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
+      );
+    }
     return false;
   });
 }

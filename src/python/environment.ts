@@ -36,11 +36,6 @@ when no provider is available. */
 export interface EnvironmentProvider {
   initialize: (disposables: vscode.Disposable[]) => Promise<void>;
 
-  /** Resolve a Python executable or environment directory to an environment. */
-  resolveInterpreter: (
-    path: string,
-  ) => Promise<PythonEnvironmentDetails | null>;
-
   /** Resolve the active Python environment for a file, folder, or workspace. */
   getActiveEnvironment: (
     uri?: vscode.Uri,
@@ -181,15 +176,6 @@ class ClassicPythonExtension implements EnvironmentProvider {
     );
   }
 
-  async resolveInterpreter(
-    path: string,
-  ): Promise<PythonEnvironmentDetails | null> {
-    const environment = await this.api.environments.resolveEnvironment(path);
-    return environment == null
-      ? null
-      : toClassicEnvironmentDetails(environment);
-  }
-
   async getActiveEnvironment(
     uri?: vscode.Uri,
   ): Promise<PythonEnvironmentDetails | null> {
@@ -249,15 +235,6 @@ class PythonEnvironmentsExtension implements EnvironmentProvider {
         this.#handleEnvironmentChange(event);
       }),
     );
-  }
-
-  async resolveInterpreter(
-    path: string,
-  ): Promise<PythonEnvironmentDetails | null> {
-    const environment = await this.api.resolveEnvironment(
-      vscode.Uri.file(path),
-    );
-    return environment == null ? null : this.#toEnvironmentDetails(environment);
   }
 
   async getActiveEnvironment(
