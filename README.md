@@ -63,6 +63,10 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 - The config file is ignored on some versions of Python if it is in the root of the project. To fix this, update `djLint` to v1.19.2 or higher.
 
+## Development
+
+Building the bundled Pyodide runtime locally (`npm run assets`, which `vscode:prepublish` also runs) requires [`uv`](https://docs.astral.sh/uv/) on `PATH` and a sibling `../djlint` checkout; see `scripts/provision-assets.mjs` for details.
+
 ## License
 
 The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
