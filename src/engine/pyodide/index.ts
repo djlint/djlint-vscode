@@ -17,11 +17,13 @@ export class PyodideEngine implements DjlintEngine {
   #worker: Worker | undefined;
   #seq = 0;
   #disposed = false;
+  #warnedPathOptionsIgnored = false;
   readonly #pending = new Map<number, Pending>();
 
   constructor(
     private readonly workerPath: string,
     private readonly indexURL: string,
+    private readonly outputChannel: vscode.LogOutputChannel,
   ) {}
 
   async format(
@@ -30,6 +32,7 @@ export class PyodideEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
+    this.#warnIfPathOptionsIgnored(config);
     return this.#call(
       "format",
       document.getText(),
@@ -44,6 +47,7 @@ export class PyodideEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
+    this.#warnIfPathOptionsIgnored(config);
     return this.#call(
       "lint",
       document.getText(),
@@ -58,6 +62,27 @@ export class PyodideEngine implements DjlintEngine {
     void this.#worker?.terminate();
     this.#worker = void 0;
     this.#rejectPending(new Error("djLint engine disposed"));
+  }
+
+  /** `djlint.configuration`/`djlint.rules` are host filesystem paths the
+  bundled Pyodide runtime cannot read (`buildConfigKwargs()` never forwards
+  them into the RPC options, see `kwargs.ts`), so setting either silently
+  does nothing on this engine. Logs one reminder the first time either is
+  set, rather than staying silent forever or logging on every format/lint
+  call. */
+  #warnIfPathOptionsIgnored(config: vscode.WorkspaceConfiguration): void {
+    if (this.#warnedPathOptionsIgnored) {
+      return;
+    }
+    const hasConfiguration = Boolean(config.get<string>("configuration"));
+    const hasRules = Boolean(config.get<string>("rules"));
+    if (!hasConfiguration && !hasRules) {
+      return;
+    }
+    this.#warnedPathOptionsIgnored = true;
+    this.outputChannel.info(
+      "djlint.configuration and djlint.rules are ignored by the bundled djLint runtime (it has no access to the host filesystem); install djLint externally to use them.",
+    );
   }
 
   #rejectPending(reason: Error): void {

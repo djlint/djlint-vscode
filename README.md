@@ -27,6 +27,8 @@ When an external djLint is used, the extension detects its version (`djlint --ve
 
 On djLint ≥ 1.43.0, the extension also passes the edited file's workspace-relative path via `--stdin-filename` when linting, so [`per-file-ignores`](https://djlint.com/docs/linter/#per-file-ignores) rules work correctly even though the file's contents are piped in over stdin rather than read from disk.
 
+`djlint.configuration` and `djlint.rules` point to files on disk. Since the bundled runtime has no access to the host filesystem, both settings only take effect with an externally-installed djLint (see [Installation](#installation)) and are silently ignored — with a one-time notice in the "djLint" output channel — when the bundled runtime is used.
+
 The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 
 Add this to your `settings.json` to format the default enabled languages with `djLint`:

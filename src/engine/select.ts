@@ -158,7 +158,7 @@ export function getEngine(
     "pyodide",
   ).fsPath;
   function makePyodide(): DjlintEngine {
-    return new PyodideEngine(workerPath, indexURL);
+    return new PyodideEngine(workerPath, indexURL, outputChannel);
   }
   state.cached = selectEngine<DjlintEngine>({
     isTrusted: vscode.workspace.isTrusted,

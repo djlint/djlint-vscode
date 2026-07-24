@@ -8,6 +8,7 @@ import {
   fakeConfig,
   fakeDocument,
   fakeFormattingOptions,
+  fakeOutputChannel,
   fakeToken,
 } from "./pyodide-harness.js";
 
@@ -23,7 +24,11 @@ describe.skipIf(!hasAssets)("PyodideEngine parity across profiles", () => {
   let engine: PyodideEngine;
 
   beforeAll(async () => {
-    engine = new PyodideEngine(await buildWorker(), assetsDir);
+    engine = new PyodideEngine(
+      await buildWorker(),
+      assetsDir,
+      fakeOutputChannel(),
+    );
   }, 120_000);
 
   afterAll(() => {

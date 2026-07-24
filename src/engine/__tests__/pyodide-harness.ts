@@ -2,6 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import * as esbuild from "esbuild";
+import { vi } from "vitest";
 
 // Shared setup for the real-Pyodide-in-Node integration tests: build the worker bundle + minimal vscode-shaped fakes.
 
@@ -43,3 +44,7 @@ export const fakeToken: any = {
   isCancellationRequested: false,
   onCancellationRequested: () => ({ dispose: () => {} }),
 };
+
+export function fakeOutputChannel(): any {
+  return { debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
+}

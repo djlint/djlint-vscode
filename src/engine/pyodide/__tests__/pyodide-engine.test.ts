@@ -12,6 +12,7 @@ import {
   fakeConfig,
   fakeDocument,
   fakeFormattingOptions,
+  fakeOutputChannel,
   fakeToken,
 } from "../../__tests__/pyodide-harness.js";
 import { PyodideEngine } from "../index.js";
@@ -33,7 +34,11 @@ describe.skipIf(!hasAssets)("PyodideEngine (real Pyodide in Node)", () => {
   let engine: PyodideEngine;
 
   beforeAll(async () => {
-    engine = new PyodideEngine(await buildWorker(), assetsDir);
+    engine = new PyodideEngine(
+      await buildWorker(),
+      assetsDir,
+      fakeOutputChannel(),
+    );
   }, 120_000);
 
   afterAll(() => {
@@ -90,5 +95,58 @@ describe.skipIf(!hasAssets)("PyodideEngine (real Pyodide in Node)", () => {
       fakeToken,
     );
     expect(out).toBe(expected);
+  }, 120_000);
+
+  /* Regression coverage for Finding B: djlint.configuration/djlint.rules are
+  file-path settings the bundled Pyodide runtime has no access to resolve.
+  Before the fix, buildConfigKwargs() forwarded "rules" straight through to
+  djLint's Config, which raised an uncaught FileNotFoundError for the
+  (nonexistent, from this sandboxed runtime's point of view) path, silently
+  breaking format/lint. Now buildConfigKwargs() never emits
+  "configuration"/"rules" at all (see kwargs.test.ts), so this must format
+  normally instead of throwing/rejecting. */
+  test("djlint.rules set is silently ignored (not a throw) by the bundled runtime", async () => {
+    const out = await engine.format(
+      fakeDocument(FORMAT_INPUT),
+      fakeConfig("django", { rules: "/nonexistent/rules.yaml" }),
+      fakeFormattingOptions,
+      fakeToken,
+    );
+    expect(out).toBe(FORMAT_EXPECTED);
+  }, 120_000);
+
+  test("djlint.configuration/djlint.rules being set logs one reminder, not one per call", async () => {
+    const output = fakeOutputChannel();
+    const localEngine = new PyodideEngine(
+      await buildWorker(),
+      assetsDir,
+      output,
+    );
+    try {
+      await localEngine.format(
+        fakeDocument(FORMAT_INPUT),
+        fakeConfig("django", { rules: "/nonexistent/rules.yaml" }),
+        fakeFormattingOptions,
+        fakeToken,
+      );
+      await localEngine.format(
+        fakeDocument(FORMAT_INPUT),
+        fakeConfig("django", { configuration: "/nonexistent/.djlintrc" }),
+        fakeFormattingOptions,
+        fakeToken,
+      );
+      await localEngine.lint(
+        fakeDocument(LINT_INPUT),
+        fakeConfig("django", { rules: "/nonexistent/rules.yaml" }),
+        fakeToken,
+      );
+
+      expect(output.info).toHaveBeenCalledTimes(1);
+      expect(output.info).toHaveBeenCalledWith(
+        expect.stringContaining("djlint.rules"),
+      );
+    } finally {
+      localEngine.dispose();
+    }
   }, 120_000);
 });

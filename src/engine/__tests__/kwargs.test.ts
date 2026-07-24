@@ -80,3 +80,35 @@ test("lint mode never emits the CLI-only linter_output_format or quiet kwargs", 
   expect(kwargs).not.toHaveProperty("linter_output_format");
   expect(kwargs).not.toHaveProperty("quiet");
 });
+
+// Regression coverage for Finding B: configuration/rules are host filesystem
+// paths the bundled Pyodide runtime cannot resolve (it has no access to the
+// host filesystem); djLint's Config raised an uncaught FileNotFoundError for
+// a missing path, silently breaking format/lint. buildConfigKwargs() must
+// never forward either, even when set -- the subprocess (CLI) path is
+// unaffected since it uses CliArg.build(), not buildKwarg().
+test("never emits configuration/rules kwargs, even when set (bundled runtime has no host filesystem access)", () => {
+  const cfg = fakeConfig({
+    configuration: "/workspace/.djlintrc",
+    rules: "/workspace/rules.yaml",
+  });
+  const formattingOptions: any = { tabSize: 2 };
+
+  const formatKwargs = buildConfigKwargs(
+    cfg,
+    fakeDocument,
+    formattingOptions,
+    "format",
+  );
+  const lintKwargs = buildConfigKwargs(
+    cfg,
+    fakeDocument,
+    formattingOptions,
+    "lint",
+  );
+
+  expect(formatKwargs).not.toHaveProperty("configuration");
+  expect(formatKwargs).not.toHaveProperty("rules");
+  expect(lintKwargs).not.toHaveProperty("configuration");
+  expect(lintKwargs).not.toHaveProperty("rules");
+});

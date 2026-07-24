@@ -148,6 +148,19 @@ class UseEditorIndentationArg extends CliArg {
   }
 }
 
+/** A `StringArg` for a host filesystem path (`djlint.configuration`/
+`djlint.rules`) that the bundled Pyodide engine cannot use: it runs sandboxed,
+with no access to the host filesystem, and djLint's `Config` raises an
+uncaught `FileNotFoundError` for a path it can't find — so `buildKwarg()`
+always returns `undefined` here, meaning `buildConfigKwargs()` (used only by
+the Pyodide engine, see `engine/kwargs.ts`) never forwards it. `build()` (the
+CLI flag, used by the subprocess engine, which reads the path itself) is
+unchanged. */
+class PathOnlyArg extends StringArg {
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  override buildKwarg(): undefined {}
+}
+
 // ⚠️ MUST equal the djLint version that first ships `--stdin-filename`.
 const STDIN_FILENAME_MIN_VERSION = "1.43.0";
 
@@ -173,13 +186,13 @@ class StdinFilenameArg extends CliOnlyArg {
   }
 }
 
-export const configurationArg = new StringArg(
+export const configurationArg = new PathOnlyArg(
   "configuration",
   "--configuration",
   "1.13",
 );
 
-export const rulesArg = new StringArg("rules", "--rules", "1.41");
+export const rulesArg = new PathOnlyArg("rules", "--rules", "1.41");
 
 const commonArgs = [
   configurationArg,
