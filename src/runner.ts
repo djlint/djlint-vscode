@@ -3,6 +3,7 @@ import { execa, ExecaError } from "execa";
 import * as vscode from "vscode";
 import { configurationArg, rulesArg, type CliArg } from "./args.js";
 import { configSection } from "./config.js";
+import { RESOLUTION_TTL_MS } from "./engine/subprocess/constants.js";
 import { DjlintUnavailableError } from "./engine/types.js";
 import { checkErrors } from "./errors.js";
 import {
@@ -164,15 +165,8 @@ folder (stringified `vscode.Uri`), or `undefined` for the shared global
 scope when the document has no workspace folder. */
 export type DjlintCommandCacheKey = string | undefined;
 
-/** How long a resolved `{ command, version }` stays cached before it is
-treated as stale and re-resolved (re-running `--version`), even without any
-of the explicit invalidation triggers firing. This is what picks up an
-in-place upgrade (e.g. `pip install -U djlint`) without the user touching a
-setting or the active Python environment — the two things that DO invalidate
-the cache immediately via `invalidateDjlintCommandCache()`. 5 minutes
-balances that against re-probing (spawning a process) on every
-format/lint call. */
-export const RESOLUTION_TTL_MS = 5 * 60 * 1000;
+// RESOLUTION_TTL_MS lives in ./engine/subprocess/constants.js (and is re-exported here) so select.ts's FallbackEngine can share the same TTL for its own per-scope self-heal without depending on this module, which pulls in execa and the Python-extension integration — overkill for a number, and a dependency select.ts's tests are structured to avoid. See that module for what the TTL means and why 5 minutes.
+export { RESOLUTION_TTL_MS } from "./engine/subprocess/constants.js";
 
 interface CommandCacheEntry {
   command: RunnerCommand;

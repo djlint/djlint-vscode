@@ -7,6 +7,7 @@ import {
   type LintDiagnostic,
 } from "../types.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
+import { isDjlintUnavailable } from "./unavailable.js";
 
 function controllerFor(token: vscode.CancellationToken): AbortController {
   const controller = new AbortController();
@@ -17,10 +18,7 @@ function controllerFor(token: vscode.CancellationToken): AbortController {
 }
 
 function asUnavailable(e: unknown): never {
-  if (
-    isCustomExecaError(e) &&
-    (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr))
-  ) {
+  if (isCustomExecaError(e) && isDjlintUnavailable(e)) {
     throw new DjlintUnavailableError("External djLint is not available.", {
       cause: e,
     });

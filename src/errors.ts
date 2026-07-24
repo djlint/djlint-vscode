@@ -1,5 +1,6 @@
 import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type CliArg } from "./args.js";
+import { isDjlintUnavailable } from "./engine/subprocess/unavailable.js";
 import type { CustomExecaError } from "./runner.js";
 
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
@@ -39,7 +40,7 @@ export function checkErrors(
   outputChannel: vscode.LogOutputChannel,
 ): CustomExecaError {
   // Surface "djLint unavailable" quietly (log only, no popup) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime.
-  if (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr)) {
+  if (isDjlintUnavailable(e)) {
     outputChannel.debug(
       `External djLint not available (${e.shortMessage}); using the bundled runtime.`,
     );
