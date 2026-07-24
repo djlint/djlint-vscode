@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+import { deriveStdinFilename } from "./stdin-filename.js";
 
 export abstract class CliArg {
   constructor(
@@ -145,6 +146,35 @@ class UseEditorIndentationArg extends CliArg {
   }
 }
 
+// ⚠️ MUST equal the djLint version that first ships `--stdin-filename`.
+const STDIN_FILENAME_MIN_VERSION = "1.43.0";
+
+/** Passes the document's derived filename (see `deriveStdinFilename()`) as
+`--stdin-filename`, so the subprocess path's `per-file-ignores` matching
+works for stdin input the same way the Pyodide engine's already does (it
+passes the filename directly to `linter()`/`formatter()`). Has no
+library-API equivalent to send via `buildKwarg()` — djLint's `Config` takes
+no filename kwarg; only its `linter()`/`formatter()` functions take a
+`filepath` argument directly, which is exactly what the Pyodide engine
+already does. Not user-configurable (no `djlint.*` setting), so
+`vscodeName` is `""`, matching `SimpleArg`'s convention for CLI-only flags. */
+class StdinFilenameArg extends CliArg {
+  constructor() {
+    super("", "--stdin-filename", STDIN_FILENAME_MIN_VERSION);
+  }
+
+  build(
+    _config: vscode.WorkspaceConfiguration,
+    document: vscode.TextDocument,
+  ): string[] {
+    return [this.cliName, deriveStdinFilename(document)];
+  }
+
+  // CLI-only: see the class doc comment above.
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  buildKwarg(): undefined {}
+}
+
 export const configurationArg = new StringArg(
   "configuration",
   "--configuration",
@@ -167,6 +197,7 @@ export const lintingArgs = [
   ...commonArgs,
   new LinterOutputFormatArg(),
   rulesArg,
+  new StdinFilenameArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
 ] as const;

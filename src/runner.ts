@@ -11,11 +11,21 @@ import {
   type EnvironmentProvider,
   type PythonEnvironmentDetails,
 } from "./python/environment.js";
+import { isVersionAtLeast, parseDjlintVersion } from "./version.js";
 
+/** A resolved djLint invocation, plus the version that resolution proved it
+to be (via a successful `--version` probe) — used to gate which `CliArg`s
+`runDjlintCommand()` is allowed to send it (see `selectSupportedArgs()`). */
 export interface RunnerCommand {
   exec: string;
   prefixArgs: readonly string[];
+  version: string;
 }
+
+/** A resolved djLint invocation, without the version — the shape
+`resolveDjlintCommand()`'s individual candidate steps build before pairing it
+with whatever version its `probe()` call reported. */
+type RunnerTarget = Omit<RunnerCommand, "version">;
 
 function isRelativePathLike(exec: string): boolean {
   return /[\\/]/u.test(exec) && !path.isAbsolute(exec);
@@ -56,7 +66,7 @@ environments). Returns `null` when the environment has no runnable
 command. */
 function toEnvironmentRunnerCommand(
   details: PythonEnvironmentDetails | null,
-): RunnerCommand | null {
+): RunnerTarget | null {
   if (details?.command == null) {
     return null;
   }
@@ -72,14 +82,23 @@ export interface ResolveDjlintCommandDeps {
   useVenv: boolean | undefined;
   provider: EnvironmentProvider | null;
   uri: vscode.Uri | undefined;
-  probe: (exec: string, prefixArgs: readonly string[]) => Promise<boolean>;
+  /** Validates a candidate invocation by running
+  `<exec> [...prefixArgs, "--version"]`: returns the parsed
+  `major.minor[.patch]` version string when it exits `0` and prints a
+  recognizable version, or `null` when the candidate is unusable (not found,
+  non-zero exit, or unparseable output — e.g. a valid interpreter with no
+  djLint installed). */
+  probe: (
+    exec: string,
+    prefixArgs: readonly string[],
+  ) => Promise<string | null>;
 }
 
 /** Pure decision: which djLint command to run. No VS Code/execa dependency
 beyond the injected `deps`, so it is unit-testable in isolation.
 
 1. `djlint.executablePath`, if non-empty, run directly — `probe()` must
-   confirm it works.
+   confirm it works and report its version.
 2. `djlint.pythonPath`, if non-empty, run as `<pythonPath> -m djlint` —
    `probe()` must confirm that combination works too.
 3. The active Python environment from `provider`, unless `djlint.useVenv` is
@@ -88,20 +107,29 @@ beyond the injected `deps`, so it is unit-testable in isolation.
    the result must still pass `probe()`.
 4. `djlint` on PATH, if `probe()` confirms it works.
 5. Otherwise `DjlintUnavailableError`, so the caller can fall back to the
-   bundled runtime. */
+   bundled runtime.
+
+Each candidate is accepted only when `probe()` returns a version (not just a
+launchable process) — a `pythonPath`/active-environment interpreter that
+launches fine but has no djLint installed now correctly falls through to the
+next candidate instead of being accepted and only failing at run time. */
 export async function resolveDjlintCommand(
   deps: ResolveDjlintCommandDeps,
 ): Promise<RunnerCommand> {
   const executablePath = deps.executablePath.trim();
-  if (executablePath && (await deps.probe(executablePath, []))) {
-    return { exec: executablePath, prefixArgs: [] };
+  if (executablePath) {
+    const version = await deps.probe(executablePath, []);
+    if (version != null) {
+      return { exec: executablePath, prefixArgs: [], version };
+    }
   }
 
   const pythonPath = deps.pythonPath.trim();
   if (pythonPath) {
     const prefixArgs = ["-m", "djlint"];
-    if (await deps.probe(pythonPath, prefixArgs)) {
-      return { exec: pythonPath, prefixArgs };
+    const version = await deps.probe(pythonPath, prefixArgs);
+    if (version != null) {
+      return { exec: pythonPath, prefixArgs, version };
     }
   }
 
@@ -109,13 +137,17 @@ export async function resolveDjlintCommand(
     const active = toEnvironmentRunnerCommand(
       await deps.provider.getActiveEnvironment(deps.uri),
     );
-    if (active && (await deps.probe(active.exec, active.prefixArgs))) {
-      return active;
+    if (active) {
+      const version = await deps.probe(active.exec, active.prefixArgs);
+      if (version != null) {
+        return { ...active, version };
+      }
     }
   }
 
-  if (await deps.probe("djlint", [])) {
-    return { exec: "djlint", prefixArgs: [] };
+  const pathVersion = await deps.probe("djlint", []);
+  if (pathVersion != null) {
+    return { exec: "djlint", prefixArgs: [], version: pathVersion };
   }
 
   throw new DjlintUnavailableError(
@@ -128,7 +160,22 @@ folder (stringified `vscode.Uri`), or `undefined` for the shared global
 scope when the document has no workspace folder. */
 export type DjlintCommandCacheKey = string | undefined;
 
-const commandCache = new Map<DjlintCommandCacheKey, RunnerCommand>();
+/** How long a resolved `{ command, version }` stays cached before it is
+treated as stale and re-resolved (re-running `--version`), even without any
+of the explicit invalidation triggers firing. This is what picks up an
+in-place upgrade (e.g. `pip install -U djlint`) without the user touching a
+setting or the active Python environment — the two things that DO invalidate
+the cache immediately via `invalidateDjlintCommandCache()`. 5 minutes
+balances that against re-probing (spawning a process) on every
+format/lint call. */
+export const RESOLUTION_TTL_MS = 5 * 60 * 1000;
+
+interface CommandCacheEntry {
+  command: RunnerCommand;
+  resolvedAt: number;
+}
+
+const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 
 /** Clears every cached command resolution, forcing the next
 `resolveDjlintCommandCached()` call for each scope to re-run
@@ -139,7 +186,10 @@ changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
 active Python environment. Also un-latches a memoized "no Python environment
 provider available" result (see `resetUnavailableEnvironmentProviders()`),
 so a transient activation failure doesn't stay pinned for the rest of the
-session. */
+session. This is also what the `djlint.restart` command runs (via
+`invalidateResolution()` in `extension.ts`) as a manual escape hatch — e.g.
+right after an in-place djLint upgrade, rather than waiting out
+`RESOLUTION_TTL_MS`. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
   resetUnavailableEnvironmentProviders();
@@ -147,44 +197,50 @@ export function invalidateDjlintCommandCache(): void {
 
 /** Thin memoizing layer around `resolveDjlintCommand()`: the first
 resolution for a given `scopeKey` probes/resolves as usual and, on success,
-its result is cached; every later call for the same scope returns the
-cached `RunnerCommand` without touching `deps.probe` or `deps.provider` at
-all — this is what keeps the format/lint hot path from spawning `--version`
-probes on every call. A failed resolution (`resolveDjlintCommand()`
-throwing) is never cached, so installing djLint mid-session, or fixing a
-broken `djlint.executablePath`, is picked up on the very next call rather
-than being stuck behind a cached failure until an invalidation trigger
-fires. */
+its result is cached (with the resolution time); every later call for the
+same scope returns the cached `RunnerCommand` — without touching
+`deps.probe` or `deps.provider` at all — as long as it is younger than
+`RESOLUTION_TTL_MS`. This is what keeps the format/lint hot path from
+spawning `--version` probes on every call, while still picking up an
+in-place djLint upgrade within a few minutes on its own (see
+`RESOLUTION_TTL_MS`) even if nothing explicitly invalidates the cache. A
+failed resolution (`resolveDjlintCommand()` throwing) is never cached, so
+installing djLint mid-session, or fixing a broken `djlint.executablePath`,
+is picked up on the very next call rather than being stuck behind a cached
+failure until an invalidation trigger fires or the TTL expires. */
 export async function resolveDjlintCommandCached(
   deps: ResolveDjlintCommandDeps,
   scopeKey: DjlintCommandCacheKey,
 ): Promise<RunnerCommand> {
   const cached = commandCache.get(scopeKey);
-  if (cached != null) {
-    return cached;
+  if (cached != null && Date.now() - cached.resolvedAt < RESOLUTION_TTL_MS) {
+    return cached.command;
   }
   const command = await resolveDjlintCommand(deps);
-  commandCache.set(scopeKey, command);
+  commandCache.set(scopeKey, { command, resolvedAt: Date.now() });
   return command;
 }
 
-/** Runtime `probe`: attempts to spawn `exec [...prefixArgs, "--version"]`
-and reports whether the process could be launched at all (regardless of its
-exit code), which is enough to tell a missing/unresolvable executable from a
-real one. `prefixArgs` lets the caller probe the exact invocation it intends
-to run (e.g. `<pythonPath> -m djlint --version`), not just the bare
-executable. */
+/** Runtime `probe`: validates a candidate `<exec> [...prefixArgs]`
+invocation by running `[...prefixArgs, "--version"]` and requires BOTH a
+`0` exit code AND stdout that parses as a djLint version (see
+`parseDjlintVersion()`) — a valid interpreter/executable that merely
+launches but has no djLint installed (or isn't djLint at all) now correctly
+fails the probe instead of being accepted and only failing at run time.
+Returns the parsed version string on success, `null` otherwise. `prefixArgs`
+lets the caller probe the exact invocation it intends to run (e.g.
+`<pythonPath> -m djlint --version`), not just the bare executable. */
 async function probeExecutable(
   exec: string,
   prefixArgs: readonly string[],
-): Promise<boolean> {
+): Promise<string | null> {
   try {
     const result = await execa(exec, [...prefixArgs, "--version"], {
       reject: false,
     });
-    return result.exitCode !== void 0;
+    return result.exitCode === 0 ? parseDjlintVersion(result.stdout) : null;
   } catch {
-    return false;
+    return null;
   }
 }
 
@@ -271,6 +327,35 @@ export function isCustomExecaError(e: unknown): e is CustomExecaError {
   return e instanceof ExecaError;
 }
 
+/** Filters `args` down to the ones `version` actually supports (i.e.
+`isVersionAtLeast(version, arg.minVersion)`), logging one
+`outputChannel.warn()` per skipped arg naming the option and the required
+`minVersion`. Pure aside from the logging side effect, so it is
+unit-testable with a fake `outputChannel` and no real `CliArg`/execa
+involved. This is what keeps a djLint older than, say,
+`STDIN_FILENAME_MIN_VERSION` from ever being sent `--stdin-filename` (or any
+other option newer than its own version) — `errors.ts`'s "No such option"
+handling remains as a safety net for anything this filter misses (e.g. an
+option removed in a newer djLint than the one djlint-vscode targets). */
+export function selectSupportedArgs(
+  args: readonly CliArg[],
+  version: string,
+  outputChannel: vscode.LogOutputChannel,
+): readonly CliArg[] {
+  return args.filter((arg) => {
+    if (isVersionAtLeast(version, arg.minVersion)) {
+      return true;
+    }
+    const optionName = arg.vscodeName
+      ? `djlint.${arg.vscodeName}`
+      : arg.cliName;
+    outputChannel.warn(
+      `Skipping ${optionName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
+    );
+    return false;
+  });
+}
+
 async function runDjlintCommand(
   command: RunnerCommand,
   document: vscode.TextDocument,
@@ -280,10 +365,17 @@ async function runDjlintCommand(
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
+  const supportedArgs = selectSupportedArgs(
+    args,
+    command.version,
+    outputChannel,
+  );
   const childArgs = [
     ...command.prefixArgs,
     "-",
-    ...args.flatMap((arg) => arg.build(config, document, formattingOptions)),
+    ...supportedArgs.flatMap((arg) =>
+      arg.build(config, document, formattingOptions),
+    ),
   ];
   const childOptions: ChildOptions = {
     ...getCwd(childArgs, document, outputChannel),

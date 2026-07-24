@@ -31,6 +31,8 @@ const {
   resolveDjlintCommandCached,
   invalidateDjlintCommandCache,
   normalizeConfiguredExecutable,
+  selectSupportedArgs,
+  RESOLUTION_TTL_MS,
 } = await import("../runner.js");
 const { DjlintUnavailableError } = await import("../engine/types.js");
 type ResolveDjlintCommandDeps = Parameters<typeof resolveDjlintCommand>[0];
@@ -48,7 +50,7 @@ function deps(
 ): ResolveDjlintCommandDeps {
   return {
     executablePath: "",
-    probe: vi.fn(async () => false),
+    probe: vi.fn(async () => null),
     provider: null,
     pythonPath: "",
     uri: void 0,
@@ -76,7 +78,9 @@ function envDetails(
 
 test("djlint.executablePath: used directly when it probes successfully", async () => {
   const provider = fakeProvider();
-  const probe = vi.fn(async (exec: string) => exec === "/custom/djlint");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "/custom/djlint" ? "1.42.3" : null,
+  );
   const command = await resolveDjlintCommand(
     deps({
       executablePath: "/custom/djlint",
@@ -85,19 +89,24 @@ test("djlint.executablePath: used directly when it probes successfully", async (
       pythonPath: "/some/python",
     }),
   );
-  expect(command).toEqual({ exec: "/custom/djlint", prefixArgs: [] });
+  expect(command).toEqual({
+    exec: "/custom/djlint",
+    prefixArgs: [],
+    version: "1.42.3",
+  });
   expect(probe).toHaveBeenCalledWith("/custom/djlint", []);
   // Later steps must never be consulted: step 1 already won.
   expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
 });
 
 test("djlint.executablePath: falls through to djlint.pythonPath when it fails to probe", async () => {
-  const probe = vi.fn(
-    async (exec: string, prefixArgs: readonly string[]) =>
-      exec === "/venv/bin/python" &&
-      prefixArgs.length === 2 &&
-      prefixArgs[0] === "-m" &&
-      prefixArgs[1] === "djlint",
+  const probe = vi.fn(async (exec: string, prefixArgs: readonly string[]) =>
+    exec === "/venv/bin/python" &&
+    prefixArgs.length === 2 &&
+    prefixArgs[0] === "-m" &&
+    prefixArgs[1] === "djlint"
+      ? "1.42.3"
+      : null,
   );
   const command = await resolveDjlintCommand(
     deps({
@@ -109,17 +118,44 @@ test("djlint.executablePath: falls through to djlint.pythonPath when it fails to
   expect(command).toEqual({
     exec: "/venv/bin/python",
     prefixArgs: ["-m", "djlint"],
+    version: "1.42.3",
   });
 });
 
+test("djlint.executablePath: a candidate that launches but has no djLint installed (probe reports no version) falls through, not just an unlaunchable one", async () => {
+  // Regression coverage for the gap the version-detecting probe closes: the
+  // old permissive probe accepted "the process could be spawned at all",
+  // so a valid Python with no djLint installed passed and only failed later
+  // at run time. Now probe() itself must report a version.
+  const probe = vi.fn(async (exec: string) =>
+    exec === "/venv/bin/python" ? "1.0.0" : null,
+  );
+  const command = await resolveDjlintCommand(
+    deps({
+      executablePath: "/valid/python/no-djlint",
+      probe,
+      pythonPath: "/venv/bin/python",
+    }),
+  );
+  expect(command).toEqual({
+    exec: "/venv/bin/python",
+    prefixArgs: ["-m", "djlint"],
+    version: "1.0.0",
+  });
+  expect(probe).toHaveBeenCalledWith("/valid/python/no-djlint", []);
+});
+
 test("djlint.pythonPath: used (with -m djlint) when no executablePath is set", async () => {
-  const probe = vi.fn(async (exec: string) => exec === "/venv/bin/python");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "/venv/bin/python" ? "1.42.3" : null,
+  );
   const command = await resolveDjlintCommand(
     deps({ probe, pythonPath: "/venv/bin/python" }),
   );
   expect(command).toEqual({
     exec: "/venv/bin/python",
     prefixArgs: ["-m", "djlint"],
+    version: "1.42.3",
   });
   expect(probe).toHaveBeenCalledWith("/venv/bin/python", ["-m", "djlint"]);
 });
@@ -132,7 +168,7 @@ test("djlint.pythonPath wins over the active environment", async () => {
   });
   const command = await resolveDjlintCommand(
     deps({
-      probe: vi.fn(async () => true),
+      probe: vi.fn(async () => "1.42.3"),
       provider,
       pythonPath: "/venv/bin/python",
     }),
@@ -140,6 +176,7 @@ test("djlint.pythonPath wins over the active environment", async () => {
   expect(command).toEqual({
     exec: "/venv/bin/python",
     prefixArgs: ["-m", "djlint"],
+    version: "1.42.3",
   });
   expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
 });
@@ -150,11 +187,14 @@ test("active environment: used with its args + -m djlint when neither executable
       envDetails({ args: ["run"], executable: "/active/python" }),
     ),
   });
-  const probe = vi.fn(async (exec: string) => exec === "/active/python");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "/active/python" ? "1.42.3" : null,
+  );
   const command = await resolveDjlintCommand(deps({ probe, provider }));
   expect(command).toEqual({
     exec: "/active/python",
     prefixArgs: ["run", "-m", "djlint"],
+    version: "1.42.3",
   });
   expect(probe).toHaveBeenCalledWith("/active/python", ["run", "-m", "djlint"]);
 });
@@ -166,11 +206,12 @@ test("active environment: a conda/uv-style command's own launch args are preserv
     ),
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => true), provider }),
+    deps({ probe: vi.fn(async () => "1.42.3"), provider }),
   );
   expect(command).toEqual({
     exec: "/usr/bin/uv",
     prefixArgs: ["run", "-p", "3.12", "-m", "djlint"],
+    version: "1.42.3",
   });
 });
 
@@ -181,9 +222,18 @@ test("active environment: a command that fails to probe falls through to the PAT
     ),
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async (exec: string) => exec === "djlint"), provider }),
+    deps({
+      probe: vi.fn(async (exec: string) =>
+        exec === "djlint" ? "1.42.3" : null,
+      ),
+      provider,
+    }),
   );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(command).toEqual({
+    exec: "djlint",
+    prefixArgs: [],
+    version: "1.42.3",
+  });
 });
 
 test("active environment with no command falls through to the PATH fallback", async () => {
@@ -191,9 +241,13 @@ test("active environment with no command falls through to the PATH fallback", as
     getActiveEnvironment: vi.fn(async () => envDetails(null)),
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => true), provider }),
+    deps({ probe: vi.fn(async () => "1.42.3"), provider }),
   );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(command).toEqual({
+    exec: "djlint",
+    prefixArgs: [],
+    version: "1.42.3",
+  });
 });
 
 test("djlint.useVenv: false skips the active-environment step", async () => {
@@ -203,9 +257,13 @@ test("djlint.useVenv: false skips the active-environment step", async () => {
     }),
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => true), provider, useVenv: false }),
+    deps({ probe: vi.fn(async () => "1.42.3"), provider, useVenv: false }),
   );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(command).toEqual({
+    exec: "djlint",
+    prefixArgs: [],
+    version: "1.42.3",
+  });
   expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
 });
 
@@ -216,24 +274,33 @@ test("djlint.useVenv left at its default (true) still consults the active enviro
     ),
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => true), provider, useVenv: true }),
+    deps({ probe: vi.fn(async () => "1.42.3"), provider, useVenv: true }),
   );
   expect(command).toEqual({
     exec: "/active/python",
     prefixArgs: ["-m", "djlint"],
+    version: "1.42.3",
   });
 });
 
 test("falls back to djlint on PATH when nothing else resolves", async () => {
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async (exec: string) => exec === "djlint") }),
+    deps({
+      probe: vi.fn(async (exec: string) =>
+        exec === "djlint" ? "1.42.3" : null,
+      ),
+    }),
   );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(command).toEqual({
+    exec: "djlint",
+    prefixArgs: [],
+    version: "1.42.3",
+  });
 });
 
 test("throws DjlintUnavailableError when nothing resolves at all", async () => {
   await expect(
-    resolveDjlintCommand(deps({ probe: vi.fn(async () => false) })),
+    resolveDjlintCommand(deps({ probe: vi.fn(async () => null) })),
   ).rejects.toBeInstanceOf(DjlintUnavailableError);
 });
 
@@ -270,19 +337,23 @@ test("normalizeConfiguredExecutable(): trims whitespace-only input down to an em
 });
 
 test("resolveDjlintCommandCached: a second resolution for the same scope does not re-probe", async () => {
-  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "djlint" ? "1.42.3" : null,
+  );
   const d = deps({ probe });
 
   const first = await resolveDjlintCommandCached(d, "scope-a");
   const second = await resolveDjlintCommandCached(d, "scope-a");
 
-  expect(first).toEqual({ exec: "djlint", prefixArgs: [] });
+  expect(first).toEqual({ exec: "djlint", prefixArgs: [], version: "1.42.3" });
   expect(second).toEqual(first);
   expect(probe).toHaveBeenCalledTimes(1);
 });
 
 test("resolveDjlintCommandCached: invalidateDjlintCommandCache() forces a re-probe", async () => {
-  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "djlint" ? "1.42.3" : null,
+  );
   const d = deps({ probe });
 
   await resolveDjlintCommandCached(d, "scope-a");
@@ -293,7 +364,9 @@ test("resolveDjlintCommandCached: invalidateDjlintCommandCache() forces a re-pro
 });
 
 test("resolveDjlintCommandCached: different scopes are cached independently", async () => {
-  const probe = vi.fn(async (exec: string) => exec === "djlint");
+  const probe = vi.fn(async (exec: string) =>
+    exec === "djlint" ? "1.42.3" : null,
+  );
   const d = deps({ probe });
 
   await resolveDjlintCommandCached(d, "scope-a");
@@ -305,7 +378,7 @@ test("resolveDjlintCommandCached: different scopes are cached independently", as
 });
 
 test("resolveDjlintCommandCached: a failed resolution is not cached", async () => {
-  const probe = vi.fn(async () => false);
+  const probe = vi.fn(async () => null);
   const d = deps({ probe });
 
   await expect(resolveDjlintCommandCached(d, "scope-a")).rejects.toBeInstanceOf(
@@ -318,4 +391,108 @@ test("resolveDjlintCommandCached: a failed resolution is not cached", async () =
   // Nothing was ever cached, so both resolutions independently reach (and
   // fail) the PATH fallback probe: 1 probe call each x 2 resolutions.
   expect(probe).toHaveBeenCalledTimes(2);
+});
+
+test("resolveDjlintCommandCached: a cache entry younger than RESOLUTION_TTL_MS is reused", async () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(0);
+    const probe = vi.fn(async (exec: string) =>
+      exec === "djlint" ? "1.42.3" : null,
+    );
+    const d = deps({ probe });
+
+    await resolveDjlintCommandCached(d, "scope-a");
+    vi.setSystemTime(RESOLUTION_TTL_MS - 1);
+    await resolveDjlintCommandCached(d, "scope-a");
+
+    expect(probe).toHaveBeenCalledTimes(1);
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+test("resolveDjlintCommandCached: a cache entry at least RESOLUTION_TTL_MS old is treated as a miss and re-probed (picks up an in-place djLint upgrade)", async () => {
+  vi.useFakeTimers();
+  try {
+    vi.setSystemTime(0);
+    const probe = vi.fn(async (exec: string): Promise<string | null> =>
+      exec === "djlint" ? "1.42.3" : null,
+    );
+    const d = deps({ probe });
+
+    const first = await resolveDjlintCommandCached(d, "scope-a");
+    expect(first.version).toBe("1.42.3");
+
+    vi.setSystemTime(RESOLUTION_TTL_MS);
+    probe.mockImplementation(async (exec: string) =>
+      exec === "djlint" ? "1.43.0" : null,
+    );
+    const second = await resolveDjlintCommandCached(d, "scope-a");
+
+    expect(probe).toHaveBeenCalledTimes(2);
+    expect(second.version).toBe("1.43.0");
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
+function fakeArg(over: {
+  cliName: string;
+  minVersion: string;
+  vscodeName?: string;
+}): any {
+  return { vscodeName: "", ...over };
+}
+
+function fakeOutputChannel(): any {
+  return { warn: vi.fn() };
+}
+
+test("selectSupportedArgs: keeps every arg whose minVersion the resolved version satisfies", () => {
+  const outputChannel = fakeOutputChannel();
+  const args = [
+    fakeArg({ cliName: "--a", minVersion: "1.0" }),
+    fakeArg({ cliName: "--b", minVersion: "1.42" }),
+  ];
+
+  const result = selectSupportedArgs(args, "1.42.3", outputChannel);
+
+  expect(result).toEqual(args);
+  expect(outputChannel.warn).not.toHaveBeenCalled();
+});
+
+test("selectSupportedArgs: drops an arg whose minVersion is newer than the resolved version, and warns once", () => {
+  const outputChannel = fakeOutputChannel();
+  const supported = fakeArg({ cliName: "--old", minVersion: "1.0" });
+  const unsupported = fakeArg({
+    cliName: "--stdin-filename",
+    minVersion: "1.43.0",
+  });
+
+  const result = selectSupportedArgs(
+    [supported, unsupported],
+    "1.42.3",
+    outputChannel,
+  );
+
+  expect(result).toEqual([supported]);
+  expect(outputChannel.warn).toHaveBeenCalledTimes(1);
+  const [[message]] = outputChannel.warn.mock.calls;
+  expect(message).toContain("--stdin-filename");
+  expect(message).toContain("1.43.0");
+});
+
+test("selectSupportedArgs: names the djlint.* setting (not just the CLI flag) when the arg has a vscodeName", () => {
+  const outputChannel = fakeOutputChannel();
+  const arg = fakeArg({
+    cliName: "--rules",
+    minVersion: "1.41",
+    vscodeName: "rules",
+  });
+
+  selectSupportedArgs([arg], "1.0", outputChannel);
+
+  const [[message]] = outputChannel.warn.mock.calls;
+  expect(message).toContain("djlint.rules");
 });

@@ -1,5 +1,15 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { buildConfigKwargs } from "../kwargs.js";
+
+// kwargs.ts pulls in args.ts, which (via StdinFilenameArg) now imports the
+// shared stdin-filename.ts module, which imports "vscode" (not resolvable
+// outside a real extension host) for `deriveStdinFilename()`'s
+// `vscode.workspace.asRelativePath()` call. That call is never reached from
+// this file (buildConfigKwargs() only exercises `buildKwarg()`, and
+// StdinFilenameArg.buildKwarg() is CLI-only — it returns `undefined` without
+// touching `document`), so an empty stub is enough to satisfy module
+// resolution.
+vi.mock("vscode", () => ({}));
 
 function fakeConfig(values: Record<string, unknown>): any {
   return { get: (k: string): unknown => values[k] };

@@ -5,7 +5,7 @@ export interface WorkerRequest {
   kind: "format" | "lint";
   src: string;
   opts: Record<string, unknown>;
-  // Path djLint should see, e.g. for `per-file-ignores` matching (forward slashes only; see `derivePyodideFilename()` in `../index.ts`).
+  // Path djLint should see, e.g. for `per-file-ignores` matching (forward slashes only; see `deriveStdinFilename()` in `../../stdin-filename.ts`).
   filename: string;
 }
 

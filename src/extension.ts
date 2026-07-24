@@ -46,6 +46,8 @@ export async function activate(
     }),
     // The active interpreter can also change from outside VS Code's settings (switching environments via the Python extension's UI), so this needs its own listener rather than folding into the config-change one above.
     onDidChangeActivePythonEnvironment(invalidateResolution),
+    // Manual escape hatch for an in-place djLint upgrade (e.g. `pip install -U djlint`): the resolved command/version cache otherwise only refreshes on its own after `RESOLUTION_TTL_MS` (src/runner.ts) or one of the triggers above.
+    vscode.commands.registerCommand("djlint.restart", invalidateResolution),
   );
 
   const formatter = new Formatter(context, outputChannel);

@@ -1,5 +1,6 @@
 import { Worker } from "node:worker_threads";
 import * as vscode from "vscode";
+import { deriveStdinFilename } from "../../stdin-filename.js";
 import { buildConfigKwargs } from "../kwargs.js";
 import type { DjlintEngine, LintDiagnostic } from "../types.js";
 import type { WorkerRequest, WorkerResponse } from "./protocol.js";
@@ -7,41 +8,6 @@ import type { WorkerRequest, WorkerResponse } from "./protocol.js";
 interface Pending {
   reject: (reason: Error) => void;
   resolve: (value: any) => void;
-}
-
-// Mirrors linter.ts's `supportedUriSchemes`: the schemes for which a document has a meaningful, stable path. Kept as a local copy rather than a shared import to avoid a dependency from the engine layer back up to linter.ts.
-const supportedFilenameSchemes: ReadonlySet<string> = new Set([
-  "file",
-  "vscode-vfs",
-]);
-
-/** Derives the path djLint's `linter()` should match `per-file-ignores`
-patterns against: the document's workspace-relative path when known (the
-form users write those patterns against), falling back to the absolute
-filesystem path, falling back to `"-"` for untitled/unsupported schemes.
-Backslashes are normalized to forward slashes, since per-file-ignores
-patterns are written with `/`. Pure (plain strings in, string out) so it is
-unit-testable outside VS Code. */
-export function derivePyodideFilename(
-  scheme: string,
-  relativePath: string | undefined,
-  fsPath: string | undefined,
-): string {
-  if (!supportedFilenameSchemes.has(scheme)) {
-    return "-";
-  }
-  // An empty relative path (e.g. when asRelativePath finds no containing workspace folder) is treated the same as "absent": `||`, not `??`, is intentional here.
-  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-  const raw = relativePath || fsPath;
-  return raw ? raw.replaceAll("\\", "/") : "-";
-}
-
-function documentFilename(document: vscode.TextDocument): string {
-  return derivePyodideFilename(
-    document.uri.scheme,
-    vscode.workspace.asRelativePath(document.uri, false),
-    document.uri.fsPath,
-  );
 }
 
 /** Runs bundled djLint inside a single warm Pyodide worker_thread, one RPC per
@@ -68,7 +34,7 @@ export class PyodideEngine implements DjlintEngine {
       "format",
       document.getText(),
       buildConfigKwargs(config, document, formattingOptions, "format"),
-      documentFilename(document),
+      deriveStdinFilename(document),
       token,
     );
   }
@@ -82,7 +48,7 @@ export class PyodideEngine implements DjlintEngine {
       "lint",
       document.getText(),
       buildConfigKwargs(config, document, void 0, "lint"),
-      documentFilename(document),
+      deriveStdinFilename(document),
       token,
     );
   }

@@ -48,6 +48,12 @@
     "watch:tsc": "tsc --watch"
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "djlint.restart",
+        "title": "djLint: Restart"
+      }
+    ],
     "configuration": {
       "properties": {
         "djlint.blankLineAfterTag": {
