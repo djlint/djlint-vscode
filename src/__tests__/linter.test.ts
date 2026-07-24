@@ -3,7 +3,7 @@ import { beforeEach, expect, test, vi } from "vitest";
 /*
  * linter.ts pulls in vscode + ./config.js + ./engine/select.js (which itself
  * pulls in the full subprocess/pyodide engine stack). Stub all three so this
- * file can exercise Linter's gating logic (enableLinting + lintLanguages +
+ * file can exercise Linter's gating logic (enableLinting + formatLanguages +
  * URI scheme) against a fake engine, matching the mocking pattern already
  * used in src/engine/__tests__/select.test.ts.
  */
@@ -101,8 +101,8 @@ beforeEach(() => {
   state.collection = void 0;
 });
 
-test("enabled + language in lintLanguages -> lints the document", async () => {
-  state.settings = { enableLinting: true, lintLanguages: ["django-html"] };
+test("enabled + language in formatLanguages -> lints the document", async () => {
+  state.settings = { enableLinting: true, formatLanguages: ["django-html"] };
   state.docs = [fakeDocument("django-html")];
 
   const linter = new Linter(fakeContext(), fakeOutputChannel());
@@ -113,8 +113,10 @@ test("enabled + language in lintLanguages -> lints the document", async () => {
   expect(state.collection?.delete).not.toHaveBeenCalled();
 });
 
-test("enabled + language NOT in lintLanguages -> skips linting and clears diagnostics", async () => {
-  state.settings = { enableLinting: true, lintLanguages: ["django-html"] };
+test("enabled globally + language NOT in formatLanguages -> skips linting and clears diagnostics", async () => {
+  // Simulates a user setting `djlint.enableLinting: true` globally: it must
+  // not lint every language, only those djLint actually handles.
+  state.settings = { enableLinting: true, formatLanguages: ["django-html"] };
   state.docs = [fakeDocument("python")];
 
   const linter = new Linter(fakeContext(), fakeOutputChannel());
@@ -125,8 +127,8 @@ test("enabled + language NOT in lintLanguages -> skips linting and clears diagno
   expect(state.collection?.set).not.toHaveBeenCalled();
 });
 
-test("enableLinting disabled -> still skips regardless of lintLanguages", async () => {
-  state.settings = { enableLinting: false, lintLanguages: ["django-html"] };
+test("enableLinting disabled -> still skips regardless of formatLanguages", async () => {
+  state.settings = { enableLinting: false, formatLanguages: ["django-html"] };
   state.docs = [fakeDocument("django-html")];
 
   const linter = new Linter(fakeContext(), fakeOutputChannel());

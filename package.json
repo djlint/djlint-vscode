@@ -289,44 +289,6 @@
           "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27.",
           "scope": "resource"
         },
-        "djlint.lintLanguages": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [
-            "django-html",
-            "jinja",
-            "jinja-html",
-            "jinja2",
-            "html-hubl",
-            "hubl-html",
-            "twig",
-            "html-nunjucks",
-            "njk",
-            "nunjucks",
-            "handlebars",
-            "hbs",
-            "spacebars",
-            "liquid",
-            "jekyll",
-            "go-template",
-            "go-tmpl",
-            "gotemplate",
-            "GoTemplate",
-            "gohtml",
-            "GoHTML",
-            "gotmpl",
-            "hugo-html",
-            "mustache",
-            "htmlmustache",
-            "tera",
-            "askama-html",
-            "html"
-          ],
-          "markdownDescription": "Language IDs djLint will lint. Combined with `#djlint.enableLinting#`, so enabling linting globally (rather than per language) still only lints these languages.",
-          "scope": "window"
-        },
         "djlint.maxAttributeLength": {
           "type": [
             "integer",

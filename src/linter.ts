@@ -70,10 +70,10 @@ export class Linter {
       return;
     }
 
-    // `enableLinting` alone doesn't scope by language (it can legitimately be set globally); `lintLanguages` is what keeps a global `enableLinting: true` from linting every file in the workspace.
+    // `enableLinting` alone doesn't scope by language (it can legitimately be set globally); gating on `formatLanguages` (the list of languages djLint handles) is what keeps a global `enableLinting: true` from linting every file in the workspace.
     if (
       !config
-        .get<readonly string[]>("lintLanguages")
+        .get<readonly string[]>("formatLanguages")
         ?.includes(document.languageId)
     ) {
       this.#collection.delete(document.uri);
