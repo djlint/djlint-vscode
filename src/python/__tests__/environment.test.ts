@@ -103,22 +103,32 @@ function fakeClassicPythonExtensionApi(vscode: any): {
   };
 }
 
-test("Finding 1: initializePythonEnvironment() actually wires the classic Python extension's change event through to onDidChangeActivePythonEnvironment (the listener registration is no longer dead code)", async () => {
+test("Finding 1: getActivePythonEnvironment() actually wires the classic Python extension's change event through to onDidChangeActivePythonEnvironment (the listener registration is no longer dead code)", async () => {
   const { PythonExtension } = await import("@vscode/python-extension");
-  const { initializePythonEnvironment, onDidChangeActivePythonEnvironment } =
-    await freshEnvironmentModule();
+  const {
+    initializePythonEnvironment,
+    getActivePythonEnvironment,
+    onDidChangeActivePythonEnvironment,
+  } = await freshEnvironmentModule();
   const vscode: any = await import("vscode");
   const { api, emitter } = fakeClassicPythonExtensionApi(vscode);
   vi.mocked(PythonExtension.api).mockResolvedValue(api);
 
   const disposables: unknown[] = [];
-  await initializePythonEnvironment(disposables, outputChannel);
+  initializePythonEnvironment(disposables, outputChannel);
+  // initializePythonEnvironment() bridges its own disposables into the array
+  // it's given, but (per the lazy-activation test below) does NOT itself
+  // register the listener yet.
+  expect(disposables).toHaveLength(1);
+  expect(
+    api.environments.onDidChangeActiveEnvironmentPath,
+  ).not.toHaveBeenCalled();
+
+  await getActivePythonEnvironment();
   // The whole bug was that this listener registration never happened.
   expect(
     api.environments.onDidChangeActiveEnvironmentPath,
   ).toHaveBeenCalledTimes(1);
-  // initializePythonEnvironment() bridges its own disposables into the array it's given.
-  expect(disposables).toHaveLength(1);
 
   let fired = 0;
   onDidChangeActivePythonEnvironment(() => {
@@ -131,6 +141,33 @@ test("Finding 1: initializePythonEnvironment() actually wires the classic Python
   });
 
   expect(fired).toBe(1);
+});
+
+test("initializePythonEnvironment() does not activate the classic Python extension by itself; activation is lazy, on the first getActivePythonEnvironment() call", async () => {
+  const { PythonExtension } = await import("@vscode/python-extension");
+  const { initializePythonEnvironment, getActivePythonEnvironment } =
+    await freshEnvironmentModule();
+  const vscode: any = await import("vscode");
+  const { api } = fakeClassicPythonExtensionApi(vscode);
+  // mockClear() first: despite vi.resetModules() in beforeEach, this mock's
+  // call history has been observed to survive across tests in this file
+  // (unlike the fakeClassicPythonExtensionApi()-local mocks, which are
+  // rebuilt fresh every test), so clear it explicitly rather than relying on
+  // an absolute "never called" baseline that a preceding test could taint.
+  vi.mocked(PythonExtension.api).mockClear().mockResolvedValue(api);
+
+  const disposables: unknown[] = [];
+  initializePythonEnvironment(disposables, outputChannel);
+
+  // Regression coverage for the eager `await getClassicPythonExtension(...)`
+  // this used to make: activating ms-python.python for EVERY user on djLint
+  // startup, even one on executablePath/useVenv:false/no-djLint-file who
+  // never needs it.
+  expect(PythonExtension.api).not.toHaveBeenCalled();
+
+  await getActivePythonEnvironment();
+
+  expect(PythonExtension.api).toHaveBeenCalledTimes(1);
 });
 
 test("getActivePythonEnvironment(): returns null when the Python extension is absent, without throwing", async () => {

@@ -43,8 +43,8 @@ export async function activate(
     vscode.commands.registerCommand("djlint.restart", invalidateResolution),
   );
 
-  // Wires up the classic Python extension's active-environment-changed listener (see src/python/environment.ts) before either Formatter/Linter can trigger a format/lint call that needs it; its own disposables are bridged into context.subscriptions here.
-  await initializePythonEnvironment(context.subscriptions, outputChannel);
+  // Registers the disposal bridge for the classic Python extension's eventual (lazy) activation before either Formatter/Linter can trigger a format/lint call, and stashes outputChannel for that later activation to log through -- see src/python/environment.ts. This does NOT activate ms-python.python: activation happens lazily, only on the first getActivePythonEnvironment() call that djLint command resolution actually reaches (i.e. never for an executablePath/useVenv:false/no-djLint-file user).
+  initializePythonEnvironment(context.subscriptions, outputChannel);
 
   const formatter = new Formatter(context, outputChannel);
   formatter.activate();
