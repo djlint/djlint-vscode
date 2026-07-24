@@ -28,8 +28,13 @@ export function fakeDocument(text: string): any {
   };
 }
 
-export function fakeConfig(profile: string): any {
-  return { get: (key: string) => (key === "profile" ? profile : undefined) };
+export function fakeConfig(
+  profile: string,
+  overrides: Record<string, unknown> = {},
+): any {
+  return {
+    get: (key: string) => (key === "profile" ? profile : overrides[key]),
+  };
 }
 
 export const fakeFormattingOptions: any = { tabSize: 4, insertSpaces: true };

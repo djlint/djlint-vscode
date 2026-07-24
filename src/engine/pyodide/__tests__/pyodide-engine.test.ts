@@ -58,4 +58,37 @@ describe.skipIf(!hasAssets)("PyodideEngine (real Pyodide in Node)", () => {
     );
     expect(diagnostics).toEqual(LINT_EXPECTED);
   }, 120_000);
+
+  // Regression coverage for the uv-derived dependency closure: no other test
+  // enables formatCss/formatJs, so cssbeautifier/jsbeautifier are otherwise
+  // never actually imported inside the sandboxed Pyodide runtime — the exact
+  // packages a closure regression (e.g. a stale/missing wheel) would break.
+  // Golden output captured from the bundled djLint 1.42.3.
+  test("format with formatCss/formatJs imports cssbeautifier/jsbeautifier and beautifies <style>/<script> contents", async () => {
+    const input =
+      "<html><head><style>.a{color:red}</style></head><body><script>var x=1;</script></body></html>";
+    const expected =
+      "<html>\n" +
+      "    <head>\n" +
+      "        <style>\n" +
+      "            .a {\n" +
+      "                color: red\n" +
+      "            }\n" +
+      "        </style>\n" +
+      "    </head>\n" +
+      "    <body>\n" +
+      "        <script>\n" +
+      "            var x = 1;\n" +
+      "        </script>\n" +
+      "    </body>\n" +
+      "</html>\n";
+
+    const out = await engine.format(
+      fakeDocument(input),
+      fakeConfig("html", { formatCss: true, formatJs: true }),
+      fakeFormattingOptions,
+      fakeToken,
+    );
+    expect(out).toBe(expected);
+  }, 120_000);
 });

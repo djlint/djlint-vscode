@@ -73,13 +73,6 @@ function runUv(args, options = {}) {
 // --- 1. Build the djLint wheel from source with uv -------------------------
 
 function buildDjlintWheel() {
-  mkdirSync(OUT, { recursive: true });
-  // Drop any stale djlint wheel so exactly one version is bundled.
-  for (const f of readdirSync(OUT)) {
-    if (/^djlint-.*\.whl$/u.test(f)) {
-      rmSync(`${OUT}/${f}`);
-    }
-  }
   runUv(["build", "--wheel", "--no-create-gitignore", "-o", OUT, DJLINT_SRC], {
     stdio: "inherit",
   });
@@ -107,9 +100,18 @@ const MARKER_CMP = {
   ">=": (cmp) => cmp >= 0,
 };
 
+// Throws on a non-numeric segment instead of letting it silently become NaN:
+// `NaN - x` is always NaN, `NaN !== 0` is true, and `Math.sign(NaN)` is NaN,
+// which would make every marker comparison involving it evaluate to false —
+// silently mis-evaluating the marker instead of failing loudly.
 function compareVersions(a, b) {
   const pa = a.split(".").map(Number);
   const pb = b.split(".").map(Number);
+  if (pa.some((n) => Number.isNaN(n)) || pb.some((n) => Number.isNaN(n))) {
+    throw new TypeError(
+      `non-numeric version segment while comparing "${a}" to "${b}"`,
+    );
+  }
   for (let i = 0; i < Math.max(pa.length, pb.length); i += 1) {
     const diff = (pa[i] ?? 0) - (pb[i] ?? 0);
     if (diff !== 0) {
@@ -274,6 +276,12 @@ function lockEntry(name, version, fileName, buf, depends) {
 
 // --- main -------------------------------------------------------------
 
+// Start from a clean output dir (rather than only ever deleting stale djlint
+// wheels) so a package that drops out of the runtime dependency closure — or
+// any other stale artifact from a previous run — can't linger in the bundle.
+rmSync(OUT, { recursive: true, force: true });
+mkdirSync(OUT, { recursive: true });
+
 const djlintWheel = buildDjlintWheel();
 const djlintVersion = /^djlint-(.+?)-py3-none-any\.whl$/u.exec(djlintWheel)[1];
 
@@ -283,8 +291,6 @@ const closureNames = closure
   .toArray()
   .toSorted((a, b) => a.localeCompare(b));
 console.log(`djLint runtime dependency closure: ${closureNames.join(", ")}`);
-
-mkdirSync(OUT, { recursive: true });
 
 // 3. Pyodide core + its stock lock.
 for (const f of CORE) {
