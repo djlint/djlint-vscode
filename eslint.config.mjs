@@ -6,15 +6,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  {
-    ignores: [
-      "dist",
-      "assets",
-      "**/__tests__/**",
-      "**/*.test.ts",
-      "vitest.config.ts",
-    ],
-  },
+  { ignores: ["dist", "assets"] },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
