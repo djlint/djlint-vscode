@@ -11,7 +11,11 @@ import {
   type EnvironmentProvider,
   type PythonEnvironmentDetails,
 } from "./python/environment.js";
-import { isVersionAtLeast, parseDjlintVersion } from "./version.js";
+import {
+  parseDjlintVersion,
+  resetSkippedArgWarnings,
+  selectSupportedArgs,
+} from "./version.js";
 
 /** A resolved djLint invocation, plus the version that resolution proved it
 to be (via a successful `--version` probe) — used to gate which `CliArg`s
@@ -177,16 +181,6 @@ interface CommandCacheEntry {
 
 const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 
-/** `${version}::${arg.cliName}` pairs `selectSupportedArgs()` has already
-warned about, so the same skipped option is not re-logged on every
-`runDjlintCommand()` call for as long as the resolved command stays cached
-(up to `RESOLUTION_TTL_MS`, i.e. potentially every save/lint in between).
-Cleared by `invalidateDjlintCommandCache()` — and therefore by the
-`djlint.restart` command, which calls it — so a freshly (re-)resolved
-version warns again rather than staying silent forever off a stale
-resolution. */
-const warnedSkippedArgs = new Set<string>();
-
 /** Clears every cached command resolution, forcing the next
 `resolveDjlintCommandCached()` call for each scope to re-run
 `resolveDjlintCommand()` (and therefore re-probe) instead of reusing a stale
@@ -196,16 +190,16 @@ changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
 active Python environment. Also un-latches a memoized "no Python environment
 provider available" result (see `resetUnavailableEnvironmentProviders()`),
 so a transient activation failure doesn't stay pinned for the rest of the
-session, and clears `selectSupportedArgs()`'s per-version skipped-arg
-warning dedupe (`warnedSkippedArgs`), so a version resolved anew warns about
-its unsupported args again instead of staying silent off the old
-resolution's dedupe state. This is also what the `djlint.restart` command
-runs (via `invalidateResolution()` in `extension.ts`) as a manual escape
-hatch — e.g. right after an in-place djLint upgrade, rather than waiting out
-`RESOLUTION_TTL_MS`. */
+session, and clears `version.ts`'s `selectSupportedArgs()` per-version
+skipped-arg warning dedupe (see `resetSkippedArgWarnings()`), so a version
+resolved anew warns about its unsupported args again instead of staying
+silent off the old resolution's dedupe state. This is also what the
+`djlint.restart` command runs (via `invalidateResolution()` in
+`extension.ts`) as a manual escape hatch — e.g. right after an in-place
+djLint upgrade, rather than waiting out `RESOLUTION_TTL_MS`. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
-  warnedSkippedArgs.clear();
+  resetSkippedArgWarnings();
   resetUnavailableEnvironmentProviders();
 }
 
@@ -339,40 +333,6 @@ export type CustomExecaError = ExecaError<ChildOptions>;
 
 export function isCustomExecaError(e: unknown): e is CustomExecaError {
   return e instanceof ExecaError;
-}
-
-/** Filters `args` down to the ones `version` actually supports (i.e.
-`isVersionAtLeast(version, arg.minVersion)`), logging one
-`outputChannel.warn()` the first time a given `(version, arg)` pair is
-skipped — see `warnedSkippedArgs` — naming the option and the required
-`minVersion`. Pure aside from the logging side effect, so it is
-unit-testable with a fake `outputChannel` and no real `CliArg`/execa
-involved. This is what keeps a djLint older than, say,
-`STDIN_FILENAME_MIN_VERSION` from ever being sent `--stdin-filename` (or any
-other option newer than its own version) — `errors.ts`'s "No such option"
-handling remains as a safety net for anything this filter misses (e.g. an
-option removed in a newer djLint than the one djlint-vscode targets). */
-export function selectSupportedArgs(
-  args: readonly CliArg[],
-  version: string,
-  outputChannel: vscode.LogOutputChannel,
-): readonly CliArg[] {
-  return args.filter((arg) => {
-    if (isVersionAtLeast(version, arg.minVersion)) {
-      return true;
-    }
-    const warnKey = `${version}::${arg.cliName}`;
-    if (!warnedSkippedArgs.has(warnKey)) {
-      warnedSkippedArgs.add(warnKey);
-      const optionName = arg.vscodeName
-        ? `djlint.${arg.vscodeName}`
-        : arg.cliName;
-      outputChannel.warn(
-        `Skipping ${optionName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
-      );
-    }
-    return false;
-  });
 }
 
 async function runDjlintCommand(

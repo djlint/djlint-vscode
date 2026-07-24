@@ -46,30 +46,9 @@ export class FallbackEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
-    if (this.#switched) {
-      return this.#secondaryEngine().format(
-        document,
-        config,
-        formattingOptions,
-        token,
-      );
-    }
-    try {
-      return await this.primary.format(
-        document,
-        config,
-        formattingOptions,
-        token,
-      );
-    } catch (e) {
-      this.#switchOrThrow(e);
-      return this.#secondaryEngine().format(
-        document,
-        config,
-        formattingOptions,
-        token,
-      );
-    }
+    return this.#dispatch(async (engine) =>
+      engine.format(document, config, formattingOptions, token),
+    );
   }
 
   async lint(
@@ -77,21 +56,31 @@ export class FallbackEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
-    if (this.#switched) {
-      return this.#secondaryEngine().lint(document, config, token);
-    }
-    try {
-      return await this.primary.lint(document, config, token);
-    } catch (e) {
-      this.#switchOrThrow(e);
-      return this.#secondaryEngine().lint(document, config, token);
-    }
+    return this.#dispatch(async (engine) =>
+      engine.lint(document, config, token),
+    );
   }
 
   dispose(): void {
     this.#disposed = true;
     this.primary.dispose();
     this.#secondary?.dispose();
+  }
+
+  /** Shared `format()`/`lint()` flow: once switched, every call goes
+  straight to the secondary; otherwise the primary is tried first, and a
+  `DjlintUnavailableError` triggers a one-time switch followed by a retry on
+  the secondary. */
+  async #dispatch<R>(call: (engine: DjlintEngine) => Promise<R>): Promise<R> {
+    if (this.#switched) {
+      return call(this.#secondaryEngine());
+    }
+    try {
+      return await call(this.primary);
+    } catch (e) {
+      this.#switchOrThrow(e);
+      return call(this.#secondaryEngine());
+    }
   }
 
   #secondaryEngine(): DjlintEngine {

@@ -1,11 +1,12 @@
 import * as vscode from "vscode";
+import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
 import { getEngine } from "./engine/select.js";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #running: Map<string, vscode.CancellationTokenSource>;
+  readonly #registry: CancellationRegistry;
   #providerDisposable: vscode.Disposable | undefined;
 
   constructor(
@@ -14,7 +15,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   ) {
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#running = new Map();
+    this.#registry = new CancellationRegistry();
   }
 
   activate(): void {
@@ -32,11 +33,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   dispose(): void {
     this.#providerDisposable?.dispose();
     this.#providerDisposable = void 0;
-    for (const source of this.#running.values()) {
-      source.cancel();
-      source.dispose();
-    }
-    this.#running.clear();
+    this.#registry.disposeAll();
   }
 
   async provideDocumentFormattingEdits(
@@ -47,9 +44,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     const config = getConfig(document);
 
     const key = document.uri.toString();
-    this.#running.get(key)?.cancel();
-    const source = new vscode.CancellationTokenSource();
-    this.#running.set(key, source);
+    const source = this.#registry.start(key);
     const cancellation = token.onCancellationRequested(() => {
       source.cancel();
     });
@@ -66,10 +61,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
       return void 0;
     } finally {
       cancellation.dispose();
-      source.dispose();
-      if (this.#running.get(key) === source) {
-        this.#running.delete(key);
-      }
+      this.#registry.finish(key, source);
     }
 
     const lastLineId = document.lineCount - 1;

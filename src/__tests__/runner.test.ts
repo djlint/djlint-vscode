@@ -31,9 +31,9 @@ const {
   resolveDjlintCommandCached,
   invalidateDjlintCommandCache,
   normalizeConfiguredExecutable,
-  selectSupportedArgs,
   RESOLUTION_TTL_MS,
 } = await import("../runner.js");
+const { selectSupportedArgs } = await import("../version.js");
 const { DjlintUnavailableError } = await import("../engine/types.js");
 type ResolveDjlintCommandDeps = Parameters<typeof resolveDjlintCommand>[0];
 

@@ -30,7 +30,17 @@ export abstract class CliArg {
   ): [string, unknown] | undefined;
 }
 
-class SimpleArg extends CliArg {
+/** Base for flags with no djLint `Config` kwarg equivalent (CLI-only), e.g.
+`--reformat` is implied by calling `formatter()`, `--quiet`/structured output
+are native to the library API, and `--stdin-filename` has no `Config` kwarg
+at all (see `StdinFilenameArg`'s own doc comment). `buildKwarg()` always
+returns `undefined` for these. */
+abstract class CliOnlyArg extends CliArg {
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  override buildKwarg(): undefined {}
+}
+
+class SimpleArg extends CliOnlyArg {
   constructor(cliName: string, minVersion: string) {
     super("", cliName, minVersion);
   }
@@ -38,10 +48,6 @@ class SimpleArg extends CliArg {
   build(): string[] {
     return [this.cliName];
   }
-
-  // CLI-only: e.g. --reformat is implied by calling formatter(), --quiet has no library-API counterpart.
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  buildKwarg(): undefined {}
 }
 
 class BoolArg extends CliArg {
@@ -100,7 +106,7 @@ class StringArg extends CliArg {
   }
 }
 
-class LinterOutputFormatArg extends CliArg {
+class LinterOutputFormatArg extends CliOnlyArg {
   constructor() {
     super("useNewLinterOutputParser", "--linter-output-format", "1.25");
   }
@@ -113,10 +119,6 @@ class LinterOutputFormatArg extends CliArg {
         ]
       : [];
   }
-
-  // CLI-only: structured output is native to the library API, so there is no kwarg to emit.
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  buildKwarg(): undefined {}
 }
 
 class UseEditorIndentationArg extends CliArg {
@@ -158,7 +160,7 @@ no filename kwarg; only its `linter()`/`formatter()` functions take a
 `filepath` argument directly, which is exactly what the Pyodide engine
 already does. Not user-configurable (no `djlint.*` setting), so
 `vscodeName` is `""`, matching `SimpleArg`'s convention for CLI-only flags. */
-class StdinFilenameArg extends CliArg {
+class StdinFilenameArg extends CliOnlyArg {
   constructor() {
     super("", "--stdin-filename", STDIN_FILENAME_MIN_VERSION);
   }
@@ -169,10 +171,6 @@ class StdinFilenameArg extends CliArg {
   ): string[] {
     return [this.cliName, deriveStdinFilename(document)];
   }
-
-  // CLI-only: see the class doc comment above.
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  buildKwarg(): undefined {}
 }
 
 export const configurationArg = new StringArg(

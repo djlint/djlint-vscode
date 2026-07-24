@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { CancellationRegistry } from "./cancellation-registry.js";
 import { getConfig } from "./config.js";
 import { getEngine } from "./engine/select.js";
 
@@ -11,7 +12,7 @@ export class Linter {
   readonly #collection: vscode.DiagnosticCollection;
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #running: Map<string, vscode.CancellationTokenSource>;
+  readonly #registry: CancellationRegistry;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -21,7 +22,7 @@ export class Linter {
     context.subscriptions.push(this.#collection);
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#running = new Map();
+    this.#registry = new CancellationRegistry();
   }
 
   async activate(): Promise<void> {
@@ -36,11 +37,7 @@ export class Linter {
       vscode.workspace.onDidSaveTextDocument(maybeLint),
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
         this.#collection.delete(uri);
-        const key = uri.toString();
-        const source = this.#running.get(key);
-        source?.cancel();
-        source?.dispose();
-        this.#running.delete(key);
+        this.#registry.cancelAndDelete(uri.toString());
       }),
     );
 
@@ -55,11 +52,7 @@ export class Linter {
   }
 
   dispose(): void {
-    for (const source of this.#running.values()) {
-      source.cancel();
-      source.dispose();
-    }
-    this.#running.clear();
+    this.#registry.disposeAll();
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
@@ -88,9 +81,7 @@ export class Linter {
     }
 
     const key = document.uri.toString();
-    this.#running.get(key)?.cancel();
-    const source = new vscode.CancellationTokenSource();
-    this.#running.set(key, source);
+    const source = this.#registry.start(key);
 
     let diagnostics;
     try {
@@ -106,14 +97,11 @@ export class Linter {
       }
       throw e;
     } finally {
-      source.dispose();
-      if (this.#running.get(key) === source) {
-        this.#running.delete(key);
-      }
+      this.#registry.finish(key, source);
     }
 
     // A newer run for this document may have superseded us while awaiting.
-    if (this.#running.has(key) || source.token.isCancellationRequested) {
+    if (this.#registry.has(key) || source.token.isCancellationRequested) {
       return;
     }
 
