@@ -4,14 +4,11 @@ from djlint.lint import linter
 from djlint.reformat import formatter
 from djlint.settings import Config
 
-# _make_config() memoization: djLint's Config.__init__ does a project-root
-# filesystem walk, a gitignore lookup, and ~20 re.compile() calls that don't
-# depend on the passed options -- expensive to repeat on every format/lint
-# RPC (one per keystroke-save) inside WASM. options no longer ever contains
-# "configuration"/"rules" (see buildConfigKwargs() in kwargs.ts -- the
-# bundled runtime has no access to the host filesystem those paths would
-# point to), so every remaining value is a plain scalar/string, making a
-# simple equality-keyed cache of the last call sufficient.
+# Memoize the last Config: __init__ does a filesystem walk, gitignore lookup,
+# and ~20 re.compile() calls independent of the options -- expensive to
+# repeat on every format/lint RPC inside WASM. All remaining option values
+# are plain scalars/strings (configuration/rules paths are never forwarded,
+# see kwargs.ts), so equality-keyed caching of the last call suffices.
 _config_cache_key = None
 _config_cache_value = None
 
@@ -26,16 +23,12 @@ def _make_config(options):
 
 
 def _djlint_format(src, options, filename="-"):
-    # filename is accepted (and currently unused) for symmetry with
-    # _djlint_lint and in case a future djlint.formatter() gains filepath-
-    # sensitive behavior (e.g. per-file rules).
+    # filename accepted for symmetry with _djlint_lint; unused since formatter() is not filepath-sensitive.
     return formatter(_make_config(options), src)
 
 
 def _djlint_lint(src, options, filename="-"):
-    # djLint's linter() matches per-file-ignores patterns against the
-    # filepath argument, so a real filename (not the "-" stdin placeholder)
-    # is required for that feature to work.
+    # linter() matches per-file-ignores against the filepath argument, so a real filename (not "-") is required.
     errors = linter(_make_config(options), src, filename, filename)[filename]
     result = []
     for error in errors:

@@ -22,8 +22,7 @@ export abstract class CliArg {
   ): string[];
 
   /** The djLint `Config(**kwargs)` equivalent of `build()`, or `undefined`
-  when this flag has no library-API counterpart (CLI-only) or the value is
-  absent/empty, mirroring `build()`'s emission conditions. */
+  when CLI-only or the value is absent/empty. */
   abstract buildKwarg(
     config: vscode.WorkspaceConfiguration,
     document: vscode.TextDocument,
@@ -31,11 +30,9 @@ export abstract class CliArg {
   ): [string, unknown] | undefined;
 }
 
-/** Base for flags with no djLint `Config` kwarg equivalent (CLI-only), e.g.
-`--reformat` is implied by calling `formatter()`, `--quiet`/structured output
-are native to the library API, and `--stdin-filename` has no `Config` kwarg
-at all (see `StdinFilenameArg`'s own doc comment). `buildKwarg()` always
-returns `undefined` for these. */
+/** Base for flags with no djLint `Config` kwarg equivalent, e.g.
+`--reformat` (implied by calling `formatter()`) or `--stdin-filename` (no
+`Config` kwarg at all). `buildKwarg()` always returns `undefined`. */
 abstract class CliOnlyArg extends CliArg {
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
   override buildKwarg(): undefined {}
@@ -107,15 +104,10 @@ class StringArg extends CliArg {
   }
 }
 
-/** Pins djLint's linter output to {@link LINTER_OUTPUT_FORMAT} whenever djLint
-supports `--linter-output-format` (>= 1.25, enforced by `minVersion` via
-`selectSupportedArgs()`), so `parseLinterOutput()` (see
-`engine/subprocess/parse-lint-output.ts`) can rely on the edge-case-proof
-pinned format instead of djLint's ambiguous legacy default. Always sent when
-supported -- not user-configurable, hence the empty `vscodeName`, matching
-`StdinFilenameArg`'s convention for CLI-only flags. Unrelated to the bundled
-Pyodide engine, which calls djLint's `linter()` library function directly and
-never goes through this CLI flag at all. */
+/** Pins djLint's linter output to {@link LINTER_OUTPUT_FORMAT} whenever
+supported (>= 1.25), so `parseLinterOutput()` can rely on an edge-case-proof
+format instead of djLint's ambiguous legacy default. Not user-configurable.
+Unrelated to the Pyodide engine, which calls `linter()` directly. */
 class LinterOutputFormatArg extends CliOnlyArg {
   constructor() {
     super("", "--linter-output-format", "1.25");
@@ -154,13 +146,9 @@ class UseEditorIndentationArg extends CliArg {
 }
 
 /** A `StringArg` for a host filesystem path (`djlint.configuration`/
-`djlint.rules`) that the bundled Pyodide engine cannot use: it runs sandboxed,
-with no access to the host filesystem, and djLint's `Config` raises an
-uncaught `FileNotFoundError` for a path it can't find — so `buildKwarg()`
-always returns `undefined` here, meaning `buildConfigKwargs()` (used only by
-the Pyodide engine, see `engine/kwargs.ts`) never forwards it. `build()` (the
-CLI flag, used by the subprocess engine, which reads the path itself) is
-unchanged. */
+`djlint.rules`) that the sandboxed Pyodide engine can't use (no host
+filesystem access) — `buildKwarg()` always returns `undefined`; `build()`
+(the CLI flag, used by the subprocess engine) is unchanged. */
 class PathOnlyArg extends StringArg {
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
   override buildKwarg(): undefined {}
@@ -169,15 +157,10 @@ class PathOnlyArg extends StringArg {
 // ⚠️ MUST equal the djLint version that first ships `--stdin-filename`.
 const STDIN_FILENAME_MIN_VERSION = "1.43.0";
 
-/** Passes the document's derived filename (see `deriveStdinFilename()`) as
-`--stdin-filename`, so the subprocess path's `per-file-ignores` matching
-works for stdin input the same way the Pyodide engine's already does (it
-passes the filename directly to `linter()`/`formatter()`). Has no
-library-API equivalent to send via `buildKwarg()` — djLint's `Config` takes
-no filename kwarg; only its `linter()`/`formatter()` functions take a
-`filepath` argument directly, which is exactly what the Pyodide engine
-already does. Not user-configurable (no `djlint.*` setting), so
-`vscodeName` is `""`, matching `SimpleArg`'s convention for CLI-only flags. */
+/** Passes the document's derived filename as `--stdin-filename`, so
+`per-file-ignores` matching works for stdin input like it already does on
+the Pyodide path. No `buildKwarg()` equivalent — djLint's `Config` takes no
+filename kwarg. */
 class StdinFilenameArg extends CliOnlyArg {
   constructor() {
     super("", "--stdin-filename", STDIN_FILENAME_MIN_VERSION);

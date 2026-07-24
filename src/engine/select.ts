@@ -15,47 +15,29 @@ export interface EngineSelectionDeps<T> {
 }
 
 /** Pure decision: which engine to build, given workspace-trust state. No
-VS Code dependency, so it is unit-testable in isolation.
-
-- A trusted desktop host tries the environment djLint (`makeSubprocess`
-  always wraps it so it transparently falls back to the bundled runtime when
-  djLint is unavailable — see `FallbackEngine`).
-- An untrusted workspace ALWAYS gets the sandboxed bundled runtime: we never
-  execute an environment tool on untrusted content. */
+VS Code dependency, so it is unit-testable in isolation. A trusted host
+tries the environment djLint (wrapped in `FallbackEngine` so it falls back
+to the bundled runtime when unavailable); an untrusted workspace always
+gets the sandboxed bundled runtime — we never run an environment tool on
+untrusted content. */
 export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
   return deps.isTrusted ? deps.makeSubprocess() : deps.makePyodide();
 }
 
 /** The per-scope key `FallbackEngine` remembers a "primary unavailable"
-verdict under: the document's workspace folder, mirroring `runner.ts`'s
-`resolutionScopeKey()` (kept separate rather than imported — importing it
-would pull `runner.ts`'s own dependencies, namely `execa` and the
-Python-extension integration, into every consumer of this module) — so a
-multi-root workspace's folders (each potentially with their own
-interpreter/virtualenv) fall back independently: one folder's missing
-djLint cannot force a sibling folder with a working djLint onto the bundled
-runtime. Unlike `resolutionScopeKey()` (which returns `string | undefined`,
-`undefined` meaning the shared global scope), this always returns a
-`string` — `""` is the stable fallback key for that same "no workspace
-folder" scope — so it can key a plain `Map<string, number>`. */
+verdict under: the document's workspace folder (mirroring, not importing,
+`runner.ts`'s `resolutionScopeKey()`, to avoid pulling in `execa`), always
+as a `string` (`""` for "no workspace folder") to key a plain `Map`. */
 function fallbackScopeKey(document: vscode.TextDocument): string {
   return (
     vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString() ?? ""
   );
 }
 
-/** Wraps a primary engine (subprocess) and, whenever it reports djLint is
-unavailable for a given document's workspace-folder scope (see
-`fallbackScopeKey()`), transparently switches that scope to a
-lazily-created secondary (bundled Pyodide) for `RESOLUTION_TTL_MS` —
-logging one info line per newly-unavailable scope instead of the old
-blocking "not installed" error. The verdict self-heals: once the TTL
-elapses, the next call for that scope retries the primary, so an in-place
-`pip install djlint` (or a venv rebuild) is picked up without restarting
-the extension — mirroring how `runner.ts`'s own command-resolution cache
-self-heals on the same TTL. The secondary (bundled Pyodide) is shared
-across every scope, since the bundled runtime is independent of the
-workspace's Python environment. */
+/** Wraps a primary engine and, whenever it reports djLint unavailable for a
+scope, switches that scope to a lazily-created secondary (bundled Pyodide)
+for `RESOLUTION_TTL_MS`, self-healing once the TTL elapses. The secondary
+is shared across every scope. */
 export class FallbackEngine implements DjlintEngine {
   #secondary: DjlintEngine | undefined;
   readonly #unavailableUntil = new Map<string, number>();
@@ -94,12 +76,9 @@ export class FallbackEngine implements DjlintEngine {
     this.#secondary?.dispose();
   }
 
-  /** Shared `format()`/`lint()` flow: if `document`'s scope is currently
-  within its unavailable-until window, go straight to the secondary (no
-  primary attempt, so a healthy sibling scope is never dragged down);
-  otherwise try the primary, and on a `DjlintUnavailableError` mark the
-  scope unavailable for `RESOLUTION_TTL_MS` and retry on the secondary. Any
-  other error propagates without touching the fallback state. */
+  /** Shared `format()`/`lint()` flow: within the unavailable-until window,
+  go straight to the secondary; otherwise try the primary and fall back on
+  `DjlintUnavailableError`. Other errors propagate untouched. */
   async #dispatch<R>(
     document: vscode.TextDocument,
     call: (engine: DjlintEngine) => Promise<R>,
@@ -118,7 +97,7 @@ export class FallbackEngine implements DjlintEngine {
   }
 
   #secondaryEngine(): DjlintEngine {
-    // Dispose is terminal: never build a secondary (and its Pyodide worker) for an engine already invalidated mid-call.
+    // Dispose is terminal: never build a secondary for an already-invalidated engine.
     if (this.#disposed) {
       throw new vscode.CancellationError();
     }
@@ -130,7 +109,7 @@ export class FallbackEngine implements DjlintEngine {
     if (!(e instanceof DjlintUnavailableError)) {
       throw e;
     }
-    // #dispatch() only reaches here after an actual (uncached) primary attempt just failed for this scope, which happens at most once per RESOLUTION_TTL_MS window — so this can't spam the log on every format/lint call.
+    // Reached at most once per RESOLUTION_TTL_MS window per scope, so this can't spam the log.
     this.outputChannel.info(
       "djLint not found in the environment; using the bundled runtime.",
     );

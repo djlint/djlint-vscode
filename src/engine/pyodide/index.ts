@@ -66,10 +66,8 @@ export class PyodideEngine implements DjlintEngine {
 
   /** `djlint.configuration`/`djlint.rules` are host filesystem paths the
   bundled Pyodide runtime cannot read (`buildConfigKwargs()` never forwards
-  them into the RPC options, see `kwargs.ts`), so setting either silently
-  does nothing on this engine. Logs one reminder the first time either is
-  set, rather than staying silent forever or logging on every format/lint
-  call. */
+  them), so setting either silently does nothing on this engine. Logs one
+  reminder the first time either is set. */
   #warnIfPathOptionsIgnored(config: vscode.WorkspaceConfiguration): void {
     if (this.#warnedPathOptionsIgnored) {
       return;
@@ -119,7 +117,7 @@ export class PyodideEngine implements DjlintEngine {
       this.#rejectPending(e);
       this.#worker = void 0;
     });
-    // A worker can also die WITHOUT an "error" (WebAssembly heap abort, explicit exit, bootstrap failure); without this every pending RPC would hang forever.
+    // A worker can die without an "error" (heap abort, explicit exit, bootstrap failure); without this, pending RPCs would hang forever.
     worker.on("exit", (code) => {
       if (this.#disposed) {
         return;

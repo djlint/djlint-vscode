@@ -8,17 +8,14 @@ and still parse unambiguously. */
 const FIELD_SEPARATOR = "\u{1F}";
 const RECORD_SEPARATOR = "\u{1E}";
 
-/** The `--linter-output-format` template `LinterOutputFormatArg` (see
-`args.ts`) sends for djLint >= 1.25, the version that introduced the flag.
+/** The `--linter-output-format` template sent for djLint >= 1.25.
 Deliberately excludes `{match}` (arbitrary source text, the main hazard) and
-puts `{message}` last: djLint's `build_output()` does raw, unescaped
-`str.format()` substitution per error and `echo()` appends a trailing
-newline, but neither matters here because {@link RECORD_SEPARATOR} -- not
-that newline -- is what delimits records, so nothing after `{message}`
-needs escaping. `{line}` expands to djLint's own `"<line>:<column>"` pair,
-same as in the legacy default format below. Built via `String#concat()`, not
-a template literal, so the literal `{code}`/`{line}`/`{message}` placeholders
-aren't mistaken for JS interpolation. */
+puts `{message}` last: djLint does raw, unescaped `str.format()`
+substitution, but nothing after `{message}` needs escaping since
+{@link RECORD_SEPARATOR} — not the trailing newline `echo()` appends — is
+what delimits records. Built via `String#concat()`, not a template literal,
+so the literal `{code}`/`{line}`/`{message}` placeholders aren't mistaken
+for JS interpolation. */
 export const LINTER_OUTPUT_FORMAT = "{code}".concat(
   FIELD_SEPARATOR,
   "{line}",
@@ -27,18 +24,17 @@ export const LINTER_OUTPUT_FORMAT = "{code}".concat(
   RECORD_SEPARATOR,
 );
 
-/** The djLint default `linter_output_format` (`"{code} {line} {message} {match}"`),
-emitted by djLint versions too old to support `--linter-output-format`
-(< 1.25, see `LinterOutputFormatArg`'s `minVersion`). `{match}` is left
-untouched by this pattern -- it's trailing, arbitrary source text that isn't
-needed for diagnostics. */
+/** The djLint default `linter_output_format`
+(`"{code} {line} {message} {match}"`), emitted by djLint too old to support
+`--linter-output-format` (< 1.25). `{match}` is left untouched -- trailing,
+arbitrary source text not needed for diagnostics. */
 const LEGACY_OUTPUT_REGEX =
   /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
 
 function parsePinnedFormat(stdout: string): LintDiagnostic[] {
   const diags: LintDiagnostic[] = [];
   for (const record of stdout.split(RECORD_SEPARATOR)) {
-    // Each record ends with a newline appended by djLint's echo(); after splitting on RECORD_SEPARATOR that newline becomes leading whitespace on the next chunk (and the final chunk is empty or all whitespace), so trim() clears it and an empty result means "no error here".
+    // `echo()`'s trailing newline becomes leading whitespace on the next chunk; `trim()` clears it, and an empty result means "no error here".
     const trimmed = record.trim();
     if (!trimmed) {
       continue;
@@ -48,7 +44,7 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
       continue;
     }
     const [code, lineColumn] = parts;
-    // A stray FIELD_SEPARATOR inside the message (never expected from real linter text) must not truncate it, so rejoin everything past index 1.
+    // Rejoin past index 1 so a stray FIELD_SEPARATOR inside the message doesn't truncate it.
     const message = parts.slice(2).join(FIELD_SEPARATOR);
     const lineColumnParts = lineColumn.split(":");
     if (lineColumnParts.length !== 2) {
@@ -76,16 +72,11 @@ function parseLegacyFormat(stdout: string): LintDiagnostic[] {
   return diags;
 }
 
-/** Parses djLint's stdout into diagnostics, auto-detecting which format it's
-in: `stdout` containing {@link RECORD_SEPARATOR} means the pinned
-`--linter-output-format` was sent (djLint >= 1.25, see
-`LINTER_OUTPUT_FORMAT`); otherwise it's djLint's legacy default format,
-which is what older djLint (< 1.25) always emits, since it never received
-`--linter-output-format` in the first place -- see
-`LinterOutputFormatArg`'s `minVersion` and `selectSupportedArgs()`
-in `version.ts`, which is what guarantees the two are never mismatched.
-Both branches return `[]` for empty/no-error output. Pure (string in,
-diagnostics out) so it is unit-testable without spawning any process. */
+/** Parses djLint's stdout into diagnostics, auto-detecting the format:
+`stdout` containing {@link RECORD_SEPARATOR} means the pinned
+`--linter-output-format` was sent (djLint >= 1.25); otherwise it's djLint's
+legacy default, which is all older djLint ever emits. Both branches return
+`[]` for empty/no-error output. */
 export function parseLinterOutput(stdout: string): LintDiagnostic[] {
   return stdout.includes(RECORD_SEPARATOR)
     ? parsePinnedFormat(stdout)

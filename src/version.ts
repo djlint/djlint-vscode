@@ -2,10 +2,8 @@ import type * as vscode from "vscode";
 import type { CliArg } from "./args.js";
 
 /** Parses the version djLint prints for `--version` (e.g. `"djlint, version
-1.42.3"`, also produced by `<python> -m djlint --version`), returning the
-captured `major.minor[.patch]` string, or `null` when the output doesn't
-match. Pure (string in, string out) so it is unit-testable without spawning
-any process. */
+1.42.3"`), returning the captured `major.minor[.patch]` string, or `null`
+when the output doesn't match. */
 export function parseDjlintVersion(stdout: string): string | null {
   return (
     /version\s+(?<version>\d+\.\d+(?:\.\d+)?)/u.exec(stdout)?.groups?.[
@@ -15,19 +13,17 @@ export function parseDjlintVersion(stdout: string): string | null {
 }
 
 /** Splits a dot-separated version string into its numeric components, e.g.
-`"1.42.3"` -> `[1, 42, 3]`. Non-numeric/empty components become `NaN`, which
-compares as neither greater than, less than, nor equal to any number — a
-malformed component therefore always counts as "different" in
-`isVersionAtLeast()` rather than silently matching. */
+`"1.42.3"` -> `[1, 42, 3]`. Non-numeric/empty components become `NaN`,
+which always counts as "different" in `isVersionAtLeast()` rather than
+silently matching. */
 function versionComponents(version: string): number[] {
   return version.split(".").map(Number);
 }
 
 /** Dot-separated numeric version compare: is `version` at least
-`minVersion`? Components are compared numerically position by position (so
-`"1.5"` is correctly less than `"1.25"`, unlike a lexicographic string
-compare); a version with fewer components than the other is padded with `0`s
-(so `"1.42"` equals `"1.42.0"`). Pure and unit-tested thoroughly. */
+`minVersion`? Compared position by position numerically (so `"1.5"` is
+correctly less than `"1.25"`); a version with fewer components is padded
+with `0`s (`"1.42"` equals `"1.42.0"`). */
 export function isVersionAtLeast(version: string, minVersion: string): boolean {
   const actual = versionComponents(version);
   const required = versionComponents(minVersion);
@@ -42,36 +38,24 @@ export function isVersionAtLeast(version: string, minVersion: string): boolean {
   return true;
 }
 
-/** `${version}::${arg.cliName}` pairs `selectSupportedArgs()` has already
-warned about, so the same skipped option is not re-logged on every
-`runDjlintCommand()` call for as long as `runner.ts`'s resolved command stays
-cached (up to its `RESOLUTION_TTL_MS`, i.e. potentially every save/lint in
-between). Cleared by `resetSkippedArgWarnings()` — called from `runner.ts`'s
-`invalidateDjlintCommandCache()`, and therefore by the `djlint.restart`
-command — so a freshly (re-)resolved version warns again rather than staying
-silent forever off a stale resolution. */
+/** `${version}::${arg.cliName}` pairs already warned about, so the same
+skipped option isn't re-logged on every call while `runner.ts`'s resolved
+command stays cached. Cleared by `resetSkippedArgWarnings()` (via
+`invalidateDjlintCommandCache()`) so a freshly re-resolved version warns
+again. */
 const warnedSkippedArgs = new Set<string>();
 
-/** Clears `selectSupportedArgs()`'s per-version skipped-arg warning dedupe
-(`warnedSkippedArgs`), so a version resolved anew warns about its unsupported
-args again instead of staying silent off the old resolution's dedupe state.
-Called by `runner.ts`'s `invalidateDjlintCommandCache()` as part of its own
-cache-invalidation sweep. */
+/** Clears the per-version skipped-arg warning dedupe (`warnedSkippedArgs`),
+called by `runner.ts`'s `invalidateDjlintCommandCache()`. */
 export function resetSkippedArgWarnings(): void {
   warnedSkippedArgs.clear();
 }
 
-/** Filters `args` down to the ones `version` actually supports (i.e.
-`isVersionAtLeast(version, arg.minVersion)`), logging one
-`outputChannel.warn()` the first time a given `(version, arg)` pair is
-skipped — see `warnedSkippedArgs` — naming the option and the required
-`minVersion`. Pure aside from the logging side effect, so it is
-unit-testable with a fake `outputChannel` and no real `CliArg`/execa
-involved. This is what keeps a djLint older than, say,
-`STDIN_FILENAME_MIN_VERSION` from ever being sent `--stdin-filename` (or any
-other option newer than its own version) — `errors.ts`'s "No such option"
-handling remains as a safety net for anything this filter misses (e.g. an
-option removed in a newer djLint than the one djlint-vscode targets). */
+/** Filters `args` down to the ones `version` actually supports, logging one
+warning the first time a given `(version, arg)` pair is skipped. This keeps
+an option newer than the resolved djLint from ever being sent; `errors.ts`'s
+"No such option" handling is the safety net for anything this filter
+misses. */
 export function selectSupportedArgs(
   args: readonly CliArg[],
   version: string,

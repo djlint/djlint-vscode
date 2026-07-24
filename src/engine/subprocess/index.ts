@@ -15,7 +15,7 @@ function controllerFor(token: vscode.CancellationToken): AbortController {
 export class SubprocessEngine implements DjlintEngine {
   constructor(private readonly outputChannel: vscode.LogOutputChannel) {}
 
-  // `runDjlint()` already decides -- in one place -- whether a failure means djLint is unavailable (throwing DjlintUnavailableError, for FallbackEngine to catch) or is a genuine error (already surfaced via checkErrors()'s popup and rethrown), so there is nothing left to classify here: both methods just pass its promise straight through.
+  // `runDjlint()` already decides whether a failure means djLint is unavailable or is a genuine error, so both methods below just pass its promise through.
   async format(
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,

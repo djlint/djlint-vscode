@@ -16,20 +16,17 @@ export interface PythonEnvironmentDetails {
 const activePythonEnvironmentChangeEmitter = new vscode.EventEmitter<void>();
 
 /** Fired when the active Python interpreter for some scope changes, so
-callers can invalidate anything cached against it. Carries no payload: the
-only subscriber (`extension.ts`) invalidates unconditionally regardless of
-which scope changed, so there is nothing for a payload to usefully convey. */
+callers can invalidate anything cached against it. No payload: the only
+subscriber invalidates unconditionally regardless of scope. */
 export const onDidChangeActivePythonEnvironment: vscode.Event<void> =
   activePythonEnvironmentChangeEmitter.event;
 
 const unavailable = Symbol("unavailable");
 
-/** Disposables registered while activating the classic Python extension
-(`ms-python.python`)'s environment API -- currently just its
-`onDidChangeActiveEnvironmentPath` listener. `initializePythonEnvironment()`
-bridges this into whichever `vscode.Disposable[]` its caller passes (e.g.
-`context.subscriptions`), so it's cleaned up on deactivate instead of
-leaking. */
+/** Disposables from activating the classic Python extension's environment
+API (its `onDidChangeActiveEnvironmentPath` listener). Bridged into the
+caller's `vscode.Disposable[]` by `initializePythonEnvironment()` so it's
+cleaned up on deactivate instead of leaking. */
 const providerDisposables: vscode.Disposable[] = [];
 
 function disposeProviderDisposables(): void {
@@ -41,9 +38,8 @@ function disposeProviderDisposables(): void {
 
 /** Activates the classic Python extension (`ms-python.python`), registering
 its active-environment-changed listener. Never throws: a missing, disabled,
-or failed-to-activate extension resolves to `unavailable` instead -- djLint
-falls back to its bundled runtime whenever this integration isn't available,
-so a failure here must never propagate as an error. */
+or failed activation resolves to `unavailable` instead, since djLint falls
+back to its bundled runtime whenever this integration isn't available. */
 async function activateClassicPythonExtension(
   outputChannel: vscode.LogOutputChannel | undefined,
 ): Promise<PythonExtensionApi | typeof unavailable> {
@@ -65,15 +61,11 @@ async function activateClassicPythonExtension(
   }
 }
 
-/** Memoizes `activateClassicPythonExtension()`: the in-flight (or resolved)
-promise is stashed synchronously in `pending`, so concurrent callers share
-one activation attempt instead of racing. A `typeof unavailable` outcome is
-cached too (in `lastResult`), so we don't keep retrying on every call --
-until `resetPythonEnvironmentProviderIfUnavailable()` clears that latched
-failure, letting a later call retry activation from scratch. A
-successfully-activated extension is never reset: `lastResult` only gets
-cleared when it's `unavailable`, so a working extension's listener
-registration never runs more than once. */
+/** Memoizes `activateClassicPythonExtension()`: `pending` is stashed
+synchronously so concurrent callers share one activation attempt instead of
+racing. An `unavailable` outcome is cached in `lastResult` too, until
+`resetPythonEnvironmentProviderIfUnavailable()` clears it for a retry; a
+successful activation is never reset, so its listener is registered once. */
 const activation: {
   pending: Promise<PythonExtensionApi | typeof unavailable> | undefined;
   lastResult: PythonExtensionApi | typeof unavailable | undefined;
@@ -84,45 +76,25 @@ async function getClassicPythonExtension(
 ): Promise<PythonExtensionApi | null> {
   activation.pending ??= activateClassicPythonExtension(outputChannel);
   const result = await activation.pending;
-  /* eslint-disable-next-line require-atomic-updates -- intentional: this is
-  the memoization itself, not a bug. Every concurrent caller awaits the SAME
-  `activation.pending` promise (coalesced just above), so they all compute
-  the same `result` and (harmlessly, redundantly) write the same value here;
-  nothing reads/writes `activation.lastResult` in between to actually race
-  against. */
+  // eslint-disable-next-line require-atomic-updates -- concurrent callers share the same pending promise and redundantly write the same result; not a real race.
   activation.lastResult = result;
   return result === unavailable ? null : result;
 }
 
 /** Holds the output channel to log through once the classic Python
-extension actually activates -- stashed here by `initializePythonEnvironment()`
-(which itself must NOT trigger activation, see below) so
-`getActivePythonEnvironment()`'s later, lazy call to
-`getClassicPythonExtension()` can still log "Initializing the Python
-extension" etc. `outputChannel` is `undefined` until
-`initializePythonEnvironment()` runs. A property on a holder object, mirroring
-`activation` above, rather than its own top-level `let`, so setting it from
-`initializePythonEnvironment()` is a property write, not a module-level
-rebinding. */
+extension actually activates, stashed by `initializePythonEnvironment()`
+for `getActivePythonEnvironment()`'s later lazy call. `undefined` until
+that runs. */
 const pythonEnvironmentInit: {
   outputChannel: vscode.LogOutputChannel | undefined;
 } = { outputChannel: void 0 };
 
 /** Registers the disposal bridge for the classic Python extension's
-eventual activation, and stashes `outputChannel` for
-`getActivePythonEnvironment()`'s first real call to log through. Deliberately
-does NOT activate `ms-python.python` itself -- activation is lazy, driven
-entirely by `getClassicPythonExtension()`'s own memoization, and happens
-only on the first `getActivePythonEnvironment()` call that djLint command
-resolution actually reaches the active-environment step for (guarded by
-`djlint.useVenv`, see `runner.ts`'s `resolveDjlintCommand()`). That keeps a
-user on `djlint.executablePath`, `djlint.useVenv: false`, or who never
-formats/lints a supported file from ever paying to activate an extension
-they never asked for. Intended to be called exactly once, early in
-`extension.ts`'s `activate()`, so the disposal bridge is registered before
-Formatter/Linter can trigger a format/lint call -- but calling it again is
-harmless, since it only re-registers the same static bridge and re-stashes
-the same channel. */
+eventual activation, and stashes `outputChannel` for later logging.
+Deliberately does NOT activate `ms-python.python` itself: activation stays
+lazy, so a user on `executablePath`/`useVenv: false` never pays for an
+extension they never asked for. Call once, early in `activate()`; calling
+again is harmless. */
 export function initializePythonEnvironment(
   disposables: vscode.Disposable[],
   outputChannel?: vscode.LogOutputChannel,
@@ -139,16 +111,11 @@ function toClassicEnvironmentDetails(
 }
 
 /** Resolves the active Python environment for a file, folder, or workspace,
-via the classic Python extension (`ms-python.python`). That extension is
-optional: djLint falls back to a bundled runtime when it isn't installed, so
-this returns `null` -- never throws -- when it is unavailable, INCLUDING
-when the extension itself throws from `getActiveEnvironmentPath()` or
-`resolveEnvironment()` (a misbehaving Python extension must not break the
-resolution/fallback chain in `runner.ts`). This is also where the extension
-actually activates for the first time in a session: `getClassicPythonExtension()`
-is only ever triggered lazily, from here -- `initializePythonEnvironment()`
-just stashes the output channel this passes through, it never activates
-anything itself. */
+via the classic Python extension. Never throws — returns `null` when the
+extension is unavailable, including when it throws internally, so a
+misbehaving Python extension can't break the resolution/fallback chain in
+`runner.ts`. Also where the extension actually activates for the first time
+in a session (lazily, via `getClassicPythonExtension()`). */
 export async function getActivePythonEnvironment(
   uri?: vscode.Uri,
 ): Promise<PythonEnvironmentDetails | null> {
@@ -170,16 +137,11 @@ export async function getActivePythonEnvironment(
   }
 }
 
-/** Un-latches a previously memoized "the classic Python extension is
-unavailable" outcome, so the next `getActivePythonEnvironment()` call
-retries activation from scratch instead of staying pinned to a transient
-failure (e.g. the Python extension still installing) for the rest of the
-session. A successfully-activated
-extension is left untouched -- this never forces a working extension to
-re-activate or re-register its listener. Safe to call unconditionally;
-wired into `resolveDjlintCommand`'s cache invalidation path
-(`invalidateDjlintCommandCache()` in `runner.ts`) so a retry is attempted
-whenever anything else that could affect djLint resolution changes. */
+/** Un-latches a previously memoized "Python extension unavailable" outcome,
+so the next `getActivePythonEnvironment()` call retries activation instead
+of staying pinned to a transient failure (e.g. the extension still
+installing). A successfully-activated extension is left untouched. Safe to
+call unconditionally; wired into `invalidateDjlintCommandCache()`. */
 export function resetPythonEnvironmentProviderIfUnavailable(): void {
   if (activation.lastResult !== unavailable) {
     return;

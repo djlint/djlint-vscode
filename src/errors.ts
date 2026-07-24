@@ -35,13 +35,9 @@ function showError(
 }
 
 /** True when a failed djLint invocation's non-zero exit is actually a valid
-lint result, not a failure at all: djLint exits `1` and prints its normal
-"Linting N/M files" progress (or nothing) on stderr when it finds
-violations. Checked FIRST in `runner.ts`'s `classifyRunFailure()` -- before
-it ever considers whether djLint has become unavailable -- so the common
-"found issues" case never pays for an unavailability re-probe. Also reused
-by `checkErrors()` below (for whatever genuine error reaches it) so the two
-checks cannot drift apart. */
+lint result: djLint exits `1` and prints its normal "Linting N/M files"
+progress (or nothing) on stderr when it finds violations. Also reused by
+`checkErrors()` below so the two checks can't drift apart. */
 export function isValidLintResult(e: CustomExecaError): boolean {
   return (
     e.exitCode != null && /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)

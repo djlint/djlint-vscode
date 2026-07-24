@@ -1,26 +1,18 @@
-// Provision assets/pyodide/ with the pinned Pyodide runtime, a pure-python
+// Provisions assets/pyodide/ with the pinned Pyodide runtime, a pure-python
 // djLint wheel built from source, and every runtime dependency djLint needs,
-// then write an augmented pyodide-lock.json so a single
+// then writes an augmented pyodide-lock.json so
 // `loadPyodide({ indexURL }).loadPackage("djlint")` resolves the whole
 // closure OFFLINE (no PyPI/CDN at runtime).
 //
-// Requires `uv` (https://docs.astral.sh/uv/) on PATH. uv does two jobs here:
-//   1. Builds the djLint wheel from the sibling ../djlint checkout (uv
-//      provisions its own Python; no separate Python install needed). The
-//      mypyc build hook is disabled by default there, so the result is a
-//      pure-python wheel Pyodide can load as-is.
-//   2. Derives djLint's runtime dependency closure from ../djlint's
-//      `uv.lock` (`uv export`), instead of a hand-maintained dependency map
-//      that silently goes stale whenever djLint's own dependencies change.
+// Requires `uv` (https://docs.astral.sh/uv/) on PATH: it builds the djLint
+// wheel from the sibling ../djlint checkout (mypyc disabled there, so the
+// result is pure-python) and derives the runtime dependency closure from
+// ../djlint's uv.lock, instead of a hand-maintained map that would go stale.
 //
-// The closure is then split dynamically: any package the pinned Pyodide
-// build already ships (i.e. present in its stock pyodide-lock.json) is
-// pulled from the Pyodide CDN and sha256-verified against the lock; anything
-// else is a pure-python wheel pulled from PyPI and sha256-verified against
-// PyPI's digest.
-//
-// Layout is flat (all wheels beside the lock), matching Pyodide's default
-// packageBaseUrl == indexURL.
+// The closure is split: packages the pinned Pyodide build already ships are
+// pulled from the Pyodide CDN (sha256-verified against its lock); the rest
+// are pure-python wheels pulled from PyPI (sha256-verified against PyPI's
+// digest). Layout is flat, matching Pyodide's default packageBaseUrl.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -46,10 +38,9 @@ const CORE = [
 ];
 
 // Marker environment matching the bundled runtime: Python 3.14 under
-// Pyodide, which reports `sys.platform == "emscripten"` (never `win32`).
-// Used to evaluate the PEP 508 markers `uv export` attaches to
-// version/platform-conditional dependencies (e.g. the `tomli`/
-// `typing-extensions` py<3.11 backports, or click's win32-only `colorama`).
+// Pyodide, which reports sys.platform == "emscripten" (never "win32").
+// Evaluates the PEP 508 markers uv export attaches to conditional
+// dependencies (e.g. py<3.11 backports, click's win32-only colorama).
 const TARGET_ENV = {
   python_full_version: "3.14.0",
   python_version: "3.14",
@@ -100,10 +91,8 @@ const MARKER_CMP = {
   ">=": (cmp) => cmp >= 0,
 };
 
-// Throws on a non-numeric segment instead of letting it silently become NaN:
-// `NaN - x` is always NaN, `NaN !== 0` is true, and `Math.sign(NaN)` is NaN,
-// which would make every marker comparison involving it evaluate to false —
-// silently mis-evaluating the marker instead of failing loudly.
+// Throws on a non-numeric segment instead of letting it silently become NaN
+// (which would make every comparison involving it false instead of loud).
 function compareVersions(a, b) {
   const pa = a.split(".").map(Number);
   const pb = b.split(".").map(Number);
@@ -143,10 +132,8 @@ function evalClause(clause, env) {
 }
 
 // Evaluates the small PEP 508 marker subset djLint's dependencies actually
-// use (simple `python_version`/`python_full_version`/`sys_platform`
-// comparisons, optionally combined with `and`/`or`). Throws on anything
-// unrecognized instead of silently mis-evaluating it, so an unfamiliar
-// marker fails the build loudly rather than corrupting the bundle.
+// use. Throws on anything unrecognized, so an unfamiliar marker fails the
+// build loudly rather than corrupting the bundle.
 function evalMarker(marker, env) {
   return marker
     .split(/\s+or\s+/u)
@@ -158,8 +145,7 @@ function evalMarker(marker, env) {
 }
 
 // Returns a Map<packageName, version> of djLint's runtime dependency
-// closure (transitive, dev/test groups excluded), evaluated for the target
-// Pyodide runtime environment.
+// closure (transitive, dev/test excluded), for the target environment.
 function runtimeClosure() {
   const output = runUv([
     "export",
@@ -224,8 +210,8 @@ async function download(url, name) {
   writeFileSync(`${OUT}/${name}`, await get(url));
 }
 
-// Verify a download against an expected sha256 before writing it, so a
-// corrupted or tampered wheel never lands in the bundled runtime.
+// Verifies against an expected sha256 before writing, so a corrupted or
+// tampered wheel never lands in the bundle.
 async function downloadVerified(url, name, expectedSha) {
   const buf = await get(url);
   const actual = sha256(buf);
@@ -237,8 +223,8 @@ async function downloadVerified(url, name, expectedSha) {
   writeFileSync(`${OUT}/${name}`, buf);
 }
 
-// Fetch a specific released version of a pure-python wheel from PyPI,
-// verified against PyPI's own sha256 digest.
+// Fetches a specific released pure-python wheel from PyPI, verified against
+// PyPI's own sha256 digest.
 async function pypiWheel(pkg, version) {
   const meta = await (
     await fetch(`https://pypi.org/pypi/${pkg}/${version}/json`)
@@ -276,9 +262,8 @@ function lockEntry(name, version, fileName, buf, depends) {
 
 // --- main -------------------------------------------------------------
 
-// Start from a clean output dir (rather than only ever deleting stale djlint
-// wheels) so a package that drops out of the runtime dependency closure — or
-// any other stale artifact from a previous run — can't linger in the bundle.
+// Start from a clean output dir so a package dropped from the dependency
+// closure, or any other stale artifact, can't linger in the bundle.
 rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
 
@@ -309,8 +294,8 @@ for (const name of closure.keys()) {
   }
 }
 
-// 4a. Pyodide-provided: download the file the stock lock already describes,
-// verified against its sha256. Its lock entry is left untouched.
+// 4a. Pyodide-provided: download the file the stock lock describes,
+// verified against its sha256. Lock entry left untouched.
 for (const name of pyodideProvided) {
   const entry = lock.packages[name];
   await downloadVerified(
@@ -322,8 +307,8 @@ for (const name of pyodideProvided) {
 }
 
 // 4b. Not shipped by Pyodide: download the pure wheel from PyPI and add a
-// lock entry for it. `depends: []` — the flattened djlint entry below is
-// what pulls the whole closure, so individual chains no longer matter.
+// lock entry with `depends: []` — the flattened djlint entry below pulls
+// the whole closure, so individual chains no longer matter.
 for (const name of pureWheels) {
   const version = closure.get(name);
   const filename = await pypiWheel(name, version);
