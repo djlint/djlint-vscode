@@ -6,7 +6,15 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["dist", "assets"] },
+  {
+    ignores: [
+      "dist",
+      "assets",
+      "**/__tests__/**",
+      "**/*.test.ts",
+      "vitest.config.ts",
+    ],
+  },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
@@ -82,29 +90,6 @@ export default defineConfig(
       "unicorn/prefer-json-parse-buffer": "off",
       "unicorn/prefer-top-level-await": "off",
       "unicorn/try-complexity": "off",
-    },
-  },
-  {
-    files: ["**/*.test.ts", "**/__tests__/**", "vitest.config.ts"],
-    rules: {
-      "@typescript-eslint/explicit-function-return-type": "off",
-      "@typescript-eslint/naming-convention": "off",
-      "@typescript-eslint/no-empty-function": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unsafe-argument": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-return": "off",
-      "@typescript-eslint/require-await": "off",
-      "capitalized-comments": "off",
-      "func-style": "off",
-      "no-undefined": "off",
-      "sort-keys": "off",
-      "unicorn/comment-content": "off",
-      "unicorn/filename-case": "off",
-      "unicorn/import-style": "off",
-      "unicorn/max-nested-calls": "off",
     },
   },
   {

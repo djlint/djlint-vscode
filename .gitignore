@@ -349,3 +349,11 @@ $RECYCLE.BIN/
 
 # Subagent-driven-development scratch (ledger, briefs, reports, review packages)
 /.superpowers/
+
+# CodeGraph index (local only)
+/.codegraph/
+
+# AI planning docs + test suite — kept locally, not committed (see git history)
+/docs/superpowers/
+**/__tests__/
+/vitest.config.ts
