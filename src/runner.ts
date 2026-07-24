@@ -275,7 +275,7 @@ async function getDjlintCommand(
   const pythonPath = normalize(config.get<string>("pythonPath") ?? "");
   const useVenv = config.get<boolean>("useVenv");
 
-  // Only activate the Python (Environments) extension when the active-environment step (guarded by useVenv) is still in play. This keeps a "djlint.executablePath only, useVenv: false" setup from paying for an extension it never asked for.
+  // Only activate the Python extension when the active-environment step (guarded by useVenv) is still in play. This keeps a "djlint.executablePath only, useVenv: false" setup from paying for an extension it never asked for.
   const provider =
     useVenv === false ? null : await getEnvironmentProvider(outputChannel);
 

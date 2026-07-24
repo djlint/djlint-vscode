@@ -72,7 +72,7 @@ function fakeProvider(
 function envDetails(
   command: PythonEnvironmentDetails["command"],
 ): PythonEnvironmentDetails {
-  return { command, sysPrefix: "/env", version: null };
+  return { command, sysPrefix: "/env" };
 }
 
 test("djlint.executablePath: used directly when it probes successfully", async () => {

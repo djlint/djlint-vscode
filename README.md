@@ -18,10 +18,10 @@ The extension looks for a djLint to run, in this order:
 
 1. `djlint.executablePath` — path to a djLint executable. Relative paths are resolved from the workspace root.
 2. `djlint.pythonPath` — path to a Python interpreter to run djLint from (`python -m djlint`). Relative paths are resolved from the workspace root.
-3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs), or the classic [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) if that one isn't installed — unless `djlint.useVenv` is set to `false`.
+3. The active environment reported by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python), if it is installed — unless `djlint.useVenv` is set to `false`.
 4. `djlint` on PATH.
 
-`djlint.executablePath` and `djlint.pythonPath` both default to `""` (unset), so leaving them unset uses step 3, falling back to step 4 if neither Python extension is installed (or `djlint.useVenv` is `false`). If none of the above resolves to a working djLint, the extension falls back to its bundled runtime instead of failing — see [Installation](#installation). In an untrusted workspace, the bundled runtime is always used, whatever is installed in the environment.
+`djlint.executablePath` and `djlint.pythonPath` both default to `""` (unset), so leaving them unset uses step 3, falling back to step 4 if the Python extension isn't installed (or `djlint.useVenv` is `false`). If none of the above resolves to a working djLint, the extension falls back to its bundled runtime instead of failing — see [Installation](#installation). In an untrusted workspace, the bundled runtime is always used, whatever is installed in the environment.
 
 When an external djLint is used, the extension detects its version (`djlint --version`) and only sends command-line options that version actually supports, skipping (and logging a warning for, in the "djLint" output channel) any option that requires a newer djLint than the one resolved. This detected version is cached per workspace folder and refreshed automatically after a few minutes or whenever `djlint.executablePath`/`djlint.pythonPath`/`djlint.useVenv` changes or the active Python environment changes; run the **djLint: Restart** command (from the Command Palette) to refresh it immediately, for example right after upgrading djLint in place (`pip install -U djlint`).
 

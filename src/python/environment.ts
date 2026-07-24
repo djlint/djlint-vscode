@@ -1,21 +1,8 @@
-import { isDeepStrictEqual } from "node:util";
-import type {
-  DidChangeEnvironmentEventArgs,
-  PythonEnvironment,
-  PythonEnvironmentApi,
-} from "@vscode/python-environments";
 import {
   PythonExtension as PythonExtensionApi,
   type ResolvedEnvironment,
 } from "@vscode/python-extension";
 import * as vscode from "vscode";
-import {
-  createEnvironmentChangeCache,
-  type EnvironmentChangeCache,
-} from "./environment-cache.js";
-import { parsePythonVersion } from "./python-version.js";
-
-const pythonEnvironmentsExtensionId = "ms-python.vscode-python-envs";
 
 export interface PythonCommand {
   args: readonly string[];
@@ -25,14 +12,12 @@ export interface PythonCommand {
 export interface PythonEnvironmentDetails {
   command: PythonCommand | null;
   sysPrefix: string;
-  version: { major: number; minor: number; patch: number | null } | null;
 }
 
-/** Resolves Python environments from a single source (the Python
-Environments extension or the classic Python extension). Both are optional
-in this extension: djLint falls back to a bundled runtime when neither is
-installed, so `getEnvironmentProvider()` returns `null` rather than throwing
-when no provider is available. */
+/** Resolves the active Python environment via the classic Python extension
+(`ms-python.python`). That extension is optional: djLint falls back to a
+bundled runtime when it isn't installed, so `getEnvironmentProvider()`
+returns `null` rather than throwing when it is unavailable. */
 export interface EnvironmentProvider {
   initialize: (disposables: vscode.Disposable[]) => Promise<void>;
 
@@ -50,8 +35,8 @@ export interface PythonEnvironmentChangeEventArgs {
 const activePythonEnvironmentChangeEmitter =
   new vscode.EventEmitter<PythonEnvironmentChangeEventArgs>();
 
-/** Fired by whichever provider is in use when the active Python interpreter
-for a scope changes, so callers can invalidate anything cached against it. */
+/** Fired by the provider when the active Python interpreter for a scope
+changes, so callers can invalidate anything cached against it. */
 export const onDidChangeActivePythonEnvironment: vscode.Event<PythonEnvironmentChangeEventArgs> =
   activePythonEnvironmentChangeEmitter.event;
 
@@ -80,10 +65,10 @@ async function resolveOrUnavailable<T>(
   return result ?? unavailable;
 }
 
-/** Disposables registered by `EnvironmentProvider.initialize()` (see the
-`tryActivate*` factories below), owned collectively by whichever provider
+/** Disposables registered by `EnvironmentProvider.initialize()` (see
+`tryActivateClassicPythonExtension()` below), owned by the provider once it
 successfully activates. `extension.ts` pushes `disposeEnvironmentProviders`
-into `context.subscriptions` so these VS Code listeners are cleaned up on
+into `context.subscriptions` so this VS Code listener is cleaned up on
 deactivate instead of leaking. */
 const providerDisposables: vscode.Disposable[] = [];
 
@@ -137,16 +122,11 @@ function lazyInit<T>(
 function toClassicEnvironmentDetails(
   environment: ResolvedEnvironment,
 ): PythonEnvironmentDetails {
-  const { version } = environment;
   const executable = environment.executable.uri?.fsPath;
 
   return {
     command: executable == null ? null : { args: [], executable },
     sysPrefix: environment.executable.sysPrefix,
-    version:
-      version == null
-        ? null
-        : { major: version.major, minor: version.minor, patch: version.micro },
   };
 }
 
@@ -211,175 +191,24 @@ async function getClassicPythonExtension(
   return classicPythonExtension.get(outputChannel);
 }
 
-/** Facade for the dedicated Python Environments extension
-(`ms-python.vscode-python-envs`)'s API. */
-class PythonEnvironmentsExtension implements EnvironmentProvider {
-  readonly #activeEnvironments: EnvironmentChangeCache<PythonEnvironmentDetails | null> =
-    createEnvironmentChangeCache();
-
-  constructor(
-    private readonly api: PythonEnvironmentApi,
-    private readonly outputChannel: vscode.LogOutputChannel,
-  ) {}
-
-  // eslint-disable-next-line @typescript-eslint/require-await -- the EnvironmentProvider interface requires Promise<void>, but registering the listener below is synchronous.
-  async initialize(disposables: vscode.Disposable[]): Promise<void> {
-    this.outputChannel.info(
-      "Using the Python Environments extension for Python environment detection",
-    );
-
-    // Server startup resolves the active environment on demand; avoid a global lookup here, since it can trigger full environment discovery and block activation.
-
-    disposables.push(
-      this.api.onDidChangeEnvironment((event) => {
-        this.#handleEnvironmentChange(event);
-      }),
-    );
-  }
-
-  async getActiveEnvironment(
-    uri?: vscode.Uri,
-  ): Promise<PythonEnvironmentDetails | null> {
-    const environment = await this.api.getEnvironment(uri);
-    const details =
-      environment == null ? null : this.#toEnvironmentDetails(environment);
-
-    this.#activeEnvironments.remember(uri?.toString(), details);
-    if (details != null) {
-      this.outputChannel.debug(
-        `Resolved Python environment: '${details.sysPrefix}'`,
-      );
-    }
-    return details;
-  }
-
-  #handleEnvironmentChange(event: DidChangeEnvironmentEventArgs): void {
-    const key = event.uri?.toString();
-    const environment =
-      event.new == null ? null : this.#toEnvironmentDetails(event.new);
-    const previousEnvironment =
-      event.old == null ? null : this.#toEnvironmentDetails(event.old);
-
-    // The extension emits duplicate change events. Compare the event's own old/new pair first: a scope our cache has not seen yet must not be reported as "changed" just because the event itself reports no change.
-    if (isDeepStrictEqual(previousEnvironment, environment)) {
-      this.#activeEnvironments.remember(key, environment);
-      this.#logIgnoredChange(event.uri);
-      return;
-    }
-
-    if (!this.#activeEnvironments.record(key, environment)) {
-      this.#logIgnoredChange(event.uri);
-      return;
-    }
-
-    fireActivePythonEnvironmentChange({
-      path: environment?.command?.executable,
-      uri: event.uri,
-    });
-  }
-
-  #logIgnoredChange(uri: vscode.Uri | undefined): void {
-    this.outputChannel.debug(
-      `Ignoring a Python Environments change event because the active environment is unchanged for '${uri?.toString() ?? "workspace"}'.`,
-    );
-  }
-
-  #toEnvironmentDetails(
-    environment: PythonEnvironment,
-  ): PythonEnvironmentDetails | null {
-    if (environment.error != null) {
-      this.outputChannel.warn(
-        `Ignoring the '${environment.environmentPath.fsPath}' environment because it has errors: ${environment.error}`,
-      );
-      return null;
-    }
-
-    return {
-      command: {
-        args: environment.execInfo.run.args ?? [],
-        executable: environment.execInfo.run.executable,
-      },
-      sysPrefix: environment.sysPrefix,
-      version: parsePythonVersion(environment.version),
-    };
-  }
-}
-
-async function tryActivatePythonEnvironmentsExtension(
-  outputChannel: vscode.LogOutputChannel,
-): Promise<PythonEnvironmentsExtension | null> {
-  // Parameterized with `| undefined` (rather than just `PythonEnvironmentApi`) because `.exports` is genuinely `undefined` at runtime when the user disables `python.useEnvironmentsExtension` — the plain generic would type it as always present and make the null-check below look unreachable to the type checker.
-  const extension = vscode.extensions.getExtension<
-    PythonEnvironmentApi | undefined
-  >(pythonEnvironmentsExtensionId);
-
-  if (extension == null) {
-    outputChannel.info(
-      "The Python Environments extension is not installed or is disabled.",
-    );
-    return null;
-  }
-
-  if (!extension.isActive) {
-    try {
-      outputChannel.info("Activating the Python Environments extension");
-      await extension.activate();
-    } catch (e) {
-      outputChannel.warn(
-        `Failed to activate the Python Environments extension: ${String(e)}`,
-      );
-      return null;
-    }
-  }
-
-  // No API is exported when the user disables `python.useEnvironmentsExtension`.
-  if (extension.exports == null) {
-    outputChannel.info(
-      "The Python Environments extension is disabled by 'python.useEnvironmentsExtension'.",
-    );
-    return null;
-  }
-
-  const provider = new PythonEnvironmentsExtension(
-    extension.exports,
-    outputChannel,
-  );
-  await provider.initialize(providerDisposables);
-  return provider;
-}
-
-const pythonEnvironmentsExtension = lazyInit(
-  tryActivatePythonEnvironmentsExtension,
-);
-
-async function getPythonEnvironmentsExtension(
-  outputChannel: vscode.LogOutputChannel,
-): Promise<PythonEnvironmentsExtension | null> {
-  return pythonEnvironmentsExtension.get(outputChannel);
-}
-
-/** Prefer the Python Environments extension; fall back to the classic
-Python extension; return `null` if neither is usable. Never throws. */
+/** Resolve the classic Python extension's environment provider, or `null` if
+it is not installed or fails to activate. Never throws. */
 export async function getEnvironmentProvider(
   outputChannel: vscode.LogOutputChannel,
 ): Promise<EnvironmentProvider | null> {
-  return (
-    (await getPythonEnvironmentsExtension(outputChannel)) ??
-    (await getClassicPythonExtension(outputChannel))
-  );
+  return getClassicPythonExtension(outputChannel);
 }
 
-/** Un-latches a previously memoized "no provider available" outcome for
-either provider, so the next `getEnvironmentProvider()` call retries
-activation from scratch instead of staying pinned to a transient failure
-(e.g. the Python extension still installing) for the rest of the session.
-A provider that DID activate successfully is left untouched — this never
-forces a working provider to re-activate or re-register its listeners. Safe
-to call unconditionally; wired into `resolveDjlintCommand`'s cache
-invalidation path (`invalidateDjlintCommandCache()` in `runner.ts`) so a
-retry is attempted whenever anything else that could affect djLint
-resolution changes. */
+/** Un-latches a previously memoized "no environment provider available"
+outcome for the classic Python extension, so the next
+`getEnvironmentProvider()` call retries activation from scratch instead of
+staying pinned to a transient failure (e.g. the Python extension still
+installing) for the rest of the session. A provider that DID activate
+successfully is left untouched — this never forces a working provider to
+re-activate or re-register its listeners. Safe to call unconditionally;
+wired into `resolveDjlintCommand`'s cache invalidation path
+(`invalidateDjlintCommandCache()` in `runner.ts`) so a retry is attempted
+whenever anything else that could affect djLint resolution changes. */
 export function resetUnavailableEnvironmentProviders(): void {
-  pythonEnvironmentsExtension.resetIfUnavailable();
   classicPythonExtension.resetIfUnavailable();
 }

@@ -27,7 +27,7 @@ export async function activate(
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
-    // Owns the `onDidChangeActiveEnvironmentPath` / `onDidChangeEnvironment` listeners an `EnvironmentProvider.initialize()` call registers (see src/python/environment.ts), so they're disposed on deactivate instead of leaking.
+    // Owns the `onDidChangeActiveEnvironmentPath` listener an `EnvironmentProvider.initialize()` call registers (see src/python/environment.ts), so it's disposed on deactivate instead of leaking.
     { dispose: disposeEnvironmentProviders },
     vscode.workspace.onDidGrantWorkspaceTrust(disposeEngine),
     vscode.workspace.onDidChangeConfiguration((e) => {
