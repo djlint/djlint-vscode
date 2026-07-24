@@ -1,3 +1,4 @@
+import path from "node:path";
 import { beforeEach, expect, test, vi } from "vitest";
 import type {
   EnvironmentProvider,
@@ -8,10 +9,13 @@ import type {
  * runner.ts imports "vscode" (not resolvable outside a real extension host)
  * and "../python/environment.js" (which itself pulls in "vscode" and the two
  * Python-extension packages). Stub those hops so this file can exercise the
- * pure resolveDjlintCommand() in isolation, matching the pattern already
- * used in src/engine/__tests__/select.test.ts.
+ * pure resolveDjlintCommand() (and the small relative-path helper) in
+ * isolation, matching the pattern already used in
+ * src/engine/__tests__/select.test.ts. `workspace.getWorkspaceFolder` is a
+ * real vi.fn() (not just a stub returning `{}`) so tests can configure it
+ * per-case to exercise relative-path resolution.
  */
-vi.mock("vscode", () => ({}));
+vi.mock("vscode", () => ({ workspace: { getWorkspaceFolder: vi.fn() } }));
 vi.mock("execa", () => ({
   ExecaError: class ExecaError extends Error {},
   execa: vi.fn(),
@@ -21,11 +25,12 @@ vi.mock("../python/environment.js", () => ({
   resetUnavailableEnvironmentProviders: vi.fn(),
 }));
 
+const vscode = await import("vscode");
 const {
   resolveDjlintCommand,
   resolveDjlintCommandCached,
   invalidateDjlintCommandCache,
-  isExplicitlySet,
+  normalizeConfiguredExecutable,
 } = await import("../runner.js");
 const { DjlintUnavailableError } = await import("../engine/types.js");
 type ResolveDjlintCommandDeps = Parameters<typeof resolveDjlintCommand>[0];
@@ -35,17 +40,17 @@ type ResolveDjlintCommandDeps = Parameters<typeof resolveDjlintCommand>[0];
 // leak into (or be polluted by) one another.
 beforeEach(() => {
   invalidateDjlintCommandCache();
+  vi.mocked(vscode.workspace.getWorkspaceFolder).mockReset();
 });
 
 function deps(
   over: Partial<ResolveDjlintCommandDeps> = {},
 ): ResolveDjlintCommandDeps {
   return {
-    executablePath: void 0,
-    interpreter: [],
-    path: [],
+    executablePath: "",
     probe: vi.fn(async () => false),
     provider: null,
+    pythonPath: "",
     uri: void 0,
     useVenv: true,
     ...over,
@@ -69,128 +74,36 @@ function envDetails(
   return { command, sysPrefix: "/env", version: null };
 }
 
-test("djlint.path: the first probing entry wins, as a plain CLI command", async () => {
-  const probe = vi.fn(async (exec: string) => exec === "/good/djlint");
-  const command = await resolveDjlintCommand(
-    deps({ path: ["/bad/djlint", "/good/djlint", "/unreached/djlint"], probe }),
-  );
-  expect(command).toEqual({ exec: "/good/djlint", prefixArgs: [] });
-  expect(probe).toHaveBeenCalledTimes(2);
-});
-
-test("djlint.path wins over djlint.interpreter", async () => {
+test("djlint.executablePath: used directly when it probes successfully", async () => {
   const provider = fakeProvider();
-  const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["/some/python"],
-      path: ["/good/djlint"],
-      probe: vi.fn(async () => true),
-      provider,
-    }),
-  );
-  expect(command).toEqual({ exec: "/good/djlint", prefixArgs: [] });
-  expect(provider.resolveInterpreter).not.toHaveBeenCalled();
-});
-
-test("djlint.path entries that never probe successfully fall through to later steps", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: [], executable: "/active/python" }),
-    ),
-  });
-  const command = await resolveDjlintCommand(
-    deps({ path: ["/bad/djlint"], probe: vi.fn(async () => false), provider }),
-  );
-  expect(command).toEqual({
-    exec: "/active/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-});
-
-test("resolveDjlintCommand honors any present executablePath, including the old default value ('djlint') — 'explicitly set' is decided by the caller via isExplicitlySet()/config.inspect(), not by resolveDjlintCommand itself", async () => {
-  const provider = fakeProvider();
-  const command = await resolveDjlintCommand(
-    deps({
-      executablePath: "djlint",
-      interpreter: ["/some/python"],
-      probe: vi.fn(async () => true),
-      provider,
-    }),
-  );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
-  // Step 3 (djlint.interpreter) must never be consulted: step 2 already won.
-  expect(provider.resolveInterpreter).not.toHaveBeenCalled();
-});
-
-test("isExplicitlySet(): false when the config only ever reports its own default value back (never set by the user)", () => {
-  const config: any = { inspect: vi.fn(() => ({ defaultValue: "djlint" })) };
-  expect(isExplicitlySet(config, "executablePath")).toBe(false);
-});
-
-test("isExplicitlySet(): true when explicitly set at workspace scope, even to the setting's own default value", () => {
-  const config: any = {
-    inspect: vi.fn(() => ({
-      defaultValue: "djlint",
-      workspaceValue: "djlint",
-    })),
-  };
-  expect(isExplicitlySet(config, "executablePath")).toBe(true);
-});
-
-test("isExplicitlySet(): true when explicitly set at the global (user) scope", () => {
-  const config: any = {
-    inspect: vi.fn(() => ({
-      defaultValue: "djlint",
-      globalValue: "/custom/djlint",
-    })),
-  };
-  expect(isExplicitlySet(config, "executablePath")).toBe(true);
-});
-
-test("isExplicitlySet(): true when explicitly set at workspace-folder scope", () => {
-  const config: any = {
-    inspect: vi.fn(() => ({
-      defaultValue: "djlint",
-      workspaceFolderValue: "/custom/djlint",
-    })),
-  };
-  expect(isExplicitlySet(config, "executablePath")).toBe(true);
-});
-
-test("isExplicitlySet(): false when inspect() returns nothing at all (section never registered)", () => {
-  const config: any = { inspect: vi.fn(() => void 0) };
-  expect(isExplicitlySet(config, "executablePath")).toBe(false);
-});
-
-test("deprecated djlint.executablePath wins over djlint.interpreter and the active environment", async () => {
-  const provider = fakeProvider();
+  const probe = vi.fn(async (exec: string) => exec === "/custom/djlint");
   const command = await resolveDjlintCommand(
     deps({
       executablePath: "/custom/djlint",
-      interpreter: ["/some/python"],
-      probe: vi.fn(async () => true),
+      probe,
       provider,
+      pythonPath: "/some/python",
     }),
   );
   expect(command).toEqual({ exec: "/custom/djlint", prefixArgs: [] });
-  expect(provider.resolveInterpreter).not.toHaveBeenCalled();
+  expect(probe).toHaveBeenCalledWith("/custom/djlint", []);
+  // Later steps must never be consulted: step 1 already won.
   expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
 });
 
-test("djlint.interpreter wins over the active environment", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () => {
-      throw new Error("should not be reached: interpreter[] should win");
-    }),
-    resolveInterpreter: vi.fn(async (p: string) =>
-      envDetails({ args: [], executable: p }),
-    ),
-  });
+test("djlint.executablePath: falls through to djlint.pythonPath when it fails to probe", async () => {
+  const probe = vi.fn(
+    async (exec: string, prefixArgs: readonly string[]) =>
+      exec === "/venv/bin/python" &&
+      prefixArgs.length === 2 &&
+      prefixArgs[0] === "-m" &&
+      prefixArgs[1] === "djlint",
+  );
   const command = await resolveDjlintCommand(
     deps({
-      interpreter: ["/venv/bin/python"],
-      probe: vi.fn(async () => true),
-      provider,
+      executablePath: "/bad/djlint",
+      probe,
+      pythonPath: "/venv/bin/python",
     }),
   );
   expect(command).toEqual({
@@ -199,14 +112,61 @@ test("djlint.interpreter wins over the active environment", async () => {
   });
 });
 
-test("djlint.interpreter: resolved environment args are preserved and -m djlint is appended", async () => {
+test("djlint.pythonPath: used (with -m djlint) when no executablePath is set", async () => {
+  const probe = vi.fn(async (exec: string) => exec === "/venv/bin/python");
+  const command = await resolveDjlintCommand(
+    deps({ probe, pythonPath: "/venv/bin/python" }),
+  );
+  expect(command).toEqual({
+    exec: "/venv/bin/python",
+    prefixArgs: ["-m", "djlint"],
+  });
+  expect(probe).toHaveBeenCalledWith("/venv/bin/python", ["-m", "djlint"]);
+});
+
+test("djlint.pythonPath wins over the active environment", async () => {
   const provider = fakeProvider({
-    resolveInterpreter: vi.fn(async () =>
+    getActiveEnvironment: vi.fn(async () => {
+      throw new Error("should not be reached: pythonPath should win");
+    }),
+  });
+  const command = await resolveDjlintCommand(
+    deps({
+      probe: vi.fn(async () => true),
+      provider,
+      pythonPath: "/venv/bin/python",
+    }),
+  );
+  expect(command).toEqual({
+    exec: "/venv/bin/python",
+    prefixArgs: ["-m", "djlint"],
+  });
+  expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
+});
+
+test("active environment: used with its args + -m djlint when neither executablePath nor pythonPath resolve", async () => {
+  const provider = fakeProvider({
+    getActiveEnvironment: vi.fn(async () =>
+      envDetails({ args: ["run"], executable: "/active/python" }),
+    ),
+  });
+  const probe = vi.fn(async (exec: string) => exec === "/active/python");
+  const command = await resolveDjlintCommand(deps({ probe, provider }));
+  expect(command).toEqual({
+    exec: "/active/python",
+    prefixArgs: ["run", "-m", "djlint"],
+  });
+  expect(probe).toHaveBeenCalledWith("/active/python", ["run", "-m", "djlint"]);
+});
+
+test("active environment: a conda/uv-style command's own launch args are preserved alongside -m djlint", async () => {
+  const provider = fakeProvider({
+    getActiveEnvironment: vi.fn(async () =>
       envDetails({ args: ["run", "-p", "3.12"], executable: "/usr/bin/uv" }),
     ),
   });
   const command = await resolveDjlintCommand(
-    deps({ interpreter: ["uv"], probe: vi.fn(async () => true), provider }),
+    deps({ probe: vi.fn(async () => true), provider }),
   );
   expect(command).toEqual({
     exec: "/usr/bin/uv",
@@ -214,133 +174,29 @@ test("djlint.interpreter: resolved environment args are preserved and -m djlint 
   });
 });
 
-test("djlint.interpreter: falls back to the raw entry when the provider is null, if it probes successfully", async () => {
-  const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["/venv/bin/python"],
-      probe: vi.fn(async () => true),
-      provider: null,
-    }),
-  );
-  expect(command).toEqual({
-    exec: "/venv/bin/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-});
-
-test("djlint.interpreter: falls back to the raw entry when the provider cannot resolve it, if it probes successfully", async () => {
-  const provider = fakeProvider({
-    resolveInterpreter: vi.fn(async () => null),
-  });
-  const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["/venv/bin/python"],
-      probe: vi.fn(async () => true),
-      provider,
-    }),
-  );
-  expect(command).toEqual({
-    exec: "/venv/bin/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-});
-
-test("djlint.interpreter: blank entries are skipped", async () => {
-  const provider = fakeProvider({
-    resolveInterpreter: vi.fn(async (p: string) =>
-      envDetails({ args: [], executable: p }),
-    ),
-  });
-  const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["  ", "/venv/bin/python"],
-      probe: vi.fn(async () => true),
-      provider,
-    }),
-  );
-  expect(command).toEqual({
-    exec: "/venv/bin/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-});
-
-test("djlint.interpreter: a first entry that resolves but fails to probe falls through to a working second entry", async () => {
-  const provider = fakeProvider({
-    resolveInterpreter: vi.fn(async (p: string) =>
-      envDetails({ args: [], executable: p }),
-    ),
-  });
-  const probe = vi.fn(async (exec: string) => exec === "/good/python");
-  const command = await resolveDjlintCommand(
-    deps({ interpreter: ["/bad/python", "/good/python"], probe, provider }),
-  );
-  expect(command).toEqual({
-    exec: "/good/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-  expect(provider.resolveInterpreter).toHaveBeenNthCalledWith(1, "/bad/python");
-  expect(provider.resolveInterpreter).toHaveBeenNthCalledWith(
-    2,
-    "/good/python",
-  );
-});
-
-test("djlint.interpreter: a first entry the provider cannot resolve (and whose raw path also fails to probe) falls through to a working second entry", async () => {
-  const provider = fakeProvider({
-    resolveInterpreter: vi.fn(async (p: string) =>
-      p === "/good/python" ? envDetails({ args: [], executable: p }) : null,
-    ),
-  });
-  const probe = vi.fn(async (exec: string) => exec === "/good/python");
-  const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["/unresolvable/python", "/good/python"],
-      probe,
-      provider,
-    }),
-  );
-  expect(command).toEqual({
-    exec: "/good/python",
-    prefixArgs: ["-m", "djlint"],
-  });
-});
-
-test("djlint.interpreter: all entries failing falls through to the active environment", async () => {
+test("active environment: a command that fails to probe falls through to the PATH fallback", async () => {
   const provider = fakeProvider({
     getActiveEnvironment: vi.fn(async () =>
       envDetails({ args: [], executable: "/active/python" }),
     ),
-    resolveInterpreter: vi.fn(async (p: string) =>
-      envDetails({ args: [], executable: p }),
-    ),
   });
   const command = await resolveDjlintCommand(
-    deps({
-      interpreter: ["/bad/python", "/also-bad/python"],
-      probe: vi.fn(async () => false),
-      provider,
-    }),
+    deps({ probe: vi.fn(async (exec: string) => exec === "djlint"), provider }),
   );
-  expect(command).toEqual({
-    exec: "/active/python",
-    prefixArgs: ["-m", "djlint"],
-  });
+  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
 });
 
-test("active environment: used with its args + -m djlint when nothing else is configured", async () => {
+test("active environment with no command falls through to the PATH fallback", async () => {
   const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: ["run"], executable: "/active/python" }),
-    ),
+    getActiveEnvironment: vi.fn(async () => envDetails(null)),
   });
-  const command = await resolveDjlintCommand(deps({ provider }));
-  expect(command).toEqual({
-    exec: "/active/python",
-    prefixArgs: ["run", "-m", "djlint"],
-  });
+  const command = await resolveDjlintCommand(
+    deps({ probe: vi.fn(async () => true), provider }),
+  );
+  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
 });
 
-test("deprecated djlint.useVenv: false skips the active-environment step", async () => {
+test("djlint.useVenv: false skips the active-environment step", async () => {
   const provider = fakeProvider({
     getActiveEnvironment: vi.fn(async () => {
       throw new Error("should not be reached: useVenv is false");
@@ -353,13 +209,15 @@ test("deprecated djlint.useVenv: false skips the active-environment step", async
   expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
 });
 
-test("deprecated djlint.useVenv left at its default (true) still consults the active environment", async () => {
+test("djlint.useVenv left at its default (true) still consults the active environment", async () => {
   const provider = fakeProvider({
     getActiveEnvironment: vi.fn(async () =>
       envDetails({ args: [], executable: "/active/python" }),
     ),
   });
-  const command = await resolveDjlintCommand(deps({ provider, useVenv: true }));
+  const command = await resolveDjlintCommand(
+    deps({ probe: vi.fn(async () => true), provider, useVenv: true }),
+  );
   expect(command).toEqual({
     exec: "/active/python",
     prefixArgs: ["-m", "djlint"],
@@ -379,14 +237,36 @@ test("throws DjlintUnavailableError when nothing resolves at all", async () => {
   ).rejects.toBeInstanceOf(DjlintUnavailableError);
 });
 
-test("active environment with no command falls through to the PATH fallback", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () => envDetails(null)),
-  });
-  const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => true), provider }),
+test("normalizeConfiguredExecutable(): resolves a relative path against the workspace root", () => {
+  // `: any` (not `as any`): minimal fake vscode.WorkspaceFolder/TextDocument for this test.
+  const workspaceFolder: any = {
+    uri: { fsPath: "/workspace", scheme: "file" },
+  };
+  vi.mocked(vscode.workspace.getWorkspaceFolder).mockReturnValue(
+    workspaceFolder,
   );
-  expect(command).toEqual({ exec: "djlint", prefixArgs: [] });
+  const document: any = { uri: {} };
+
+  const result = normalizeConfiguredExecutable("./bin/djlint", document);
+
+  expect(result).toBe(path.resolve("/workspace", "./bin/djlint"));
+});
+
+test("normalizeConfiguredExecutable(): leaves a bare command name (no path separator) untouched", () => {
+  // `: any` (not `as any`): minimal fake vscode.TextDocument for this test.
+  const document: any = { uri: {} };
+
+  const result = normalizeConfiguredExecutable("djlint", document);
+
+  expect(result).toBe("djlint");
+  expect(vscode.workspace.getWorkspaceFolder).not.toHaveBeenCalled();
+});
+
+test("normalizeConfiguredExecutable(): trims whitespace-only input down to an empty string", () => {
+  // `: any` (not `as any`): minimal fake vscode.TextDocument for this test.
+  const document: any = { uri: {} };
+
+  expect(normalizeConfiguredExecutable(" ".repeat(3), document)).toBe("");
 });
 
 test("resolveDjlintCommandCached: a second resolution for the same scope does not re-probe", async () => {

@@ -106,11 +106,8 @@
         },
         "djlint.executablePath": {
           "type": "string",
-          "minLength": 1,
-          "default": "djlint",
-          "markdownDescription": "Path to the djLint executable, used only when explicitly set. Relative paths are resolved from the workspace root. Tried before `#djlint.interpreter#` and the active environment, regardless of `#djlint.useVenv#`.",
-          "markdownDeprecationMessage": "**Deprecated**: use `#djlint.path#` instead.",
-          "deprecationMessage": "Deprecated: use djlint.path instead.",
+          "default": "",
+          "markdownDescription": "Absolute path to the djLint executable. Relative paths are resolved from the workspace root. When empty, djLint is located from `#djlint.pythonPath#`, then the active Python environment, then PATH, then the bundled runtime.",
           "scope": "machine-overridable"
         },
         "djlint.exclude": {
@@ -274,15 +271,6 @@
           "description": "JS indent level. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
-        "djlint.interpreter": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Path(s) to a Python interpreter to run djLint from (`python -m djlint`), tried in order until one succeeds. Takes precedence over the active environment. When empty, the active environment from the Python Environments (or Python) extension is used. Ignored when `#djlint.path#` resolves.",
-          "scope": "machine-overridable"
-        },
         "djlint.lineBreakAfterMultilineTag": {
           "type": "boolean",
           "default": false,
@@ -334,15 +322,6 @@
           "description": "Do not attempt to format set contents. Requires djLint ≥ 1.30.2.",
           "scope": "resource"
         },
-        "djlint.path": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "markdownDescription": "Path(s) to the djLint executable, tried in order until one succeeds. Relative paths are resolved from the workspace root. Takes precedence over `#djlint.interpreter#`.",
-          "scope": "machine-overridable"
-        },
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
@@ -379,6 +358,12 @@
           "default": "",
           "scope": "language-overridable",
           "description": "Enable defaults by template language. Requires djLint ≥ 0.4.5; the askama, tera and liquid profiles require djLint ≥ 1.42."
+        },
+        "djlint.pythonPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Path to a Python interpreter used to run `python -m djlint`. Relative paths are resolved from the workspace root. When empty, the active Python environment is used (subject to `#djlint.useVenv#`).",
+          "scope": "machine-overridable"
         },
         "djlint.requirePragma": {
           "type": "boolean",
@@ -425,9 +410,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment as a fallback when `#djlint.path#`, `#djlint.executablePath#`, and `#djlint.interpreter#` don't resolve. Disable this to skip that fallback and use `djlint` from PATH instead.",
-          "markdownDeprecationMessage": "**Deprecated**: use `#djlint.interpreter#` and `#djlint.importStrategy#` instead.",
-          "deprecationMessage": "Deprecated: use djlint.interpreter and djlint.importStrategy instead.",
+          "markdownDescription": "When enabled, use the Python interpreter from the active environment (via the Python Environments / Python extension) to run djLint when no explicit `#djlint.executablePath#`/`#djlint.pythonPath#` is set.",
           "scope": "machine-overridable"
         }
       }
@@ -581,10 +564,9 @@
       "supported": "limited",
       "restrictedConfigurations": [
         "djlint.executablePath",
-        "djlint.importStrategy",
-        "djlint.interpreter",
-        "djlint.path",
+        "djlint.pythonPath",
         "djlint.useVenv",
+        "djlint.importStrategy",
         "djlint.configuration",
         "djlint.rules"
       ]

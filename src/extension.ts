@@ -20,8 +20,7 @@ export async function activate(
   const engineSettings = [
     "executablePath",
     "importStrategy",
-    "interpreter",
-    "path",
+    "pythonPath",
     "useVenv",
   ];
   // Also invalidates the cached djLint command (src/runner.ts) alongside the cached engine: they're independent module-level caches, so a fresh engine created after disposeEngine() would otherwise keep resolving to a stale command.

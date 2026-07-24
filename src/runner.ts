@@ -37,11 +37,11 @@ function resolveConfiguredExecutablePath(
   return path.resolve(workspaceFolder.uri.fsPath, exec);
 }
 
-/** Trims a configured executable/interpreter entry and, if it looks like a
-relative filesystem path, resolves it against the workspace root. Empty (or
-whitespace-only) entries come back as `""` so callers can filter them out
-uniformly. */
-function normalizeConfiguredExecutable(
+/** Trims a configured `djlint.executablePath`/`djlint.pythonPath` value and,
+if it looks like a relative filesystem path, resolves it against the
+workspace root. An empty (or whitespace-only) value comes back as `""` so
+callers can treat "unset" uniformly. */
+export function normalizeConfiguredExecutable(
   raw: string,
   document: vscode.TextDocument,
 ): string {
@@ -67,71 +67,41 @@ function toEnvironmentRunnerCommand(
 }
 
 export interface ResolveDjlintCommandDeps {
-  path: readonly string[];
-  executablePath: string | undefined;
-  interpreter: readonly string[];
+  executablePath: string;
+  pythonPath: string;
   useVenv: boolean | undefined;
   provider: EnvironmentProvider | null;
   uri: vscode.Uri | undefined;
-  probe: (exec: string) => Promise<boolean>;
+  probe: (exec: string, prefixArgs: readonly string[]) => Promise<boolean>;
 }
 
-/** Pure decision: which djLint command to run, mirroring ruff-vscode's
-`findRuffBinaryPath` resolution order. No VS Code/execa dependency beyond
-the injected `deps`, so it is unit-testable in isolation.
+/** Pure decision: which djLint command to run. No VS Code/execa dependency
+beyond the injected `deps`, so it is unit-testable in isolation.
 
-1. `djlint.path` — the first configured executable that `probe()` confirms
-   works, run directly.
-2. The deprecated `djlint.executablePath`, when explicitly set (as decided
-   by the caller via `config.inspect()` — see `isExplicitlySet()`) — same
-   shape as (1).
-3. `djlint.interpreter` — each non-empty entry, tried in order. If
-   `provider` can resolve an entry to an environment, that environment's own
-   launch command/args are used (with `-m djlint` appended); otherwise the
-   entry itself is used as the interpreter verbatim. Either way, the
-   resulting command's executable must also pass `probe()` for the entry to
-   be accepted; an entry that fails is skipped in favor of the next one.
-4. The active Python environment from `provider`, unless the deprecated
-   `djlint.useVenv` is explicitly `false`.
-5. `djlint` on PATH, if `probe()` confirms it works.
-6. Otherwise `DjlintUnavailableError`, so the caller can fall back to the
+1. `djlint.executablePath`, if non-empty, run directly — `probe()` must
+   confirm it works.
+2. `djlint.pythonPath`, if non-empty, run as `<pythonPath> -m djlint` —
+   `probe()` must confirm that combination works too.
+3. The active Python environment from `provider`, unless `djlint.useVenv` is
+   explicitly `false`. The environment's own launch command/args are used
+   (needed for conda/uv-managed environments) with `-m djlint` appended, and
+   the result must still pass `probe()`.
+4. `djlint` on PATH, if `probe()` confirms it works.
+5. Otherwise `DjlintUnavailableError`, so the caller can fall back to the
    bundled runtime. */
 export async function resolveDjlintCommand(
   deps: ResolveDjlintCommandDeps,
 ): Promise<RunnerCommand> {
-  for (const rawExec of deps.path) {
-    const exec = rawExec.trim();
-    // eslint-disable-next-line no-await-in-loop -- candidates must be probed in order; the first one that works wins.
-    if (exec && (await deps.probe(exec))) {
-      return { exec, prefixArgs: [] };
-    }
-  }
-
-  const executablePath = deps.executablePath?.trim();
-  if (executablePath && (await deps.probe(executablePath))) {
+  const executablePath = deps.executablePath.trim();
+  if (executablePath && (await deps.probe(executablePath, []))) {
     return { exec: executablePath, prefixArgs: [] };
   }
 
-  for (const rawEntry of deps.interpreter) {
-    const entry = rawEntry.trim();
-    if (!entry) {
-      continue;
-    }
-
-    let resolved: RunnerCommand | null = null;
-    if (deps.provider) {
-      // eslint-disable-next-line no-await-in-loop -- candidates must be resolved/probed in order; the first one that works wins.
-      const details = await deps.provider.resolveInterpreter(entry);
-      resolved = toEnvironmentRunnerCommand(details);
-    }
-    const candidate: RunnerCommand = resolved ?? {
-      exec: entry,
-      prefixArgs: ["-m", "djlint"],
-    };
-
-    // eslint-disable-next-line no-await-in-loop -- see above.
-    if (await deps.probe(candidate.exec)) {
-      return candidate;
+  const pythonPath = deps.pythonPath.trim();
+  if (pythonPath) {
+    const prefixArgs = ["-m", "djlint"];
+    if (await deps.probe(pythonPath, prefixArgs)) {
+      return { exec: pythonPath, prefixArgs };
     }
   }
 
@@ -139,17 +109,17 @@ export async function resolveDjlintCommand(
     const active = toEnvironmentRunnerCommand(
       await deps.provider.getActiveEnvironment(deps.uri),
     );
-    if (active) {
+    if (active && (await deps.probe(active.exec, active.prefixArgs))) {
       return active;
     }
   }
 
-  if (await deps.probe("djlint")) {
+  if (await deps.probe("djlint", [])) {
     return { exec: "djlint", prefixArgs: [] };
   }
 
   throw new DjlintUnavailableError(
-    `Could not find djLint. Set ${configSection}.path, ${configSection}.interpreter, or install djLint so it is available on PATH.`,
+    `Could not find djLint. Set ${configSection}.executablePath, ${configSection}.pythonPath, or install djLint so it is available on PATH.`,
   );
 }
 
@@ -164,8 +134,8 @@ const commandCache = new Map<DjlintCommandCacheKey, RunnerCommand>();
 `resolveDjlintCommandCached()` call for each scope to re-run
 `resolveDjlintCommand()` (and therefore re-probe) instead of reusing a stale
 result. Call whenever something that could change which djLint runs
-changes: a relevant setting (`djlint.path`, `djlint.interpreter`,
-`djlint.executablePath`, `djlint.useVenv`, `djlint.importStrategy`) or the
+changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
+`djlint.useVenv`, `djlint.importStrategy`) or the
 active Python environment. Also un-latches a memoized "no Python environment
 provider available" result (see `resetUnavailableEnvironmentProviders()`),
 so a transient activation failure doesn't stay pinned for the rest of the
@@ -182,8 +152,9 @@ cached `RunnerCommand` without touching `deps.probe` or `deps.provider` at
 all — this is what keeps the format/lint hot path from spawning `--version`
 probes on every call. A failed resolution (`resolveDjlintCommand()`
 throwing) is never cached, so installing djLint mid-session, or fixing a
-broken `djlint.path`, is picked up on the very next call rather than being
-stuck behind a cached failure until an invalidation trigger fires. */
+broken `djlint.executablePath`, is picked up on the very next call rather
+than being stuck behind a cached failure until an invalidation trigger
+fires. */
 export async function resolveDjlintCommandCached(
   deps: ResolveDjlintCommandDeps,
   scopeKey: DjlintCommandCacheKey,
@@ -197,12 +168,20 @@ export async function resolveDjlintCommandCached(
   return command;
 }
 
-/** Runtime `probe`: attempts to spawn `exec --version` and reports whether
-the process could be launched at all (regardless of its exit code), which is
-enough to tell a missing/unresolvable executable from a real one. */
-async function probeExecutable(exec: string): Promise<boolean> {
+/** Runtime `probe`: attempts to spawn `exec [...prefixArgs, "--version"]`
+and reports whether the process could be launched at all (regardless of its
+exit code), which is enough to tell a missing/unresolvable executable from a
+real one. `prefixArgs` lets the caller probe the exact invocation it intends
+to run (e.g. `<pythonPath> -m djlint --version`), not just the bare
+executable. */
+async function probeExecutable(
+  exec: string,
+  prefixArgs: readonly string[],
+): Promise<boolean> {
   try {
-    const result = await execa(exec, ["--version"], { reject: false });
+    const result = await execa(exec, [...prefixArgs, "--version"], {
+      reject: false,
+    });
     return result.exitCode !== void 0;
   } catch {
     return false;
@@ -219,27 +198,6 @@ function resolutionScopeKey(
   return vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString();
 }
 
-/** Whether `section` has been explicitly set by the user at some scope
-`config.get()` would honor, as opposed to `config` merely reporting back its
-own registered default. Needed for deprecated settings such as
-`djlint.executablePath`, whose default value ("djlint") is itself a value a
-user could legitimately opt in to: a bare `value !== defaultValue` string
-comparison would wrongly treat that user as never having set it. Mirrors
-the pattern ruff-vscode's `getPreferredWorkspaceSetting()` uses
-(`src/common/settings.ts`), narrowed to the scopes this extension's
-resource-scoped settings can actually be set at. */
-export function isExplicitlySet(
-  config: vscode.WorkspaceConfiguration,
-  section: string,
-): boolean {
-  const inspected = config.inspect<string>(section);
-  return (
-    inspected?.globalValue !== void 0 ||
-    inspected?.workspaceValue !== void 0 ||
-    inspected?.workspaceFolderValue !== void 0
-  );
-}
-
 async function getDjlintCommand(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
@@ -249,30 +207,20 @@ async function getDjlintCommand(
     return normalizeConfiguredExecutable(raw, document);
   }
 
-  const rawExecutablePath = config.get<string>("executablePath");
-  const isExecutablePathExplicit = isExplicitlySet(config, "executablePath");
-  const interpreter = (config.get<string[]>("interpreter") ?? []).map((raw) =>
-    normalize(raw),
-  );
+  const executablePath = normalize(config.get<string>("executablePath") ?? "");
+  const pythonPath = normalize(config.get<string>("pythonPath") ?? "");
   const useVenv = config.get<boolean>("useVenv");
 
-  // Only activate the Python (Environments) extension when this resolution could actually use it: either djlint.interpreter has an entry to resolve, or the active environment step (guarded by the deprecated useVenv) is still in play. This keeps a "djlint.path only, useVenv: false" setup from paying for an extension it never asked for.
-  const requiresProvider =
-    interpreter.some((entry) => entry !== "") || useVenv !== false;
-  const provider = requiresProvider
-    ? await getEnvironmentProvider(outputChannel)
-    : null;
+  // Only activate the Python (Environments) extension when the active-environment step (guarded by useVenv) is still in play. This keeps a "djlint.executablePath only, useVenv: false" setup from paying for an extension it never asked for.
+  const provider =
+    useVenv === false ? null : await getEnvironmentProvider(outputChannel);
 
   return resolveDjlintCommandCached(
     {
-      executablePath:
-        !isExecutablePathExplicit || rawExecutablePath == null
-          ? void 0
-          : normalize(rawExecutablePath),
-      interpreter,
-      path: (config.get<string[]>("path") ?? []).map((raw) => normalize(raw)),
+      executablePath,
       probe: probeExecutable,
       provider,
+      pythonPath,
       uri: document.uri,
       useVenv,
     },
