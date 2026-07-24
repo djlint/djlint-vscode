@@ -29,11 +29,7 @@ function asUnavailable(e: unknown): never {
 }
 
 export class SubprocessEngine implements DjlintEngine {
-  constructor(
-    private readonly outputChannel: vscode.LogOutputChannel,
-    // When true (a bundled fallback exists), surface "djLint unavailable" quietly (no popup) so the caller can switch engines.
-    private readonly hasFallback = false,
-  ) {}
+  constructor(private readonly outputChannel: vscode.LogOutputChannel) {}
 
   async format(
     document: vscode.TextDocument,
@@ -49,7 +45,6 @@ export class SubprocessEngine implements DjlintEngine {
         this.outputChannel,
         controllerFor(token),
         formattingOptions,
-        this.hasFallback,
       );
     } catch (e) {
       return asUnavailable(e);
@@ -69,8 +64,6 @@ export class SubprocessEngine implements DjlintEngine {
         lintingArgs,
         this.outputChannel,
         controllerFor(token),
-        void 0,
-        this.hasFallback,
       );
     } catch (e) {
       asUnavailable(e);

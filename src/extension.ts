@@ -17,12 +17,7 @@ export async function activate(
   });
 
   // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload — this also clears a FallbackEngine that latched onto the bundled runtime, letting a newly installed djLint take over.
-  const engineSettings = [
-    "executablePath",
-    "importStrategy",
-    "pythonPath",
-    "useVenv",
-  ];
+  const engineSettings = ["executablePath", "pythonPath", "useVenv"];
   // Also invalidates the cached djLint command (src/runner.ts) alongside the cached engine: they're independent module-level caches, so a fresh engine created after disposeEngine() would otherwise keep resolving to a stale command.
   function invalidateResolution(): void {
     disposeEngine();

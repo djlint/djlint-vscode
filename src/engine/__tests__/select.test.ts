@@ -19,12 +19,9 @@ interface FakeEngine {
 }
 
 function deps(
-  over: Partial<
-    Pick<EngineSelectionDeps<FakeEngine>, "importStrategy" | "isTrusted">
-  > = {},
+  over: Partial<Pick<EngineSelectionDeps<FakeEngine>, "isTrusted">> = {},
 ): EngineSelectionDeps<FakeEngine> {
   return {
-    importStrategy: "fromEnvironment",
     isTrusted: true,
     makeSubprocess: vi.fn((): FakeEngine => ({ kind: "sub" })),
     makePyodide: vi.fn((): FakeEngine => ({ kind: "pyo" })),
@@ -32,46 +29,24 @@ function deps(
   };
 }
 
-test("useBundled → pyodide", () => {
-  expect(selectEngine(deps({ importStrategy: "useBundled" })).kind).toBe("pyo");
+test("trusted → subprocess (bundled fallback handled at call time via FallbackEngine)", () => {
+  expect(selectEngine(deps()).kind).toBe("sub");
 });
 
 test("untrusted → pyodide", () => {
   expect(selectEngine(deps({ isTrusted: false })).kind).toBe("pyo");
 });
 
-test("fromEnvironment trusted → subprocess (fallback handled at call time)", () => {
-  expect(selectEngine(deps()).kind).toBe("sub");
-});
-
-test("untrusted + useBundled → pyodide (both conditions)", () => {
-  expect(
-    selectEngine(deps({ importStrategy: "useBundled", isTrusted: false })).kind,
-  ).toBe("pyo");
-});
-
-test("fromEnvironmentStrict (trusted) → subprocess", () => {
-  expect(
-    selectEngine(deps({ importStrategy: "fromEnvironmentStrict" })).kind,
-  ).toBe("sub");
-});
-
-test("untrusted always → pyodide, even in strict mode (never execute env tools)", () => {
-  const d = deps({ importStrategy: "fromEnvironmentStrict", isTrusted: false });
-  expect(selectEngine(d).kind).toBe("pyo");
+test("untrusted never calls makeSubprocess (never execute env tools on untrusted content)", () => {
+  const d = deps({ isTrusted: false });
+  selectEngine(d);
   expect(d.makeSubprocess).not.toHaveBeenCalled();
 });
 
-test("fromEnvironment (trusted) asks for a subprocess WITH fallback", () => {
+test("trusted never calls makePyodide directly (selection, not the fallback path)", () => {
   const d = deps();
   selectEngine(d);
-  expect(d.makeSubprocess).toHaveBeenCalledWith({ fallback: true });
-});
-
-test("fromEnvironmentStrict asks for a subprocess WITHOUT fallback", () => {
-  const d = deps({ importStrategy: "fromEnvironmentStrict" });
-  selectEngine(d);
-  expect(d.makeSubprocess).toHaveBeenCalledWith({ fallback: false });
+  expect(d.makePyodide).not.toHaveBeenCalled();
 });
 
 const doc: any = {};

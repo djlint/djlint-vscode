@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { getConfig } from "../config.js";
 import { PyodideEngine } from "./pyodide/index.js";
 import { SubprocessEngine } from "./subprocess/index.js";
 import {
@@ -8,36 +7,22 @@ import {
   type LintDiagnostic,
 } from "./types.js";
 
-export type ImportStrategy =
-  "fromEnvironment" | "fromEnvironmentStrict" | "useBundled";
-
 export interface EngineSelectionDeps<T> {
-  importStrategy: ImportStrategy;
   isTrusted: boolean;
-  // `fallback: true` asks for the environment engine wrapped to fall back to the bundled runtime when djLint is unavailable.
-  makeSubprocess: (options: { fallback: boolean }) => T;
+  makeSubprocess: () => T;
   makePyodide: () => T;
 }
 
-/** Pure decision: which engine to build, given the `djlint.importStrategy`
-setting and workspace-trust state. No VS Code dependency, so it is
-unit-testable in isolation.
+/** Pure decision: which engine to build, given workspace-trust state. No
+VS Code dependency, so it is unit-testable in isolation.
 
-- An untrusted workspace ALWAYS gets the sandboxed bundled runtime, whatever
-  the strategy: we never execute an environment tool on untrusted content.
-- `useBundled`: always the bundled runtime.
-- `fromEnvironmentStrict`: the environment djLint, no fallback — an error
-  surfaces if it is unavailable (guarantees the configured instance runs).
-- `fromEnvironment` (default): the environment djLint with a silent fallback
-  to the bundled runtime. */
+- A trusted desktop host tries the environment djLint (`makeSubprocess`
+  always wraps it so it transparently falls back to the bundled runtime when
+  djLint is unavailable — see `FallbackEngine`).
+- An untrusted workspace ALWAYS gets the sandboxed bundled runtime: we never
+  execute an environment tool on untrusted content. */
 export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
-  if (!deps.isTrusted || deps.importStrategy === "useBundled") {
-    return deps.makePyodide();
-  }
-  if (deps.importStrategy === "fromEnvironmentStrict") {
-    return deps.makeSubprocess({ fallback: false });
-  }
-  return deps.makeSubprocess({ fallback: true });
+  return deps.isTrusted ? deps.makeSubprocess() : deps.makePyodide();
 }
 
 /** Wraps a primary engine (subprocess) and, the first time it reports djLint
@@ -153,18 +138,15 @@ export function getEngine(
   function makePyodide(): DjlintEngine {
     return new PyodideEngine(workerPath, indexURL);
   }
-  const importStrategy =
-    getConfig().get<ImportStrategy>("importStrategy") ?? "fromEnvironment";
   state.cached = selectEngine<DjlintEngine>({
-    importStrategy,
     isTrusted: vscode.workspace.isTrusted,
     makePyodide,
-    makeSubprocess: ({ fallback }): DjlintEngine => {
-      const subprocess = new SubprocessEngine(outputChannel, fallback);
-      return fallback
-        ? new FallbackEngine(subprocess, makePyodide, outputChannel)
-        : subprocess;
-    },
+    makeSubprocess: (): DjlintEngine =>
+      new FallbackEngine(
+        new SubprocessEngine(outputChannel),
+        makePyodide,
+        outputChannel,
+      ),
   });
   return state.cached;
 }

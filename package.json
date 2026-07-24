@@ -234,22 +234,6 @@
           "description": "Do not fix case on known html tags. Requires djLint ≥ 1.23.",
           "scope": "resource"
         },
-        "djlint.importStrategy": {
-          "type": "string",
-          "enum": [
-            "fromEnvironment",
-            "fromEnvironmentStrict",
-            "useBundled"
-          ],
-          "enumDescriptions": [
-            "Use djLint from the environment, falling back to the bundled version if it is not found.",
-            "Use djLint from the environment; if it is not found, report an error instead of falling back to the bundled version. Ensures the exact djLint you configured is what runs. In an untrusted workspace the sandboxed bundled version is still used.",
-            "Always use the version of djLint bundled with the extension."
-          ],
-          "default": "fromEnvironment",
-          "scope": "window",
-          "markdownDescription": "Strategy for locating djLint. `fromEnvironment` uses your installed djLint (see `#djlint.useVenv#`), falling back to the bundled runtime. `fromEnvironmentStrict` uses your installed djLint but reports an error instead of falling back, guaranteeing the exact instance you configured. `useBundled` always uses the bundled runtime. Note: the bundled runtime applies djLint settings from VS Code but does not read project config files (`pyproject.toml [tool.djlint]`, `.djlintrc`); install djLint if you rely on those."
-        },
         "djlint.include": {
           "type": "array",
           "items": {
@@ -382,12 +366,6 @@
           "default": "",
           "description": "Path to a custom rules file in .djlint_rules.yaml format. The path can be relative to the workspace root. Requires djLint ≥ 1.41.",
           "scope": "resource"
-        },
-        "djlint.showInstallError": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "Show an error message when djLint is not found in the configured environment and `#djlint.importStrategy#` is `fromEnvironmentStrict` (no bundled fallback available). With the default `fromEnvironment` (or `useBundled`) strategy, the bundled runtime is used silently instead and this setting has no effect.",
-          "scope": "window"
         },
         "djlint.singleAttributePerLine": {
           "type": "boolean",
@@ -572,7 +550,6 @@
         "djlint.executablePath",
         "djlint.pythonPath",
         "djlint.useVenv",
-        "djlint.importStrategy",
         "djlint.configuration",
         "djlint.rules"
       ]

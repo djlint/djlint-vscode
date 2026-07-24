@@ -192,7 +192,7 @@ const warnedSkippedArgs = new Set<string>();
 `resolveDjlintCommand()` (and therefore re-probe) instead of reusing a stale
 result. Call whenever something that could change which djLint runs
 changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
-`djlint.useVenv`, `djlint.importStrategy`) or the
+`djlint.useVenv`) or the
 active Python environment. Also un-latches a memoized "no Python environment
 provider available" result (see `resetUnavailableEnvironmentProviders()`),
 so a transient activation failure doesn't stay pinned for the rest of the
@@ -416,14 +416,13 @@ export async function runDjlint(
   outputChannel: vscode.LogOutputChannel,
   abortController: AbortController,
   formattingOptions?: vscode.FormattingOptions,
-  hasFallback = false,
 ): Promise<string> {
   let command;
   try {
     command = await getDjlintCommand(document, config, outputChannel);
   } catch (e) {
-    // With a bundled fallback, stay quiet (log only) so the caller can switch engines instead of showing a popup for a condition that will self-resolve.
-    if (hasFallback && e instanceof DjlintUnavailableError) {
+    // Stay quiet (log only) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime instead of showing a popup for a condition that will self-resolve.
+    if (e instanceof DjlintUnavailableError) {
       outputChannel.debug(`${e.message} Using the bundled runtime.`);
     } else {
       void vscode.window.showErrorMessage(
@@ -449,6 +448,6 @@ export async function runDjlint(
       throw e;
     }
 
-    return checkErrors(e, outputChannel, config, hasFallback).stdout;
+    return checkErrors(e, outputChannel).stdout;
   }
 }

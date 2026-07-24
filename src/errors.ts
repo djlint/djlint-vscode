@@ -8,8 +8,6 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
 
 const installDocsUrl = "https://djlint.com/docs/getting-started/";
 const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
-const extReadmeUrl =
-  "https://github.com/djlint/djLint-vscode/blob/main/README.md";
 
 function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
@@ -39,14 +37,9 @@ function showError(
 export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
-  config: vscode.WorkspaceConfiguration,
-  hasFallback = false,
 ): CustomExecaError {
-  // With a bundled fallback, surface "djLint unavailable" quietly (log only, no popup) so the caller can switch to the bundled runtime.
-  if (
-    hasFallback &&
-    (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr))
-  ) {
+  // Surface "djLint unavailable" quietly (log only, no popup) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime.
+  if (e.code === "ENOENT" || /No\s+module\s+named\s+djlint/u.test(e.stderr)) {
     outputChannel.debug(
       `External djLint not available (${e.shortMessage}); using the bundled runtime.`,
     );
@@ -57,48 +50,6 @@ export function checkErrors(
   if (e.exitCode != null) {
     if (/(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)) {
       return e;
-    }
-
-    if (/No\s+module\s+named\s+djlint/u.test(e.stderr)) {
-      errorToOutputChannel(outputChannel, e);
-
-      const configName = "showInstallError";
-      if (config.get<boolean>(configName)) {
-        const errMsg = `djLint was not found in the configured environment (djlint.importStrategy is "fromEnvironmentStrict", so the bundled runtime is not used as a fallback). See installation instructions at ${extReadmeUrl}, or set djlint.importStrategy to "fromEnvironment" (or "useBundled") to use the djLint bundled with this extension instead.`;
-        void (async (): Promise<void> => {
-          const choice = await vscode.window.showErrorMessage(
-            errMsg,
-            "Do not show again (workspace)",
-            "Do not show again (global)",
-            "Details",
-          );
-          // eslint-disable-next-line default-case, @typescript-eslint/switch-exhaustiveness-check
-          switch (choice) {
-            case "Do not show again (workspace)": {
-              void config.update(
-                configName,
-                false,
-                vscode.ConfigurationTarget.Workspace,
-              );
-              break;
-            }
-            case "Do not show again (global)": {
-              void config.update(
-                configName,
-                false,
-                vscode.ConfigurationTarget.Global,
-              );
-              break;
-            }
-            case "Details": {
-              outputChannel.show();
-              break;
-            }
-          }
-        })();
-      }
-      // eslint-disable-next-line @typescript-eslint/only-throw-error
-      throw e;
     }
 
     const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(e.stderr)
