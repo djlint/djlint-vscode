@@ -30,3 +30,19 @@ test("does not match unrelated stderr", () => {
     isDjlintUnavailable(execaError({ stderr: "SyntaxError: invalid syntax" })),
   ).toBe(false);
 });
+
+test("does not match djlint_extras (a djlint-prefixed submodule)", () => {
+  expect(
+    isDjlintUnavailable(
+      execaError({ stderr: "No module named 'djlint_extras'" }),
+    ),
+  ).toBe(false);
+});
+
+test("does not match djlint.rules.foo (a djlint subpackage)", () => {
+  expect(
+    isDjlintUnavailable(
+      execaError({ stderr: "No module named 'djlint.rules.foo'" }),
+    ),
+  ).toBe(false);
+});

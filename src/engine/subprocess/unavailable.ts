@@ -13,6 +13,6 @@ pattern never matched CPython's actual (quoted) message. */
 export function isDjlintUnavailable(e: CustomExecaError): boolean {
   return (
     e.code === "ENOENT" ||
-    /No\s+module\s+named\s+['"]?djlint['"]?/u.test(e.stderr)
+    /No\s+module\s+named\s+['"]?djlint['"]?(?![\w.])/u.test(e.stderr)
   );
 }
