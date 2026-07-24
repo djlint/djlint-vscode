@@ -1,9 +1,6 @@
 import path from "node:path";
 import { beforeEach, expect, test, vi } from "vitest";
-import type {
-  EnvironmentProvider,
-  PythonEnvironmentDetails,
-} from "../python/environment.js";
+import type { PythonEnvironmentDetails } from "../python/environment.js";
 
 /*
  * runner.ts imports "vscode" (not resolvable outside a real extension host)
@@ -21,8 +18,8 @@ vi.mock("execa", () => ({
   execa: vi.fn(),
 }));
 vi.mock("../python/environment.js", () => ({
-  getEnvironmentProvider: vi.fn(),
-  resetUnavailableEnvironmentProviders: vi.fn(),
+  getActivePythonEnvironment: vi.fn(),
+  resetPythonEnvironmentProviderIfUnavailable: vi.fn(),
 }));
 
 const vscode = await import("vscode");
@@ -50,8 +47,8 @@ function deps(
 ): ResolveDjlintCommandDeps {
   return {
     executablePath: "",
+    getActiveEnvironment: null,
     probe: vi.fn(async () => null),
-    provider: null,
     pythonPath: "",
     uri: void 0,
     useVenv: true,
@@ -59,32 +56,22 @@ function deps(
   };
 }
 
-function fakeProvider(
-  over: Partial<EnvironmentProvider> = {},
-): EnvironmentProvider {
-  return {
-    getActiveEnvironment: vi.fn(async () => null),
-    initialize: vi.fn(async () => {}),
-    ...over,
-  };
-}
-
 function envDetails(
   command: PythonEnvironmentDetails["command"],
 ): PythonEnvironmentDetails {
-  return { command, sysPrefix: "/env" };
+  return { command };
 }
 
 test("djlint.executablePath: used directly when it probes successfully", async () => {
-  const provider = fakeProvider();
+  const getActiveEnvironment = vi.fn(async () => null);
   const probe = vi.fn(async (exec: string) =>
     exec === "/custom/djlint" ? "1.42.3" : null,
   );
   const command = await resolveDjlintCommand(
     deps({
       executablePath: "/custom/djlint",
+      getActiveEnvironment,
       probe,
-      provider,
       pythonPath: "/some/python",
     }),
   );
@@ -95,7 +82,7 @@ test("djlint.executablePath: used directly when it probes successfully", async (
   });
   expect(probe).toHaveBeenCalledWith("/custom/djlint", []);
   // Later steps must never be consulted: step 1 already won.
-  expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
+  expect(getActiveEnvironment).not.toHaveBeenCalled();
 });
 
 test("djlint.executablePath: falls through to djlint.pythonPath when it fails to probe", async () => {
@@ -160,15 +147,13 @@ test("djlint.pythonPath: used (with -m djlint) when no executablePath is set", a
 });
 
 test("djlint.pythonPath wins over the active environment", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () => {
-      throw new Error("should not be reached: pythonPath should win");
-    }),
+  const getActiveEnvironment = vi.fn(async (): Promise<never> => {
+    throw new Error("should not be reached: pythonPath should win");
   });
   const command = await resolveDjlintCommand(
     deps({
+      getActiveEnvironment,
       probe: vi.fn(async () => "1.42.3"),
-      provider,
       pythonPath: "/venv/bin/python",
     }),
   );
@@ -177,19 +162,19 @@ test("djlint.pythonPath wins over the active environment", async () => {
     prefixArgs: ["-m", "djlint"],
     version: "1.42.3",
   });
-  expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
+  expect(getActiveEnvironment).not.toHaveBeenCalled();
 });
 
 test("active environment: used with its args + -m djlint when neither executablePath nor pythonPath resolve", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: ["run"], executable: "/active/python" }),
-    ),
-  });
+  const getActiveEnvironment = vi.fn(async () =>
+    envDetails({ args: ["run"], executable: "/active/python" }),
+  );
   const probe = vi.fn(async (exec: string) =>
     exec === "/active/python" ? "1.42.3" : null,
   );
-  const command = await resolveDjlintCommand(deps({ probe, provider }));
+  const command = await resolveDjlintCommand(
+    deps({ getActiveEnvironment, probe }),
+  );
   expect(command).toEqual({
     exec: "/active/python",
     prefixArgs: ["run", "-m", "djlint"],
@@ -199,13 +184,11 @@ test("active environment: used with its args + -m djlint when neither executable
 });
 
 test("active environment: a conda/uv-style command's own launch args are preserved alongside -m djlint", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: ["run", "-p", "3.12"], executable: "/usr/bin/uv" }),
-    ),
-  });
+  const getActiveEnvironment = vi.fn(async () =>
+    envDetails({ args: ["run", "-p", "3.12"], executable: "/usr/bin/uv" }),
+  );
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => "1.42.3"), provider }),
+    deps({ getActiveEnvironment, probe: vi.fn(async () => "1.42.3") }),
   );
   expect(command).toEqual({
     exec: "/usr/bin/uv",
@@ -215,17 +198,15 @@ test("active environment: a conda/uv-style command's own launch args are preserv
 });
 
 test("active environment: a command that fails to probe falls through to the PATH fallback", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: [], executable: "/active/python" }),
-    ),
-  });
+  const getActiveEnvironment = vi.fn(async () =>
+    envDetails({ args: [], executable: "/active/python" }),
+  );
   const command = await resolveDjlintCommand(
     deps({
+      getActiveEnvironment,
       probe: vi.fn(async (exec: string) =>
         exec === "djlint" ? "1.42.3" : null,
       ),
-      provider,
     }),
   );
   expect(command).toEqual({
@@ -236,11 +217,9 @@ test("active environment: a command that fails to probe falls through to the PAT
 });
 
 test("active environment with no command falls through to the PATH fallback", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () => envDetails(null)),
-  });
+  const getActiveEnvironment = vi.fn(async () => envDetails(null));
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => "1.42.3"), provider }),
+    deps({ getActiveEnvironment, probe: vi.fn(async () => "1.42.3") }),
   );
   expect(command).toEqual({
     exec: "djlint",
@@ -250,30 +229,34 @@ test("active environment with no command falls through to the PATH fallback", as
 });
 
 test("djlint.useVenv: false skips the active-environment step", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () => {
-      throw new Error("should not be reached: useVenv is false");
-    }),
+  const getActiveEnvironment = vi.fn(async (): Promise<never> => {
+    throw new Error("should not be reached: useVenv is false");
   });
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => "1.42.3"), provider, useVenv: false }),
+    deps({
+      getActiveEnvironment,
+      probe: vi.fn(async () => "1.42.3"),
+      useVenv: false,
+    }),
   );
   expect(command).toEqual({
     exec: "djlint",
     prefixArgs: [],
     version: "1.42.3",
   });
-  expect(provider.getActiveEnvironment).not.toHaveBeenCalled();
+  expect(getActiveEnvironment).not.toHaveBeenCalled();
 });
 
 test("djlint.useVenv left at its default (true) still consults the active environment", async () => {
-  const provider = fakeProvider({
-    getActiveEnvironment: vi.fn(async () =>
-      envDetails({ args: [], executable: "/active/python" }),
-    ),
-  });
+  const getActiveEnvironment = vi.fn(async () =>
+    envDetails({ args: [], executable: "/active/python" }),
+  );
   const command = await resolveDjlintCommand(
-    deps({ probe: vi.fn(async () => "1.42.3"), provider, useVenv: true }),
+    deps({
+      getActiveEnvironment,
+      probe: vi.fn(async () => "1.42.3"),
+      useVenv: true,
+    }),
   );
   expect(command).toEqual({
     exec: "/active/python",

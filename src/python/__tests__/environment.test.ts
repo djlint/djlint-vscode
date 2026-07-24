@@ -3,11 +3,11 @@ import { beforeEach, expect, test, vi } from "vitest";
 /*
  * Unlike runner.test.ts (which stubs "../python/environment.js" away
  * entirely), this file exercises the REAL environment.ts end to end,
- * including its module-level `lazyInit()` activation singleton. That's
- * deliberate: Finding 1 was that `EnvironmentProvider.initialize()` is
- * declared on the interface and implemented by the provider class, but was
- * never actually invoked anywhere in production code -- only a test mock
- * ever called it, which is exactly how 61 green tests missed a dead
+ * including its module-level lazy-activation singleton (`pending`/
+ * `lastResult`). That's deliberate: Finding 1 was that the classic Python
+ * extension's `onDidChangeActiveEnvironmentPath` listener registration was
+ * declared but never actually wired up in production code -- only a test
+ * mock ever triggered it, which is exactly how 61 green tests missed a dead
  * `onDidChangeActivePythonEnvironment`. Mocking environment.ts away here
  * would reproduce that same blind spot, so instead we stub only "vscode"
  * (and, transitively, "@vscode/python-extension", which imports "vscode"
@@ -60,10 +60,10 @@ vi.mock("@vscode/python-extension", () => ({
 const outputChannel: any = { debug: vi.fn(), info: vi.fn(), warn: vi.fn() };
 
 // Each test needs its own copy of environment.ts's module-level activation
-// singleton (`classicPythonExtension`), so a latched result (or a
-// registered listener) from one test can't leak into another. Resetting the
-// module registry also re-runs the "@vscode/python-extension" mock factory
-// above, so each test gets a fresh, freshly-configurable `PythonExtension.api`
+// singleton (`pending`/`lastResult`), so a latched result (or a registered
+// listener) from one test can't leak into another. Resetting the module
+// registry also re-runs the "@vscode/python-extension" mock factory above,
+// so each test gets a fresh, freshly-configurable `PythonExtension.api`
 // mock too.
 beforeEach(() => {
   vi.resetModules();
@@ -89,91 +89,139 @@ function fakeClassicPythonExtensionApi(vscode: any): {
       environments: {
         getActiveEnvironmentPath: vi.fn(() => "/env/a/bin/python"),
         onDidChangeActiveEnvironmentPath,
-        resolveEnvironment: vi.fn(async () => null),
+        // A resolvable environment by default, so a successful activation
+        // is distinguishable (via getActivePythonEnvironment()'s non-null
+        // return) from "the extension is unavailable" without a separate
+        // provider-object getter. Tests exercising "no active environment"
+        // override this explicitly.
+        resolveEnvironment: vi.fn(async () => ({
+          executable: { uri: { fsPath: "/env/a/bin/python" } },
+        })),
       },
     },
     emitter,
   };
 }
 
-test("Finding 1: getEnvironmentProvider() actually wires the classic Python extension's change event through to onDidChangeActivePythonEnvironment (initialize() is no longer dead code)", async () => {
-  const { vscode, getEnvironmentProvider, onDidChangeActivePythonEnvironment } =
-    await freshEnvironmentModule();
+test("Finding 1: initializePythonEnvironment() actually wires the classic Python extension's change event through to onDidChangeActivePythonEnvironment (the listener registration is no longer dead code)", async () => {
   const { PythonExtension } = await import("@vscode/python-extension");
+  const { initializePythonEnvironment, onDidChangeActivePythonEnvironment } =
+    await freshEnvironmentModule();
+  const vscode: any = await import("vscode");
   const { api, emitter } = fakeClassicPythonExtensionApi(vscode);
   vi.mocked(PythonExtension.api).mockResolvedValue(api);
 
-  const provider = await getEnvironmentProvider(outputChannel);
-  expect(provider).not.toBeNull();
+  const disposables: unknown[] = [];
+  await initializePythonEnvironment(disposables, outputChannel);
   // The whole bug was that this listener registration never happened.
   expect(
     api.environments.onDidChangeActiveEnvironmentPath,
   ).toHaveBeenCalledTimes(1);
+  // initializePythonEnvironment() bridges its own disposables into the array it's given.
+  expect(disposables).toHaveLength(1);
 
-  const changes: unknown[] = [];
-  onDidChangeActivePythonEnvironment((change: unknown) => {
-    changes.push(change);
+  let fired = 0;
+  onDidChangeActivePythonEnvironment(() => {
+    fired += 1;
   });
 
-  const uri = vscode.Uri.file("/workspace/project");
-  emitter.fire({ path: "/env/a/bin/python", resource: uri });
+  emitter.fire({
+    path: "/env/a/bin/python",
+    resource: vscode.Uri.file("/workspace/project"),
+  });
 
-  expect(changes).toEqual([{ path: "/env/a/bin/python", uri }]);
+  expect(fired).toBe(1);
 });
 
-test("Finding 5: a latched 'no environment provider available' result is retried after resetUnavailableEnvironmentProviders(), without disturbing an already-activated provider", async () => {
-  const {
-    vscode,
-    getEnvironmentProvider,
-    resetUnavailableEnvironmentProviders,
-  } = await freshEnvironmentModule();
+test("getActivePythonEnvironment(): returns null when the Python extension is absent, without throwing", async () => {
+  const { getActivePythonEnvironment } = await freshEnvironmentModule();
   const { PythonExtension } = await import("@vscode/python-extension");
+  // Explicit, rather than relying on the mock factory's own default reject
+  // behavior surviving vi.resetModules() (every other test in this file
+  // configures PythonExtension.api explicitly for the same reason).
+  vi.mocked(PythonExtension.api).mockRejectedValue(
+    new Error("Python extension is not installed or is disabled"),
+  );
+
+  await expect(getActivePythonEnvironment()).resolves.toBeNull();
+});
+
+test("Finding 5: a latched 'the classic Python extension is unavailable' result is retried after resetPythonEnvironmentProviderIfUnavailable(), without disturbing an already-activated extension", async () => {
+  const { PythonExtension } = await import("@vscode/python-extension");
+  const {
+    getActivePythonEnvironment,
+    resetPythonEnvironmentProviderIfUnavailable,
+  } = await freshEnvironmentModule();
 
   // The classic extension isn't installed/available yet.
   vi.mocked(PythonExtension.api).mockRejectedValue(
     new Error("Python extension is not installed or is disabled"),
   );
-  expect(await getEnvironmentProvider(outputChannel)).toBeNull();
+  expect(await getActivePythonEnvironment()).toBeNull();
 
   // The classic extension becomes available -- but without a reset, the
   // earlier failure stays latched.
+  const vscode: any = await import("vscode");
   const { api } = fakeClassicPythonExtensionApi(vscode);
   vi.mocked(PythonExtension.api).mockResolvedValue(api);
-  expect(await getEnvironmentProvider(outputChannel)).toBeNull();
+  expect(await getActivePythonEnvironment()).toBeNull();
 
-  resetUnavailableEnvironmentProviders();
+  resetPythonEnvironmentProviderIfUnavailable();
 
-  const provider = await getEnvironmentProvider(outputChannel);
-  expect(provider).not.toBeNull();
+  expect(await getActivePythonEnvironment()).not.toBeNull();
   expect(
     api.environments.onDidChangeActiveEnvironmentPath,
   ).toHaveBeenCalledTimes(1);
 
-  // Resetting again, after a provider already activated successfully, must
-  // not re-run initialize(): the memoized provider (and its listener
-  // registration) is left alone.
-  resetUnavailableEnvironmentProviders();
-  const providerAgain = await getEnvironmentProvider(outputChannel);
-  expect(providerAgain).toBe(provider);
+  // Resetting again, after activation already succeeded, must not
+  // re-activate: the memoized extension (and its listener registration) is
+  // left alone.
+  resetPythonEnvironmentProviderIfUnavailable();
+  expect(await getActivePythonEnvironment()).not.toBeNull();
   expect(
     api.environments.onDidChangeActiveEnvironmentPath,
   ).toHaveBeenCalledTimes(1);
 });
 
-test("getActiveEnvironment(): maps a resolved classic environment to command/sysPrefix, with no version field", async () => {
-  const { vscode, getEnvironmentProvider } = await freshEnvironmentModule();
+test("getActivePythonEnvironment(): maps a resolved classic environment to a command, with no sysPrefix field", async () => {
   const { PythonExtension } = await import("@vscode/python-extension");
+  const { getActivePythonEnvironment } = await freshEnvironmentModule();
+  const vscode: any = await import("vscode");
   const { api } = fakeClassicPythonExtensionApi(vscode);
   api.environments.resolveEnvironment = vi.fn(async () => ({
     executable: { sysPrefix: "/env/a", uri: { fsPath: "/env/a/bin/python" } },
   }));
   vi.mocked(PythonExtension.api).mockResolvedValue(api);
 
-  const provider = await getEnvironmentProvider(outputChannel);
-  const details = await provider?.getActiveEnvironment();
+  const details = await getActivePythonEnvironment();
 
   expect(details).toStrictEqual({
     command: { args: [], executable: "/env/a/bin/python" },
-    sysPrefix: "/env/a",
   });
+});
+
+test("getActivePythonEnvironment(): guard E -- never throws, even when the Python extension itself throws from resolveEnvironment()", async () => {
+  const { PythonExtension } = await import("@vscode/python-extension");
+  const { getActivePythonEnvironment } = await freshEnvironmentModule();
+  const vscode: any = await import("vscode");
+  const { api } = fakeClassicPythonExtensionApi(vscode);
+  api.environments.resolveEnvironment = vi.fn(async () => {
+    throw new Error("boom: a misbehaving Python extension");
+  });
+  vi.mocked(PythonExtension.api).mockResolvedValue(api);
+
+  await expect(getActivePythonEnvironment()).resolves.toBeNull();
+});
+
+test("getActivePythonEnvironment(): guard E -- never throws, even when getActiveEnvironmentPath() itself throws", async () => {
+  const { PythonExtension } = await import("@vscode/python-extension");
+  const { getActivePythonEnvironment } = await freshEnvironmentModule();
+  const vscode: any = await import("vscode");
+  const { api } = fakeClassicPythonExtensionApi(vscode);
+  api.environments.getActiveEnvironmentPath = vi.fn(() => {
+    throw new Error("boom: a misbehaving Python extension");
+  });
+  vi.mocked(PythonExtension.api).mockResolvedValue(api);
+
+  await expect(getActivePythonEnvironment()).resolves.toBeNull();
 });

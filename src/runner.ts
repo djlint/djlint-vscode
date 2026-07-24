@@ -7,9 +7,8 @@ import { RESOLUTION_TTL_MS } from "./engine/subprocess/constants.js";
 import { DjlintUnavailableError } from "./engine/types.js";
 import { checkErrors } from "./errors.js";
 import {
-  getEnvironmentProvider,
-  resetUnavailableEnvironmentProviders,
-  type EnvironmentProvider,
+  getActivePythonEnvironment,
+  resetPythonEnvironmentProviderIfUnavailable,
   type PythonEnvironmentDetails,
 } from "./python/environment.js";
 import {
@@ -85,7 +84,18 @@ export interface ResolveDjlintCommandDeps {
   executablePath: string;
   pythonPath: string;
   useVenv: boolean | undefined;
-  provider: EnvironmentProvider | null;
+  /** Resolves the active Python environment, or `null` when
+  `djlint.useVenv` is `false` (the active-environment step is skipped
+  entirely). A plain function rather than an eagerly-resolved value so
+  `getDjlintCommand()` can hand it over WITHOUT awaiting it -- it's only
+  invoked (see step 3 below) when resolution actually reaches the
+  active-environment step, i.e. never on a cache hit or when
+  `executablePath`/`pythonPath` already won. */
+  getActiveEnvironment:
+    | ((
+        uri: vscode.Uri | undefined,
+      ) => Promise<PythonEnvironmentDetails | null>)
+    | null;
   uri: vscode.Uri | undefined;
   /** Validates a candidate invocation by running
   `<exec> [...prefixArgs, "--version"]`: returns the parsed
@@ -138,9 +148,9 @@ export async function resolveDjlintCommand(
     }
   }
 
-  if (deps.useVenv !== false && deps.provider) {
+  if (deps.useVenv !== false && deps.getActiveEnvironment) {
     const active = toEnvironmentRunnerCommand(
-      await deps.provider.getActiveEnvironment(deps.uri),
+      await deps.getActiveEnvironment(deps.uri),
     );
     if (active) {
       const version = await deps.probe(active.exec, active.prefixArgs);
@@ -181,10 +191,11 @@ const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 result. Call whenever something that could change which djLint runs
 changes: a relevant setting (`djlint.executablePath`, `djlint.pythonPath`,
 `djlint.useVenv`) or the
-active Python environment. Also un-latches a memoized "no Python environment
-provider available" result (see `resetUnavailableEnvironmentProviders()`),
-so a transient activation failure doesn't stay pinned for the rest of the
-session, and clears `version.ts`'s `selectSupportedArgs()` per-version
+active Python environment. Also un-latches a memoized "the classic Python
+extension is unavailable" result (see
+`resetPythonEnvironmentProviderIfUnavailable()`), so a transient activation
+failure doesn't stay pinned for the rest of the session, and clears
+`version.ts`'s `selectSupportedArgs()` per-version
 skipped-arg warning dedupe (see `resetSkippedArgWarnings()`), so a version
 resolved anew warns about its unsupported args again instead of staying
 silent off the old resolution's dedupe state. This is also what the
@@ -194,7 +205,7 @@ djLint upgrade, rather than waiting out `RESOLUTION_TTL_MS`. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
   resetSkippedArgWarnings();
-  resetUnavailableEnvironmentProviders();
+  resetPythonEnvironmentProviderIfUnavailable();
 }
 
 /** Thin memoizing layer around `resolveDjlintCommand()`: the first
@@ -259,7 +270,6 @@ function resolutionScopeKey(
 async function getDjlintCommand(
   document: vscode.TextDocument,
   config: vscode.WorkspaceConfiguration,
-  outputChannel: vscode.LogOutputChannel,
 ): Promise<RunnerCommand> {
   function normalize(raw: string): string {
     return normalizeConfiguredExecutable(raw, document);
@@ -269,15 +279,20 @@ async function getDjlintCommand(
   const pythonPath = normalize(config.get<string>("pythonPath") ?? "");
   const useVenv = config.get<boolean>("useVenv");
 
-  // Only activate the Python extension when the active-environment step (guarded by useVenv) is still in play. This keeps a "djlint.executablePath only, useVenv: false" setup from paying for an extension it never asked for.
-  const provider =
-    useVenv === false ? null : await getEnvironmentProvider(outputChannel);
-
   return resolveDjlintCommandCached(
     {
       executablePath,
+      /* Only reaches the Python extension when the active-environment step
+      (guarded by useVenv) is both still in play AND actually reached: this
+      is a lazy function reference, not an awaited call, so a
+      "djlint.executablePath only" setup or a warm cache hit never pays for
+      an extension it never asked for. */
+      getActiveEnvironment:
+        useVenv === false
+          ? null
+          : async (uri): Promise<PythonEnvironmentDetails | null> =>
+              getActivePythonEnvironment(uri),
       probe: probeExecutable,
-      provider,
       pythonPath,
       uri: document.uri,
       useVenv,
@@ -373,7 +388,7 @@ export async function runDjlint(
 ): Promise<string> {
   let command;
   try {
-    command = await getDjlintCommand(document, config, outputChannel);
+    command = await getDjlintCommand(document, config);
   } catch (e) {
     // Stay quiet (log only) so the caller (SubprocessEngine, via FallbackEngine) can switch to the bundled runtime instead of showing a popup for a condition that will self-resolve.
     if (e instanceof DjlintUnavailableError) {

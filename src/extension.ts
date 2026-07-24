@@ -4,7 +4,7 @@ import { disposeEngine } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
 import {
-  disposeEnvironmentProviders,
+  initializePythonEnvironment,
   onDidChangeActivePythonEnvironment,
 } from "./python/environment.js";
 import { invalidateDjlintCommandCache } from "./runner.js";
@@ -27,8 +27,6 @@ export async function activate(
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
-    // Owns the `onDidChangeActiveEnvironmentPath` listener an `EnvironmentProvider.initialize()` call registers (see src/python/environment.ts), so it's disposed on deactivate instead of leaking.
-    { dispose: disposeEnvironmentProviders },
     vscode.workspace.onDidGrantWorkspaceTrust(disposeEngine),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
@@ -44,6 +42,9 @@ export async function activate(
     // Manual escape hatch for an in-place djLint upgrade (e.g. `pip install -U djlint`): the resolved command/version cache otherwise only refreshes on its own after `RESOLUTION_TTL_MS` (src/runner.ts) or one of the triggers above.
     vscode.commands.registerCommand("djlint.restart", invalidateResolution),
   );
+
+  // Wires up the classic Python extension's active-environment-changed listener (see src/python/environment.ts) before either Formatter/Linter can trigger a format/lint call that needs it; its own disposables are bridged into context.subscriptions here.
+  await initializePythonEnvironment(context.subscriptions, outputChannel);
 
   const formatter = new Formatter(context, outputChannel);
   formatter.activate();
