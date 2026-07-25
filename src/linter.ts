@@ -23,6 +23,7 @@ export class Linter {
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #registry: CancellationRegistry;
+  #disposed = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -54,6 +55,9 @@ export class Linter {
     );
 
     for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
+      }
       if (!this.#collection.has(document.uri)) {
         // eslint-disable-next-line no-await-in-loop
         await this.#safeLint(document);
@@ -67,12 +71,16 @@ export class Linter {
   of staying stale until the next save. */
   async refreshAll(): Promise<void> {
     for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
+      }
       // eslint-disable-next-line no-await-in-loop
       await this.#safeLint(document);
     }
   }
 
   dispose(): void {
+    this.#disposed = true;
     this.#registry.disposeAll();
   }
 
@@ -91,6 +99,9 @@ export class Linter {
   diagnostics immediately. */
   async #onConfigChange(e: vscode.ConfigurationChangeEvent): Promise<void> {
     for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
+      }
       const isAffected = lintSettingKeys.some((key) =>
         e.affectsConfiguration(`${configSection}.${key}`, document),
       );
@@ -102,9 +113,16 @@ export class Linter {
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
+    // Stop once disposed: a detached refreshAll()/#onConfigChange loop must not start new engine work (which would rebuild the just-disposed engine) after teardown.
+    if (this.#disposed) {
+      return;
+    }
+
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
+      // Cancel any in-flight run too, or it could finish later and republish the diagnostics we're about to delete.
+      this.#registry.cancelAndDelete(document.uri.toString());
       this.#collection.delete(document.uri);
       return;
     }
