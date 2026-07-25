@@ -21,13 +21,13 @@ repos:
     hooks:
       - id: tombi-format
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.9.5
+    rev: v3.9.6
     hooks:
       - id: prettier
         args:
           - --object-wrap=collapse
           - --no-config
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
-    rev: v1.27.0
+    rev: v1.28.0
     hooks:
       - id: zizmor
