@@ -28,6 +28,7 @@ export class SubprocessEngine implements DjlintEngine {
       formattingArgs,
       this.outputChannel,
       controllerFor(token),
+      false,
       formattingOptions,
     );
   }
@@ -43,6 +44,7 @@ export class SubprocessEngine implements DjlintEngine {
       lintingArgs,
       this.outputChannel,
       controllerFor(token),
+      true,
     );
     return parseLinterOutput(stdout);
   }

@@ -29,6 +29,13 @@ export interface RunnerCommand {
 /** A `RunnerCommand` before it has been paired with a probed version. */
 type RunnerTarget = Omit<RunnerCommand, "version">;
 
+/** Bounds `probeExecutable()`'s `--version` spawn so an unresponsive
+candidate (a stdin-waiting wrapper, a stalled network/conda/uv mount) fails
+the probe like any other unusable candidate instead of hanging command
+resolution -- and, via `classifyRunFailure()`'s `reprobe`, a live
+format/lint call too. */
+const PROBE_TIMEOUT_MS = 10_000;
+
 function isRelativePathLike(exec: string): boolean {
   return /[\\/]/u.test(exec) && !path.isAbsolute(exec);
 }
@@ -163,12 +170,24 @@ interface CommandCacheEntry {
 
 const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 
+/** In-flight `resolveDjlintCommand()` calls, keyed by scope, so concurrent
+callers on an empty/expired cache (format+lint firing together on save)
+share one resolution instead of each running up to four sequential
+`--version` spawns. Entries are removed once the resolution settles, so a
+failure is retried -- not latched -- on the next call. */
+const inFlightResolutions = new Map<
+  DjlintCommandCacheKey,
+  Promise<RunnerCommand>
+>();
+
 /** Clears every cached command resolution, un-latches a memoized "Python
 extension unavailable" result, and clears the skipped-arg warning dedupe.
 Call whenever something that could change which djLint runs changes; also
 run by `djlint.restart` as a manual escape hatch. */
 export function invalidateDjlintCommandCache(): void {
   commandCache.clear();
+  // So `djlint.restart` can't latch onto a resolution that started before it was invoked.
+  inFlightResolutions.clear();
   resetSkippedArgWarnings();
   resetPythonEnvironmentProviderIfUnavailable();
 }
@@ -176,7 +195,9 @@ export function invalidateDjlintCommandCache(): void {
 /** Thin memoizing layer around `resolveDjlintCommand()`: caches a successful
 resolution per `scopeKey` for `RESOLUTION_TTL_MS`, keeping the format/lint
 hot path from re-probing every call. A failed resolution is never cached,
-so a fix (e.g. installing djLint) is picked up on the very next call. */
+so a fix (e.g. installing djLint) is picked up on the very next call.
+Concurrent callers for the same `scopeKey` share a single in-flight
+resolution rather than each starting their own. */
 export async function resolveDjlintCommandCached(
   deps: ResolveDjlintCommandDeps,
   scopeKey: DjlintCommandCacheKey,
@@ -185,9 +206,21 @@ export async function resolveDjlintCommandCached(
   if (cached != null && Date.now() - cached.resolvedAt < RESOLUTION_TTL_MS) {
     return cached.command;
   }
-  const command = await resolveDjlintCommand(deps);
-  commandCache.set(scopeKey, { command, resolvedAt: Date.now() });
-  return command;
+
+  const pending =
+    inFlightResolutions.get(scopeKey) ??
+    (async (): Promise<RunnerCommand> => {
+      const command = await resolveDjlintCommand(deps);
+      commandCache.set(scopeKey, { command, resolvedAt: Date.now() });
+      return command;
+    })();
+  inFlightResolutions.set(scopeKey, pending);
+  try {
+    return await pending;
+  } finally {
+    // Every concurrent caller shares the same `pending` promise, so this fires once it settles regardless of which caller's `finally` runs first; a later caller that starts a new resolution after that point isn't affected.
+    inFlightResolutions.delete(scopeKey);
+  }
 }
 
 /** Runtime `probe`: runs `<exec> [...prefixArgs, "--version"]` and requires
@@ -200,7 +233,13 @@ async function probeExecutable(
 ): Promise<string | null> {
   try {
     const result = await execa(exec, [...prefixArgs, "--version"], {
+      // Match runDjlintCommand()'s env so the probed module is the one that will actually run.
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- environment variable name
+      env: { ...process.env, PYTHONSAFEPATH: "1" },
       reject: false,
+      // A candidate that never exits (stdin-waiting wrapper, unresponsive mount) must fail the probe like any other unusable candidate rather than hanging the format/lint call that triggered resolution.
+      stdin: "ignore",
+      timeout: PROBE_TIMEOUT_MS,
     });
     return result.exitCode === 0 ? parseDjlintVersion(result.stdout) : null;
   } catch {
@@ -361,6 +400,10 @@ export async function runDjlint(
   args: readonly CliArg[],
   outputChannel: vscode.LogOutputChannel,
   abortController: AbortController,
+  /** Whether this is a lint request (as opposed to a format request):
+  gates `isValidLintResult()` so a formatter's non-zero exit is never
+  mistaken for valid (if empty/garbage) formatted output. */
+  isLint: boolean,
   formattingOptions?: vscode.FormattingOptions,
 ): Promise<string> {
   let command;
@@ -396,7 +439,7 @@ export async function runDjlint(
 
     const classification = await classifyRunFailure(
       e,
-      isValidLintResult,
+      (err) => isValidLintResult(err, isLint),
       isDjlintUnavailable,
       async () => probeExecutable(command.exec, command.prefixArgs),
     );

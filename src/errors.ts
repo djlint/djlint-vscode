@@ -35,12 +35,20 @@ function showError(
 }
 
 /** True when a failed djLint invocation's non-zero exit is actually a valid
-lint result: djLint exits `1` and prints its normal "Linting N/M files"
-progress (or nothing) on stderr when it finds violations. Also reused by
-`checkErrors()` below so the two checks can't drift apart. */
-export function isValidLintResult(e: CustomExecaError): boolean {
+lint result: for a *lint* request only, djLint exits exactly `1` (its
+documented "found violations" code -- not just any non-zero exit) and
+prints its normal "Linting N/M files" progress (or nothing) on stderr. A
+*format* request never has a valid non-zero-exit result: a silent
+formatter failure must not be mistaken for formatted output, so `isLint`
+short-circuits this to `false` regardless of exit code/stderr shape. */
+export function isValidLintResult(
+  e: CustomExecaError,
+  isLint: boolean,
+): boolean {
   return (
-    e.exitCode != null && /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)
+    isLint &&
+    e.exitCode === 1 &&
+    /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)
   );
 }
 
@@ -48,10 +56,7 @@ export function checkErrors(
   e: CustomExecaError,
   outputChannel: vscode.LogOutputChannel,
 ): CustomExecaError {
-  if (isValidLintResult(e)) {
-    return e;
-  }
-
+  // No isValidLintResult() early return here: runDjlint()'s classifyRunFailure() call already ruled that out (for both lint and format requests) before falling through to this function, so re-checking it here would be dead code.
   if (e.exitCode != null) {
     const option = /No\s+such\s+option:\s*(?<option>\S+)/u.exec(e.stderr)
       ?.groups?.["option"];
