@@ -160,9 +160,6 @@ export async function resolveDjlintCommand(
 folder (stringified `vscode.Uri`), or `undefined` for the shared scope. */
 export type DjlintCommandCacheKey = string | undefined;
 
-// Re-exported so select.ts's FallbackEngine can share this TTL without depending on this module (which pulls in execa and the Python-extension integration).
-export { RESOLUTION_TTL_MS } from "./engine/subprocess/constants.js";
-
 interface CommandCacheEntry {
   command: RunnerCommand;
   resolvedAt: number;
@@ -180,11 +177,16 @@ const inFlightResolutions = new Map<
   Promise<RunnerCommand>
 >();
 
+// Bumped by invalidateDjlintCommandCache(); a resolution captures it before awaiting and skips its cache write if it changed, so an invalidation landing mid-flight can't be undone by a stale write. Held on an object (not a top-level `let`) so it can be mutated from inside a function.
+const cacheEpoch = { value: 0 };
+
 /** Clears every cached command resolution, un-latches a memoized "Python
 extension unavailable" result, and clears the skipped-arg warning dedupe.
 Call whenever something that could change which djLint runs changes; also
 run by `djlint.restart` as a manual escape hatch. */
 export function invalidateDjlintCommandCache(): void {
+  // Bump first: clear() can't cancel a resolution already awaiting inside resolveDjlintCommandCached, but the epoch change makes it skip its now-stale cache write instead of repopulating for a full TTL.
+  cacheEpoch.value += 1;
   commandCache.clear();
   // So `djlint.restart` can't latch onto a resolution that started before it was invoked.
   inFlightResolutions.clear();
@@ -210,8 +212,12 @@ export async function resolveDjlintCommandCached(
   const pending =
     inFlightResolutions.get(scopeKey) ??
     (async (): Promise<RunnerCommand> => {
+      const epoch = cacheEpoch.value;
       const command = await resolveDjlintCommand(deps);
-      commandCache.set(scopeKey, { command, resolvedAt: Date.now() });
+      // Skip the write if the cache was invalidated while resolving: the result is stale and would otherwise survive a full TTL. The caller still gets this command; only the cache poisoning is prevented.
+      if (epoch === cacheEpoch.value) {
+        commandCache.set(scopeKey, { command, resolvedAt: Date.now() });
+      }
       return command;
     })();
   inFlightResolutions.set(scopeKey, pending);
@@ -325,7 +331,7 @@ interface ChildOptions {
 }
 export type CustomExecaError = ExecaError<ChildOptions>;
 
-export function isCustomExecaError(e: unknown): e is CustomExecaError {
+function isCustomExecaError(e: unknown): e is CustomExecaError {
   return e instanceof ExecaError;
 }
 
@@ -434,6 +440,10 @@ export async function runDjlint(
     );
   } catch (e) {
     if (!isCustomExecaError(e)) {
+      throw e;
+    }
+    // A cancelled run (superseded/aborted) has no usable result: skip the wasted --version reprobe, and don't let a transient probe miss misread the cancellation as "djLint unavailable". The token-cancelled caller ignores this throw.
+    if (e.isCanceled) {
       throw e;
     }
 

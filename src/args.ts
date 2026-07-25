@@ -15,6 +15,13 @@ export abstract class CliArg {
     return this.cliName.replace(/^--/u, "").replaceAll("-", "_");
   }
 
+  /** The user-facing label for this flag: `djlint.<vscodeName>` when it maps
+  to a setting, else the bare CLI flag. Single source of truth for the
+  "unsupported option" / "skipping option" messages. */
+  get displayName(): string {
+    return this.vscodeName ? `djlint.${this.vscodeName}` : this.cliName;
+  }
+
   abstract build(
     config: vscode.WorkspaceConfiguration,
     document: vscode.TextDocument,
@@ -25,7 +32,6 @@ export abstract class CliArg {
   when CLI-only or the value is absent/empty. */
   abstract buildKwarg(
     config: vscode.WorkspaceConfiguration,
-    document: vscode.TextDocument,
     formattingOptions?: vscode.FormattingOptions,
   ): [string, unknown] | undefined;
 }
@@ -135,7 +141,6 @@ class UseEditorIndentationArg extends CliArg {
 
   buildKwarg(
     config: vscode.WorkspaceConfiguration,
-    _document: vscode.TextDocument,
     formattingOptions?: vscode.FormattingOptions,
   ): [string, unknown] | undefined {
     if (formattingOptions == null || !config.get<boolean>(this.vscodeName)) {

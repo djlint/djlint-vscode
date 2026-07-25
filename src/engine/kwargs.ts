@@ -5,14 +5,13 @@ import { formattingArgs, lintingArgs } from "../args.js";
 given mode, so the in-process (Pyodide) engine matches the subprocess path. */
 export function buildConfigKwargs(
   config: vscode.WorkspaceConfiguration,
-  document: vscode.TextDocument,
   formattingOptions: vscode.FormattingOptions | undefined,
   mode: "format" | "lint",
 ): Record<string, unknown> {
   const args = mode === "format" ? formattingArgs : lintingArgs;
   const kwargs: Record<string, unknown> = {};
   for (const arg of args) {
-    const pair = arg.buildKwarg(config, document, formattingOptions);
+    const pair = arg.buildKwarg(config, formattingOptions);
     if (pair != null) {
       const [name, value] = pair;
       kwargs[name] = value;

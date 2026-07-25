@@ -68,9 +68,7 @@ export function selectSupportedArgs(
     const warnKey = `${version}::${arg.cliName}`;
     if (!warnedSkippedArgs.has(warnKey)) {
       warnedSkippedArgs.add(warnKey);
-      const optionName = arg.vscodeName
-        ? `djlint.${arg.vscodeName}`
-        : arg.cliName;
+      const optionName = arg.displayName;
       outputChannel.warn(
         `Skipping ${optionName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
       );

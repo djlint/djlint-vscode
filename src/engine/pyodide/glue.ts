@@ -22,8 +22,7 @@ def _make_config(options):
     return _config_cache_value
 
 
-def _djlint_format(src, options, filename="-"):
-    # filename accepted for symmetry with _djlint_lint; unused since formatter() is not filepath-sensitive.
+def _djlint_format(src, options):
     return formatter(_make_config(options), src)
 
 

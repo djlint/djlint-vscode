@@ -36,7 +36,7 @@ export class PyodideEngine implements DjlintEngine {
     return this.#call(
       "format",
       document.getText(),
-      buildConfigKwargs(config, document, formattingOptions, "format"),
+      buildConfigKwargs(config, formattingOptions, "format"),
       deriveStdinFilename(document),
       token,
     );
@@ -51,7 +51,7 @@ export class PyodideEngine implements DjlintEngine {
     return this.#call(
       "lint",
       document.getText(),
-      buildConfigKwargs(config, document, void 0, "lint"),
+      buildConfigKwargs(config, void 0, "lint"),
       deriveStdinFilename(document),
       token,
     );

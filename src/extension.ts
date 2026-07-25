@@ -16,18 +16,23 @@ export async function activate(
     log: true,
   });
 
+  const formatter = new Formatter(context, outputChannel);
+  const linter = new Linter(context, outputChannel);
+
   // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload — also clears a FallbackEngine latched onto the bundled runtime.
   const engineSettings = ["executablePath", "pythonPath", "useVenv"];
-  // Also invalidates the cached djLint command: an independent module-level cache that would otherwise keep resolving to a stale command.
   function invalidateResolution(): void {
     disposeEngine();
+    // Also invalidates the cached djLint command: an independent module-level cache that would otherwise keep resolving to a stale command.
     invalidateDjlintCommandCache();
+    // Diagnostics from the previous command/engine are now stale; re-lint open documents so they reflect the newly resolved djLint.
+    void linter.refreshAll();
   }
 
   context.subscriptions.push(
     outputChannel,
     { dispose: disposeEngine },
-    vscode.workspace.onDidGrantWorkspaceTrust(disposeEngine),
+    vscode.workspace.onDidGrantWorkspaceTrust(invalidateResolution),
     vscode.workspace.onDidChangeConfiguration((e) => {
       if (
         engineSettings.some((key) =>
@@ -46,11 +51,9 @@ export async function activate(
   // Registers the disposal bridge for the Python extension's eventual (lazy) activation and stashes outputChannel for it to log through — see src/python/environment.ts. Does NOT activate ms-python.python itself.
   initializePythonEnvironment(context.subscriptions, outputChannel);
 
-  const formatter = new Formatter(context, outputChannel);
   formatter.activate();
   context.subscriptions.push(formatter);
 
-  const linter = new Linter(context, outputChannel);
   await linter.activate();
   context.subscriptions.push(linter);
 }

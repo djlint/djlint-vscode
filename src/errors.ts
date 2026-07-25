@@ -63,9 +63,7 @@ export function checkErrors(
     if (option) {
       const arg = argsMap.get(option);
       if (arg) {
-        const optionName = arg.vscodeName
-          ? `djlint.${arg.vscodeName}`
-          : arg.cliName;
+        const optionName = arg.displayName;
         const errMsg = `Your version of djLint does not support the \`${optionName}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
         showError(e, outputChannel, errMsg);
       } else {
