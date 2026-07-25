@@ -34,12 +34,12 @@ const LEGACY_OUTPUT_REGEX =
 function parsePinnedFormat(stdout: string): LintDiagnostic[] {
   const diags: LintDiagnostic[] = [];
   for (const record of stdout.split(RECORD_SEPARATOR)) {
-    // `echo()`'s trailing newline becomes leading whitespace on the next chunk; `trim()` clears it, and an empty result means "no error here".
-    const trimmed = record.trim();
-    if (!trimmed) {
+    // `echo()`'s trailing newline becomes leading whitespace on the next chunk. `.trim()` is only used to detect that case (an all-whitespace record, i.e. the trailing chunk after the final RECORD_SEPARATOR) -- the record itself is never `.trim()`ed, since that would also strip significant leading/trailing whitespace djLint emitted in `{message}`.
+    if (!record.trim()) {
       continue;
     }
-    const parts = trimmed.split(FIELD_SEPARATOR);
+    // `{code}` never starts with whitespace, so only the leading whitespace `echo()` added ahead of it is stripped here; anything after the first FIELD_SEPARATOR -- including trailing whitespace in `{message}` -- is left untouched.
+    const parts = record.replace(/^\s+/u, "").split(FIELD_SEPARATOR);
     if (parts.length < 3) {
       continue;
     }
