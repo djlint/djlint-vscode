@@ -114,16 +114,20 @@ export class PyodideEngine implements DjlintEngine {
       }
     });
     worker.on("error", (e) => {
-      this.#rejectPending(e);
+      // A stale worker (replaced after emitting "error" but before this handler ran) must not clear the replacement's #worker or reject its pending requests.
+      if (this.#worker !== worker) {
+        return;
+      }
       this.#worker = void 0;
+      this.#rejectPending(e);
     });
     // A worker can die without an "error" (heap abort, explicit exit, bootstrap failure); without this, pending RPCs would hang forever.
     worker.on("exit", (code) => {
-      if (this.#disposed) {
+      if (this.#disposed || this.#worker !== worker) {
         return;
       }
-      this.#rejectPending(new Error(`djLint Pyodide worker exited (${code})`));
       this.#worker = void 0;
+      this.#rejectPending(new Error(`djLint Pyodide worker exited (${code})`));
     });
     this.#worker = worker;
     return worker;
