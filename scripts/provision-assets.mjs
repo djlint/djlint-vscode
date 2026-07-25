@@ -298,6 +298,12 @@ for (const name of closure.keys()) {
 // verified against its sha256. Lock entry left untouched.
 for (const name of pyodideProvided) {
   const entry = lock.packages[name];
+  const required = closure.get(name);
+  if (entry.version !== required) {
+    console.warn(
+      `pyodide ships ${name} ${entry.version}, but djlint's uv.lock resolved ${required} — verify compatibility`,
+    );
+  }
   await downloadVerified(
     `${CDN}/${entry.file_name}`,
     entry.file_name,
