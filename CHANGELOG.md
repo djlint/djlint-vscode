@@ -1,5 +1,18 @@
 # Changelog
 
+## [Unreleased]
+
+- Bundle a self-contained djLint runtime so the extension works even when djLint (and Python) is not installed. When no djLint is found in your environment, the bundled runtime is used automatically ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Honor `per-file-ignores` when linting from the editor. The bundled runtime supports it directly; an externally installed djLint supports it once it provides the `--stdin-filename` option ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
+- Add a `djLint: Restart` command that re-detects djLint, for example after upgrading it in the same environment.
+- Use the Python extension to select the interpreter for `djlint.useVenv`, activated lazily only when it is actually needed.
+- Detect the installed djLint version and pass only the command-line options that version supports.
+- Automatically use a more reliable, unambiguous linter output format on djLint 1.25 and newer.
+- Un-deprecate the `djlint.executablePath` and `djlint.pythonPath` settings.
+- `djlint.configuration` and `djlint.rules` now apply only to an externally installed djLint, not the bundled runtime.
+- Remove the `djlint.useNewLinterOutputParser` setting; reliable linter output parsing is now automatic.
+- Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled runtime instead of showing an error.
+
 ## [2026.7.1] - 2026-07-20
 
 - Raise minimal required VSCode version to `v1.107.0`.

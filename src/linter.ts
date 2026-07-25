@@ -63,16 +63,6 @@ export class Linter {
       return;
     }
 
-    // `enableLinting` alone doesn't scope by language (it can be set globally); gating on `formatLanguages` keeps it from linting every file in the workspace.
-    if (
-      !config
-        .get<readonly string[]>("formatLanguages")
-        ?.includes(document.languageId)
-    ) {
-      this.#collection.delete(document.uri);
-      return;
-    }
-
     if (!supportedUriSchemes.has(document.uri.scheme)) {
       this.#outputChannel.debug(
         `Not linting "${document.uri.toString()}" (unsupported scheme)`,
