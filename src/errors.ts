@@ -9,20 +9,13 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
 const installDocsUrl = "https://djlint.com/docs/getting-started/";
 const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
 
-function errorToOutputChannel(
-  outputChannel: vscode.LogOutputChannel,
-  e: Error,
-): void {
-  // Pass the Error itself: JSON.stringify(Error) drops message and stack.
-  outputChannel.error(e);
-}
-
 function showError(
   e: Error,
   outputChannel: vscode.LogOutputChannel,
   userMessage?: string,
 ): void {
-  errorToOutputChannel(outputChannel, e);
+  // Pass the Error itself: JSON.stringify(Error) drops message and stack.
+  outputChannel.error(e);
   void (async (): Promise<void> => {
     const item = await vscode.window.showErrorMessage(
       userMessage ?? e.message,

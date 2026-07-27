@@ -159,16 +159,14 @@ class PathOnlyArg extends StringArg {
   override buildKwarg(): undefined {}
 }
 
-// ⚠️ MUST equal the djLint version that first ships `--stdin-filename`.
-const STDIN_FILENAME_MIN_VERSION = "1.43.0";
-
 /** Passes the document's derived filename as `--stdin-filename`, so
 `per-file-ignores` matching works for stdin input like it already does on
 the Pyodide path. No `buildKwarg()` equivalent — djLint's `Config` takes no
 filename kwarg. */
 class StdinFilenameArg extends CliOnlyArg {
   constructor() {
-    super("", "--stdin-filename", STDIN_FILENAME_MIN_VERSION);
+    // 1.43.0 is the djLint version that first shipped `--stdin-filename`.
+    super("", "--stdin-filename", "1.43.0");
   }
 
   build(

@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 - Bundle a self-contained djLint runtime so the extension works even when djLint (and Python) is not installed. When no djLint is found in your environment, the bundled runtime is used automatically ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
-- Honor `per-file-ignores` when linting from the editor. The bundled runtime supports it directly; an externally installed djLint supports it once it provides the `--stdin-filename` option ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
+- Honor `per-file-ignores` when linting from the editor. The bundled runtime supports it directly; an externally installed djLint requires version 1.43 or newer (which added `--stdin-filename`) ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
 - Add a `djLint: Restart` command that re-detects djLint, for example after upgrading it in the same environment.
 - Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.
 - Automatically use a more reliable, unambiguous format for linter output when your djLint supports it, and remove the now-unnecessary `djlint.useNewLinterOutputParser` setting.
