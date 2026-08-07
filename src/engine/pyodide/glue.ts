@@ -5,8 +5,8 @@ from djlint.reformat import formatter
 from djlint.settings import Config
 
 # Memoize the last Config: __init__ does a filesystem walk, gitignore lookup,
-# and ~20 re.compile() calls independent of the options -- expensive to
-# repeat on every format/lint RPC inside WASM. All remaining option values
+# and ~20 re.compile() calls independent of the options, all of which are
+# expensive to repeat on every format/lint RPC inside WASM. Remaining values
 # are plain scalars/strings (configuration/rules paths are never forwarded,
 # see kwargs.ts), so equality-keyed caching of the last call suffices.
 _config_cache_key = None

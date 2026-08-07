@@ -2,7 +2,7 @@ import type { CustomExecaError } from "../../runner.js";
 
 /** Fast, definite-unavailable shortcut: true when a failed djLint subprocess
 invocation unambiguously means djLint is not available, as opposed to a
-real linting/runtime error -- either the executable wasn't found (`ENOENT`)
+real linting/runtime error: either the executable wasn't found (`ENOENT`)
 or Python reports no `djlint` module (quotes optional in the pattern, since
 CPython quotes the module name but the message is plain English on every
 OS).

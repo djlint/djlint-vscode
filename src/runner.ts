@@ -32,8 +32,8 @@ type RunnerTarget = Omit<RunnerCommand, "version">;
 /** Bounds `probeExecutable()`'s `--version` spawn so an unresponsive
 candidate (a stdin-waiting wrapper, a stalled network/conda/uv mount) fails
 the probe like any other unusable candidate instead of hanging command
-resolution -- and, via `classifyRunFailure()`'s `reprobe`, a live
-format/lint call too. */
+resolution, and, via `classifyRunFailure()`'s `reprobe`, a live format/lint
+call too. */
 const PROBE_TIMEOUT_MS = 10_000;
 
 function isRelativePathLike(exec: string): boolean {
@@ -111,8 +111,8 @@ beyond the injected `deps`, so it is unit-testable in isolation.
 Tries, in order: `executablePath`, `pythonPath` (as `-m djlint`), the active
 Python environment (unless `useVenv` is `false`), then `djlint` on PATH.
 Each candidate must pass `probe()` (return a version, not just launch) to be
-accepted — an interpreter with no djLint installed falls through to the next
-candidate instead of failing later at run time. Throws
+accepted, so an interpreter with no djLint installed falls through to the
+next candidate instead of failing later at run time. Throws
 `DjlintUnavailableError` if none work. */
 export async function resolveDjlintCommand(
   deps: ResolveDjlintCommandDeps,
@@ -171,7 +171,7 @@ const commandCache = new Map<DjlintCommandCacheKey, CommandCacheEntry>();
 callers on an empty/expired cache (format+lint firing together on save)
 share one resolution instead of each running up to four sequential
 `--version` spawns. Entries are removed once the resolution settles, so a
-failure is retried -- not latched -- on the next call. */
+failure is retried on the next call rather than latched. */
 const inFlightResolutions = new Map<
   DjlintCommandCacheKey,
   Promise<RunnerCommand>
@@ -230,8 +230,8 @@ export async function resolveDjlintCommandCached(
 }
 
 /** Runtime `probe`: runs `<exec> [...prefixArgs, "--version"]` and requires
-both a `0` exit code and stdout that parses as a djLint version — an
-interpreter that launches but has no djLint installed correctly fails
+both a `0` exit code and stdout that parses as a djLint version. An
+interpreter that launches but has no djLint installed therefore fails here
 instead of being accepted and only failing at run time. */
 async function probeExecutable(
   exec: string,
@@ -380,10 +380,10 @@ injected functions, so it is unit-testable in isolation.
 Order matters: `isValidResult(e)` is checked first, before any re-probe,
 since a lint-findings exit is the common case. `isUnavailableFast(e)` is the
 cheap ENOENT/"No module named" shortcut. Only then does `reprobe()` run, as
-the cross-platform backstop — Windows reports a missing executable as a
+the cross-platform backstop: Windows reports a missing executable as a
 localized non-zero exit rather than `ENOENT`, so the fast check alone misses
-it there; re-running the same `--version` probe is locale-independent. This
-step is rare, not on the hot path. */
+it there, while re-running the same `--version` probe is locale-independent.
+This step is rare, not on the hot path. */
 export async function classifyRunFailure(
   e: CustomExecaError,
   isValidResult: (e: CustomExecaError) => boolean,

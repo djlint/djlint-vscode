@@ -111,7 +111,7 @@ function toClassicEnvironmentDetails(
 }
 
 /** Resolves the active Python environment for a file, folder, or workspace,
-via the classic Python extension. Never throws — returns `null` when the
+via the classic Python extension. Never throws: it returns `null` when the
 extension is unavailable, including when it throws internally, so a
 misbehaving Python extension can't break the resolution/fallback chain in
 `runner.ts`. Also where the extension actually activates for the first time

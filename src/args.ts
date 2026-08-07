@@ -151,8 +151,8 @@ class UseEditorIndentationArg extends CliArg {
 }
 
 /** A `StringArg` for a host filesystem path (`djlint.configuration`/
-`djlint.rules`) that the sandboxed Pyodide engine can't use (no host
-filesystem access) — `buildKwarg()` always returns `undefined`; `build()`
+`djlint.rules`) that the sandboxed Pyodide engine can't use, since it has no
+host filesystem access. `buildKwarg()` always returns `undefined`; `build()`
 (the CLI flag, used by the subprocess engine) is unchanged. */
 class PathOnlyArg extends StringArg {
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
@@ -161,8 +161,8 @@ class PathOnlyArg extends StringArg {
 
 /** Passes the document's derived filename as `--stdin-filename`, so
 `per-file-ignores` matching works for stdin input like it already does on
-the Pyodide path. No `buildKwarg()` equivalent — djLint's `Config` takes no
-filename kwarg. */
+the Pyodide path. There is no `buildKwarg()` equivalent, since djLint's
+`Config` takes no filename kwarg. */
 class StdinFilenameArg extends CliOnlyArg {
   constructor() {
     // 1.43.0 is the djLint version that first shipped `--stdin-filename`.

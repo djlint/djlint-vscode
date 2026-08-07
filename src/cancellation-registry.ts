@@ -33,7 +33,7 @@ export class CancellationRegistry {
   }
 
   /** Cancels and disposes the in-flight run for `key`, without starting a
-  replacement — e.g. when the document closes mid-run. */
+  replacement, e.g. when the document closes mid-run. */
   cancelAndDelete(key: string): void {
     const source = this.#running.get(key);
     source?.cancel();

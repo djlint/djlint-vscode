@@ -19,7 +19,7 @@ export async function activate(
   const formatter = new Formatter(context, outputChannel);
   const linter = new Linter(context, outputChannel);
 
-  // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload — also clears a FallbackEngine latched onto the bundled runtime.
+  // Rebuild the cached engine (lazily) whenever something that determines WHICH djLint runs changes, so it applies without a window reload. This also clears a FallbackEngine latched onto the bundled runtime.
   const engineSettings = ["executablePath", "pythonPath", "useVenv"];
   function invalidateResolution(): void {
     disposeEngine();
@@ -48,7 +48,7 @@ export async function activate(
     vscode.commands.registerCommand("djlint.restart", invalidateResolution),
   );
 
-  // Registers the disposal bridge for the Python extension's eventual (lazy) activation and stashes outputChannel for it to log through — see src/python/environment.ts. Does NOT activate ms-python.python itself.
+  // Registers the disposal bridge for the Python extension's eventual (lazy) activation and stashes outputChannel for it to log through; see src/python/environment.ts. Does NOT activate ms-python.python itself.
   initializePythonEnvironment(context.subscriptions, outputChannel);
 
   formatter.activate();

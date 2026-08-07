@@ -9,7 +9,7 @@
 // by Renovate) rather than a hardcoded constant. djLint's wheel is built from
 // the sibling ../djlint checkout with `uv` (https://docs.astral.sh/uv/; mypyc
 // disabled there, so the result is pure-python), and its runtime dependency
-// closure is derived from ../djlint's uv.lock -- so nothing here is a
+// closure is derived from ../djlint's uv.lock, so nothing here is a
 // hand-maintained list that could go stale.
 //
 // The closure is split by source: packages the pinned Pyodide build ships are
@@ -77,7 +77,7 @@ function buildDjlintWheel() {
   }
   if (!wheel.endsWith("-py3-none-any.whl")) {
     throw new Error(
-      `uv build produced a platform-specific wheel (${wheel}) instead of a pure-python wheel — is the mypyc build hook enabled in ${DJLINT_SRC}/pyproject.toml?`,
+      `uv build produced a platform-specific wheel (${wheel}) instead of a pure-python wheel. Is the mypyc build hook enabled in ${DJLINT_SRC}/pyproject.toml?`,
     );
   }
   console.log(`built pure djLint wheel from ${DJLINT_SRC} -> ${wheel}`);
@@ -92,7 +92,7 @@ function buildDjlintWheel() {
 // "emscripten"). `uv export` emits the universal lock with PEP 508 markers on
 // conditional deps (py<3.11 backports, click's win32-only colorama); piping it
 // through `uv pip compile` evaluates those markers for the target and drops
-// what doesn't apply, while preserving the lock's exact pins -- so we get a
+// what doesn't apply, while preserving the lock's exact pins, so we get a
 // flat name==version closure without re-implementing PEP 508 markers here.
 // (win32 is the only platform djLint's deps branch on, so `linux` stands in
 // for emscripten: both are simply "not win32".)
@@ -240,14 +240,14 @@ const lock = JSON.parse(readFileSync(`${OUT}/pyodide-lock.json`, "utf8"));
 // Pyodide lock already ships are pulled as emscripten WebAssembly wheels from
 // the matching CDN release (verified against that lock, its entry left as-is);
 // the rest are pure-python wheels from PyPI (verified against PyPI's digest),
-// each given a `depends: []` lock entry -- the flattened djlint entry below
+// each given a `depends: []` lock entry. The flattened djlint entry below
 // pulls the whole closure, so the individual chains no longer matter.
 for (const [name, required] of closure) {
   if (Object.hasOwn(lock.packages, name)) {
     const entry = lock.packages[name];
     if (entry.version !== required) {
       console.warn(
-        `pyodide ships ${name} ${entry.version}, but djlint's uv.lock resolved ${required} — verify compatibility`,
+        `pyodide ships ${name} ${entry.version}, but djlint's uv.lock resolved ${required}; verify compatibility`,
       );
     }
     await downloadVerified(

@@ -10,24 +10,26 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 Install the djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
-That's it — the extension ships with a self-contained djLint runtime, so you do **not** need to install djLint or Python separately. If you prefer your own djLint (for a specific version, custom Python-module rules, or project config files such as `pyproject.toml [tool.djlint]` / `.djlintrc` — which the bundled runtime does not read), install it via the [djLint getting started guide](https://djlint.com/docs/getting-started/); the extension picks it up automatically and transparently falls back to the bundled runtime when no external djLint is found. Untrusted workspaces always use the bundled runtime, regardless of what is installed in the environment.
+That is all you need. The extension ships with a self-contained djLint runtime, so djLint and Python do **not** have to be installed separately.
+
+You may still want your own djLint: to pin a specific version, to use custom rules written as a Python module, or to have project config files read, since the bundled runtime does not read `pyproject.toml [tool.djlint]` or `.djlintrc`. Install it with the [djLint getting started guide](https://djlint.com/docs/getting-started/) and the extension picks it up on its own, falling back to the bundled runtime whenever it cannot find an external djLint. Untrusted workspaces always use the bundled runtime, whatever is installed in the environment.
 
 ## Usage
 
 The extension looks for a djLint to run, in this order:
 
-1. `djlint.executablePath` — path to a djLint executable. Relative paths are resolved from the workspace root.
-2. `djlint.pythonPath` — path to a Python interpreter to run djLint from (`python -m djlint`). Relative paths are resolved from the workspace root.
-3. The active environment reported by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python), if it is installed — unless `djlint.useVenv` is set to `false`.
+1. `djlint.executablePath`, a path to a djLint executable. Relative paths are resolved from the workspace root.
+2. `djlint.pythonPath`, a path to a Python interpreter to run djLint from (`python -m djlint`). Relative paths are resolved from the workspace root.
+3. The active environment reported by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python), if it is installed, unless `djlint.useVenv` is set to `false`.
 4. `djlint` on PATH.
 
-`djlint.executablePath` and `djlint.pythonPath` both default to `""` (unset), so leaving them unset uses step 3, falling back to step 4 if the Python extension isn't installed (or `djlint.useVenv` is `false`). If none of the above resolves to a working djLint, the extension falls back to its bundled runtime instead of failing — see [Installation](#installation). In an untrusted workspace, the bundled runtime is always used, whatever is installed in the environment.
+`djlint.executablePath` and `djlint.pythonPath` both default to `""` (unset), so leaving them unset uses step 3, falling back to step 4 if the Python extension isn't installed (or `djlint.useVenv` is `false`). If none of the above resolves to a working djLint, the extension falls back to its bundled runtime instead of failing, as described under [Installation](#installation). In an untrusted workspace, the bundled runtime is always used, whatever is installed in the environment.
 
-When an external djLint is used, the extension detects its version (`djlint --version`) and only sends command-line options that version actually supports, skipping (and logging a warning for, in the "djLint" output channel) any option that requires a newer djLint than the one resolved. This detected version is cached per workspace folder and refreshed automatically after a few minutes or whenever `djlint.executablePath`/`djlint.pythonPath`/`djlint.useVenv` changes or the active Python environment changes; run the **djLint: Restart** command (from the Command Palette) to refresh it immediately, for example right after upgrading djLint in place (`pip install -U djlint`).
+When an external djLint is used, the extension detects its version (`djlint --version`) and only sends command-line options that version actually supports. Anything that requires a newer djLint is skipped, with a warning in the "djLint" output channel. The detected version is cached per workspace folder and refreshed automatically after a few minutes, or whenever `djlint.executablePath`, `djlint.pythonPath` or `djlint.useVenv` changes, or the active Python environment changes. To refresh it immediately, for example right after upgrading djLint in place with `pip install -U djlint`, run the **djLint: Restart** command from the Command Palette.
 
-On djLint ≥ 1.43.0, the extension also passes the edited file's workspace-relative path via `--stdin-filename` when linting, so [`per-file-ignores`](https://djlint.com/docs/linter/#per-file-ignores) rules work correctly even though the file's contents are piped in over stdin rather than read from disk.
+On djLint 1.43.0 and newer, the extension also passes the edited file's workspace-relative path via `--stdin-filename` when linting, so [`per-file-ignores`](https://djlint.com/docs/linter/#per-file-ignores) rules work correctly even though the file's contents are piped in over stdin rather than read from disk.
 
-`djlint.configuration` and `djlint.rules` point to files on disk. Since the bundled runtime has no access to the host filesystem, both settings only take effect with an externally-installed djLint (see [Installation](#installation)) and are silently ignored — with a one-time notice in the "djLint" output channel — when the bundled runtime is used.
+`djlint.configuration` and `djlint.rules` point to files on disk. The bundled runtime has no access to the host filesystem, so both settings only take effect with an externally-installed djLint (see [Installation](#installation)). Under the bundled runtime they are silently ignored, with a one-time notice in the "djLint" output channel.
 
 The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
 
@@ -67,7 +69,7 @@ Add this to your `settings.json` to format the default enabled languages with `d
 
 ## Development
 
-Building the bundled Pyodide runtime locally (`npm run assets`, which `vscode:prepublish` also runs) requires [`uv`](https://docs.astral.sh/uv/) on `PATH` and a sibling `../djlint` checkout; see `scripts/provision-assets.mjs` for details.
+Building the bundled Pyodide runtime locally (`npm run assets`, which `vscode:prepublish` also runs) requires [`uv`](https://docs.astral.sh/uv/) on `PATH` and a sibling `../djlint` checkout. See `scripts/provision-assets.mjs` for details.
 
 ## License
 

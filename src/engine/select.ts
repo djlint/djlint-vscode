@@ -18,8 +18,8 @@ export interface EngineSelectionDeps<T> {
 VS Code dependency, so it is unit-testable in isolation. A trusted host
 tries the environment djLint (wrapped in `FallbackEngine` so it falls back
 to the bundled runtime when unavailable); an untrusted workspace always
-gets the sandboxed bundled runtime — we never run an environment tool on
-untrusted content. */
+gets the sandboxed bundled runtime, since we never run an environment tool
+on untrusted content. */
 export function selectEngine<T>(deps: EngineSelectionDeps<T>): T {
   return deps.isTrusted ? deps.makeSubprocess() : deps.makePyodide();
 }

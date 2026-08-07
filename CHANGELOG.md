@@ -7,7 +7,7 @@
 - Add a `djLint: Restart` command that re-detects djLint, for example after upgrading it in the same environment.
 - Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.
 - Automatically use a more reliable, unambiguous format for linter output when your djLint supports it, and remove the now-unnecessary `djlint.useNewLinterOutputParser` setting.
-- Refresh diagnostics immediately when a setting that affects linting changes — for example, clearing a language's warnings as soon as linting is disabled for it — instead of waiting for the next save.
+- Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
 - `djlint.configuration` and `djlint.rules` apply only to an externally installed djLint; the bundled runtime ignores them.
 - `djlint.pythonPath` is no longer deprecated.
 - Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled runtime instead of showing an error.

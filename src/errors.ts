@@ -29,7 +29,7 @@ function showError(
 
 /** True when a failed djLint invocation's non-zero exit is actually a valid
 lint result: for a *lint* request only, djLint exits exactly `1` (its
-documented "found violations" code -- not just any non-zero exit) and
+documented "found violations" code, not just any non-zero exit) and
 prints its normal "Linting N/M files" progress (or nothing) on stderr. A
 *format* request never has a valid non-zero-exit result: a silent
 formatter failure must not be mistaken for formatted output, so `isLint`

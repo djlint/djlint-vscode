@@ -12,7 +12,7 @@ const supportedUriSchemes: ReadonlySet<string> = new Set([
 /** Settings whose value changes djLint's lint output, so open documents must
 be re-linted when they change. Derived from lintingArgs (plus enableLinting,
 which gates linting itself) so a newly added linting option is covered
-automatically -- there's no second list to keep in sync. */
+automatically, with no second list to keep in sync. */
 const lintSettingKeys: readonly string[] = [
   "enableLinting",
   ...lintingArgs.map((arg) => arg.vscodeName).filter(Boolean),
