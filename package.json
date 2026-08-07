@@ -510,7 +510,7 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.6",
-    "execa": "10.0.0"
+    "execa": "10.0.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -521,14 +521,14 @@
     "@types/node": "22.20.1",
     "@types/vscode": "1.107.0",
     "esbuild": "0.28.1",
-    "eslint": "10.7.0",
+    "eslint": "10.8.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "72.0.0",
     "prettier": "3.9.6",
     "prettier-plugin-packagejson": "3.0.2",
     "pyodide": "314.0.2",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.65.0"
+    "typescript-eslint": "8.66.0"
   },
   "engines": {
     "vscode": "^1.107.0"
