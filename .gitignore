@@ -353,7 +353,7 @@ $RECYCLE.BIN/
 # CodeGraph index (local only)
 /.codegraph/
 
-# AI planning docs + test suite — kept locally, not committed (see git history)
+# Planning docs and test suite, kept locally rather than committed
 /docs/superpowers/
 **/__tests__/
 /vitest.config.ts
