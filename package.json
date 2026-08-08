@@ -386,7 +386,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "When enabled, use the Python interpreter from the active environment (via the Python extension) to run djLint when no explicit `#djlint.executablePath#`/`#djlint.pythonPath#` is set.",
+          "markdownDescription": "When enabled, use the Python interpreter from the active environment to run djLint when no explicit `#djlint.executablePath#`/`#djlint.pythonPath#` is set. The environment is read from the Python Environments extension (`ms-python.vscode-python-envs`) when it is installed and enabled, otherwise from the Python extension (`ms-python.python`).",
           "scope": "machine-overridable"
         }
       }
@@ -509,6 +509,7 @@
     "onStartupFinished"
   ],
   "dependencies": {
+    "@vscode/python-environments": "1.0.0",
     "@vscode/python-extension": "1.0.6",
     "execa": "10.0.1"
   },

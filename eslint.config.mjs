@@ -73,6 +73,7 @@ export default defineConfig(
       radix: "off",
       "sort-imports": "off",
       "unicorn/catch-error-name": ["error", { name: "e" }],
+      "unicorn/consistent-arrow-return-style": "off",
       "unicorn/consistent-class-member-order": "off",
       "unicorn/explicit-length-check": "off",
       "unicorn/name-replacements": "off",

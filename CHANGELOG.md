@@ -9,6 +9,7 @@
 - Automatically use a more reliable, unambiguous format for linter output when your djLint supports it, and remove the now-unnecessary `djlint.useNewLinterOutputParser` setting.
 - Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
 - `djlint.configuration` and `djlint.rules` apply only to an externally installed djLint; the bundled runtime ignores them.
+- Read the active Python environment from the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) when it is installed and enabled, falling back to the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) otherwise. Interpreters that need extra launch arguments (conda, uv) are now run correctly.
 - `djlint.pythonPath` is no longer deprecated.
 - Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled runtime instead of showing an error.
 

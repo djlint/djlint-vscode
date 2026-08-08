@@ -48,7 +48,7 @@ export async function activate(
     vscode.commands.registerCommand("djlint.restart", invalidateResolution),
   );
 
-  // Registers the disposal bridge for the Python extension's eventual (lazy) activation and stashes outputChannel for it to log through; see src/python/environment.ts. Does NOT activate ms-python.python itself.
+  // Registers the disposal bridge for the eventual (lazy) activation of whichever Python extension is selected, and stashes outputChannel for it to log through; see src/python/environment.ts. Does NOT activate ms-python.vscode-python-envs or ms-python.python itself.
   initializePythonEnvironment(context.subscriptions, outputChannel);
 
   formatter.activate();
