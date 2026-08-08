@@ -81,6 +81,7 @@ export default defineConfig(
       "unicorn/no-unreadable-new-expression": "off",
       "unicorn/prefer-json-parse-buffer": "off",
       "unicorn/prefer-top-level-await": "off",
+      "unicorn/single-line-block-comment-style": ["error", "single-line"],
       "unicorn/try-complexity": "off",
     },
   },
