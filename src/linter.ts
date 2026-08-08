@@ -1,22 +1,29 @@
 import * as vscode from "vscode";
 import { lintingArgs } from "./args.js";
-import { getConfig } from "./config.js";
-import { isCustomExecaError, runDjlint } from "./runner.js";
+import { CancellationRegistry } from "./cancellation-registry.js";
+import { configSection, getConfig } from "./config.js";
+import { getEngine } from "./engine/select.js";
 
 const supportedUriSchemes: ReadonlySet<string> = new Set([
   "file",
   "vscode-vfs",
 ]);
 
+/** Settings whose value changes djLint's lint output, so open documents must
+be re-linted when they change. Derived from lintingArgs (plus enableLinting,
+which gates linting itself) so a newly added linting option is covered
+automatically, with no second list to keep in sync. */
+const lintSettingKeys: readonly string[] = [
+  "enableLinting",
+  ...lintingArgs.map((arg) => arg.vscodeName).filter(Boolean),
+];
+
 export class Linter {
-  static readonly #outputRegex =
-    /^<filename>(?<filename>.*)<\/filename><line>(?<line>\d+):(?<column>\d+)<\/line><code>(?<code>.+)<\/code><message>(?<message>.+)<\/message>$/gmu;
-  static readonly #oldOutputRegex =
-    /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
   readonly #collection: vscode.DiagnosticCollection;
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #runningControllers: Map<string, AbortController>;
+  readonly #registry: CancellationRegistry;
+  #disposed = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -26,48 +33,96 @@ export class Linter {
     context.subscriptions.push(this.#collection);
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#runningControllers = new Map();
+    this.#registry = new CancellationRegistry();
   }
 
   async activate(): Promise<void> {
-    const maybeLint = async (document: vscode.TextDocument): Promise<void> => {
-      try {
-        await this.#lint(document);
-      } catch {}
-    };
-
     this.#context.subscriptions.push(
-      vscode.workspace.onDidOpenTextDocument(maybeLint),
-      vscode.workspace.onDidSaveTextDocument(maybeLint),
+      vscode.workspace.onDidOpenTextDocument((document) => {
+        void this.#safeLint(document);
+      }),
+      vscode.workspace.onDidSaveTextDocument((document) => {
+        void this.#safeLint(document);
+      }),
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
         this.#collection.delete(uri);
-        const key = uri.toString();
-        this.#runningControllers.get(key)?.abort();
-        this.#runningControllers.delete(key);
+        this.#registry.cancelAndDelete(uri.toString());
+      }),
+      // Keep diagnostics in sync when a lint-affecting setting changes, e.g. clearing a language's warnings once linting is disabled for it, not just on save.
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        void this.#onConfigChange(e);
       }),
     );
 
-    try {
-      for (const document of vscode.workspace.textDocuments) {
-        if (!this.#collection.has(document.uri)) {
-          // eslint-disable-next-line no-await-in-loop
-          await this.#lint(document);
-        }
+    for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
       }
-    } catch {}
+      if (!this.#collection.has(document.uri)) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.#safeLint(document);
+      }
+    }
+  }
+
+  /** Re-lints every open document, e.g. after the resolved djLint command
+  changes (interpreter, executablePath/pythonPath/useVenv, workspace trust, or
+  the djLint: Restart command), so diagnostics reflect the new command instead
+  of staying stale until the next save. */
+  async refreshAll(): Promise<void> {
+    for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await this.#safeLint(document);
+    }
   }
 
   dispose(): void {
-    for (const controller of this.#runningControllers.values()) {
-      controller.abort();
+    this.#disposed = true;
+    this.#registry.disposeAll();
+  }
+
+  /** `#lint` wrapped to swallow errors: linting is best-effort (the engine may
+  be unavailable, or a run cancelled) and must never surface as an unhandled
+  rejection from an event handler. */
+  async #safeLint(document: vscode.TextDocument): Promise<void> {
+    try {
+      await this.#lint(document);
+    } catch {}
+  }
+
+  /** Re-lints (or clears, when now disabled) each open document whose
+  lint-affecting configuration changed for its scope, so toggling
+  enableLinting, switching profile, or editing configuration/rules updates
+  diagnostics immediately. */
+  async #onConfigChange(e: vscode.ConfigurationChangeEvent): Promise<void> {
+    for (const document of vscode.workspace.textDocuments) {
+      if (this.#disposed) {
+        return;
+      }
+      const isAffected = lintSettingKeys.some((key) =>
+        e.affectsConfiguration(`${configSection}.${key}`, document),
+      );
+      if (isAffected) {
+        // eslint-disable-next-line no-await-in-loop
+        await this.#safeLint(document);
+      }
     }
-    this.#runningControllers.clear();
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
+    // Stop once disposed: a detached refreshAll()/#onConfigChange loop must not start new engine work (which would rebuild the just-disposed engine) after teardown.
+    if (this.#disposed) {
+      return;
+    }
+
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
+      // Cancel any in-flight run too, or it could finish later and republish the diagnostics we're about to delete.
+      this.#registry.cancelAndDelete(document.uri.toString());
       this.#collection.delete(document.uri);
       return;
     }
@@ -80,45 +135,54 @@ export class Linter {
     }
 
     const key = document.uri.toString();
-    this.#runningControllers.get(key)?.abort();
-    const controller = new AbortController();
-    this.#runningControllers.set(key, controller);
+    const source = this.#registry.start(key);
 
-    let stdout: string;
+    let diagnostics;
     try {
-      stdout = await runDjlint(
+      diagnostics = await getEngine(this.#context, this.#outputChannel).lint(
         document,
         config,
-        lintingArgs,
-        this.#outputChannel,
-        controller,
+        source.token,
       );
     } catch (e) {
-      this.#collection.delete(document.uri);
-      if (isCustomExecaError(e) && e.isCanceled) {
+      // A superseded run always has its token cancelled (registry.start cancels the prior one), so bail BEFORE deleting: otherwise this run wipes the diagnostics the newer run already published. Only a genuine (non-cancelled) failure should clear them.
+      if (source.token.isCancellationRequested) {
         return;
       }
+      this.#collection.delete(document.uri);
       throw e;
     } finally {
-      this.#runningControllers.delete(key);
+      this.#registry.finish(key, source);
     }
 
-    const diags = [];
-    const baseRegex = config.get<boolean>("useNewLinterOutputParser")
-      ? Linter.#outputRegex
-      : Linter.#oldOutputRegex;
-    const regex = new RegExp(baseRegex.source, baseRegex.flags);
-    for (const { groups } of stdout.matchAll(regex)) {
-      if (!groups) {
-        continue;
-      }
-      const line = Number.parseInt(groups["line"]) - 1;
-      const column = Number.parseInt(groups["column"]);
-      const range = new vscode.Range(line, column, line, column);
-      const message = `${groups["message"]} (${groups["code"]})`;
-      const diag = new vscode.Diagnostic(range, message);
-      diags.push(diag);
+    // A newer run for this document may have superseded us while awaiting.
+    if (this.#registry.has(key) || source.token.isCancellationRequested) {
+      return;
     }
-    this.#collection.set(document.uri, diags);
+
+    this.#collection.set(
+      document.uri,
+      diagnostics.map((d) => {
+        const range = new vscode.Range(
+          d.line - 1,
+          d.column,
+          d.line - 1,
+          d.column,
+        );
+        const diagnostic = new vscode.Diagnostic(
+          range,
+          d.message,
+          vscode.DiagnosticSeverity.Warning,
+        );
+        diagnostic.source = "djLint";
+        diagnostic.code = {
+          target: vscode.Uri.parse(
+            `https://djlint.com/docs/linter/#${d.code.toLowerCase()}`,
+          ),
+          value: d.code,
+        };
+        return diagnostic;
+      }),
+    );
   }
 }

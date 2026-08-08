@@ -3,7 +3,7 @@
     "@tsconfig/strictest/tsconfig.json",
     "@tsconfig/node22/tsconfig.json"
   ],
-  "exclude": ["dist"],
+  "exclude": ["dist", "scripts", "assets"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,
     "types": ["node"],

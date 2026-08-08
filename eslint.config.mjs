@@ -6,7 +6,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "assets"] },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
@@ -14,7 +14,9 @@ export default defineConfig(
   {
     languageOptions: {
       ecmaVersion: 2022,
-      parserOptions: { projectService: true },
+      parserOptions: {
+        projectService: { allowDefaultProject: ["scripts/*.mjs"] },
+      },
     },
     linterOptions: {
       reportUnusedDisableDirectives: "error",
@@ -71,6 +73,7 @@ export default defineConfig(
       radix: "off",
       "sort-imports": "off",
       "unicorn/catch-error-name": ["error", { name: "e" }],
+      "unicorn/consistent-arrow-return-style": "off",
       "unicorn/consistent-class-member-order": "off",
       "unicorn/explicit-length-check": "off",
       "unicorn/name-replacements": "off",
@@ -81,6 +84,49 @@ export default defineConfig(
       "unicorn/prefer-top-level-await": "off",
       "unicorn/single-line-block-comment-style": ["error", "single-line"],
       "unicorn/try-complexity": "off",
+    },
+  },
+  {
+    // Build/provisioning scripts need progress output, any-typed JSON parsing, and Pyodide lockfile snake_case keys.
+    files: ["scripts/**/*.mjs", "build/**/*.mjs"],
+    rules: {
+      "@typescript-eslint/dot-notation": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/strict-boolean-expressions": "off",
+      camelcase: "off",
+      "capitalized-comments": "off",
+      "no-await-in-loop": "off",
+      "no-console": "off",
+      "no-undef": "off",
+      "prefer-named-capture-group": "off",
+      "sort-keys": "off",
+      "unicorn/no-await-expression-member": "off",
+      "unicorn/prefer-error-is-error": "off",
+    },
+  },
+  {
+    // The Pyodide worker and engine sit at the untyped WebAssembly runtime + worker-RPC boundary.
+    files: ["src/engine/pyodide/worker.ts", "src/engine/pyodide/index.ts"],
+    rules: {
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-type-assertion": "off",
+      "@typescript-eslint/promise-function-async": "off",
+      camelcase: "off",
+      "unicorn/prefer-error-is-error": "off",
+      "unicorn/require-post-message-target-origin": "off",
     },
   },
 );
