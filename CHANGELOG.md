@@ -1,5 +1,22 @@
 # Changelog
 
+## [Unreleased]
+
+- Bundle a self-contained djLint runtime so the extension works even when djLint (and Python) is not installed. When no djLint is found in your environment, the bundled runtime is used automatically ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Honor `per-file-ignores` when linting from the editor. The bundled runtime supports it directly; an externally installed djLint requires version 1.43 or newer (which added `--stdin-filename`) ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
+- Add a `djLint: Restart` command that re-detects djLint, for example after upgrading it in the same environment.
+- Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.
+- Remove the `djlint.useNewLinterOutputParser` setting. The extension now picks the most reliable linter output format your djLint supports on its own.
+- Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
+- `djlint.configuration` and `djlint.rules` apply only to an externally installed djLint; the bundled runtime ignores them.
+- Stop an unresponsive djLint from hanging a format or lint indefinitely. Such a run is now given up on, and the stuck process ended, instead of surviving for the rest of the session.
+- Error notifications now show what djLint actually reported, instead of the whole failed command followed by its output.
+- Always look for `pyproject.toml`/`.djlintrc` starting from the edited file's own folder. Setting `djlint.configuration` or `djlint.rules` previously moved that search to the workspace root, so a monorepo could pick the root config instead of the one next to the file. Relative values for those two settings are still resolved from the workspace root, as documented.
+- Read the active Python environment from the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) when it is installed and enabled, falling back to the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) otherwise. Interpreters that need extra launch arguments (conda, uv) are now run correctly.
+- `djlint.executablePath` and `djlint.pythonPath` now take precedence over the active Python environment instead of being ignored while `djlint.useVenv` is enabled, and both now default to `""` (unset) rather than `"djlint"`/`"python"`. Setting either no longer requires disabling `djlint.useVenv`.
+- `djlint.pythonPath` is no longer deprecated.
+- Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled runtime instead of showing an error.
+
 ## [2026.7.1] - 2026-07-20
 
 - Raise minimal required VSCode version to `v1.107.0`.

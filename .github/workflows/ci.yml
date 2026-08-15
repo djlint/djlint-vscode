@@ -14,6 +14,7 @@ jobs:
     if: ${{ always() && github.event_name == 'pull_request' }}
     needs:
       - eslint
+      - package
       - pre-commit
       - tsc
     runs-on: ubuntu-24.04
@@ -21,6 +22,24 @@ jobs:
       - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          python-version: "3.14"
+          enable-cache: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+          check-latest: true
+      - run: npm ci
+      - run: npx --yes @vscode/vsce package --out djlint.vsix
+      - run: npm run verify-bundle
   eslint:
     runs-on: ubuntu-24.04
     steps:

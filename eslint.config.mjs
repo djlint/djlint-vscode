@@ -6,7 +6,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["dist"] },
+  { ignores: ["dist", "assets", "**/__tests__"] },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
@@ -14,7 +14,9 @@ export default defineConfig(
   {
     languageOptions: {
       ecmaVersion: 2022,
-      parserOptions: { projectService: true },
+      parserOptions: {
+        projectService: { allowDefaultProject: ["scripts/*.mjs"] },
+      },
     },
     linterOptions: {
       reportUnusedDisableDirectives: "error",
@@ -71,6 +73,7 @@ export default defineConfig(
       radix: "off",
       "sort-imports": "off",
       "unicorn/catch-error-name": ["error", { name: "e" }],
+      "unicorn/consistent-arrow-return-style": "off",
       "unicorn/consistent-class-member-order": "off",
       "unicorn/explicit-length-check": "off",
       "unicorn/name-replacements": "off",
@@ -81,6 +84,53 @@ export default defineConfig(
       "unicorn/prefer-top-level-await": "off",
       "unicorn/single-line-block-comment-style": ["error", "single-line"],
       "unicorn/try-complexity": "off",
+    },
+  },
+  {
+    files: ["scripts/**/*.mjs", "build/**/*.mjs"],
+    rules: {
+      "@typescript-eslint/dot-notation": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/strict-boolean-expressions": "off",
+      camelcase: "off",
+      "capitalized-comments": "off",
+      "no-await-in-loop": "off",
+      "no-console": "off",
+      "no-undef": "off",
+      "prefer-named-capture-group": "off",
+      "sort-keys": "off",
+      "unicorn/no-await-expression-member": "off",
+      "unicorn/prefer-error-is-error": "off",
+    },
+  },
+  {
+    files: ["src/engine/pyodide/worker.ts"],
+    rules: {
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/no-unsafe-type-assertion": "off",
+      camelcase: "off",
+      "unicorn/prefer-error-is-error": "off",
+      "unicorn/require-post-message-target-origin": "off",
+    },
+  },
+  {
+    files: ["src/engine/pyodide/index.ts"],
+    rules: {
+      "@typescript-eslint/promise-function-async": "off",
+      "unicorn/prefer-error-is-error": "off",
+      "unicorn/require-post-message-target-origin": "off",
     },
   },
 );
