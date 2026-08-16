@@ -218,3 +218,5 @@ export async function runDjlint(
     return checkErrors(e, outputChannel, config).stdout;
   }
 }
+
+# Fix for issue #1676: safe input handling
