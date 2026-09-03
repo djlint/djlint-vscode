@@ -1,22 +1,54 @@
 import * as vscode from "vscode";
 import { lintingArgs } from "./args.js";
-import { getConfig } from "./config.js";
-import { isCustomExecaError, runDjlint } from "./runner.js";
+import { CancellationRegistry } from "./cancellation-registry.js";
+import { configSection, getConfig } from "./config.js";
+import { getEngine } from "./engine/select.js";
+import type { LintDiagnostic } from "./engine/types.js";
+import { supportedUriSchemes } from "./schemes.js";
 
-const supportedUriSchemes: ReadonlySet<string> = new Set([
-  "file",
-  "vscode-vfs",
-]);
+const lintSettingKeys: readonly string[] = [
+  "enableLinting",
+  ...lintingArgs.map((arg) => arg.vscodeName).filter(Boolean),
+];
+
+function visibleFirst(
+  documents: readonly vscode.TextDocument[],
+): readonly vscode.TextDocument[] {
+  const visible = new Set(
+    vscode.window.visibleTextEditors.map((editor) => editor.document),
+  );
+  if (visible.size === 0) {
+    return documents;
+  }
+  return documents.toSorted(
+    (a, b) => Number(visible.has(b)) - Number(visible.has(a)),
+  );
+}
+
+function toDiagnostic(d: LintDiagnostic): vscode.Diagnostic {
+  const editorLine = d.line - 1;
+  const range = new vscode.Range(editorLine, d.column, editorLine, d.column);
+  const diagnostic = new vscode.Diagnostic(
+    range,
+    d.message,
+    vscode.DiagnosticSeverity.Warning,
+  );
+  diagnostic.source = "djLint";
+  diagnostic.code = {
+    target: vscode.Uri.parse(
+      `https://djlint.com/docs/linter/#${d.code.toLowerCase()}`,
+    ),
+    value: d.code,
+  };
+  return diagnostic;
+}
 
 export class Linter {
-  static readonly #outputRegex =
-    /^<filename>(?<filename>.*)<\/filename><line>(?<line>\d+):(?<column>\d+)<\/line><code>(?<code>.+)<\/code><message>(?<message>.+)<\/message>$/gmu;
-  static readonly #oldOutputRegex =
-    /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
   readonly #collection: vscode.DiagnosticCollection;
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #runningControllers: Map<string, AbortController>;
+  readonly #registry: CancellationRegistry;
+  #disposed = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -26,48 +58,87 @@ export class Linter {
     context.subscriptions.push(this.#collection);
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#runningControllers = new Map();
+    this.#registry = new CancellationRegistry();
   }
 
-  async activate(): Promise<void> {
-    const maybeLint = async (document: vscode.TextDocument): Promise<void> => {
-      try {
-        await this.#lint(document);
-      } catch {}
-    };
-
+  activate(): void {
     this.#context.subscriptions.push(
-      vscode.workspace.onDidOpenTextDocument(maybeLint),
-      vscode.workspace.onDidSaveTextDocument(maybeLint),
+      vscode.workspace.onDidOpenTextDocument((document) => {
+        void this.#safeLint(document);
+      }),
+      vscode.workspace.onDidSaveTextDocument((document) => {
+        void this.#safeLint(document);
+      }),
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
         this.#collection.delete(uri);
-        const key = uri.toString();
-        this.#runningControllers.get(key)?.abort();
-        this.#runningControllers.delete(key);
+        this.#registry.cancelAndDelete(uri.toString());
+      }),
+      vscode.workspace.onDidChangeConfiguration((e) => {
+        void this.#onConfigChange(e);
       }),
     );
 
-    try {
-      for (const document of vscode.workspace.textDocuments) {
-        if (!this.#collection.has(document.uri)) {
-          // eslint-disable-next-line no-await-in-loop
-          await this.#lint(document);
-        }
-      }
-    } catch {}
+    void this.#lintUndiagnosedDocuments();
+  }
+
+  async refreshAll(): Promise<void> {
+    await this.#lintSweep(() => true);
   }
 
   dispose(): void {
-    for (const controller of this.#runningControllers.values()) {
-      controller.abort();
+    this.#disposed = true;
+    this.#registry.disposeAll();
+  }
+
+  async #lintSweep(
+    shouldLint: (document: vscode.TextDocument) => boolean,
+  ): Promise<void> {
+    for (const document of visibleFirst(vscode.workspace.textDocuments)) {
+      if (this.#disposed) {
+        return;
+      }
+      if (shouldLint(document)) {
+        // eslint-disable-next-line no-await-in-loop -- sequential, so a window full of templates never fans out into one djLint run per editor
+        await this.#safeLint(document);
+      }
     }
-    this.#runningControllers.clear();
+  }
+
+  async #lintUndiagnosedDocuments(): Promise<void> {
+    await this.#lintSweep((document) => !this.#collection.has(document.uri));
+  }
+
+  async #safeLint(document: vscode.TextDocument): Promise<void> {
+    try {
+      await this.#lint(document);
+    } catch {}
+  }
+
+  async #onConfigChange(e: vscode.ConfigurationChangeEvent): Promise<void> {
+    if (
+      !e.affectsConfiguration(configSection) ||
+      lintSettingKeys.every(
+        (key) => !e.affectsConfiguration(`${configSection}.${key}`),
+      )
+    ) {
+      return;
+    }
+    await this.#lintSweep((document) =>
+      lintSettingKeys.some((key) =>
+        e.affectsConfiguration(`${configSection}.${key}`, document),
+      ),
+    );
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
+    if (this.#disposed) {
+      return;
+    }
+
     const config = getConfig(document);
 
     if (!config.get<boolean>("enableLinting")) {
+      this.#registry.cancelAndDelete(document.uri.toString());
       this.#collection.delete(document.uri);
       return;
     }
@@ -80,45 +151,32 @@ export class Linter {
     }
 
     const key = document.uri.toString();
-    this.#runningControllers.get(key)?.abort();
-    const controller = new AbortController();
-    this.#runningControllers.set(key, controller);
+    const source = this.#registry.start(key);
 
-    let stdout: string;
+    let diagnostics;
     try {
-      stdout = await runDjlint(
+      diagnostics = await getEngine(this.#context, this.#outputChannel).lint(
         document,
         config,
-        lintingArgs,
-        this.#outputChannel,
-        controller,
+        source.token,
       );
     } catch (e) {
-      this.#collection.delete(document.uri);
-      if (isCustomExecaError(e) && e.isCanceled) {
-        return;
+      const wasSuperseded = source.token.isCancellationRequested;
+      if (!wasSuperseded) {
+        this.#collection.delete(document.uri);
       }
       throw e;
     } finally {
-      this.#runningControllers.delete(key);
+      this.#registry.finish(key, source);
     }
 
-    const diags = [];
-    const baseRegex = config.get<boolean>("useNewLinterOutputParser")
-      ? Linter.#outputRegex
-      : Linter.#oldOutputRegex;
-    const regex = new RegExp(baseRegex.source, baseRegex.flags);
-    for (const { groups } of stdout.matchAll(regex)) {
-      if (!groups) {
-        continue;
-      }
-      const line = Number.parseInt(groups["line"]) - 1;
-      const column = Number.parseInt(groups["column"]);
-      const range = new vscode.Range(line, column, line, column);
-      const message = `${groups["message"]} (${groups["code"]})`;
-      const diag = new vscode.Diagnostic(range, message);
-      diags.push(diag);
+    const wasSuperseded =
+      this.#registry.has(key) || source.token.isCancellationRequested;
+    if (!wasSuperseded) {
+      this.#collection.set(
+        document.uri,
+        diagnostics.map((d) => toDiagnostic(d)),
+      );
     }
-    this.#collection.set(document.uri, diags);
   }
 }
