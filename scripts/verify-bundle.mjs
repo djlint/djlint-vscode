@@ -71,14 +71,13 @@ function withSortedKeys(value) {
   if (Array.isArray(value)) {
     return value.map((item) => withSortedKeys(item));
   }
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  return Object.fromEntries(
-    Object.keys(value)
-      .toSorted((a, b) => a.localeCompare(b))
-      .map((key) => [key, withSortedKeys(value[key])]),
-  );
+  return value === null || typeof value !== "object"
+    ? value
+    : Object.fromEntries(
+        Object.keys(value)
+          .toSorted((a, b) => a.localeCompare(b))
+          .map((key) => [key, withSortedKeys(value[key])]),
+      );
 }
 
 function expect(label, actual, expected) {
@@ -102,6 +101,29 @@ expect(
   "format applies indent, profile and close_void_tags",
   formatted,
   '<div>\n  <p>hi</p>\n  <img src="x.png" />\n</div>\n',
+);
+
+// Options the bundled runtime must understand for every djlint.* setting to
+// work: it is never version-gated the way an external djLint is.
+const withNewOptions = await call(
+  "format",
+  '<div><img src="x.png" class="a" id="b" alt="x"></div>',
+  {
+    indent: 2,
+    keep_br_inline: true,
+    name_endblocks: true,
+    no_entity_formatting: true,
+    no_indent_inner_html: true,
+    profile: "django",
+    quote_style: "double",
+    sort_attributes: true,
+  },
+  "templates/a.html",
+);
+expect(
+  "format accepts the djLint 1.45 options and sorts attributes",
+  withNewOptions,
+  '<div>\n  <img id="b" class="a" alt="x" src="x.png">\n</div>\n',
 );
 
 const diagnostics = await call(
