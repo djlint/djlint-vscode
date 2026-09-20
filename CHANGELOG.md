@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+- Add settings for the options added in djLint v1.45: `djlint.keepBrInline` (`--keep-br-inline`), `djlint.nameEndblocks` (`--name-endblocks`), `djlint.noEntityFormatting` (`--no-entity-formatting`), `djlint.noIndentInnerHtml` (`--no-indent-inner-html`), `djlint.quoteStyle` (`--quote-style`) and `djlint.sortAttributes` (`--sort-attributes`).
+- Add the `all` profile, accepted by djLint since v1.44, to the `djlint.profile` setting, and describe each profile in the settings UI.
+- Bring the setting descriptions in line with djLint's own documentation.
+
 ## [2026.7.1] - 2026-07-20
 
 - Raise minimal required VSCode version to `v1.107.0`.
