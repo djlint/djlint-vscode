@@ -153,10 +153,9 @@ class UseEditorIndentationArg extends CliArg {
     config: vscode.WorkspaceConfiguration,
     formattingOptions?: vscode.FormattingOptions,
   ): [string, unknown] | undefined {
-    if (formattingOptions == null || !config.get<boolean>(this.vscodeName)) {
-      return void 0;
-    }
-    return [this.kwargName, formattingOptions.tabSize];
+    return formattingOptions == null || !config.get<boolean>(this.vscodeName)
+      ? void 0
+      : [this.kwargName, formattingOptions.tabSize];
   }
 }
 
@@ -174,6 +173,7 @@ const commonArgs = [
   new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
   new BoolArg("useGitignore", "--use-gitignore", "0.5.9"),
   new StringArg("profile", "--profile", "0.4.5"),
+  new StringArg("quoteStyle", "--quote-style", "1.45"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
 ] as const;
@@ -210,13 +210,18 @@ export const formattingArgs = [
   new BoolArg("formatCss", "--format-css", "1.9"),
   new BoolArg("formatJs", "--format-js", "1.9"),
   new BoolArg("ignoreCase", "--ignore-case", "1.23"),
+  new BoolArg("keepBrInline", "--keep-br-inline", "1.45"),
+  new BoolArg("nameEndblocks", "--name-endblocks", "1.45"),
+  new BoolArg("noEntityFormatting", "--no-entity-formatting", "1.45"),
   new BoolArg("noFunctionFormatting", "--no-function-formatting", "1.30.2"),
+  new BoolArg("noIndentInnerHtml", "--no-indent-inner-html", "1.45"),
   new BoolArg("noLineAfterYaml", "--no-line-after-yaml", "1.29"),
   new BoolArg("noSetFormatting", "--no-set-formatting", "1.30.2"),
   new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
   new BoolArg("preserveClassNewlines", "--preserve-class-newlines", "1.39"),
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
   new BoolArg("singleAttributePerLine", "--single-attribute-per-line", "1.40"),
+  new BoolArg("sortAttributes", "--sort-attributes", "1.45"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),
   new BoolArg(

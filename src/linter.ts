@@ -17,12 +17,11 @@ function visibleFirst(
   const visible = new Set(
     vscode.window.visibleTextEditors.map((editor) => editor.document),
   );
-  if (visible.size === 0) {
-    return documents;
-  }
-  return documents.toSorted(
-    (a, b) => Number(visible.has(b)) - Number(visible.has(a)),
-  );
+  return visible.size === 0
+    ? documents
+    : documents.toSorted(
+        (a, b) => Number(visible.has(b)) - Number(visible.has(a)),
+      );
 }
 
 function toDiagnostic(d: LintDiagnostic): vscode.Diagnostic {

@@ -11,10 +11,11 @@ export function buildConfigKwargs(
   const kwargs: Record<string, unknown> = {};
   for (const arg of args) {
     const pair = arg.buildKwarg(config, formattingOptions);
-    if (pair != null) {
-      const [name, value] = pair;
-      kwargs[name] = value;
+    if (pair == null) {
+      continue;
     }
+    const [name, value] = pair;
+    kwargs[name] = value;
   }
   return kwargs;
 }

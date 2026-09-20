@@ -44,13 +44,12 @@ const EXTRA_ENV: NodeJS.ProcessEnv = { PYTHONSAFEPATH: "1" };
 function toEnvironmentRunnerCommand(
   details: PythonEnvironmentDetails | null,
 ): RunnerTarget | null {
-  if (details?.command == null) {
-    return null;
-  }
-  return {
-    exec: details.command.executable,
-    prefixArgs: [...details.command.args, "-m", "djlint"],
-  };
+  return details?.command == null
+    ? null
+    : {
+        exec: details.command.executable,
+        prefixArgs: [...details.command.args, "-m", "djlint"],
+      };
 }
 
 export interface ResolveDjlintCommandDeps {

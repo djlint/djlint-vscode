@@ -6,9 +6,8 @@ import type { WorkerRequest, WorkerResponse } from "./protocol.js";
 
 const indexURL: string = workerData.indexURL;
 
-function discardPythonOutput(text: string): void {
-  void text;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-function, @typescript-eslint/no-unused-vars -- Pyodide hands us every line Python writes; the extension has no use for it
+function discardPythonOutput(_text: string): void {}
 
 const ready = (async () => {
   const mod = await import(pathToFileURL(`${indexURL}/pyodide.mjs`).href);
