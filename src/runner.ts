@@ -29,11 +29,7 @@ function resolveConfiguredExecutablePath(
   }
 
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
-  if (workspaceFolder?.uri.scheme !== "file") {
-    return exec;
-  }
-
-  return path.resolve(workspaceFolder.uri.fsPath, exec);
+  return workspaceFolder?.uri.scheme === "file" ? path.resolve(workspaceFolder.uri.fsPath, exec) : exec;
 }
 
 async function getDjlintCommands(
