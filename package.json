@@ -543,7 +543,7 @@
     "@types/node": "22.20.3",
     "@types/vscode": "1.107.0",
     "esbuild": "0.28.2",
-    "eslint": "10.10.0",
+    "eslint": "10.11.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "75.0.0",
     "prettier": "3.9.8",
