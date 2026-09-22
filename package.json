@@ -540,7 +540,7 @@
     "@total-typescript/ts-reset": "0.6.1",
     "@tsconfig/node22": "22.0.6",
     "@tsconfig/strictest": "2.0.8",
-    "@types/node": "22.20.3",
+    "@types/node": "22.20.4",
     "@types/vscode": "1.107.0",
     "esbuild": "0.28.2",
     "eslint": "10.11.0",
