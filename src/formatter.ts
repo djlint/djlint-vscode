@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
-import { formattingArgs } from "./args.js";
+import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
-import { runDjlint } from "./runner.js";
+import { getEngine } from "./engine/select.js";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;
   readonly #outputChannel: vscode.LogOutputChannel;
-  readonly #runningControllers: Map<string, AbortController>;
+  readonly #registry: CancellationRegistry;
   #providerDisposable: vscode.Disposable | undefined;
 
   constructor(
@@ -15,7 +15,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   ) {
     this.#context = context;
     this.#outputChannel = outputChannel;
-    this.#runningControllers = new Map();
+    this.#registry = new CancellationRegistry();
   }
 
   activate(): void {
@@ -33,10 +33,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
   dispose(): void {
     this.#providerDisposable?.dispose();
     this.#providerDisposable = void 0;
-    for (const controller of this.#runningControllers.values()) {
-      controller.abort();
-    }
-    this.#runningControllers.clear();
+    this.#registry.disposeAll();
   }
 
   async provideDocumentFormattingEdits(
@@ -47,25 +44,24 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     const config = getConfig(document);
 
     const key = document.uri.toString();
-    this.#runningControllers.get(key)?.abort();
-    const controller = new AbortController();
-    this.#runningControllers.set(key, controller);
-    token.onCancellationRequested(() => controller.abort());
+    const source = this.#registry.start(key);
+    const cancellation = token.onCancellationRequested(() => {
+      source.cancel();
+    });
 
     let stdout: string;
     try {
-      stdout = await runDjlint(
+      stdout = await getEngine(this.#context, this.#outputChannel).format(
         document,
         config,
-        formattingArgs,
-        this.#outputChannel,
-        controller,
         options,
+        source.token,
       );
     } catch {
       return void 0;
     } finally {
-      this.#runningControllers.delete(key);
+      cancellation.dispose();
+      this.#registry.finish(key, source);
     }
 
     const lastLineId = document.lineCount - 1;
