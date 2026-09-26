@@ -548,7 +548,7 @@
     "eslint-plugin-unicorn": "76.0.0",
     "prettier": "3.9.9",
     "prettier-plugin-packagejson": "3.0.2",
-    "typescript": "6.0.3",
+    "typescript": "7.0.2",
     "typescript-eslint": "8.70.1"
   },
   "engines": {
