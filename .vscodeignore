@@ -1,7 +1,11 @@
 **
 !dist/extension.cjs
+!dist/pyodide-worker.cjs
+!assets/pyodide/**
 !CHANGELOG.md
 !icon.png
 !LICENSE
+!licenses/**
 !package.json
 !README.md
+!THIRD_PARTY.md
