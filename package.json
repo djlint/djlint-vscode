@@ -532,7 +532,7 @@
   ],
   "dependencies": {
     "@vscode/python-extension": "1.0.6",
-    "execa": "10.0.1"
+    "execa": "10.1.0"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
