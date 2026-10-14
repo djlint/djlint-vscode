@@ -15,8 +15,8 @@ export abstract class CliArg {
 }
 
 class SimpleArg extends CliArg {
-  constructor(cliName: string) {
-    super("", cliName, "0.0.9");
+  constructor(cliName: string, minVersion: string) {
+    super("", cliName, minVersion);
   }
 
   build(): string[] {
@@ -93,7 +93,7 @@ export const rulesArg = new StringArg("rules", "--rules", "1.41");
 
 const commonArgs = [
   configurationArg,
-  new SimpleArg("--quiet"),
+  new SimpleArg("--quiet", "0.0.9"),
   new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
   new BoolArg("useGitignore", "--use-gitignore", "0.5.9"),
   new StringArg("profile", "--profile", "0.4.5"),
@@ -112,7 +112,7 @@ export const lintingArgs = [
 
 export const formattingArgs = [
   ...commonArgs,
-  new SimpleArg("--reformat"),
+  new SimpleArg("--reformat", "0.0.9"),
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new BoolArg("formatAttributeJsJson", "--format-attribute-js-json", "1.37"),
   new NumberOrNullArg(
