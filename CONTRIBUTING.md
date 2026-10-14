@@ -12,7 +12,7 @@ The djLint version is pinned in `djlint-requirements.txt` and kept current by Re
 
 `npm run verify-bundle` boots the built bundle and formats and lints through it. CI runs it after packaging and before publishing, because packaging cleanly does not on its own prove the bundled runtime still works after a dependency bump.
 
-When the djLint pin is bumped, re-check the license table in `THIRD_PARTY.md` against the bundled wheels' own metadata: `npm run assets` reports any component added to or dropped from the bundle, but not one whose license changed.
+The licenses of everything bundled are collected into `dist/THIRD-PARTY-NOTICES.txt` at packaging; see [THIRD_PARTY.md](THIRD_PARTY.md). A Pyodide bump needs `licenses/pyodide-runtime.txt` updated, and `npm run assets` fails until it is.
 
 ## Packaging locally
 

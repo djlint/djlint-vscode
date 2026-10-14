@@ -81,4 +81,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
 
-The VSIX also bundles a self-contained djLint runtime (Pyodide + djLint + its dependencies) so it works without a separate install. djLint is licensed under GPL-3.0-or-later; see [THIRD_PARTY.md](THIRD_PARTY.md) for the full list of bundled components, their licenses, and the written offer of source.
+The published package also bundles djLint, which is GPL-3.0-or-later, and runs it in the same process, so the package as a whole is distributed under GPL-3.0-or-later. See [THIRD_PARTY.md](THIRD_PARTY.md).

@@ -346,6 +346,7 @@ $RECYCLE.BIN/
 
 # Provisioned Pyodide runtime + wheels (fetched by `npm run assets`, bundled at package time)
 /assets/pyodide/
+/assets/python-licenses.txt
 
 # Subagent-driven-development scratch (ledger, briefs, reports, review packages)
 /.superpowers/
