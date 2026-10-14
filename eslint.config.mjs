@@ -76,6 +76,7 @@ export default defineConfig(
       "unicorn/name-replacements": "off",
       "unicorn/no-keyword-prefix": "off",
       "unicorn/no-null": "off",
+      "unicorn/no-unnecessary-parameters": "off",
       "unicorn/no-unreadable-new-expression": "off",
       "unicorn/prefer-json-parse-buffer": "off",
       "unicorn/prefer-top-level-await": "off",
