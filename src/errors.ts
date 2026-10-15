@@ -6,10 +6,8 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
 
-const installDocsUrl = "https://djlint.com/docs/getting-started/";
-const readmeUrl = "https://github.com/djlint/djLint/blob/master/README.md";
-const extReadmeUrl =
-  "https://github.com/djlint/djLint-vscode/blob/main/README.md";
+const installDocsUrl = "https://djlint.com/docs/getting-started/#installation";
+const extReadmeUrl = "https://github.com/djlint/djlint-vscode#installation";
 
 function errorToOutputChannel(
   outputChannel: vscode.LogOutputChannel,
@@ -95,7 +93,7 @@ export function checkErrors(
         const optionName = arg.vscodeName
           ? `djlint.${arg.vscodeName}`
           : arg.cliName;
-        const errMsg = `Your version of djLint does not support the \`${optionName}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl} or ${readmeUrl}.`;
+        const errMsg = `Your version of djLint does not support the \`${optionName}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl}.`;
         showError(e, outputChannel, errMsg);
       } else {
         showError(e, outputChannel);
