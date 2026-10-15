@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Ship the licenses of the bundled npm packages in `dist/THIRD-PARTY-NOTICES.txt`.
+
 ## [2026.9.0] - 2026-09-20
 
 - Add settings for the options added in djLint v1.45: `djlint.keepBrInline` (`--keep-br-inline`), `djlint.nameEndblocks` (`--name-endblocks`), `djlint.noEntityFormatting` (`--no-entity-formatting`), `djlint.noIndentInnerHtml` (`--no-indent-inner-html`), `djlint.quoteStyle` (`--quote-style`) and `djlint.sortAttributes` (`--sort-attributes`).
