@@ -98,7 +98,7 @@
           "type": "string",
           "minLength": 1,
           "default": "djlint",
-          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is disabled, before falling back to `#djlint.pythonPath#`."
+          "markdownDescription": "Path to the djLint executable. Relative paths are resolved from the workspace root. Used when `#djlint.useVenv#` is off, or the Python extension is not installed or is disabled. If it is not found, `#djlint.pythonPath#` is used instead."
         },
         "djlint.exclude": {
           "type": "array",
@@ -348,7 +348,7 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "markdownDescription": "Path to the desired Python interpreter. Relative paths are resolved from the workspace root. Used as a fallback when `#djlint.useVenv#` is disabled and `#djlint.executablePath#` is not available.",
+          "markdownDescription": "Path to the Python interpreter to run `-m djlint` with. Relative paths are resolved from the workspace root. Used when `#djlint.executablePath#` is empty or not found.",
           "markdownDeprecationMessage": "Prefer `#djlint.executablePath#` for direct djLint executables. `#djlint.pythonPath#` remains available as a Python fallback."
         },
         "djlint.quoteStyle": {
@@ -409,7 +409,7 @@
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Use the Python executable from the current active environment. When enabled, `#djlint.executablePath#` and `#djlint.pythonPath#` are ignored. Disable this to try `#djlint.executablePath#` (`djlint` from PATH by default) before falling back to `#djlint.pythonPath#`."
+          "markdownDescription": "Run djLint with the interpreter of the active Python environment. Requires the Python extension; if it is not installed or is disabled, this setting has no effect. When it applies, `#djlint.executablePath#` and `#djlint.pythonPath#` are ignored."
         }
       }
     },

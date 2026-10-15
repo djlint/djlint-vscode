@@ -8,18 +8,19 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint itself by following the [djLint getting started guide](https://djlint.com/docs/getting-started/) or the [djLint README](https://github.com/djlint/djLint/blob/master/README.md).
-1. Install djLint VS Code extension from [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+1. Install djLint, see the [djLint installation guide](https://djlint.com/docs/getting-started/#installation).
+1. Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
 ## Usage
 
-If `djlint.useVenv` is enabled and you have the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) installed, `djlint-vscode` uses the `djLint` installed in the currently activated Python environment.
+How the extension finds djLint:
 
-If `djlint.useVenv` is disabled, the extension runs `djlint.executablePath` (`djlint` from PATH by default). Relative `djlint.executablePath` and `djlint.pythonPath` values are resolved from the workspace root. If that executable is not available, it falls back to `djlint.pythonPath -m djlint`.
+- If `djlint.useVenv` is enabled (the default) and the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is installed and enabled, it runs `python -m djlint` with the interpreter of the active Python environment.
+- Otherwise it runs `djlint.executablePath` (`djlint` from PATH by default) and, if that is empty or not found, `djlint.pythonPath -m djlint`. Relative paths in both settings are resolved from the workspace root.
 
-The extension can be configured through the settings in VS Code. Some options can be configured through the [djLint configuration file](https://djlint.com/docs/configuration/).
+The extension is configured through the VS Code settings. Some options can also be set in the [djLint configuration file](https://djlint.com/docs/configuration/).
 
-Add this to your `settings.json` to format the default enabled languages with `djLint`:
+To make djLint the default formatter for the languages in `djlint.formatLanguages`, add this to your `settings.json`:
 
 ```json
 "[django-html][jinja][jinja-html][jinja2][html-hubl][hubl-html][twig][html-nunjucks][njk][nunjucks][handlebars][hbs][spacebars][liquid][jekyll][go-template][go-tmpl][gotemplate][GoTemplate][gohtml][GoHTML][gotmpl][hugo-html][mustache][htmlmustache][tera][askama-html][html]": {
@@ -27,33 +28,20 @@ Add this to your `settings.json` to format the default enabled languages with `d
 }
 ```
 
-### Usage with djLint installed with pipx
+### djLint installed with pipx or uv
 
-[pipx](https://pypi.org/project/pipx/) creates a separate venv for each application and usually exposes a `djlint` executable. Disable `djlint.useVenv` and point `djlint.executablePath` at that executable if it is not already available on PATH:
+`pipx install djlint` and `uv tool install djlint` put djLint in an environment of its own, so the Python extension's active environment does not have it. Disable `djlint.useVenv`. If `djlint` is not on PATH, set `djlint.executablePath` to it. `pipx environment --value PIPX_BIN_DIR` and `uv tool dir --bin` print the directory it is in, `~/.local/bin` by default (on Windows, the file is `djlint.exe`):
 
 ```json
 "djlint.useVenv": false,
 "djlint.executablePath": "/home/user/.local/bin/djlint",
 ```
 
-### Usage with djLint installed with uv
-
-[uv](https://pypi.org/project/uv/) creates a separate venv for each application. Disable `djlint.useVenv` and point `djlint.executablePath` at the generated `djlint` executable:
-
-```json
-"djlint.useVenv": false,
-"djlint.executablePath": "/home/user/.local/share/uv/tools/djlint/bin/djlint",
-```
-
 ## Known issues
 
-- Non-ASCII characters turn into `?` on Windows after formatting. To fix this, update `djLint` to v1.1.1 or higher.
-
-- Linting does not work on Windows if the file contains non-ASCII characters. To fix this, update `djLint` to v1.1.1 or higher.
-
-- File contents are duplicated after formatting. This is a bug in `djLint` v1.12.1, install another version.
-
-- The config file is ignored on some versions of Python if it is in the root of the project. To fix this, update `djLint` to v1.19.2 or higher.
+- On Windows, djLint before v1.1.1 turns non-ASCII characters into `?` when formatting and cannot lint files that contain them. Update djLint.
+- djLint v1.12.1 duplicates the file contents when formatting. Install another version.
+- On some Python versions, djLint before v1.19.2 ignores a config file in the project root. Update djLint.
 
 ## License
 
