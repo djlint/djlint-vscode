@@ -348,7 +348,7 @@
           "type": "string",
           "minLength": 1,
           "default": "python",
-          "markdownDescription": "Path to the Python interpreter to run `-m djlint` with. Relative paths are resolved from the workspace root. Used when `#djlint.executablePath#` is tried and not found.",
+          "markdownDescription": "Path to the Python interpreter to run `-m djlint` with. Relative paths are resolved from the workspace root. Used when `#djlint.executablePath#` is empty or not found.",
           "markdownDeprecationMessage": "Prefer `#djlint.executablePath#` for direct djLint executables. `#djlint.pythonPath#` remains available as a Python fallback."
         },
         "djlint.quoteStyle": {

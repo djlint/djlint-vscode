@@ -16,7 +16,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 How the extension finds djLint:
 
 - If `djlint.useVenv` is enabled (the default) and the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is installed and enabled, it runs `python -m djlint` with the interpreter of the active Python environment.
-- Otherwise it runs `djlint.executablePath` (`djlint` from PATH by default) and, if that is not found, `djlint.pythonPath -m djlint`. Relative paths in both settings are resolved from the workspace root.
+- Otherwise it runs `djlint.executablePath` (`djlint` from PATH by default) and, if that is empty or not found, `djlint.pythonPath -m djlint`. Relative paths in both settings are resolved from the workspace root.
 
 The extension is configured through the VS Code settings. Some options can also be set in the [djLint configuration file](https://djlint.com/docs/configuration/).
 
