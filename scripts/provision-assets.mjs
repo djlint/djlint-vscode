@@ -9,9 +9,10 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { pyodideLicenses } from "./pyodide-licenses.mjs";
 
 const REQUIREMENTS = "djlint-requirements.txt";
-const THIRD_PARTY = "THIRD_PARTY.md";
+const PYTHON_LICENSES = "assets/python-licenses.txt";
 const OUT = "assets/pyodide";
 
 const PYODIDE_DIR = path.dirname(
@@ -213,38 +214,20 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
   }
 }
 
-function normalizeComponentName(name) {
-  return name.toLowerCase().replaceAll("_", "-");
-}
-
-function documentedComponents() {
-  const documented = new Set();
-  for (const line of readFileSync(THIRD_PARTY, "utf8").split(/\r?\n/u)) {
-    const row = /^\|\s*`([^`]+)`\s*\|/u.exec(line);
-    if (row) {
-      documented.add(normalizeComponentName(row[1]));
-    }
-  }
-  return documented;
-}
-
-function reportLicenseInventoryDrift(dependencyNames) {
-  const documented = documentedComponents();
-  const bundled = new Set(
-    dependencyNames.map((name) => normalizeComponentName(name)),
+function writePythonLicenses(lock, names) {
+  const wheels = names.map((name) => `${OUT}/${lock.packages[name].file_name}`);
+  runUv(
+    [
+      "run",
+      "--no-project",
+      "--python",
+      "3.14",
+      "scripts/wheel_licenses.py",
+      PYTHON_LICENSES,
+      ...wheels,
+    ],
+    { stdio: "inherit" },
   );
-  const undocumented = bundled.difference(documented);
-  const stale = documented.difference(bundled);
-  if (undocumented.size > 0) {
-    console.warn(
-      `warning: bundled but missing from ${THIRD_PARTY}: ${[...undocumented].join(", ")}`,
-    );
-  }
-  if (stale.size > 0) {
-    console.warn(
-      `warning: listed in ${THIRD_PARTY} but no longer bundled: ${[...stale].join(", ")}`,
-    );
-  }
 }
 
 const closure = resolveRuntimeClosure();
@@ -279,6 +262,10 @@ lock.packages["djlint"] = lockEntry(
 console.log(`+ djlint ${djlintVersion} (from PyPI)`);
 
 writeFileSync(`${OUT}/pyodide-lock.json`, JSON.stringify(lock));
-reportLicenseInventoryDrift(dependencyNames);
+writePythonLicenses(lock, ["djlint", ...dependencyNames]);
+writeFileSync(
+  "assets/pyodide-licenses.txt",
+  await pyodideLicenses(PYODIDE_VERSION),
+);
 
 console.log(`\nassembled offline Pyodide assets in ${OUT}`);

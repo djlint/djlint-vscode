@@ -31,7 +31,7 @@
     "type": "git",
     "url": "https://github.com/djlint/djlint-vscode"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "publisher": "monosans",
   "type": "module",
   "main": "./dist/extension.cjs",
@@ -42,7 +42,7 @@
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "verify-bundle": "node scripts/verify-bundle.mjs",
-    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run assets && npm run esbuild-base -- --minify && npm run esbuild-worker -- --minify",
+    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && node ./build/third-party-notices.mjs dist/THIRD-PARTY-NOTICES.txt licenses/NOTICE.txt dist/extension.meta.json dist/pyodide-worker.meta.json assets/python-licenses.txt assets/pyodide-licenses.txt",
     "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
     "watch:esbuild-worker": "npm run esbuild-worker -- --sourcemap --watch",
     "watch:tsc": "tsc --watch"

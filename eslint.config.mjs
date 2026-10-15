@@ -91,6 +91,7 @@ export default defineConfig(
     rules: {
       "@typescript-eslint/dot-notation": "off",
       "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
       "@typescript-eslint/naming-convention": "off",
       "@typescript-eslint/no-unsafe-argument": "off",
       "@typescript-eslint/no-unsafe-assignment": "off",

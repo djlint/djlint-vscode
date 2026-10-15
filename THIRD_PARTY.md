@@ -1,25 +1,18 @@
-# Third-party components bundled in this extension
+# Third-party software in the extension package
 
-So that the extension works without a separately installed djLint, the VSIX bundles a self-contained Python runtime (Pyodide) plus djLint and its dependencies, all under `assets/pyodide/`. These are separate programs invoked across the Pyodide runtime boundary; the extension's own TypeScript remains under the MIT license (see `LICENSE`).
+So that the extension works without a separately installed djLint, the VSIX bundles a Python runtime (Pyodide) plus djLint and the packages it uses under `assets/pyodide/`. esbuild also inlines npm packages into `dist/`.
 
-## djLint (GPL-3.0-or-later)
+- The extension's own code is MIT, see [`LICENSE`](LICENSE).
+- djLint is GPL-3.0-or-later, and the extension calls it in the same process, so the published package as a whole is distributed under GPL-3.0-or-later. Its Corresponding Source is this repository at the release tag, plus the bundled wheels, which contain the Python source of djLint and its dependencies.
+- Every bundled component keeps its own license. Their texts are collected into `dist/THIRD-PARTY-NOTICES.txt`, which ships in the VSIX.
 
-The bundled `djlint-*.whl` is **djLint**, licensed under **GPL-3.0-or-later**. The full license text is in [`licenses/djlint-LICENSE`](licenses/djlint-LICENSE).
+## How the notices are built
 
-**Written offer of source.** The bundled wheel is an unmodified djLint release from PyPI, pinned in `djlint-requirements.txt`. Its complete corresponding source is publicly available at <https://github.com/djlint/djLint> at the tag matching that version (also visible in the wheel filename under `assets/pyodide/`). A copy of the source may also be requested from the extension maintainer.
+`vscode:prepublish` writes `dist/THIRD-PARTY-NOTICES.txt` from:
 
-## Runtime and dependency wheels
+1. [`licenses/NOTICE.txt`](licenses/NOTICE.txt), the statement above;
+2. the license files of the npm packages in esbuild's metafiles;
+3. `assets/python-licenses.txt`, which `npm run assets` extracts from the bundled wheels with [`scripts/wheel_licenses.py`](scripts/wheel_licenses.py);
+4. `assets/pyodide-licenses.txt`, which `npm run assets` builds with [`scripts/pyodide-licenses.mjs`](scripts/pyodide-licenses.mjs): the licenses of Pyodide and of what it compiles into its runtime (CPython, Emscripten and the C libraries they link), in the versions Pyodide's own build files name at the pinned tag.
 
-| Component               | Role                | License                    |
-| ----------------------- | ------------------- | -------------------------- |
-| Pyodide (incl. CPython) | WASM Python runtime | MPL-2.0 / PSF              |
-| `regex`                 | djLint dependency   | Apache-2.0 AND CNRI-Python |
-| `PyYAML`                | djLint dependency   | MIT                        |
-| `click`                 | djLint dependency   | BSD-3-Clause               |
-| `pathspec`              | djLint dependency   | MPL-2.0                    |
-| `json5`                 | djLint dependency   | Apache-2.0                 |
-| `editorconfig`          | djLint dependency   | PSF-2.0                    |
-| `jsbeautifier`          | djLint dependency   | MIT                        |
-| `cssbeautifier`         | djLint dependency   | MIT                        |
-
-Each component is redistributed unmodified under its own license. The identifiers above come from each bundled wheel's own metadata and `LICENSE` files; refer to the respective project for the authoritative license text.
+The build fails if a bundled npm package or wheel has no license file, or if Pyodide starts linking a library `scripts/pyodide-licenses.mjs` does not know.
