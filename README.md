@@ -58,7 +58,7 @@ With an installed djLint, the extension detects its version and passes only the 
 
 ## Configuration files
 
-An installed djLint looks for its configuration file (`pyproject.toml`, `djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root.
+An installed djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root.
 
 `djlint.configuration` and `djlint.rules` also point to files on disk, so they only take effect with an installed djLint. The bundled runtime ignores them and says so once in the "djLint" output channel. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
 
