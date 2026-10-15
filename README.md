@@ -15,7 +15,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 How the extension finds djLint:
 
-- If `djlint.useVenv` is enabled (the default) and the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is installed, it runs `python -m djlint` with the interpreter of the active Python environment.
+- If `djlint.useVenv` is enabled (the default) and the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is installed and enabled, it runs `python -m djlint` with the interpreter of the active Python environment.
 - Otherwise it runs `djlint.executablePath` (`djlint` from PATH by default) and, if that is not found, `djlint.pythonPath -m djlint`. Relative paths in both settings are resolved from the workspace root.
 
 The extension is configured through the VS Code settings. Some options can also be set in the [djLint configuration file](https://djlint.com/docs/configuration/).
@@ -30,7 +30,7 @@ To make djLint the default formatter for the languages in `djlint.formatLanguage
 
 ### djLint installed with pipx or uv
 
-`pipx install djlint` and `uv tool install djlint` put djLint in an environment of its own, so the Python extension's active environment does not have it. Disable `djlint.useVenv`. If `djlint` is not on PATH, set `djlint.executablePath` to it (both tools put it in `~/.local/bin` by default):
+`pipx install djlint` and `uv tool install djlint` put djLint in an environment of its own, so the Python extension's active environment does not have it. Disable `djlint.useVenv`. If `djlint` is not on PATH, set `djlint.executablePath` to it. `pipx environment --value PIPX_BIN_DIR` and `uv tool dir --bin` print the directory it is in, `~/.local/bin` by default (on Windows, the file is `djlint.exe`):
 
 ```json
 "djlint.useVenv": false,
