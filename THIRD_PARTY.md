@@ -18,7 +18,7 @@ The bundled `djlint-*.whl` is **djLint**, licensed under **GPL-3.0-or-later**. T
 | `click`                 | djLint dependency   | BSD-3-Clause               |
 | `pathspec`              | djLint dependency   | MPL-2.0                    |
 | `json5`                 | djLint dependency   | Apache-2.0                 |
-| `editorconfig`          | djLint dependency   | BSD/PSF                    |
+| `editorconfig`          | djLint dependency   | PSF-2.0                    |
 | `jsbeautifier`          | djLint dependency   | MIT                        |
 | `cssbeautifier`         | djLint dependency   | MIT                        |
 

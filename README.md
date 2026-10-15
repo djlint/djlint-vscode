@@ -1,5 +1,6 @@
 # djlint-vscode
 
+[![CI](https://github.com/djlint/djlint-vscode/actions/workflows/ci.yml/badge.svg)](https://github.com/djlint/djlint-vscode/actions/workflows/ci.yml)
 [![Visual Studio Marketplace Installs](https://vsmarketplacebadges.dev/installs-short/monosans.djlint.svg?label=Visual%20Studio%20Marketplace%20installs&logo=visualstudio)](https://marketplace.visualstudio.com/items?itemName=monosans.djlint)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/monosans/djlint?label=Open%20VSX%20downloads&logo=vscodium)](https://open-vsx.org/extension/monosans/djlint)
 
@@ -7,11 +8,9 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint). It ships a self-contained djLint runtime, so you do not need to install djLint or Python.
 
-That is all you need: a self-contained djLint runtime ships with the extension, so djLint and Python do **not** have to be installed separately.
-
-Install djLint [yourself](https://djlint.com/docs/getting-started/) if you want to pin a specific version, or to have your project's config and custom rules files read — the bundled runtime cannot read anything from disk. The extension picks up your installation automatically.
+[Install djLint](https://djlint.com/docs/getting-started/#installation) yourself to pin its version, or to have your project's configuration and custom rules files read: the bundled runtime cannot read files from disk. The extension finds your installation on its own.
 
 ## Usage
 
@@ -33,7 +32,7 @@ Or for every language djLint supports:
 
 Linting is on by default for those languages and needs no setup.
 
-Everything else is configured through the `djlint.*` settings in VS Code. Most options can also be set in a [djLint configuration file](https://djlint.com/docs/configuration/).
+Everything else is configured through the `djlint.*` settings in VS Code. An installed djLint also reads most options from a [djLint configuration file](https://djlint.com/docs/configuration/).
 
 ## Which djLint is used
 
@@ -45,13 +44,13 @@ The extension looks for a djLint to run, in this order:
 4. `djlint` on PATH.
 5. The bundled runtime.
 
-Both path settings are unset by default and accept either a path or a bare command name: a value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. In an untrusted workspace the bundled runtime is always used, whatever is installed in the environment.
+A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. In an untrusted workspace the bundled runtime is always used, whatever is installed in the environment.
 
-With an external djLint, the extension detects its version and sends only the command-line options that version supports; the rest are skipped with a warning in the "djLint" output channel. The detected version refreshes automatically after a few minutes, or whenever the settings above or the active Python environment change. To refresh it right away — after upgrading djLint in place with `pip install -U djlint`, say — run **djLint: Restart** from the Command Palette.
+With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in place, with `pip install -U djlint` for example, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 
 ### djLint installed with pipx or uv
 
-Both [pipx](https://pypi.org/project/pipx/) and [uv](https://pypi.org/project/uv/) create a separate venv per application. If the resulting `djlint` executable is not on PATH, point `djlint.executablePath` at it — `~/.local/bin/djlint` for pipx, `~/.local/share/uv/tools/djlint/bin/djlint` for uv:
+`pipx install djlint` and `uv tool install djlint` put the `djlint` executable in `~/.local/bin` by default; `pipx environment --value PIPX_BIN_DIR` and `uv tool dir --bin` print the directory. If it is not on PATH, set `djlint.executablePath` to the executable (on Windows, `djlint.exe`):
 
 ```json
 "djlint.executablePath": "/home/user/.local/bin/djlint"
@@ -59,15 +58,15 @@ Both [pipx](https://pypi.org/project/pipx/) and [uv](https://pypi.org/project/uv
 
 ## Configuration files
 
-When `djlint.configuration` and `djlint.rules` are unset, djLint finds its own configuration by searching upward from the edited file's folder, so in a monorepo the `pyproject.toml`/`.djlintrc` nearest the file wins over one at the workspace root.
+An installed djLint looks for its configuration file (`pyproject.toml`, `djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root.
 
-Both settings point to files on disk, so they only take effect with an externally installed djLint; the bundled runtime ignores them and says so once in the "djLint" output channel. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
+`djlint.configuration` and `djlint.rules` also point to files on disk, so they only take effect with an installed djLint. The bundled runtime ignores them and says so once in the "djLint" output channel. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
 
-[`per-file-ignores`](https://djlint.com/docs/linter/#per-file-ignores) works while linting from the editor. The bundled runtime always supports it; an external djLint needs version 1.43.0 or newer.
+[`per-file-ignores`](https://djlint.com/docs/configuration/#per-file-ignores) is read from the configuration file too. It works while linting from the editor with an installed djLint 1.43.0 or newer.
 
 ## Known issues
 
-These are bugs in old djLint versions, so they only affect an externally installed djLint. The bundled runtime is unaffected, and updating djLint fixes all of them.
+These are bugs in old djLint versions, so they only affect an installed djLint. The bundled runtime is unaffected, and updating djLint fixes all of them.
 
 - Before v1.1.1: non-ASCII characters break formatting and linting on Windows.
 - v1.12.1: file contents are duplicated after formatting.
@@ -81,4 +80,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
 
-The VSIX also bundles a self-contained djLint runtime (Pyodide + djLint + its dependencies) so it works without a separate install. djLint is licensed under GPL-3.0-or-later; see [THIRD_PARTY.md](THIRD_PARTY.md) for the full list of bundled components, their licenses, and the written offer of source.
+The VSIX also bundles the djLint runtime (Pyodide, djLint and its dependencies). djLint is licensed under GPL-3.0-or-later; [THIRD_PARTY.md](THIRD_PARTY.md) lists every bundled component with its license, and has the written offer of source.
