@@ -10,7 +10,15 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint). It ships a self-contained djLint runtime, so you do not need to install djLint or Python.
 
-[Install djLint](https://djlint.com/docs/getting-started/#installation) yourself to pin its version, or to have your project's configuration and custom rules files read: the bundled runtime cannot read files from disk. The extension finds your installation on its own.
+Install djLint yourself to pin its version, or to have your project's configuration and custom rules files read: the bundled runtime cannot read files from disk. Add it to your project with [uv](https://docs.astral.sh/uv/) or pip, and the extension finds it on its own:
+
+```bash
+uv add --dev djlint
+# or
+pip install djlint
+```
+
+The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
 
 ## Usage
 
@@ -46,11 +54,11 @@ The extension looks for a djLint to run, in this order:
 
 A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. In an untrusted workspace the bundled runtime is always used, whatever is installed in the environment.
 
-With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in place, with `pip install -U djlint` for example, run "djLint: Restart" from the Command Palette to pick up the new version right away.
+With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 
-### djLint installed with pipx or uv
+### djLint installed with uv tool or pipx
 
-`pipx install djlint` and `uv tool install djlint` put the `djlint` executable in `~/.local/bin` by default; `pipx environment --value PIPX_BIN_DIR` and `uv tool dir --bin` print the directory. If it is not on PATH, set `djlint.executablePath` to the executable (on Windows, `djlint.exe`):
+`uv tool install djlint` and `pipx install djlint` put the `djlint` executable in `~/.local/bin` by default; `uv tool dir --bin` and `pipx environment --value PIPX_BIN_DIR` print the directory. If it is not on PATH, set `djlint.executablePath` to the executable (on Windows, `djlint.exe`):
 
 ```json
 "djlint.executablePath": "/home/user/.local/bin/djlint"
