@@ -9,10 +9,10 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { pyodideLicenses } from "./pyodide-licenses.mjs";
 
 const REQUIREMENTS = "djlint-requirements.txt";
 const PYTHON_LICENSES = "assets/python-licenses.txt";
-const RUNTIME_LICENSES = "licenses/pyodide-runtime.txt";
 const OUT = "assets/pyodide";
 
 const PYODIDE_DIR = path.dirname(
@@ -214,15 +214,6 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
   }
 }
 
-function assertRuntimeLicensesMatchPyodide() {
-  const expected = `Written for Pyodide ${PYODIDE_VERSION};`;
-  if (!readFileSync(RUNTIME_LICENSES, "utf8").includes(expected)) {
-    throw new Error(
-      `${RUNTIME_LICENSES} was written for another Pyodide version. Update it for Pyodide ${PYODIDE_VERSION}: the versions of CPython, Emscripten and the libraries Pyodide links in come from its cpython/Makefile and Makefile.envs.`,
-    );
-  }
-}
-
 function writePythonLicenses(lock, names) {
   const wheels = names.map((name) => `${OUT}/${lock.packages[name].file_name}`);
   runUv(
@@ -238,8 +229,6 @@ function writePythonLicenses(lock, names) {
     { stdio: "inherit" },
   );
 }
-
-assertRuntimeLicensesMatchPyodide();
 
 const closure = resolveRuntimeClosure();
 const djlintVersion = closure.get("djlint");
@@ -274,5 +263,9 @@ console.log(`+ djlint ${djlintVersion} (from PyPI)`);
 
 writeFileSync(`${OUT}/pyodide-lock.json`, JSON.stringify(lock));
 writePythonLicenses(lock, ["djlint", ...dependencyNames]);
+writeFileSync(
+  "assets/pyodide-licenses.txt",
+  await pyodideLicenses(PYODIDE_VERSION),
+);
 
 console.log(`\nassembled offline Pyodide assets in ${OUT}`);
