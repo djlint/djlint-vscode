@@ -8,7 +8,14 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint, see the [djLint installation guide](https://djlint.com/docs/getting-started/#installation).
+1. Install djLint into your project's environment with [uv](https://docs.astral.sh/uv/) or pip. The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
+
+   ```bash
+   uv add --dev djlint
+   # or, with the project's environment activated
+   pip install djlint
+   ```
+
 1. Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
 
 ## Usage
@@ -28,9 +35,9 @@ To make djLint the default formatter for the languages in `djlint.formatLanguage
 }
 ```
 
-### djLint installed with pipx or uv
+### djLint installed with uv tool or pipx
 
-`pipx install djlint` and `uv tool install djlint` put djLint in an environment of its own, so the Python extension's active environment does not have it. Disable `djlint.useVenv`. If `djlint` is not on PATH, set `djlint.executablePath` to it. `pipx environment --value PIPX_BIN_DIR` and `uv tool dir --bin` print the directory it is in, `~/.local/bin` by default (on Windows, the file is `djlint.exe`):
+`uv tool install djlint` and `pipx install djlint` put djLint in an environment of its own, so the Python extension's active environment does not have it. Disable `djlint.useVenv`. If `djlint` is not on PATH, set `djlint.executablePath` to it. `uv tool dir --bin` and `pipx environment --value PIPX_BIN_DIR` print the directory it is in, `~/.local/bin` by default (on Windows, the file is `djlint.exe`):
 
 ```json
 "djlint.useVenv": false,
