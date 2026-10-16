@@ -12,7 +12,7 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
    ```bash
    uv add --dev djlint
-   # or
+   # or, with the project's environment activated
    pip install djlint
    ```
 
