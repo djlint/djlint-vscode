@@ -14,7 +14,7 @@ Install djLint yourself to pin its version, or to have your project's configurat
 
 ```bash
 uv add --dev djlint
-# or
+# or, with the project's environment activated
 pip install djlint
 ```
 
