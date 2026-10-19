@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2026.10.0] - 2026-10-19
 
 - Ship the licenses of the bundled npm packages in `dist/THIRD-PARTY-NOTICES.txt`.
 - Say in the descriptions of `djlint.useVenv`, `djlint.executablePath` and `djlint.pythonPath` that `djlint.useVenv` has no effect when the Python extension is not installed or is disabled.
