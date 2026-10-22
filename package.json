@@ -1,7 +1,7 @@
 {
   "name": "djlint",
   "displayName": "djLint",
-  "version": "2026.10.0",
+  "version": "2026.10.1",
   "description": "HTML template formatter and linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go templates, Mustache, Tera, Askama)",
   "categories": [
     "Formatters",
@@ -36,7 +36,7 @@
   "type": "module",
   "main": "./dist/extension.cjs",
   "scripts": {
-    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.21.1",
+    "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.20.0",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && node ./build/third-party-notices.mjs dist/THIRD-PARTY-NOTICES.txt dist/extension.meta.json",
@@ -391,6 +391,11 @@
           "default": false,
           "markdownDescription": "Sort attributes by name, with `id` first and `class` second. A tag whose attributes are guarded by a template tag keeps the order it was written in, since moving one out of its branch would change the page. Requires djLint ≥ 1.45."
         },
+        "djlint.sortLoadTags": {
+          "type": "boolean",
+          "default": false,
+          "markdownDescription": "Sort the libraries in `{% load %}` tags and drop the ones written twice, so `{% load static i18n %}` becomes `{% load i18n static %}`. In `{% load a b from library %}`, the names before `from` are sorted. Where two libraries define a tag or filter of the same name, the one loaded last wins, so sorting can change which one a template uses. Requires djLint ≥ 1.47."
+        },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
@@ -541,7 +546,7 @@
     "@tsconfig/node22": "22.0.6",
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.5",
-    "@types/vscode": "1.107.0",
+    "@types/vscode": "1.106.1",
     "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
@@ -552,7 +557,7 @@
     "typescript-eslint": "8.71.2"
   },
   "engines": {
-    "vscode": "^1.107.0"
+    "vscode": "^1.106.0"
   },
   "icon": "icon.png"
 }

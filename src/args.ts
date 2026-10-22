@@ -145,6 +145,7 @@ export const formattingArgs = [
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
   new BoolArg("singleAttributePerLine", "--single-attribute-per-line", "1.40"),
   new BoolArg("sortAttributes", "--sort-attributes", "1.45"),
+  new BoolArg("sortLoadTags", "--sort-load-tags", "1.47"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),
   new BoolArg(

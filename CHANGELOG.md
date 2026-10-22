@@ -1,5 +1,10 @@
 # Changelog
 
+## [2026.10.1] - 2026-10-22
+
+- Add `djlint.sortLoadTags` setting for the `--sort-load-tags` option added in djLint v1.47.
+- Lower the minimum required VSCode version to 1.106.0.
+
 ## [2026.10.0] - 2026-10-19
 
 - Ship the licenses of the bundled npm packages in `dist/THIRD-PARTY-NOTICES.txt`.
