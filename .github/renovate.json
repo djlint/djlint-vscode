@@ -1,5 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "branchTopic": "{{{depNameSanitized}}}-{{{newMajor}}}{{#if separateMinorPatch}}{{#if isPatch}}.{{{newMinor}}}{{/if}}{{/if}}{{#if separateMultipleMinor}}{{#if isMinor}}.{{{newMinor}}}{{/if}}{{/if}}.x",
   "configMigration": true,
   "dependencyDashboard": false,
   "docker-compose": { "enabled": true },
@@ -12,6 +13,10 @@
   "lockFileMaintenance": { "enabled": true, "schedule": ["at any time"] },
   "minimumReleaseAge": "3 days",
   "packageRules": [
+    {
+      "matchPackageNames": ["prettier", "rbubley/mirrors-prettier"],
+      "groupName": "prettier"
+    },
     {
       "matchCurrentVersion": "!/^0/",
       "matchUpdateTypes": ["minor"],
