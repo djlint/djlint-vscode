@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+
+- Move the licenses of the bundled npm packages from `dist/THIRD-PARTY-NOTICES.txt` to `THIRD-PARTY-NOTICES.txt` in the root of the extension.
+
 ## [2026.10.1] - 2026-10-22
 
 - Add `djlint.sortLoadTags` setting for the `--sort-load-tags` option added in djLint v1.47.

@@ -48,7 +48,7 @@ jobs:
           check-latest: true
       - run: npm ci
       - run: npx --yes @vscode/vsce package --out djlint.vsix
-      - run: unzip -l djlint.vsix | grep -F extension/dist/THIRD-PARTY-NOTICES.txt
+      - run: unzip -l djlint.vsix | grep -F extension/THIRD-PARTY-NOTICES.txt
   pre-commit:
     runs-on: ubuntu-26.04
     steps:

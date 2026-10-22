@@ -1,6 +1,6 @@
 **
 !dist/extension.cjs
-!dist/THIRD-PARTY-NOTICES.txt
+!THIRD-PARTY-NOTICES.txt
 !CHANGELOG.md
 !icon.png
 !LICENSE
