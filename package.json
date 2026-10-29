@@ -554,7 +554,7 @@
     "prettier": "3.9.10",
     "prettier-plugin-packagejson": "3.0.3",
     "typescript": "6.0.3",
-    "typescript-eslint": "8.72.0"
+    "typescript-eslint": "8.72.1"
   },
   "engines": {
     "vscode": "^1.106.0"
