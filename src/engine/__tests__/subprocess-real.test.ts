@@ -14,12 +14,12 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
+  makePythonEnvironments,
   makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode } from "../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../args.js";
-import type { PythonEnvironments } from "../../python/environment.js";
 import { SubprocessEngine } from "../subprocess/index.js";
 
 const installed = await execa("djlint", ["--version"], { reject: false });
@@ -52,7 +52,7 @@ describe.skipIf(installed.failed)(
       );
       engine = new SubprocessEngine(
         makeChannel(),
-        {} as PythonEnvironments,
+        makePythonEnvironments().environments,
         makeStatus(),
       );
     });

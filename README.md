@@ -58,7 +58,7 @@ The language status item in the status bar shows which one is in use, and opens 
 
 Set `djlint.importStrategy` to `useBundled` to go from `djlint.executablePath` straight to the bundled djLint, skipping the steps between them, as `ruff.importStrategy` does. An untrusted workspace always uses the bundled djLint.
 
-With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
+With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected for each environment, and for each folder when djLint comes from PATH, and again after five minutes and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 
 ### djLint installed with uv tool or pipx
 

@@ -15,6 +15,7 @@ import {
   makeConfig,
   makeDocument,
   makeExecaError,
+  makePythonEnvironments,
   makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
@@ -83,17 +84,17 @@ function runs(): Parameters<Spawn>[] {
 const document = makeDocument("/w/sub/t.html", "<p>x</p>");
 const config = makeConfig({ executablePath: "/bin/djlint" });
 
-function makeEngine(
-  getActive: PythonEnvironments["getActive"] = async () => null,
-): { channel: ReturnType<typeof makeChannel>; engine: SubprocessEngine } {
+function makeEngine(getActive?: PythonEnvironments["getActive"]): {
+  channel: ReturnType<typeof makeChannel>;
+  engine: SubprocessEngine;
+  fireEnvironmentChange: () => void;
+} {
   const channel = makeChannel();
+  const { environments, fireChange } = makePythonEnvironments(getActive);
   return {
     channel,
-    engine: new SubprocessEngine(
-      channel,
-      { getActive } as unknown as PythonEnvironments,
-      makeStatus(),
-    ),
+    engine: new SubprocessEngine(channel, environments, makeStatus()),
+    fireEnvironmentChange: fireChange,
   };
 }
 
@@ -365,6 +366,110 @@ describe("resolution through the engine", () => {
       "/w/one/.venv/python",
       "/w/two/.venv/python",
     ]);
+  });
+
+  it("runs the executablePath a language overrides", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.lint(
+      document,
+      makeConfig({ executablePath: "/bin/django-djlint" }),
+      liveToken(),
+    );
+    await engine.lint(
+      document,
+      makeConfig({ executablePath: "/bin/jinja-djlint" }),
+      liveToken(),
+    );
+    expect(runs().map(([exec]) => exec)).toStrictEqual([
+      "/bin/django-djlint",
+      "/bin/jinja-djlint",
+    ]);
+  });
+
+  it("detects a djLint installed in an environment selected again", async () => {
+    let isInstalled = false;
+    spawn.mockImplementation(async (exec, args) => {
+      if (exec === "/b/python" || (exec === "/a/python" && isInstalled)) {
+        return isProbe(args) ? VERSION_OUTPUT : { stdout: "" };
+      }
+      return { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+    });
+    let active = "/a/python";
+    const { engine, fireEnvironmentChange } = makeEngine(async () => ({
+      command: { args: [], executable: active },
+    }));
+    const lint = makeConfig({ useVenv: true });
+    await expect(
+      engine.lint(document, lint, liveToken()),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+
+    isInstalled = true;
+    active = "/b/python";
+    fireEnvironmentChange();
+    await engine.lint(document, lint, liveToken());
+    active = "/a/python";
+    fireEnvironmentChange();
+    await expect(
+      engine.lint(document, lint, liveToken()),
+    ).resolves.toStrictEqual([]);
+  });
+
+  it("stops listening to environments once disposed", async () => {
+    installDjlint();
+    const { engine, fireEnvironmentChange } = makeEngine();
+    await engine.lint(document, config, liveToken());
+    engine.dispose();
+    fireEnvironmentChange();
+    await engine.lint(document, config, liveToken());
+    expect(probes()).toBe(1);
+  });
+
+  it("detects per folder what a shim on PATH may pick differently", async () => {
+    spawn.mockImplementation(async (_exec, args, options) => {
+      if (!isProbe(args)) {
+        return { stdout: "" };
+      }
+      return {
+        exitCode: 0,
+        stdout: `djlint, version ${String(options["cwd"]).includes("old") ? "1.30.0" : "1.48.0"}`,
+      };
+    });
+    const { engine } = makeEngine();
+    const lint = makeConfig();
+    await engine.lint(makeDocument("/w/new/t.html"), lint, liveToken());
+    await engine.lint(makeDocument("/w/old/t.html"), lint, liveToken());
+    expect(probes()).toBe(2);
+  });
+
+  it("detects once per folder of a workspace for an absolute path", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.lint(makeDocument("/w/one/t.html"), config, liveToken());
+    await engine.lint(makeDocument("/w/two/t.html"), config, liveToken());
+    expect(probes()).toBe(1);
+  });
+
+  it("detects once for an active environment", async () => {
+    installDjlint();
+    const { engine } = makeEngine(async () => ({
+      command: { args: [], executable: "/venv/python" },
+    }));
+    const lint = makeConfig({ useVenv: true });
+    await engine.lint(makeDocument("/w/one/t.html"), lint, liveToken());
+    await engine.lint(makeDocument("/w/two/t.html"), lint, liveToken());
+    expect(probes()).toBe(1);
+  });
+
+  it("logs the djLint in use once", async () => {
+    installDjlint();
+    const { channel, engine } = makeEngine();
+    const lint = makeConfig();
+    await engine.lint(makeDocument("/w/one/t.html"), lint, liveToken());
+    await engine.lint(makeDocument("/w/two/t.html"), lint, liveToken());
+    expect(
+      channel.of("info").filter((line) => line.startsWith("Using")),
+    ).toHaveLength(1);
   });
 
   it("tells apart environments that only differ in their arguments", async () => {

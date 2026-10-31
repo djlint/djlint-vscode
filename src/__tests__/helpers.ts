@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import type { EngineManager } from "../engine/select.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import type { DjlintEngine } from "../engine/types.js";
+import type { PythonEnvironments } from "../python/environment.js";
 import type { DjlintStatus } from "../status.js";
 import { control, RecordingChannel, Uri } from "./vscode-stub.js";
 
@@ -11,6 +12,31 @@ export type TestChannel = RecordingChannel & vscode.LogOutputChannel;
 
 export function makeStatus(): DjlintStatus {
   return { clear: vi.fn(), update: vi.fn() } as unknown as DjlintStatus;
+}
+
+export function makePythonEnvironments(
+  getActive: PythonEnvironments["getActive"] = async () => null,
+): { environments: PythonEnvironments; fireChange: () => void } {
+  const listeners = new Set<() => void>();
+  const environments = {
+    getActive,
+    onDidChange: (listener: () => void) => {
+      listeners.add(listener);
+      return {
+        dispose: () => {
+          listeners.delete(listener);
+        },
+      };
+    },
+  } as unknown as PythonEnvironments;
+  return {
+    environments,
+    fireChange: () => {
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
 }
 
 export function makeChannel(): TestChannel {

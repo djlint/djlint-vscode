@@ -32,7 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     pythonEnvironments,
-    // The next run resolves djLint for the new environment. Nothing else depends on it, least of all a running Pyodide.
+    // SubprocessEngine forgets what it found. Nothing else depends on the environment, least of all a running Pyodide.
     pythonEnvironments.onDidChange(refresh),
   );
 }

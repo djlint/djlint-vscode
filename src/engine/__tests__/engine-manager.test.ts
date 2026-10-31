@@ -11,11 +11,11 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
+  makePythonEnvironments,
   makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
-import type { PythonEnvironments } from "../../python/environment.js";
 import { createDesktopEngine } from "../desktop.js";
 import { PyodideEngine } from "../pyodide/index.js";
 import { EngineManager, FallbackEngine } from "../select.js";
@@ -37,7 +37,7 @@ function makeManager(): EngineManager {
     createDesktopEngine(
       Uri.file(extensionPath) as never,
       makeChannel(),
-      {} as PythonEnvironments,
+      makePythonEnvironments().environments,
       makeStatus(),
     ),
   );

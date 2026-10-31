@@ -6,7 +6,7 @@ import { execa } from "execa";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as vscode from "vscode";
-import { engineSettingKeys } from "../engine/select.js";
+import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
 import { changeOf, flush, makeContext, makeDocument } from "./helpers.js";
 import {
@@ -172,11 +172,14 @@ describe("activate", () => {
     });
 
     it("keeps the engines, and with them a running Pyodide", async () => {
-      await expect(
-        reacted(() => {
-          fireEnvironmentChange();
-        }),
-      ).resolves.toBe(false);
+      const reset = vi.spyOn(EngineManager.prototype, "reset");
+      fireWorkspaceEvent("open", document);
+      await flush();
+      reset.mockClear();
+      fireEnvironmentChange();
+      await flush();
+      expect(reset).not.toHaveBeenCalled();
+      reset.mockRestore();
     });
   });
 

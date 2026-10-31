@@ -21,6 +21,7 @@ describe("DjlintStatus", () => {
 
   it("names the djLint in use", () => {
     const status = new DjlintStatus();
+    setActiveDocument(document);
     status.update(document, "1.47.1", "bundled");
     const [item] = control.statusItems;
     expect(item?.text).toBe("djLint 1.47.1");
@@ -38,6 +39,21 @@ describe("DjlintStatus", () => {
     setActiveDocument(document);
     expect(item?.text).toBe("djLint 1.0");
     setActiveDocument(other);
+    expect(item?.text).toBe("djLint 2.0");
+  });
+
+  it("tells apart the projects of a workspace folder", () => {
+    setWorkspaceFolders("/a");
+    const status = new DjlintStatus();
+    const one = makeDocument("/a/one/t.html");
+    const two = makeDocument("/a/two/t.html");
+    status.update(one, "1.0", "first");
+    status.update(two, "2.0", "second");
+    const [item] = control.statusItems;
+
+    setActiveDocument(one);
+    expect(item?.text).toBe("djLint 1.0");
+    setActiveDocument(two);
     expect(item?.text).toBe("djLint 2.0");
   });
 

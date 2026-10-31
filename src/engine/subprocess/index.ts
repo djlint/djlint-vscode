@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import {
+  directoryScopeKey,
   normalizeConfiguredExecutable,
   workspaceScopeKey,
 } from "../../paths.js";
@@ -138,12 +139,13 @@ async function probeExecutable(
 
 export class SubprocessEngine implements DjlintEngine {
   readonly #resolver = new CommandResolver();
-  readonly #loggedCommands = new Map<string, string>();
+  readonly #loggedCommands = new Set<string>();
   readonly #warnedSkippedArgs = new Set<string>();
   readonly #schemesWarnedAboutCwd = new Set<string>();
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #pythonEnvironments: PythonEnvironments;
   readonly #status: DjlintStatus;
+  readonly #environmentChange: vscode.Disposable;
 
   constructor(
     outputChannel: vscode.LogOutputChannel,
@@ -153,6 +155,9 @@ export class SubprocessEngine implements DjlintEngine {
     this.#outputChannel = outputChannel;
     this.#pythonEnvironments = pythonEnvironments;
     this.#status = status;
+    this.#environmentChange = pythonEnvironments.onDidChange(() => {
+      this.#resolver.invalidate();
+    });
   }
 
   async format(
@@ -174,8 +179,9 @@ export class SubprocessEngine implements DjlintEngine {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  dispose(): void {}
+  dispose(): void {
+    this.#environmentChange.dispose();
+  }
 
   async #getCommand(
     document: vscode.TextDocument,
@@ -187,11 +193,6 @@ export class SubprocessEngine implements DjlintEngine {
       !shouldUseBundled && config.get<boolean>("useVenv")
         ? await this.#pythonEnvironments.getActive(document.uri)
         : null;
-    const { args = [], executable = "" } = activeEnvironment?.command ?? {};
-    // A workspace folder can hold projects with environments of their own.
-    const scopeKey = [workspaceScopeKey(document), executable, ...args].join(
-      "\0",
-    );
     function configuredExecutable(
       key: Parameters<typeof getConfiguredPath>[1],
     ): string {
@@ -200,10 +201,31 @@ export class SubprocessEngine implements DjlintEngine {
         document,
       );
     }
+    const executablePath = configuredExecutable("executablePath");
+    const pythonPath = configuredExecutable("pythonPath");
+    // What is found on PATH can be a shim, which picks a djLint by the folder it runs from.
+    const isPickedByFolder =
+      activeEnvironment?.command == null &&
+      !path.isAbsolute(executablePath) &&
+      !path.isAbsolute(pythonPath);
+    // A language can set its own paths, and a workspace folder can hold projects with environments of their own.
+    const scopeKey = [
+      workspaceScopeKey(document),
+      isPickedByFolder ? directoryScopeKey(document) : "",
+      executablePath,
+      pythonPath,
+      shouldUseBundled,
+      ...(activeEnvironment?.command == null
+        ? []
+        : [
+            activeEnvironment.command.executable,
+            ...activeEnvironment.command.args,
+          ]),
+    ].join("\0");
     const command = await this.#resolver.resolve(
       {
         activeEnvironment,
-        executablePath: configuredExecutable("executablePath"),
+        executablePath,
         onConfiguredPathRejected: (setting, exec): void => {
           this.#outputChannel.warn(
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
@@ -211,7 +233,7 @@ export class SubprocessEngine implements DjlintEngine {
         },
         probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
-        pythonPath: configuredExecutable("pythonPath"),
+        pythonPath,
         shouldUseBundled,
       },
       scopeKey,
@@ -219,8 +241,9 @@ export class SubprocessEngine implements DjlintEngine {
     const source = [command.exec, ...command.prefixArgs].join(" ");
     this.#status.update(document, command.version ?? "", source);
     const description = `djLint ${command.version ?? "of unknown version"}: ${source}`;
-    if (this.#loggedCommands.get(scopeKey) !== description) {
-      this.#loggedCommands.set(scopeKey, description);
+    const logKey = [workspaceScopeKey(document), description].join("\0");
+    if (!this.#loggedCommands.has(logKey)) {
+      this.#loggedCommands.add(logKey);
       this.#outputChannel.info(`Using ${description}`);
     }
     return command;
