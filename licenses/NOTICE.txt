@@ -1,19 +1,18 @@
 djLint for Visual Studio Code: licenses of this package
 
-The extension's own code is licensed under the MIT License, in LICENSE.txt.
+The extension is licensed under the MIT License, in LICENSE.txt.
 
-This package also bundles djLint, licensed under the GNU General Public
-License, version 3 or later, and calls it in the same process through the
-bundled Pyodide runtime. The package as a whole is therefore distributed
-under the GNU General Public License, version 3 or later, whose text is in
-the djlint section below. Each bundled component also remains available
-under its own license, collected below.
+This package also contains djLint, a separate program licensed under the
+GNU General Public License, version 3 or later, whose text is in the djlint
+section below. It runs on the bundled Pyodide runtime in a worker of its own,
+and the extension exchanges only text with it, as it does with an installed
+djLint. Each bundled component remains under its own license, collected
+below.
 
-The Corresponding Source of this package is:
+The Corresponding Source of djLint and what it runs on is:
 
-- the extension's source, at https://github.com/djlint/djlint-vscode under
-  the tag of this version, which includes the scripts that build the
-  package;
+- the scripts that build the package, at
+  https://github.com/djlint/djlint-vscode under the tag of this version;
 - the Python source of djLint and of the packages it uses, contained in the
   wheels under assets/pyodide/, except the compiled parts of regex and PyYAML,
   whose source is at https://pypi.org/project/regex/,

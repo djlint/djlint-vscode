@@ -21,7 +21,7 @@
 - `djlint.executablePath` and `djlint.pythonPath` now take precedence over the active Python environment instead of being ignored while `djlint.useVenv` is enabled, and both now default to `""` (unset) rather than `"djlint"`/`"python"`. Setting either no longer requires disabling `djlint.useVenv`. Unset, `djlint` on PATH is still found, and so is `python -m djlint`. The old default values mean the same as unset when written out in `settings.json`, so they do not take precedence over the active environment.
 - `djlint.pythonPath` is no longer deprecated.
 - Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled one instead of showing an error.
-- Ship the licenses of everything the package bundles (npm packages, Pyodide, djLint and the Python packages it uses) in `THIRD-PARTY-NOTICES.txt` in the root of the extension, which moved from `dist/`. Because the package bundles djLint, it is distributed under GPL-3.0-or-later as a whole; the extension's own code stays MIT.
+- Ship the licenses of everything the package bundles (npm packages, Pyodide, djLint and the Python packages it uses) in `THIRD-PARTY-NOTICES.txt` in the root of the extension, which moved from `dist/`.
 
 ## [2026.10.1] - 2026-10-22
 

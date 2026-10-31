@@ -84,12 +84,8 @@ These are bugs in old djLint versions, so they only affect an installed djLint. 
 - v1.12.1: file contents are duplicated after formatting.
 - Before v1.19.2: a config file in the project root is ignored on some Python versions.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## License
 
-The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
+[MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)
 
-The published package also bundles djLint, which is GPL-3.0-or-later, and runs it in the same process, so the package as a whole is distributed under GPL-3.0-or-later. See [THIRD_PARTY.md](THIRD_PARTY.md).
+The bundled djLint is GPL-3.0-or-later. It and the rest of what the package bundles keep their own licenses, collected in `THIRD-PARTY-NOTICES.txt` in the extension.
