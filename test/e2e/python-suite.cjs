@@ -87,8 +87,18 @@ exports.run = async () => {
         await sleep(POLL_MS);
       }
     }
+    const seen = {
+      active: python.environments.getActiveEnvironmentPath(folder.uri).path,
+      diagnostics: vscode.languages
+        .getDiagnostics(uri)
+        .map((d) => [d.source, d.code?.value ?? d.code, d.message]),
+      text: document.getText(),
+      version: document.version,
+      dirty: document.isDirty,
+      language: document.languageId,
+    };
     throw new Error(
-      `${label}: expected ${length}, got ${String(findingLength())}`,
+      `${label}: expected ${length}, got ${String(findingLength())} ${JSON.stringify(seen)}`,
     );
   }
 

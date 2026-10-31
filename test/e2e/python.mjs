@@ -176,6 +176,7 @@ try {
         workspace,
         `--extensions-dir=${extensionsDir}`,
         `--logsPath=${logs}`,
+        "--log=monosans.djlint:debug",
         `--user-data-dir=${path.join(workspace, `.user-${useEnvironmentsExtension}`)}`,
         "--disable-workspace-trust",
       ],
