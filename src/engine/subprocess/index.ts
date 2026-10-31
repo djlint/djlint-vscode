@@ -108,12 +108,19 @@ export class SubprocessEngine implements DjlintEngine {
   readonly #loggedCommands = new Map<string, string>();
   readonly #warnedSkippedArgs = new Set<string>();
   readonly #schemesWarnedAboutCwd = new Set<string>();
+  readonly #outputChannel: vscode.LogOutputChannel;
+  readonly #pythonEnvironments: PythonEnvironments;
+  readonly #status: DjlintStatus;
 
   constructor(
-    private readonly outputChannel: vscode.LogOutputChannel,
-    private readonly pythonEnvironments: PythonEnvironments,
-    private readonly status: DjlintStatus,
-  ) {}
+    outputChannel: vscode.LogOutputChannel,
+    pythonEnvironments: PythonEnvironments,
+    status: DjlintStatus,
+  ) {
+    this.#outputChannel = outputChannel;
+    this.#pythonEnvironments = pythonEnvironments;
+    this.#status = status;
+  }
 
   async format(
     document: vscode.TextDocument,
@@ -150,10 +157,10 @@ export class SubprocessEngine implements DjlintEngine {
         ),
         getActiveEnvironment: config.get<boolean>("useVenv")
           ? async (uri): Promise<PythonEnvironmentDetails | null> =>
-              this.pythonEnvironments.getActive(uri)
+              this.#pythonEnvironments.getActive(uri)
           : null,
         onConfiguredPathRejected: (setting, exec): void => {
-          this.outputChannel.warn(
+          this.#outputChannel.warn(
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
           );
         },
@@ -168,11 +175,11 @@ export class SubprocessEngine implements DjlintEngine {
       scopeKey,
     );
     const source = [command.exec, ...command.prefixArgs].join(" ");
-    this.status.update(document, command.version ?? "", source);
+    this.#status.update(document, command.version ?? "", source);
     const description = `djLint ${command.version ?? "of unknown version"}: ${source}`;
     if (this.#loggedCommands.get(scopeKey) !== description) {
       this.#loggedCommands.set(scopeKey, description);
-      this.outputChannel.info(`Using ${description}`);
+      this.#outputChannel.info(`Using ${description}`);
     }
     return command;
   }
@@ -185,7 +192,7 @@ export class SubprocessEngine implements DjlintEngine {
     const { scheme } = document.uri;
     if (!this.#schemesWarnedAboutCwd.has(scheme)) {
       this.#schemesWarnedAboutCwd.add(scheme);
-      this.outputChannel.warn(
+      this.#outputChannel.warn(
         `djLint cannot be run from the folder of "${document.uri.toString()}", so configuration files next to it are not found.`,
       );
     }
@@ -203,7 +210,7 @@ export class SubprocessEngine implements DjlintEngine {
       command.version,
       context,
       this.#warnedSkippedArgs,
-      this.outputChannel,
+      this.#outputChannel,
     );
     const childArgs = [
       ...command.prefixArgs,
@@ -257,7 +264,7 @@ export class SubprocessEngine implements DjlintEngine {
 
       if (classification === "unavailable") {
         this.#resolver.invalidate();
-        this.outputChannel.debug(
+        this.#outputChannel.debug(
           `djLint is no longer available (${e.shortMessage}).`,
         );
         if (!isRetry) {
@@ -268,7 +275,7 @@ export class SubprocessEngine implements DjlintEngine {
         });
       }
 
-      return checkErrors(e, this.outputChannel);
+      return checkErrors(e, this.#outputChannel);
     } finally {
       cancellation.dispose();
     }

@@ -12,15 +12,15 @@ type ArgValue = boolean | number | string;
 
 export abstract class CliArg {
   readonly isPath: boolean = false;
-  readonly kwargName: string;
   readonly displayName: string;
+  readonly #kwargName: string;
 
   constructor(
     readonly vscodeName: string,
     readonly cliName: string,
     readonly minVersion: string,
   ) {
-    this.kwargName = cliName.replace(/^--/u, "").replaceAll("-", "_");
+    this.#kwargName = cliName.replace(/^--/u, "").replaceAll("-", "_");
     this.displayName = vscodeName ? `djlint.${vscodeName}` : cliName;
   }
 
@@ -39,7 +39,7 @@ export abstract class CliArg {
 
   buildKwarg(context: ArgContext): [string, ArgValue] | undefined {
     const value = this.read(context);
-    return value == null ? void 0 : [this.kwargName, value];
+    return value == null ? void 0 : [this.#kwargName, value];
   }
 
   protected abstract read(context: ArgContext): ArgValue | undefined;
