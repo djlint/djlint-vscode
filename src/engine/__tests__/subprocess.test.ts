@@ -522,40 +522,6 @@ describe("resolution through the engine", () => {
     expect(exec.replaceAll("\\", "/")).toBe("/w/.venv/djlint");
   });
 
-  describe('with importStrategy "useBundled"', () => {
-    const lint = makeConfig({
-      executablePath: "/bin/djlint",
-      importStrategy: "useBundled",
-      pythonPath: "/py",
-      useVenv: true,
-    });
-
-    it("still runs executablePath", async () => {
-      installDjlint();
-      const getActive = vi.fn(async () => null);
-      const { engine } = makeEngine(getActive);
-      await engine.lint(document, lint, liveToken());
-      const [[exec]] = runs() as [Parameters<Spawn>];
-      expect(exec).toBe("/bin/djlint");
-      expect(getActive).not.toHaveBeenCalled();
-    });
-
-    it("goes to the bundled djLint from a broken executablePath", async () => {
-      spawn.mockImplementation(async (exec) =>
-        exec === "/bin/djlint"
-          ? { exitCode: 1, stderr: NO_MODULE, stdout: "" }
-          : VERSION_OUTPUT,
-      );
-      const { engine } = makeEngine();
-      await expect(
-        engine.lint(document, lint, liveToken()),
-      ).rejects.toBeInstanceOf(DjlintUnavailableError);
-      expect(spawn.mock.calls.map(([exec]) => exec)).toStrictEqual([
-        "/bin/djlint",
-      ]);
-    });
-  });
-
   it("never asks for an environment with useVenv off", async () => {
     installDjlint();
     const getActive = vi.fn(async () => null);

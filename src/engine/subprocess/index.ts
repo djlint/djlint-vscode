@@ -187,12 +187,9 @@ export class SubprocessEngine implements DjlintEngine {
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,
   ): Promise<RunnerCommand> {
-    const shouldUseBundled =
-      config.get<string>("importStrategy") === "useBundled";
-    const activeEnvironment =
-      !shouldUseBundled && config.get<boolean>("useVenv")
-        ? await this.#pythonEnvironments.getActive(document.uri)
-        : null;
+    const activeEnvironment = config.get<boolean>("useVenv")
+      ? await this.#pythonEnvironments.getActive(document.uri)
+      : null;
     function configuredExecutable(
       key: Parameters<typeof getConfiguredPath>[1],
     ): string {
@@ -214,7 +211,6 @@ export class SubprocessEngine implements DjlintEngine {
       isPickedByFolder ? directoryScopeKey(document) : "",
       executablePath,
       pythonPath,
-      shouldUseBundled,
       ...(activeEnvironment?.command == null
         ? []
         : [
@@ -234,7 +230,6 @@ export class SubprocessEngine implements DjlintEngine {
         probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
         pythonPath,
-        shouldUseBundled,
       },
       scopeKey,
     );

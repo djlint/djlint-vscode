@@ -10,7 +10,6 @@
 - Show the djLint of the active file's folder in the status bar, instead of the last one used in the workspace folder.
 - Keep the bundled djLint running when the active Python environment changes.
 - Pick up a Python extension as soon as it is installed or enabled when there was none, as before 2026.10.2, instead of after `djLint: Restart`.
-- Let `djlint.executablePath` win over `djlint.importStrategy: useBundled`, as `ruff.path` does over `ruff.importStrategy`.
 - Expand `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` in `djlint.executablePath` and `djlint.pythonPath`.
 
 ## [2026.10.2] - 2026-10-31

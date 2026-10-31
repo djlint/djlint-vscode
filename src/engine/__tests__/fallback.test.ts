@@ -248,27 +248,16 @@ describe("FallbackEngine", () => {
       expect(secondaryBuilds()).toBe(1);
     });
 
-    it("leaves executablePath to the primary, as ruff.path", async () => {
-      const { calls, engine } = makeFallback(() => "PRIMARY");
-      await expect(
-        format(
-          engine,
-          document,
-          makeConfig({
-            executablePath: "/bin/djlint",
-            importStrategy: "useBundled",
-          }),
-        ),
-      ).resolves.toBe("PRIMARY");
-      expect(calls).toStrictEqual(["primary"]);
-    });
-
-    it("ignores pythonPath, as ruff.interpreter", async () => {
+    it("wins over the paths, which is what always means", async () => {
       const { calls, engine } = makeFallback(() => "PRIMARY");
       await format(
         engine,
         document,
-        makeConfig({ importStrategy: "useBundled", pythonPath: "/py" }),
+        makeConfig({
+          executablePath: "/bin/djlint",
+          importStrategy: "useBundled",
+          pythonPath: "/py",
+        }),
       );
       expect(calls).toStrictEqual(["secondary"]);
     });
