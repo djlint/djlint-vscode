@@ -174,9 +174,7 @@ export async function pyodideLicenses(version) {
     ],
     [
       `bzip2 ${bzip2} (libbz2), linked into pyodide.asm.wasm`,
-      await fetchText(
-        `https://sourceware.org/git/?p=bzip2.git;a=blob_plain;f=LICENSE;hb=bzip2-${bzip2}`,
-      ),
+      await fetchText(`${RAW}/emscripten-ports/bzip2/${bzip2}/LICENSE`),
     ],
     [
       "libyaml, linked into the PyYAML wheel",

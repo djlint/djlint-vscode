@@ -205,17 +205,18 @@ export class SubprocessEngine implements DjlintEngine {
     context: ArgContext,
     cancelSignal: AbortSignal,
   ): Promise<string> {
+    const versionedContext = { ...context, djlintVersion: command.version };
     const supportedArgs = selectSupportedArgs(
       mode === "format" ? formattingArgs : lintingArgs,
       command.version,
-      context,
+      versionedContext,
       this.#warnedSkippedArgs,
       this.#outputChannel,
     );
     const childArgs = [
       ...command.prefixArgs,
       "-",
-      ...supportedArgs.flatMap((arg) => arg.build(context)),
+      ...supportedArgs.flatMap((arg) => arg.build(versionedContext)),
     ];
     const childOptions: ChildOptions = {
       ...(await this.#getCwd(context.document)),

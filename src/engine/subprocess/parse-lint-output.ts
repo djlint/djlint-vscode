@@ -11,6 +11,18 @@ export const LINTER_OUTPUT_FORMAT = "{code}".concat(
   RECORD_SEPARATOR,
 );
 
+export const LINTER_OUTPUT_FORMAT_WITH_END = "{code}".concat(
+  FIELD_SEPARATOR,
+  "{line}",
+  FIELD_SEPARATOR,
+  "{message}",
+  FIELD_SEPARATOR,
+  "{end}",
+  RECORD_SEPARATOR,
+);
+
+const END_REGEX = /^(?<line>\d+):(?<column>\d+)$/u;
+
 const LEGACY_OUTPUT_REGEX =
   /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
 
@@ -21,6 +33,22 @@ function isValidPosition(line: number, column: number): boolean {
     Number.isSafeInteger(column) &&
     column >= 0
   );
+}
+
+function endOf(
+  field: string | undefined,
+  line: number,
+  column: number,
+): Pick<LintDiagnostic, "endColumn" | "endLine"> {
+  const groups = END_REGEX.exec(field ?? "")?.groups;
+  if (!groups) {
+    return {};
+  }
+  const endLine = Number(groups["line"]);
+  const endColumn = Number(groups["column"]);
+  const isAfterStart =
+    endLine > line || (endLine === line && endColumn >= column);
+  return isAfterStart ? { endColumn, endLine } : {};
 }
 
 function parsePinnedFormat(stdout: string): LintDiagnostic[] {
@@ -34,7 +62,8 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
       continue;
     }
     const [code, lineColumn] = parts;
-    const message = parts.slice(2).join(FIELD_SEPARATOR);
+    const hasEnd = parts.length > 3 && END_REGEX.test(parts.at(-1) ?? "");
+    const message = parts.slice(2, hasEnd ? -1 : void 0).join(FIELD_SEPARATOR);
     const lineColumnParts = lineColumn.split(":");
     if (lineColumnParts.length !== 2) {
       continue;
@@ -45,7 +74,8 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
     if (!isValidPosition(line, column)) {
       continue;
     }
-    diags.push({ code, column, line, message });
+    const end = hasEnd ? endOf(parts.at(-1), line, column) : {};
+    diags.push({ code, column, line, message, ...end });
   }
   return diags;
 }

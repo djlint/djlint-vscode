@@ -1,4 +1,4 @@
-"""Run djLint the way its command line runs `djlint -`, for the worker."""
+"""Run djLint for the worker, through its Python API."""
 
 import importlib
 import json
@@ -7,28 +7,16 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from djlint import process_stdin
-from djlint.settings import Config
-from djlint.src import has_pragma
+from djlint.api import format_text, lint_text, load_config
 
 # A project's rule module leaves no __pycache__ behind in the project.
 sys.dont_write_bytecode = True
 
 _HOME = os.getcwd()
 _GUEST_ROOTS = ("/host/", "/project/")
-# Without the working directory, which Python searches first. It is the project's by the time djLint imports the rest of what it needs, and those modules stay imported: a project's html.py would stand in for the standard library's in every project after it.
-_BASE_SYS_PATH = [entry for entry in sys.path if entry]
-sys.path[:] = _BASE_SYS_PATH
+_BASE_SYS_PATH = list(sys.path)
 _PROJECT = Path("/project")
-_skipped_rules = set()
-
-
-def _enter(cwd):
-    """Enter the folder djLint looks for its configuration from."""
-    try:
-        os.chdir(cwd or _HOME)
-    except OSError:
-        os.chdir(_HOME)
+_reported_rules = set()
 
 
 def _write_project(project):
@@ -47,72 +35,59 @@ def _write_project(project):
     return str(cwd)
 
 
-def _skip_module_rules(config):
-    """Skip the custom rules whose module a project handed over cannot have."""
-    kept = []
-    for entry in config.linter_rules:
-        rule = entry["rule"]
-        if rule.get("python_module", "djlint.").startswith("djlint."):
-            kept.append(entry)
-        elif rule["name"] not in _skipped_rules:
-            _skipped_rules.add(rule["name"])
-            print(
-                f"Skipping rule {rule['name']}: python_module is not available"
-                " here.",
-                file=sys.stderr,
-            )
-    config.linter_rules = tuple(kept)
-
-
 def _is_project_module(module):
     """Tell by its file or, for a namespace package, by its folders."""
     locations = (getattr(module, "__file__", ""), *getattr(module, "__path__", ()))
     return any(str(location).startswith(_GUEST_ROOTS) for location in locations)
 
 
-def _forget_project_modules():
+def _forget_projects():
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
         if _is_project_module(module):
             del sys.modules[name]
     importlib.invalidate_caches()
+    # djLint leaves the project root it looks for rule modules in.
+    sys.path[:] = _BASE_SYS_PATH
+
+
+def _report_skipped_rules(config):
+    for name in config.skipped_rules:
+        if name not in _reported_rules:
+            _reported_rules.add(name)
+            print(f"Skipping rule {name}: python_module is not available here.", file=sys.stderr)
 
 
 def run(mode, src, options, path_options, filename, cwd, project):
     """Return the formatted text, or the diagnostics as JSON."""
-    _forget_project_modules()
-    _enter(cwd if project is None else _write_project(json.loads(project)))
-    is_format = mode == "format"
-    config = Config(
-        "-",
-        lint=not is_format,
-        reformat=is_format,
-        stdin=True,
-        stdin_filename=filename,
+    _forget_projects()
+    if project is not None:
+        folder = _write_project(json.loads(project))
+    elif cwd and os.path.isdir(cwd):
+        folder = cwd
+    else:
+        folder = _HOME
+    config = load_config(
+        folder,
+        # What a project handed over holds is its configuration, not its code.
+        python_rules=project is None,
         **json.loads(options),
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
-    # Where a custom rule's python_module is, as for `python -m djlint`, but behind the standard library, so a module named like one of its own is not found.
-    sys.path[:] = [*_BASE_SYS_PATH, str(config.project_root), ""]
-    if project is not None:
-        _skip_module_rules(config)
-    if config.require_pragma and not has_pragma(config, src.split("\n", 1)[0]):
-        return src if is_format else "[]"
-    output, formatted = process_stdin(config, src)
-    if is_format:
-        return formatted
-    diagnostics = []
-    for error in output["lint_message"][filename]:
-        line, _, column = str(error["line"]).partition(":")
-        # A python_module rule can return any position at all.
-        if not (line.isdecimal() and int(line) and (column or "0").isdecimal()):
-            continue
-        diagnostics.append(
+    _report_skipped_rules(config)
+    if mode == "format":
+        return format_text(config, src)
+    # A rule module can count lines from zero.
+    return json.dumps(
+        [
             {
-                "code": error["code"],
-                "column": int(column or 0),
-                "line": int(line),
-                "message": error["message"],
+                "code": finding.code,
+                "column": finding.column,
+                "endColumn": finding.end_column,
+                "endLine": max(finding.end_line, 1),
+                "line": max(finding.line, 1),
+                "message": finding.message,
             }
-        )
-    return json.dumps(diagnostics)
+            for finding in lint_text(config, src, filename)
+        ]
+    )

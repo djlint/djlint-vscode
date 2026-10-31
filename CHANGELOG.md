@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Bundle djLint 1.47.1, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Bundle djLint 1.48.0, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
 - Work in VS Code for the Web and in virtual workspaces, with the bundled djLint, which reads the project's configuration files there too. A custom rule with a `python_module` is skipped there.
 - Register the formatter and enable linting by default for the `tera-html` language ID, which the main Tera extension gives to `.tera` and `.html.tera` files, and `pos-liquid`, used by platformOS.
 - Remove the `hbs` language ID from the defaults. `.hbs` files are `handlebars`. To keep it, add it to `djlint.formatLanguages` and set `djlint.enableLinting` to `true` and `djlint.profile` to `"handlebars"` for it.
@@ -14,6 +14,8 @@
 - Remove the `djlint.useNewLinterOutputParser` setting. The extension now picks the most reliable linter output format your djLint supports on its own.
 - Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
 - Show the rule code of a diagnostic as a link to its documentation, instead of at the end of the message.
+- Underline what djLint found, with the bundled djLint and an installed djLint 1.48 or newer, instead of a single point. A finding over several lines is underlined on its first.
+- Put a diagnostic in the right column on a line with an emoji before it.
 - Stop an unresponsive djLint from hanging a format or lint indefinitely. Such a run is now given up on, and the stuck process ended, instead of surviving for the rest of the session.
 - Error notifications now show what djLint actually reported, instead of the whole failed command followed by its output.
 - Always look for `pyproject.toml`/`.djlintrc` starting from the edited file's own folder. Setting `djlint.configuration` or `djlint.rules` previously moved that search to the workspace root, so a monorepo could pick the root config instead of the one next to the file. Relative values for those two settings are still resolved from the workspace root, as documented.
