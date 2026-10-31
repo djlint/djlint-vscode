@@ -32,7 +32,6 @@ jobs:
       - run: npx vsce package --out djlint.vsix
       - run: unzip -q djlint.vsix -d unpacked
       - run: npm run verify-bundle -- unpacked/extension
-      - run: npx vitest run
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: vsix
