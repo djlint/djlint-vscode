@@ -37,6 +37,9 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
   stat: vi.fn(async () => ({})),
 }));
 
+vi.mock("which-command", () => ({
+  whichCommand: async (command: string) => command,
+}));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn(),
@@ -329,8 +332,34 @@ describe("resolution through the engine", () => {
     ).rejects.toBeInstanceOf(DjlintUnavailableError);
   });
 
-  it("treats a probe that answers garbage as no djLint", async () => {
-    installDjlint(void 0, { exitCode: 0, stdout: "not djlint" });
+  it("runs a wrapper that does not say which version it runs", async () => {
+    installDjlint(void 0, { exitCode: 0, stdout: "some wrapper" });
+    const { engine } = makeEngine();
+    await expect(
+      engine.lint(document, config, liveToken()),
+    ).resolves.toStrictEqual([]);
+    expect(runs()).toHaveLength(1);
+  });
+
+  it.each([
+    [
+      "a shim whose command is not there",
+      { exitCode: 127, stderr: "x: not found", stdout: "" },
+    ],
+    [
+      "a cmd.exe that finds no command",
+      { exitCode: 9009, stderr: "", stdout: "" },
+    ],
+    [
+      "a file that cannot run",
+      { code: "ENOEXEC", exitCode: void 0, stderr: "", stdout: "" },
+    ],
+    [
+      "a corrupt executable",
+      { code: "UNKNOWN", exitCode: void 0, stderr: "", stdout: "" },
+    ],
+  ])("treats %s as no djLint", async (_label, version) => {
+    installDjlint(void 0, version);
     const { engine } = makeEngine();
     await expect(
       engine.lint(document, config, liveToken()),
@@ -493,12 +522,12 @@ describe("resolution through the engine", () => {
     );
   });
 
-  it("detects once per folder of a workspace for an absolute path", async () => {
+  it("detects per folder for a configured path, which can be a shim", async () => {
     installDjlint();
     const { engine } = makeEngine();
     await engine.lint(makeDocument("/w/one/t.html"), config, liveToken());
     await engine.lint(makeDocument("/w/two/t.html"), config, liveToken());
-    expect(probes()).toBe(1);
+    expect(probes()).toBe(2);
   });
 
   it("detects once for an active environment", async () => {

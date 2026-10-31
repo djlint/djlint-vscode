@@ -14,7 +14,15 @@ const NO_SUCH_OPTION_REGEX =
 
 function summarize(e: CustomExecaError): string {
   const reason = lastLine(e.stderr);
-  return reason ? `djLint failed: ${reason}` : e.shortMessage;
+  if (reason) {
+    return `djLint failed: ${reason}`;
+  }
+  if (e.timedOut) {
+    return "djLint did not finish in time.";
+  }
+  return e.exitCode == null
+    ? `djLint was stopped by ${e.signal ?? "a signal"}.`
+    : `djLint failed with exit code ${e.exitCode}.`;
 }
 
 export function isValidLintResult(
