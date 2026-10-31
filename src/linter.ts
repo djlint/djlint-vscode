@@ -129,7 +129,7 @@ export class Linter {
   }
 
   async #lint(document: vscode.TextDocument): Promise<void> {
-    if (this.#disposed) {
+    if (this.#disposed || document.isClosed) {
       return;
     }
 

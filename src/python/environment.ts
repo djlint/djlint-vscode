@@ -11,7 +11,7 @@ import {
 } from "@vscode/python-extension";
 import * as vscode from "vscode";
 
-export interface PythonCommand {
+interface PythonCommand {
   args: readonly string[];
   executable: string;
 }

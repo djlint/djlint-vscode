@@ -21,7 +21,7 @@ export interface RunRequest {
   project: ProjectSnapshot | undefined;
 }
 
-export interface CancelRequest {
+interface CancelRequest {
   type: "cancel";
   id: number;
 }
@@ -32,18 +32,18 @@ export type RunResponse =
   | { type: "result"; id: number; ok: false; error: string }
   | { type: "result"; id: number; ok: true; output: string };
 
-export interface LogMessage {
+interface LogMessage {
   type: "log";
   level: "debug" | "warn";
   line: string;
 }
 
-export interface ReadyMessage {
+interface ReadyMessage {
   type: "ready";
   version: string;
 }
 
-export interface BootFailedMessage {
+interface BootFailedMessage {
   type: "boot-failed";
   error: string;
 }

@@ -68,6 +68,23 @@ beforeEach(() => {
   control.configuration = { enableLinting: true };
 });
 
+describe("a document closed before its turn in a sweep", () => {
+  it("gets no diagnostics", async () => {
+    const closed = {
+      ...makeDocument("/w/closed.html", "<p>x</p>"),
+      isClosed: true,
+    } as vscode.TextDocument;
+    control.configuration = { enableLinting: true };
+    control.documents = [closed];
+    const lint = vi.fn(async () => []);
+    const linter = new Linter(makeContext(), makeChannel(), {
+      engine: { lint },
+    } as never);
+    await linter.refreshAll();
+    expect(lint).not.toHaveBeenCalled();
+  });
+});
+
 describe("the startup sweep", () => {
   it("publishes diagnostics for open documents", async () => {
     control.documents = [document];

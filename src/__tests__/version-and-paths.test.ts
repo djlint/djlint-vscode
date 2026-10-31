@@ -1,9 +1,11 @@
 // Edge-case sweep over the pure helpers, checking each against what the
 // callers actually require of them.
-import { existsSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
-import { getDocumentFolder } from "../engine/document-folder.js";
+import {
+  getDocumentFolder,
+  getExistingDocumentFolder,
+} from "../engine/document-folder.js";
 import { parseLinterOutput } from "../engine/subprocess/parse-lint-output.js";
 import {
   isVersionAtLeast,
@@ -12,11 +14,6 @@ import {
 import { deriveStdinFilename, workspaceScopeKey } from "../paths.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, Uri } from "./vscode-stub.js";
-
-vi.mock("node:fs", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:fs")>()),
-  existsSync: vi.fn(() => true),
-}));
 
 const FS = "\u{1F}";
 const RS = "\u{1E}";
@@ -158,6 +155,16 @@ describe("deriveStdinFilename", () => {
   });
 });
 
+describe("parseDjlintVersion", () => {
+  it("takes the last version, past what a wrapper printed", () => {
+    expect(
+      parseDjlintVersion(
+        "mise version 0.4.1 activated\ndjlint, version 1.47.1",
+      ),
+    ).toBe("1.47.1");
+  });
+});
+
 describe("document location helpers", () => {
   it("finds the folder of a file", () => {
     expect(getDocumentFolder(makeDocument("/w/a/b.html"))).toBe(
@@ -165,9 +172,10 @@ describe("document location helpers", () => {
     );
   });
 
-  it("has no folder for a file whose folder is gone", () => {
-    vi.mocked(existsSync).mockReturnValueOnce(false);
-    expect(getDocumentFolder(makeDocument("/w/a/b.html"))).toBeUndefined();
+  it("finds no existing folder for a file whose folder is gone", async () => {
+    await expect(
+      getExistingDocumentFolder(makeDocument("/no/such/folder/b.html")),
+    ).resolves.toBeUndefined();
   });
 
   it("has no folder for a document that is not a local file", () => {

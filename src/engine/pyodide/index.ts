@@ -27,8 +27,9 @@ export interface RuntimeWorker {
 }
 
 interface Pending {
+  document: vscode.TextDocument;
   isCancelled: boolean;
-  stopWaiting: () => void;
+  stopListening: () => void;
   reject: (reason: Error) => void;
   resolve: (output: string) => void;
 }
@@ -70,6 +71,7 @@ export class PyodideEngine implements DjlintEngine {
   #seq = 0;
   #disposed = false;
   #version = "";
+  #watchdog: ReturnType<typeof setTimeout> | undefined;
   readonly #pending = new Map<number, Pending>();
   readonly #reported = new Set<string>();
 
@@ -115,13 +117,27 @@ export class PyodideEngine implements DjlintEngine {
     void showFailure(message, this.outputChannel);
   }
 
+  // Python blocks the worker, so silence is the only sign of a stuck run, and only this can end one. Each answer resets it, so a long queue is not mistaken for that, and a cancelled run stays watched until its answer arrives.
+  #watch(): void {
+    clearTimeout(this.#watchdog);
+    this.#watchdog =
+      this.#pending.size === 0
+        ? void 0
+        : setTimeout(() => {
+            this.#fail(
+              `Bundled djLint did not respond within ${RUN_TIMEOUT_MS / 1000} seconds; restarting it.`,
+              new Error("Bundled djLint timed out"),
+            );
+          }, RUN_TIMEOUT_MS);
+  }
+
   #take(id: number): Pending | undefined {
     const pending = this.#pending.get(id);
     if (!pending) {
       return void 0;
     }
     this.#pending.delete(id);
-    pending.stopWaiting();
+    pending.stopListening();
     return pending;
   }
 
@@ -129,9 +145,10 @@ export class PyodideEngine implements DjlintEngine {
     const abandoned = this.#pending.values().toArray();
     this.#pending.clear();
     for (const pending of abandoned) {
-      pending.stopWaiting();
+      pending.stopListening();
       pending.reject(reason);
     }
+    this.#watch();
   }
 
   #discardWorker(reason: Error): void {
@@ -147,7 +164,7 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     if (response.ok) {
-      this.status.update(this.#version, "bundled");
+      this.status.update(pending.document, this.#version, "bundled");
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
       this.outputChannel.error(response.error);
@@ -165,6 +182,11 @@ export class PyodideEngine implements DjlintEngine {
   }
 
   #receive(response: WorkerResponse): void {
+    this.#handle(response);
+    this.#watch();
+  }
+
+  #handle(response: WorkerResponse): void {
     // eslint-disable-next-line default-case -- every type has a case
     switch (response.type) {
       case "boot-failed": {
@@ -264,13 +286,6 @@ export class PyodideEngine implements DjlintEngine {
         reject(new vscode.CancellationError());
         return;
       }
-      const timer = setTimeout(() => {
-        this.#fail(
-          `Bundled djLint did not respond within ${RUN_TIMEOUT_MS / 1000} seconds; restarting it.`,
-          new Error("Bundled djLint timed out"),
-        );
-      }, RUN_TIMEOUT_MS);
-      // Python blocks the worker, so the run is only over once it says so. Until then the timer stays armed: nothing else can end a stuck run.
       const cancellation = token.onCancellationRequested(() => {
         const pending = this.#pending.get(id);
         if (!pending) {
@@ -282,18 +297,22 @@ export class PyodideEngine implements DjlintEngine {
         this.#worker?.postMessage(cancel);
       });
       this.#pending.set(id, {
+        document,
         isCancelled: false,
         reject,
         resolve,
-        stopWaiting: () => {
-          clearTimeout(timer);
+        stopListening: () => {
           cancellation.dispose();
         },
       });
+      if (this.#watchdog == null) {
+        this.#watch();
+      }
       try {
         this.#ensureWorker().postMessage(request);
       } catch (e) {
         this.#take(id)?.reject(e instanceof Error ? e : new Error(String(e)));
+        this.#watch();
       }
     });
   }

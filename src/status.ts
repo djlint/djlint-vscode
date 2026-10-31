@@ -1,5 +1,11 @@
 import * as vscode from "vscode";
 import { getConfig } from "./config.js";
+import { workspaceScopeKey } from "./paths.js";
+
+interface InUse {
+  source: string;
+  version: string;
+}
 
 function languages(): string[] {
   return [...(getConfig().get<readonly string[]>("formatLanguages") ?? [])];
@@ -10,16 +16,26 @@ export class DjlintStatus implements vscode.Disposable {
     "djlint",
     languages(),
   );
+  readonly #inUse = new Map<string, InUse>();
+  readonly #editorChange: vscode.Disposable;
 
   constructor() {
     this.#item.name = "djLint";
-    this.#item.text = "djLint";
     this.#item.command = { command: "djlint.showLogs", title: "Open Logs" };
+    this.#editorChange = vscode.window.onDidChangeActiveTextEditor(() => {
+      this.#render();
+    });
+    this.#render();
   }
 
-  update(version: string, source: string): void {
-    this.#item.text = `djLint ${version}`;
-    this.#item.detail = source;
+  update(document: vscode.TextDocument, version: string, source: string): void {
+    this.#inUse.set(workspaceScopeKey(document), { source, version });
+    this.#render();
+  }
+
+  clear(): void {
+    this.#inUse.clear();
+    this.#render();
   }
 
   refreshLanguages(): void {
@@ -27,6 +43,16 @@ export class DjlintStatus implements vscode.Disposable {
   }
 
   dispose(): void {
+    this.#editorChange.dispose();
     this.#item.dispose();
+  }
+
+  #render(): void {
+    const document = vscode.window.activeTextEditor?.document;
+    const inUse = this.#inUse.get(
+      document == null ? "" : workspaceScopeKey(document),
+    );
+    this.#item.text = inUse?.version ? `djLint ${inUse.version}` : "djLint";
+    this.#item.detail = inUse?.source ?? "";
   }
 }

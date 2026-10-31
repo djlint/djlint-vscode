@@ -134,6 +134,28 @@ describe("selectSupportedArgs", () => {
     expect(channel.of("warn")).toHaveLength(0);
   });
 
+  it.each([
+    ["tera", "1.41", false],
+    ["tera", "1.42", true],
+    ["liquid", "1.41", false],
+    ["askama", "1.41", false],
+    ["all", "1.43", false],
+    ["all", "1.44", true],
+    ["django", "1.41", true],
+  ])("gates profile %s on djLint %s", (profile, version, isKept) => {
+    const profileArgs = formattingArgs.filter(
+      (arg) => arg.cliName === "--profile",
+    );
+    const supported = selectSupportedArgs(
+      profileArgs,
+      version,
+      { ...context, config: makeConfig({ profile }) },
+      new Set(),
+      makeChannel(),
+    );
+    expect(supported.length === 1).toBe(isKept);
+  });
+
   it("keeps everything for a new enough version", () => {
     const channel = makeChannel();
     expect(

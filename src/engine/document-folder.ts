@@ -1,12 +1,26 @@
-import { existsSync } from "node:fs";
+import { stat } from "node:fs/promises";
 import * as vscode from "vscode";
 
 export function getDocumentFolder(
   document: vscode.TextDocument,
 ): string | undefined {
-  if (document.uri.scheme !== "file") {
+  return document.uri.scheme === "file"
+    ? vscode.Uri.joinPath(document.uri, "..").fsPath
+    : void 0;
+}
+
+// A spawn from a folder that is gone fails like a missing executable.
+export async function getExistingDocumentFolder(
+  document: vscode.TextDocument,
+): Promise<string | undefined> {
+  const folder = getDocumentFolder(document);
+  if (folder == null) {
     return void 0;
   }
-  const folder = vscode.Uri.joinPath(document.uri, "..").fsPath;
-  return existsSync(folder) ? folder : void 0;
+  try {
+    await stat(folder);
+    return folder;
+  } catch {
+    return void 0;
+  }
 }

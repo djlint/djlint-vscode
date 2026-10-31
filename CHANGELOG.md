@@ -5,12 +5,12 @@
 - Bundle djLint 1.47.1, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
 - Work in VS Code for the Web and in virtual workspaces, with the bundled djLint, which reads the project's configuration files there too.
 - Register the formatter and enable linting by default for the `tera-html` language ID, which the main Tera extension gives to `.tera` and `.html.tera` files, and `pos-liquid`, used by platformOS.
-- Remove the `hbs` language ID from the defaults. `.hbs` files are `handlebars`. To keep it, add it to `djlint.formatLanguages` and set `djlint.enableLinting` for it.
+- Remove the `hbs` language ID from the defaults. `.hbs` files are `handlebars`. To keep it, add it to `djlint.formatLanguages` and set `djlint.enableLinting` to `true` and `djlint.profile` to `"handlebars"` for it.
 - Add the `djlint.importStrategy` setting. `useBundled` always uses the bundled djLint, whatever is installed.
 - Honor `per-file-ignores` when linting from the editor, with the bundled djLint and with an installed djLint 1.43 or newer, which added `--stdin-filename` ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
 - Add a `djLint: Restart` command that detects djLint again, for example after upgrading it in the same environment, and a `djLint: Show Logs` command.
 - Show the djLint in use in the language status item of the status bar.
-- Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.
+- Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it. That includes a `djlint.profile` it does not know, such as the default `tera` and `liquid` for djLint before 1.42, which can crash it.
 - Remove the `djlint.useNewLinterOutputParser` setting. The extension now picks the most reliable linter output format your djLint supports on its own.
 - Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
 - Show the rule code of a diagnostic as a link to its documentation, instead of at the end of the message.
@@ -18,7 +18,7 @@
 - Error notifications now show what djLint actually reported, instead of the whole failed command followed by its output.
 - Always look for `pyproject.toml`/`.djlintrc` starting from the edited file's own folder. Setting `djlint.configuration` or `djlint.rules` previously moved that search to the workspace root, so a monorepo could pick the root config instead of the one next to the file. Relative values for those two settings are still resolved from the workspace root, as documented.
 - Read the active Python environment from the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) when it is installed and enabled, falling back to the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) otherwise. Interpreters that need extra launch arguments (conda, uv) are now run correctly.
-- `djlint.executablePath` and `djlint.pythonPath` now take precedence over the active Python environment instead of being ignored while `djlint.useVenv` is enabled, and both now default to `""` (unset) rather than `"djlint"`/`"python"`. Setting either no longer requires disabling `djlint.useVenv`. Unset, `djlint` on PATH is still found, and so is `python -m djlint`.
+- `djlint.executablePath` and `djlint.pythonPath` now take precedence over the active Python environment instead of being ignored while `djlint.useVenv` is enabled, and both now default to `""` (unset) rather than `"djlint"`/`"python"`. Setting either no longer requires disabling `djlint.useVenv`. Unset, `djlint` on PATH is still found, and so is `python -m djlint`. The old default values mean the same as unset when written out in `settings.json`, so they do not take precedence over the active environment.
 - `djlint.pythonPath` is no longer deprecated.
 - Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled one instead of showing an error.
 - Ship the licenses of everything the package bundles (npm packages, Pyodide, djLint and the Python packages it uses) in `THIRD-PARTY-NOTICES.txt` in the root of the extension, which moved from `dist/`. Because the package bundles djLint, it is distributed under GPL-3.0-or-later as a whole; the extension's own code stays MIT.

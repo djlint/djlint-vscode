@@ -1,6 +1,6 @@
 // SubprocessEngine with execa replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
-import { existsSync } from "node:fs";
+import { stat } from "node:fs/promises";
 import path from "node:path";
 import { execa } from "execa";
 import type { Mock } from "vitest";
@@ -26,9 +26,9 @@ import {
   RUN_TIMEOUT_MS,
 } from "../types.js";
 
-vi.mock("node:fs", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:fs")>()),
-  existsSync: vi.fn(() => true),
+vi.mock("node:fs/promises", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:fs/promises")>()),
+  stat: vi.fn(async () => ({})),
 }));
 
 vi.mock("execa", async (importOriginal) => ({
@@ -40,11 +40,18 @@ type Spawn = (
   exec: string,
   args: readonly string[],
   options: Record<string, unknown>,
-) => Promise<{ exitCode?: number; stdout: string }>;
+) => Promise<{
+  exitCode?: number | undefined;
+  failed?: boolean;
+  stderr?: string;
+  stdout: string;
+  timedOut?: boolean;
+}>;
 
 const spawn = execa as unknown as Mock<Spawn>;
 
 const VERSION_OUTPUT = { exitCode: 0, stdout: "djlint, version 1.44.2" };
+const NO_MODULE = "No module named djlint";
 
 function isProbe(args: readonly string[]): boolean {
   return args.includes("--version");
@@ -195,7 +202,9 @@ describe("the spawned command", () => {
 
   it("runs from no folder when the document's folder is gone, instead of taking the ENOENT for a missing djLint", async () => {
     installDjlint();
-    vi.mocked(existsSync).mockReturnValueOnce(false).mockReturnValueOnce(false);
+    vi.mocked(stat)
+      .mockRejectedValueOnce(new Error("gone"))
+      .mockRejectedValueOnce(new Error("gone"));
     const { engine } = makeEngine();
     await engine.format(document, config, formattingOptions, liveToken());
 
@@ -270,7 +279,7 @@ describe("resolution through the engine", () => {
       exec === "djlint" && isProbe(args)
         ? VERSION_OUTPUT
         : isProbe(args)
-          ? { exitCode: 1, stdout: "" }
+          ? { exitCode: 1, stderr: NO_MODULE, stdout: "" }
           : { stdout: "" },
     );
     const { channel, engine } = makeEngine();
@@ -402,6 +411,93 @@ describe("how a run ends", () => {
     expect(runs()).toHaveLength(4);
   });
 
+  it("runs a djLint that timed out on --version, with every option, and does not cache it", async () => {
+    spawn.mockImplementation(async (_exec, args) =>
+      isProbe(args)
+        ? {
+            exitCode: void 0,
+            failed: true,
+            stderr: "",
+            stdout: "",
+            timedOut: true,
+          }
+        : { stdout: "FORMATTED" },
+    );
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(
+        document,
+        makeConfig({ executablePath: "/slow/djlint" }),
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toBe("FORMATTED");
+    expect(runs()[0]?.[0]).toBe("/slow/djlint");
+    const before = probes();
+    await engine.format(
+      document,
+      makeConfig({ executablePath: "/slow/djlint" }),
+      formattingOptions,
+      liveToken(),
+    );
+    expect(probes()).toBe(before + 1);
+  });
+
+  it("does not fall back from a djLint that crashes on start", async () => {
+    spawn.mockImplementation(async (_exec, args) => {
+      if (isProbe(args)) {
+        return {
+          exitCode: 1,
+          failed: true,
+          stderr: "ImportError: boom",
+          stdout: "",
+        };
+      }
+      throw makeExecaError({ exitCode: 1, stderr: "ImportError: boom" });
+    });
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(document, config, formattingOptions, liveToken()),
+    ).rejects.not.toBeInstanceOf(DjlintUnavailableError);
+    expect(control.shownErrors[0]).toContain("ImportError: boom");
+  });
+
+  it("skips a python that cannot say, such as the Windows Store stub", async () => {
+    spawn.mockImplementation(async (exec) => {
+      if (exec === "djlint") {
+        throw makeExecaError({ code: "ENOENT" });
+      }
+      return {
+        exitCode: 9009,
+        failed: true,
+        stderr: "Python was not found",
+        stdout: "",
+      };
+    });
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(document, makeConfig(), formattingOptions, liveToken()),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+  });
+
+  it("takes the old default values for unset, so the active environment wins", async () => {
+    installDjlint();
+    const { engine } = makeEngine(async () => ({
+      command: { args: [], executable: "/venv/python" },
+    }));
+    await engine.format(
+      document,
+      makeConfig({
+        executablePath: "djlint",
+        pythonPath: "python",
+        useVenv: true,
+      }),
+      formattingOptions,
+      liveToken(),
+    );
+    expect(runs()[0]?.[0]).toBe("/venv/python");
+  });
+
   it("looks for djLint again when the one it had vanished", async () => {
     let isFirstRun = true;
     installDjlint(async () => {
@@ -424,7 +520,9 @@ describe("how a run ends", () => {
       if (!isProbe(args)) {
         throw makeExecaError({ exitCode: 3, stderr: "gone" });
       }
-      const output = firstProbe ? VERSION_OUTPUT : { exitCode: 1, stdout: "" };
+      const output = firstProbe
+        ? VERSION_OUTPUT
+        : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
       firstProbe = false;
       return output;
     });

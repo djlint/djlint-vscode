@@ -244,6 +244,8 @@ interface FormattingProviderRecord {
 }
 
 function initialState(): {
+  activeDocument: unknown;
+  activeEditorListeners: Set<() => void>;
   files: Map<string, string>;
   statusItems: StatusItem[];
   commands: Map<string, () => unknown>;
@@ -260,6 +262,8 @@ function initialState(): {
   workspaceFolders: readonly WorkspaceFolder[];
 } {
   return {
+    activeDocument: void 0,
+    activeEditorListeners: new Set(),
     files: new Map(),
     statusItems: [],
     commands: new Map(),
@@ -331,6 +335,13 @@ function findWorkspaceFolder(uri: Uri): WorkspaceFolder | undefined {
     .toSorted((a, b) => b.uri.path.length - a.uri.path.length)[0];
 }
 
+export function setActiveDocument(document: unknown): void {
+  control.activeDocument = document;
+  for (const listener of control.activeEditorListeners) {
+    listener();
+  }
+}
+
 export const workspace = {
   fs: {
     readFile: async (uri: Uri): Promise<Uint8Array> => {
@@ -367,6 +378,21 @@ export const workspace = {
 };
 
 export const window = {
+  get activeTextEditor(): { document: unknown } | undefined {
+    return control.activeDocument == null
+      ? void 0
+      : { document: control.activeDocument };
+  },
+  onDidChangeActiveTextEditor: (
+    listener: () => void,
+  ): { dispose: () => void } => {
+    control.activeEditorListeners.add(listener);
+    return {
+      dispose: (): void => {
+        control.activeEditorListeners.delete(listener);
+      },
+    };
+  },
   createOutputChannel: (
     _name: string,
     _options?: unknown,

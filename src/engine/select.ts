@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
 import {
   DjlintUnavailableError,
@@ -60,8 +61,8 @@ export class FallbackEngine implements DjlintEngine {
     // Only the bundled djLint can read the configuration of a virtual workspace.
     const shouldPreferBundled =
       isVirtualDocument(document) &&
-      !config.get<string>("executablePath") &&
-      !config.get<string>("pythonPath");
+      !getConfiguredPath(config, "executablePath") &&
+      !getConfiguredPath(config, "pythonPath");
     if (
       shouldPreferBundled ||
       config.get<string>("importStrategy") === "useBundled"

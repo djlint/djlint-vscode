@@ -6,8 +6,11 @@ import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../types.js";
 export interface RunnerCommand {
   exec: string;
   prefixArgs: readonly string[];
-  version: string;
+  version: string | null;
 }
+
+/** The version, null if djLint is not there, undefined if the probe cannot tell: it failed or timed out. */
+export type ProbeResult = string | null | undefined;
 
 const MODULE_ARGS: readonly string[] = ["-m", "djlint"];
 
@@ -22,10 +25,7 @@ export interface ResolveDjlintCommandDeps {
       ) => Promise<PythonEnvironmentDetails | null>)
     | null;
   uri: vscode.Uri | undefined;
-  probe: (
-    exec: string,
-    prefixArgs: readonly string[],
-  ) => Promise<string | null>;
+  probe: (exec: string, prefixArgs: readonly string[]) => Promise<ProbeResult>;
   onConfiguredPathRejected: (setting: string, exec: string) => void;
 }
 
@@ -37,6 +37,9 @@ export async function resolveDjlintCommand(
     prefixArgs: readonly string[],
   ): Promise<RunnerCommand | null> {
     const version = await deps.probe(exec, prefixArgs);
+    if (version === void 0) {
+      return { exec, prefixArgs, version: null };
+    }
     return version == null ? null : { exec, prefixArgs, version };
   }
 
@@ -73,10 +76,11 @@ export async function resolveDjlintCommand(
   }
 
   for (const python of PYTHONS_ON_PATH) {
+    // A python that cannot tell is no sign of a djLint: this is only a last look around.
     // eslint-disable-next-line no-await-in-loop -- the first one that works wins
-    const command = await tryCommand(python, MODULE_ARGS);
-    if (command) {
-      return command;
+    const version = await deps.probe(python, MODULE_ARGS);
+    if (version != null) {
+      return { exec: python, prefixArgs: MODULE_ARGS, version };
     }
   }
 
@@ -128,7 +132,7 @@ export class CommandResolver {
   ): Promise<RunnerCommand> {
     const epochAtStart = this.#epoch;
     const command = await resolveDjlintCommand(deps);
-    if (epochAtStart === this.#epoch) {
+    if (epochAtStart === this.#epoch && command.version != null) {
       this.#cache.set(scopeKey, { command, resolvedAt: Date.now() });
     }
     return command;

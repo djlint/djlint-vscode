@@ -23,11 +23,6 @@ import { PyodideEngine } from "../index.js";
 import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
 
-vi.mock("node:fs", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:fs")>()),
-  existsSync: vi.fn(() => true),
-}));
-
 vi.mock("node:worker_threads", async () => {
   const { FakeWorker: Worker } =
     await import("../../../__tests__/fake-worker.js");
@@ -479,6 +474,22 @@ describe("timeouts", () => {
 
     const { id } = FakeWorker.latest.lastRun;
     FakeWorker.latest.failRun(id, "cancelled");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("does not mistake a long queue for a stuck run", async () => {
+    const { engine } = makeEngine();
+    format(engine).catch(() => void 0);
+    const first = FakeWorker.latest.lastRun.id;
+    format(engine).catch(() => void 0);
+    const second = FakeWorker.latest.lastRun.id;
+
+    await vi.advanceTimersByTimeAsync(RUN_TIMEOUT_MS - 1);
+    FakeWorker.latest.succeed(first, "x");
+    await vi.advanceTimersByTimeAsync(RUN_TIMEOUT_MS - 1);
+    expect(FakeWorker.latest.terminated).toBe(false);
+
+    FakeWorker.latest.succeed(second, "x");
     expect(vi.getTimerCount()).toBe(0);
   });
 

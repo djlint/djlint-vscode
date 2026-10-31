@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { DjlintStatus } from "../status.js";
-import { control, resetVscode } from "./vscode-stub.js";
+import { makeDocument, setWorkspaceFolders } from "./helpers.js";
+import { control, resetVscode, setActiveDocument } from "./vscode-stub.js";
+
+const document = makeDocument("/a/t.html");
 
 beforeEach(() => {
   resetVscode();
@@ -18,10 +21,33 @@ describe("DjlintStatus", () => {
 
   it("names the djLint in use", () => {
     const status = new DjlintStatus();
-    status.update("1.47.1", "bundled");
+    status.update(document, "1.47.1", "bundled");
     const [item] = control.statusItems;
     expect(item?.text).toBe("djLint 1.47.1");
     expect(item?.detail).toBe("bundled");
+  });
+
+  it("shows the djLint of the active document's folder", () => {
+    setWorkspaceFolders("/a", "/b");
+    const status = new DjlintStatus();
+    const other = makeDocument("/b/t.html");
+    status.update(document, "1.0", "first");
+    status.update(other, "2.0", "second");
+    const [item] = control.statusItems;
+
+    setActiveDocument(document);
+    expect(item?.text).toBe("djLint 1.0");
+    setActiveDocument(other);
+    expect(item?.text).toBe("djLint 2.0");
+  });
+
+  it("forgets what it showed on a restart", () => {
+    const status = new DjlintStatus();
+    status.update(document, "1.47.1", "bundled");
+    status.clear();
+    const [item] = control.statusItems;
+    expect(item?.text).toBe("djLint");
+    expect(item?.detail).toBe("");
   });
 
   it("follows djlint.formatLanguages", () => {

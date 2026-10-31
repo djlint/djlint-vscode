@@ -17,6 +17,7 @@ export function startExtension(
 
   function restart(): void {
     engines.reset();
+    status.clear();
     beforeRestart?.();
     void linter.refreshAll();
   }

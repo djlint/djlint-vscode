@@ -20,11 +20,6 @@ import { createDesktopEngine } from "../desktop.js";
 import { PyodideEngine } from "../pyodide/index.js";
 import { EngineManager, FallbackEngine } from "../select.js";
 
-vi.mock("node:fs", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:fs")>()),
-  existsSync: vi.fn(() => true),
-}));
-
 vi.mock("node:worker_threads", async () => {
   const { FakeWorker: Worker } = await import("../../__tests__/fake-worker.js");
   return { Worker };

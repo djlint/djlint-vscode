@@ -17,6 +17,7 @@ export function everySetting(args: readonly CliArg[]): Record<string, unknown> {
         values[arg.vscodeName] = 1;
         break;
       }
+      case "ProfileArg":
       case "StringArg": {
         values[arg.vscodeName] = "x";
         break;

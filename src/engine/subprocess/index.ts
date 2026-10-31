@@ -3,7 +3,7 @@ import process from "node:process";
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
-import { configSection } from "../../config.js";
+import { configSection, getConfiguredPath } from "../../config.js";
 import {
   normalizeConfiguredExecutable,
   workspaceScopeKey,
@@ -13,7 +13,7 @@ import type {
   PythonEnvironments,
 } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
-import { getDocumentFolder } from "../document-folder.js";
+import { getExistingDocumentFolder } from "../document-folder.js";
 import {
   DjlintUnavailableError,
   RUN_TIMEOUT_MS,
@@ -29,7 +29,11 @@ import {
   type CustomExecaError,
 } from "./exec.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
-import { CommandResolver, type RunnerCommand } from "./resolve.js";
+import {
+  CommandResolver,
+  type ProbeResult,
+  type RunnerCommand,
+} from "./resolve.js";
 import { parseDjlintVersion, selectSupportedArgs } from "./version.js";
 
 const PROBE_TIMEOUT_MS = 10_000;
@@ -59,13 +63,13 @@ function moduleSearchEnv({
   };
 }
 
-export type RunFailureClassification = "error" | "lint-result" | "unavailable";
+type RunFailureClassification = "error" | "lint-result" | "unavailable";
 
 export async function classifyRunFailure(
   e: CustomExecaError,
   isValidResult: (e: CustomExecaError) => boolean,
   isUnavailableFast: (e: CustomExecaError) => boolean,
-  reprobe: () => Promise<string | null>,
+  reprobe: () => Promise<ProbeResult>,
 ): Promise<RunFailureClassification> {
   if (isValidResult(e)) {
     return "lint-result";
@@ -73,8 +77,7 @@ export async function classifyRunFailure(
   if (isUnavailableFast(e)) {
     return "unavailable";
   }
-  const version = await reprobe();
-  return version == null ? "unavailable" : "error";
+  return (await reprobe()) === null ? "unavailable" : "error";
 }
 
 // Version managers' shims pick the Python of the folder they run from.
@@ -82,8 +85,8 @@ async function probeExecutable(
   exec: string,
   prefixArgs: readonly string[],
   document: vscode.TextDocument,
-): Promise<string | null> {
-  const cwd = getDocumentFolder(document);
+): Promise<ProbeResult> {
+  const cwd = await getExistingDocumentFolder(document);
   try {
     const result = await execa(exec, [...prefixArgs, "--version"], {
       ...(cwd != null && { cwd }),
@@ -91,7 +94,10 @@ async function probeExecutable(
       stdin: "ignore",
       timeout: PROBE_TIMEOUT_MS,
     });
-    return result.exitCode === 0 ? parseDjlintVersion(result.stdout) : null;
+    if (result.exitCode === 0) {
+      return parseDjlintVersion(result.stdout);
+    }
+    return isDjlintUnavailable(result) ? null : void 0;
   } catch {
     return null;
   }
@@ -139,7 +145,7 @@ export class SubprocessEngine implements DjlintEngine {
     const command = await this.#resolver.resolve(
       {
         executablePath: normalizeConfiguredExecutable(
-          config.get<string>("executablePath") ?? "",
+          getConfiguredPath(config, "executablePath"),
           document,
         ),
         getActiveEnvironment: config.get<boolean>("useVenv")
@@ -151,10 +157,10 @@ export class SubprocessEngine implements DjlintEngine {
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
           );
         },
-        probe: async (exec, prefixArgs): Promise<string | null> =>
+        probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
         pythonPath: normalizeConfiguredExecutable(
-          config.get<string>("pythonPath") ?? "",
+          getConfiguredPath(config, "pythonPath"),
           document,
         ),
         uri: document.uri,
@@ -162,8 +168,8 @@ export class SubprocessEngine implements DjlintEngine {
       scopeKey,
     );
     const source = [command.exec, ...command.prefixArgs].join(" ");
-    this.status.update(command.version, source);
-    const description = `djLint ${command.version}: ${source}`;
+    this.status.update(document, command.version ?? "", source);
+    const description = `djLint ${command.version ?? "of unknown version"}: ${source}`;
     if (this.#loggedCommands.get(scopeKey) !== description) {
       this.#loggedCommands.set(scopeKey, description);
       this.outputChannel.info(`Using ${description}`);
@@ -171,8 +177,8 @@ export class SubprocessEngine implements DjlintEngine {
     return command;
   }
 
-  #getCwd(document: vscode.TextDocument): { cwd?: string } {
-    const cwd = getDocumentFolder(document);
+  async #getCwd(document: vscode.TextDocument): Promise<{ cwd?: string }> {
+    const cwd = await getExistingDocumentFolder(document);
     if (cwd != null) {
       return { cwd };
     }
@@ -205,7 +211,7 @@ export class SubprocessEngine implements DjlintEngine {
       ...supportedArgs.flatMap((arg) => arg.build(context)),
     ];
     const childOptions: ChildOptions = {
-      ...this.#getCwd(context.document),
+      ...(await this.#getCwd(context.document)),
       ...moduleSearchEnv(context),
       cancelSignal,
       input: context.document.getText(),

@@ -22,7 +22,7 @@ interface Runtime {
   run: Run;
 }
 
-export interface WorkerHost {
+interface WorkerHost {
   indexURL: string;
   importPyodide: () => Promise<{ loadPyodide: typeof loadPyodide }>;
   listen: (listener: (request: WorkerRequest) => void) => void;

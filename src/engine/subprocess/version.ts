@@ -2,11 +2,11 @@ import type * as vscode from "vscode";
 import type { ArgContext, CliArg } from "../../args.js";
 
 export function parseDjlintVersion(stdout: string): string | null {
-  return (
-    /version\s+(?<version>\d+\.\d+(?:\.\d+)?)/u.exec(stdout)?.groups?.[
-      "version"
-    ] ?? null
-  );
+  // The last one: a version manager's wrapper can print its own first.
+  const matches = stdout
+    .matchAll(/version\s+(?<version>\d+\.\d+(?:\.\d+)?)/gu)
+    .toArray();
+  return matches.at(-1)?.groups?.["version"] ?? null;
 }
 
 export function isVersionAtLeast(version: string, minVersion: string): boolean {
@@ -25,20 +25,21 @@ export function isVersionAtLeast(version: string, minVersion: string): boolean {
 
 export function selectSupportedArgs(
   args: readonly CliArg[],
-  version: string,
+  version: string | null,
   context: ArgContext,
   warned: Set<string>,
   outputChannel: vscode.LogOutputChannel,
 ): readonly CliArg[] {
   return args.filter((arg) => {
-    if (isVersionAtLeast(version, arg.minVersion)) {
+    const required = arg.requiredVersion(context);
+    if (version == null || isVersionAtLeast(version, required)) {
       return true;
     }
-    const warnKey = `${version}::${arg.cliName}`;
+    const warnKey = `${version}::${arg.cliName}::${required}`;
     if (!warned.has(warnKey) && arg.build(context).length > 0) {
       warned.add(warnKey);
       outputChannel.warn(
-        `Skipping ${arg.displayName} (${arg.cliName}): requires djLint >= ${arg.minVersion}, resolved djLint is ${version}.`,
+        `Skipping ${arg.displayName} (${arg.cliName}): requires djLint >= ${required}, resolved djLint is ${version}.`,
       );
     }
     return false;
