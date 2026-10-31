@@ -143,12 +143,28 @@ describe("isValidLintResult", () => {
     ["findings with empty stderr", 1, "", true, true],
     ["findings with progress on stderr", 1, "Linting 1/1 files", true, true],
     ["a format run", 1, "", false, false],
+    ["a traceback", 1, "Traceback (most recent call last)", true, false],
     ["a usage error", 2, "", true, false],
     ["exit 1 with a real complaint", 1, "Traceback", true, false],
   ])("%s", (_label, exitCode, stderr, isLint, expected) => {
     expect(
       isValidLintResult(makeExecaError({ exitCode, stderr }), isLint),
     ).toBe(expected);
+  });
+});
+
+describe("findings with a warning on stderr", () => {
+  it("are findings", () => {
+    expect(
+      isValidLintResult(
+        makeExecaError({
+          exitCode: 1,
+          stderr: "Invalid pyproject.toml",
+          stdout: "H013",
+        }),
+        true,
+      ),
+    ).toBe(true);
   });
 });
 

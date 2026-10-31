@@ -161,6 +161,7 @@ async function probeExecutable(
 export class SubprocessEngine implements DjlintEngine {
   readonly #resolver = new CommandResolver();
   readonly #loggedCommands = new Set<string>();
+  readonly #loggedWarnings = new Set<string>();
   readonly #warnedSkippedArgs = new Set<string>();
   readonly #schemesWarnedAboutCwd = new Set<string>();
   readonly #outputChannel: vscode.LogOutputChannel;
@@ -318,8 +319,23 @@ export class SubprocessEngine implements DjlintEngine {
       stripFinalNewline: false,
       timeout: RUN_TIMEOUT_MS,
     };
-    const { stdout } = await execa(command.exec, childArgs, childOptions);
+    const { stderr, stdout } = await execa(
+      command.exec,
+      childArgs,
+      childOptions,
+    );
+    this.#logWarnings(stderr);
     return stdout;
+  }
+
+  // After a configuration it cannot read, for example, djLint goes on with its defaults.
+  #logWarnings(stderr: string): void {
+    const warnings = stderr.trim();
+    if (!warnings || this.#loggedWarnings.has(warnings)) {
+      return;
+    }
+    this.#loggedWarnings.add(warnings);
+    this.#outputChannel.warn(warnings);
   }
 
   async #run(
@@ -352,6 +368,7 @@ export class SubprocessEngine implements DjlintEngine {
       );
 
       if (classification === "lint-result") {
+        this.#logWarnings(e.stderr);
         return e.stdout;
       }
 

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Pass `djlint.closeVoidTags`, `djlint.customBlocks`, `djlint.customHtml`, `djlint.ignoreBlocks`, `djlint.ignoreCase`, `djlint.maxBlankLines` and `djlint.preserveBlankLines` when linting too, because they change what djLint reports. The linter flagged what the formatter had just kept.
+- Show the findings of an installed djLint that also writes a warning to stderr, instead of failing and clearing them. It is logged in the "djLint" output channel, and so is such a warning while formatting.
+- Lint again when a document changes during a lint, instead of showing findings at the positions of the older text.
+- Keep a finding that a rule module reports on line 0, on the first line, as the bundled djLint does.
+- Show a number field for `djlint.indentCss` and the other optional numbers in the Settings UI.
+- Say that `djlint.exclude`, `djlint.extendExclude` and `djlint.useGitignore` do not apply to the file in the editor.
 - On Windows, go on to the next place to look for djLint, and in the end to the bundled one, when a command does not exist, instead of showing an error on every run. Until now this needed `djlint` on PATH, and also failed for a removed interpreter, or a virtual environment whose base Python is gone.
 - Do the same for a shim that says its command is not there, and for a file that cannot run, such as an environment built on another system.
 - Go on without the active Python environment if the Python extension does not answer within 30 seconds, instead of leaving formatting and linting waiting. `djLint: Restart` tries again, and so does the extension once it answers.

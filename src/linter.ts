@@ -177,6 +177,7 @@ export class Linter {
 
     const key = document.uri.toString();
     const source = this.#registry.start(key);
+    const versionAtStart = document.version;
 
     let diagnostics;
     try {
@@ -197,11 +198,17 @@ export class Linter {
 
     const wasSuperseded =
       this.#registry.has(key) || source.token.isCancellationRequested;
-    if (!wasSuperseded) {
-      this.#collection.set(
-        document.uri,
-        diagnostics.map((d) => toDiagnostic(d, document)),
-      );
+    if (wasSuperseded) {
+      return;
     }
+    // The positions are of a text the document no longer has.
+    if (document.version !== versionAtStart) {
+      void this.#safeLint(document);
+      return;
+    }
+    this.#collection.set(
+      document.uri,
+      diagnostics.map((d) => toDiagnostic(d, document)),
+    );
   }
 }

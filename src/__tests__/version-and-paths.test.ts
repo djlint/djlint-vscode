@@ -97,7 +97,6 @@ describe("parseLinterOutput, pinned format", () => {
   });
 
   it.each([
-    ["line 0", `H1${FS}0:5${FS}m${RS}\n`],
     ["an empty line field", `H1${FS}:5${FS}m${RS}\n`],
     ["a non-numeric line", `H1${FS}x:5${FS}m${RS}\n`],
   ])("drops a record with %s", (_label, stdout) => {
@@ -106,8 +105,27 @@ describe("parseLinterOutput, pinned format", () => {
 
   it("does not lose the good records to a bad one", () => {
     expect(
-      parseLinterOutput(`H1${FS}0:5${FS}bad${RS}\nH2${FS}4:1${FS}good${RS}\n`),
+      parseLinterOutput(`H1${FS}x:5${FS}bad${RS}\nH2${FS}4:1${FS}good${RS}\n`),
     ).toStrictEqual([{ code: "H2", column: 1, line: 4, message: "good" }]);
+  });
+
+  it("moves line 0 to the first line", () => {
+    expect(parseLinterOutput(`H1${FS}0:5${FS}m${RS}\n`)).toStrictEqual([
+      { code: "H1", column: 5, line: 1, message: "m" },
+    ]);
+  });
+
+  it("moves the end on line 0 with it", () => {
+    expect(parseLinterOutput(`H1${FS}0:5${FS}m${FS}0:9${RS}\n`)).toStrictEqual([
+      {
+        code: "H1",
+        column: 5,
+        endColumn: 9,
+        endLine: 1,
+        line: 1,
+        message: "m",
+      },
+    ]);
   });
 });
 
@@ -125,8 +143,10 @@ describe("parseLinterOutput, legacy format", () => {
     ]);
   });
 
-  it("drops line 0", () => {
-    expect(parseLinterOutput("H013 0:5 msg")).toStrictEqual([]);
+  it("moves line 0 to the first line", () => {
+    expect(parseLinterOutput("H013 0:5 msg")).toStrictEqual([
+      { code: "H013", column: 5, line: 1, message: "msg" },
+    ]);
   });
 
   it("reads several findings", () => {
