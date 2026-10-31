@@ -181,6 +181,7 @@ export default defineConfig(
       "unicorn/prefer-early-return": "off",
       "unicorn/prefer-error-is-error": "off",
       "unicorn/prefer-event-target": "off",
+      "unicorn/prefer-json-import": "off",
       "unicorn/prefer-string-repeat": "off",
       "unicorn/prefer-then-catch": "off",
       "unicorn/require-array-join-separator": "off",
