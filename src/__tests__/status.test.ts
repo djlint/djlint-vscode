@@ -57,6 +57,29 @@ describe("DjlintStatus", () => {
     expect(item?.text).toBe("djLint 2.0");
   });
 
+  it("tells apart the files of a folder, which can differ by language", () => {
+    setWorkspaceFolders("/a");
+    const status = new DjlintStatus();
+    const one = makeDocument("/a/one.html");
+    const two = makeDocument("/a/two.jinja");
+    status.update(one, "1.0", "first");
+    status.update(two, "2.0", "second");
+    const [item] = control.statusItems;
+
+    setActiveDocument(one);
+    expect(item?.text).toBe("djLint 1.0");
+    setActiveDocument(two);
+    expect(item?.text).toBe("djLint 2.0");
+  });
+
+  it("shows what its folder uses for a file that has not run yet", () => {
+    setWorkspaceFolders("/a");
+    const status = new DjlintStatus();
+    status.update(makeDocument("/a/one.html"), "1.0", "first");
+    setActiveDocument(makeDocument("/a/two.html"));
+    expect(control.statusItems[0]?.text).toBe("djLint 1.0");
+  });
+
   it("forgets what it showed on a restart", () => {
     const status = new DjlintStatus();
     status.update(document, "1.47.1", "bundled");

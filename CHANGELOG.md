@@ -7,7 +7,7 @@
 - Try `python -m djlint` before `python3 -m djlint` when looking on PATH, so a `python` that used to run keeps running.
 - Run the djLint of the environment of each project when a workspace folder holds several, and of each language that sets its own `djlint.executablePath` or `djlint.pythonPath`, instead of the one found first for five minutes.
 - Detect the version of a djLint found on PATH per folder, because a version manager's shim can pick another one in each.
-- Show the djLint of the active file's folder in the status bar, instead of the last one used in the workspace folder.
+- Show the djLint of the active file in the status bar, instead of the last one used in the workspace folder.
 - Keep the bundled djLint running when the active Python environment changes.
 - Pick up a Python extension as soon as it is installed or enabled when there was none, as before 2026.10.2, instead of after `djLint: Restart`.
 - Expand `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` in `djlint.executablePath` and `djlint.pythonPath`.
