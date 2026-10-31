@@ -25,8 +25,10 @@ const CANNOT_START: ReadonlySet<string | undefined> = new Set([
   "UNKNOWN",
 ]);
 
-// How a shell, or a version manager's shim, says that a command is not there.
-const COMMAND_NOT_FOUND: ReadonlySet<number | undefined> = new Set([127, 9009]);
+// How a shell, a version manager's shim, or on Windows a venv whose base Python is gone says that a command is not there.
+const COMMAND_NOT_FOUND: ReadonlySet<number | undefined> = new Set([
+  103, 127, 9009,
+]);
 
 export function isDjlintUnavailable(e: {
   code?: string | undefined;

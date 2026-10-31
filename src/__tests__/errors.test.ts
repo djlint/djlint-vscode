@@ -155,9 +155,12 @@ describe("isDjlintUnavailable", () => {
     },
   );
 
-  it.each([127, 9009])("recognizes the exit code %d of a shell", (exitCode) => {
-    expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
-  });
+  it.each([103, 127, 9009])(
+    "recognizes the exit code %d of a launcher",
+    (exitCode) => {
+      expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
+    },
+  );
 
   it.each([
     "No module named djlint",
