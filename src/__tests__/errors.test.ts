@@ -69,6 +69,11 @@ describe("checkErrors", () => {
     expect(message).not.toContain("does not support the");
   });
 
+  it("says why djLint could not start", () => {
+    const { message } = report(makeExecaError({ code: "E2BIG" }));
+    expect(message).toBe("djLint could not start: E2BIG.");
+  });
+
   it("summarizes stderr by its last non-empty line", () => {
     const { message } = report(
       makeExecaError({

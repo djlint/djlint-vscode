@@ -20,9 +20,12 @@ function summarize(e: CustomExecaError): string {
   if (e.timedOut) {
     return "djLint did not finish in time.";
   }
-  return e.exitCode == null
-    ? `djLint was stopped by ${e.signal ?? "a signal"}.`
-    : `djLint failed with exit code ${e.exitCode}.`;
+  if (e.exitCode != null) {
+    return `djLint failed with exit code ${e.exitCode}.`;
+  }
+  return e.signal == null
+    ? `djLint could not start: ${e.code ?? "unknown error"}.`
+    : `djLint was stopped by ${e.signal}.`;
 }
 
 export function isValidLintResult(

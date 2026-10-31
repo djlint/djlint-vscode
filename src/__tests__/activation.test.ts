@@ -183,7 +183,7 @@ describe("activate", () => {
       activePath = "/other";
       fireEnvironmentChange();
       await flush();
-      expect(update).toHaveBeenCalled();
+      expect(update.mock.lastCall?.[2]).toBe("/other -m djlint");
       update.mockRestore();
     });
 
