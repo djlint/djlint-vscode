@@ -50,9 +50,14 @@
       "enabled": false
     },
     {
-      "matchCategories": ["js"],
-      "matchPackageNames": ["@types/node"],
-      "matchUpdateTypes": ["major"],
+      "description": "Node goes up by hand, together with the VS Code version.",
+      "matchManagers": ["nvm"],
+      "enabled": false
+    },
+    {
+      "description": "Their major versions and replacements follow that Node.",
+      "matchPackageNames": ["@types/node", "/^@tsconfig/node/"],
+      "matchUpdateTypes": ["major", "replacement"],
       "enabled": false
     },
     {
