@@ -97,6 +97,9 @@ def run(mode, src, options, path_options, filename, cwd, project):
     diagnostics = []
     for error in output["lint_message"][filename]:
         line, _, column = str(error["line"]).partition(":")
+        # A python_module rule can return any position at all.
+        if not (line.isdecimal() and int(line) and (column or "0").isdecimal()):
+            continue
         diagnostics.append(
             {
                 "code": error["code"],

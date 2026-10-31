@@ -323,13 +323,14 @@ try {
     path.join(project, "project_rule.py"),
     [
       "def run(rule, config, html, filepath, line_ends, *args, **kwargs):",
-      '    return [{"code": rule["name"], "line": "1:0", "match": "",',
-      '             "message": rule["message"]}]',
+      '    return [{"code": rule["name"], "line": line, "match": "",',
+      '             "message": rule["message"]}',
+      '            for line in ("1:0", "0:0", "-1:0", "x", "1:x")]',
       "",
     ].join("\n"),
   );
   expect(
-    "a custom rule's python_module runs",
+    "a custom rule's python_module runs, and a position it made up is dropped",
     JSON.parse(await call("lint", "<div>text</div>", { cwd: folder })),
     [{ code: "T9001", column: 0, line: 1, message: "From a module" }],
   );

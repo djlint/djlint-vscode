@@ -8,7 +8,7 @@ Run `npm run assets` once to build the bundled runtime, then press <kbd>F5</kbd>
 
 `npm run assets` (also run by `vscode:prepublish`) assembles `assets/pyodide/`: the pinned Pyodide runtime, djLint, and what djLint depends on, all sha256-verified against `uv.lock` or Pyodide's lock file. It needs [`uv`](https://docs.astral.sh/uv/) on PATH.
 
-The djLint version is pinned in `pyproject.toml` and what it depends on in `uv.lock`, both kept current by Renovate; run `uv lock` after changing the first. The Pyodide runtime is pinned by the `pyodide` devDependency, and its own click, PyYAML and regex replace the locked ones, which the build checks djLint accepts. `requires-python` must be the Python that Pyodide runs.
+The djLint version is pinned in `pyproject.toml` and what it depends on in `uv.lock`, both kept current by Renovate; run `uv lock` after changing the first. The Pyodide runtime is pinned by the `pyodide` devDependency, and its own click, PyYAML and regex replace the locked ones, which the build checks djLint accepts. `requires-python` must be the Python that Pyodide runs, so Renovate leaves it alone: when a Pyodide bump moves to a new Python, `npm run assets` fails on that PR until `requires-python` and the `python-version` in the workflows are updated and `uv lock` is run.
 
 `npm run verify-bundle` boots the built bundle and formats and lints through it, reading a project's configuration from disk as it does in the editor. CI runs it on the unpacked VSIX, with `npm run verify-bundle -- unpacked/extension`, after packaging and before publishing, because packaging cleanly does not on its own prove that what is shipped still works after a dependency bump.
 

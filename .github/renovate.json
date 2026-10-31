@@ -40,6 +40,11 @@
     },
     { "matchManagers": ["github-actions", "pre-commit"], "automerge": true },
     {
+      "description": "The Python version Pyodide runs: it moves with the pyodide package, not on its own.",
+      "matchDepTypes": ["requires-python"],
+      "enabled": false
+    },
+    {
       "matchCategories": ["js"],
       "matchPackageNames": ["@types/node"],
       "matchUpdateTypes": ["major"],
