@@ -4,6 +4,11 @@ export interface WorkerData {
   indexURL: string;
 }
 
+export interface ProjectSnapshot {
+  cwd: string;
+  files: Record<string, string>;
+}
+
 export interface RunRequest {
   type: "run";
   id: number;
@@ -13,6 +18,7 @@ export interface RunRequest {
   pathOptions: Record<string, string>;
   filename: string;
   cwd: string | undefined;
+  project: ProjectSnapshot | undefined;
 }
 
 export interface CancelRequest {
@@ -37,4 +43,10 @@ export interface ReadyMessage {
   version: string;
 }
 
-export type WorkerResponse = LogMessage | ReadyMessage | RunResponse;
+export interface BootFailedMessage {
+  type: "boot-failed";
+  error: string;
+}
+
+export type WorkerResponse =
+  BootFailedMessage | LogMessage | ReadyMessage | RunResponse;

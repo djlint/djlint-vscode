@@ -40,6 +40,8 @@ Or for every language djLint supports:
 
 Linting is on by default for those languages and needs no setup.
 
+The extension also works in [vscode.dev](https://vscode.dev) and [github.dev](https://github.dev), with the bundled djLint.
+
 Everything else is configured through the `djlint.*` settings in VS Code. djLint also reads most options from a [djLint configuration file](https://djlint.com/docs/configuration/).
 
 ## Which djLint is used
@@ -68,7 +70,7 @@ With an installed djLint, the extension detects its version and passes only the 
 
 ## Configuration files
 
-djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root. The bundled djLint does the same, except in an untrusted workspace, where it reads no files.
+djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root. The bundled djLint does the same, except in an untrusted workspace, where it reads no files. In a virtual workspace, the bundled djLint is used unless `djlint.executablePath` or `djlint.pythonPath` is set, because an installed djLint cannot read files there. The search stops at the workspace root, and a custom rule's `python_module` is not available.
 
 `djlint.configuration` and `djlint.rules` point to a file of your choice. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
 

@@ -244,6 +244,7 @@ interface FormattingProviderRecord {
 }
 
 function initialState(): {
+  files: Map<string, string>;
   statusItems: StatusItem[];
   commands: Map<string, () => unknown>;
   configuration: Record<string, unknown>;
@@ -259,6 +260,7 @@ function initialState(): {
   workspaceFolders: readonly WorkspaceFolder[];
 } {
   return {
+    files: new Map(),
     statusItems: [],
     commands: new Map(),
     configuration: {},
@@ -330,6 +332,15 @@ function findWorkspaceFolder(uri: Uri): WorkspaceFolder | undefined {
 }
 
 export const workspace = {
+  fs: {
+    readFile: async (uri: Uri): Promise<Uint8Array> => {
+      const text = control.files.get(uri.toString());
+      if (text == null) {
+        throw new Error(`no such file: ${uri.toString()}`);
+      }
+      return new TextEncoder().encode(text);
+    },
+  },
   // Without a folder, VS Code answers with the path it was given.
   asRelativePath: (uri: Uri, _includeWorkspaceFolder?: boolean): string => {
     const folder = findWorkspaceFolder(uri);

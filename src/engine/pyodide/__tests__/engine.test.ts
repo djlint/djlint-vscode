@@ -17,8 +17,10 @@ import {
 } from "../../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../../args.js";
+import { getDocumentFolder } from "../../document-folder.js";
 import { RUN_TIMEOUT_MS, type LintDiagnostic } from "../../types.js";
 import { PyodideEngine } from "../index.js";
+import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
 
 vi.mock("node:fs", async (importOriginal) => ({
@@ -43,11 +45,11 @@ function makeEngine(canReadProjectFiles = true): {
   return {
     channel,
     engine: new PyodideEngine(
-      "/ext/worker.cjs",
-      "/ext/pyodide",
+      () => createNodeWorker("/ext/worker.cjs", "/ext/pyodide"),
       channel,
       canReadProjectFiles,
       makeStatus(),
+      getDocumentFolder,
     ),
   };
 }
@@ -116,7 +118,7 @@ describe("the run request", () => {
     engine.dispose();
   });
 
-  it("has no cwd for a document that is not a local file", () => {
+  it("has no cwd for a document that is not a local file", async () => {
     const { engine } = makeEngine();
     engine
       .lint(
@@ -125,7 +127,9 @@ describe("the run request", () => {
         liveToken(),
       )
       .catch(() => void 0);
-    expect(FakeWorker.latest.lastRun.cwd).toBeUndefined();
+    await vi.waitFor(() => {
+      expect(FakeWorker.latest.lastRun.cwd).toBeUndefined();
+    });
     engine.dispose();
   });
 
@@ -268,6 +272,21 @@ describe("responses", () => {
     expect(channel.of("debug").join()).toContain("stdout line");
     expect(channel.of("warn").join()).toContain("stderr line");
     expect(channel.of("info").join()).toContain("bundled djLint 1.47.1");
+    engine.dispose();
+  });
+});
+
+describe("a runtime that fails to start", () => {
+  it("is dropped, so the next request starts a new one", async () => {
+    const { engine } = makeEngine();
+    const first = format(engine);
+    const worker = FakeWorker.latest;
+    worker.respond({ error: "fetch failed", type: "boot-failed" });
+    await expect(first).rejects.toThrow("fetch failed");
+    expect(worker.terminated).toBe(true);
+
+    format(engine).catch(() => void 0);
+    expect(FakeWorker.latest).not.toBe(worker);
     engine.dispose();
   });
 });

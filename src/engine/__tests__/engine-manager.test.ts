@@ -16,6 +16,7 @@ import {
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
 import type { PythonEnvironments } from "../../python/environment.js";
+import { createDesktopEngine } from "../desktop.js";
 import { PyodideEngine } from "../pyodide/index.js";
 import { EngineManager, FallbackEngine } from "../select.js";
 
@@ -37,11 +38,13 @@ vi.mock("execa", async (importOriginal) => ({
 const extensionPath = "/ext";
 
 function makeManager(): EngineManager {
-  return new EngineManager(
-    Uri.file(extensionPath) as never,
-    makeChannel(),
-    {} as PythonEnvironments,
-    makeStatus(),
+  return new EngineManager(() =>
+    createDesktopEngine(
+      Uri.file(extensionPath) as never,
+      makeChannel(),
+      {} as PythonEnvironments,
+      makeStatus(),
+    ),
   );
 }
 

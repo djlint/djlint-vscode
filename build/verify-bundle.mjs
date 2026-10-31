@@ -58,16 +58,25 @@ const pending = new Map();
 const seq = { value: 0 };
 
 worker.on("message", (/** @type {WorkerResponse} */ response) => {
-  if (response.type === "log") {
-    console.log(`     ${response.line}`);
-    return;
+  // eslint-disable-next-line default-case -- every type has a case
+  switch (response.type) {
+    case "boot-failed": {
+      throw new Error(`bundled worker failed to start: ${response.error}`);
+    }
+    case "log": {
+      console.log(`     ${response.line}`);
+      break;
+    }
+    case "ready": {
+      console.log(`     bundled djLint ${response.version}`);
+      break;
+    }
+    case "result": {
+      pending.get(response.id)?.(response);
+      pending.delete(response.id);
+      break;
+    }
   }
-  if (response.type === "ready") {
-    console.log(`     bundled djLint ${response.version}`);
-    return;
-  }
-  pending.get(response.id)?.(response);
-  pending.delete(response.id);
 });
 worker.on("error", (e) => {
   console.error("bundled worker errored:", e);
@@ -103,6 +112,7 @@ async function call(mode, src, request = {}) {
       mode,
       options: { profile: "django" },
       pathOptions: {},
+      project: void 0,
       src,
       type: "run",
       ...request,
@@ -173,6 +183,17 @@ expect(
     },
   ),
   '<div>\n  <img id="b" class="a" alt="x" src="x.png">\n</div>\n',
+);
+
+expect(
+  "format reads a project handed over with the request",
+  await call("format", "<div><p>hi</p></div>", {
+    project: {
+      cwd: "templates/sub",
+      files: { "templates/pyproject.toml": "[tool.djlint]\nindent = 3\n" },
+    },
+  }),
+  "<div>\n   <p>hi</p>\n</div>\n",
 );
 
 expect(

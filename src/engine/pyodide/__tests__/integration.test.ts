@@ -44,8 +44,11 @@ import {
 import { Formatter } from "../../../formatter.js";
 import { Linter } from "../../../linter.js";
 import type { PythonEnvironments } from "../../../python/environment.js";
+import { createDesktopEngine } from "../../desktop.js";
+import { getDocumentFolder } from "../../document-folder.js";
 import { EngineManager } from "../../select.js";
 import { PyodideEngine } from "../index.js";
+import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest, WorkerRequest, WorkerResponse } from "../protocol.js";
 
 const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
@@ -71,11 +74,11 @@ function makeEngine(
   channel = makeChannel(),
 ): PyodideEngine {
   return new PyodideEngine(
-    workerPath,
-    indexURL,
+    () => createNodeWorker(workerPath, indexURL),
     channel,
     canReadProjectFiles,
     makeStatus(),
+    getDocumentFolder,
   );
 }
 
@@ -328,6 +331,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
 
     it("reads a djlint.configuration path from the workspace root", async () => {
       await write("conf/djlint.json", '{ "indent": 5 }\n');
+      await write("sub/t.html", NESTED);
       await expect(
         format(
           NESTED,
@@ -382,6 +386,19 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
           documentIn("t.html", "<p>x</p>"),
         ),
       ).resolves.toContain("H998");
+    });
+
+    it("reads a virtual document's configuration through VS Code", async () => {
+      const uri = vscode.Uri.parse("memfs://repo/app/templates/t.html");
+      control.workspaceFolders = [
+        { uri: vscode.Uri.parse("memfs://repo/app") as never },
+      ];
+      control.files = new Map([
+        ["memfs://repo/app/pyproject.toml", "[tool.djlint]\nindent = 5\n"],
+      ]);
+      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(
+        indented(5),
+      );
     });
 
     it("imports a rule's python_module afresh on every run, leaving no cache behind", async () => {
@@ -501,6 +518,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
           mode: "format",
           options: {},
           pathOptions: {},
+          project: void 0,
           src: "<p>x</p>",
           type: "run",
         });
@@ -529,11 +547,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
 
     beforeEach(() => {
       control.isTrusted = false;
-      engines = new EngineManager(
-        repositoryContext().extensionUri,
-        uiChannel,
-        {} as PythonEnvironments,
-        makeStatus(),
+      engines = new EngineManager(() =>
+        createDesktopEngine(
+          repositoryContext().extensionUri,
+          uiChannel,
+          {} as PythonEnvironments,
+          makeStatus(),
+        ),
       );
     });
 

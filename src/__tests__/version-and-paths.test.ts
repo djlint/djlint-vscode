@@ -3,16 +3,13 @@
 import { existsSync } from "node:fs";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+import { getDocumentFolder } from "../engine/document-folder.js";
 import { parseLinterOutput } from "../engine/subprocess/parse-lint-output.js";
 import {
   isVersionAtLeast,
   parseDjlintVersion,
 } from "../engine/subprocess/version.js";
-import {
-  deriveStdinFilename,
-  getDocumentFolder,
-  workspaceScopeKey,
-} from "../paths.js";
+import { deriveStdinFilename, workspaceScopeKey } from "../paths.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, Uri } from "./vscode-stub.js";
 

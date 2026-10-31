@@ -1,6 +1,8 @@
 **
 !dist/extension.cjs
 !dist/pyodide-worker.cjs
+!dist/web/extension.cjs
+!dist/web/pyodide-worker.js
 !THIRD-PARTY-NOTICES.txt
 !assets/pyodide/**
 !CHANGELOG.md

@@ -5,6 +5,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from shutil import rmtree
 
 from djlint import process_stdin
 from djlint.settings import Config
@@ -14,8 +15,9 @@ from djlint.src import has_pragma
 sys.dont_write_bytecode = True
 
 _HOME = os.getcwd()
-_GUEST_ROOTS = ("/host/",)
+_GUEST_ROOTS = ("/host/", "/project/")
 _BASE_SYS_PATH = list(sys.path)
+_PROJECT = Path("/project")
 
 
 def _enter(cwd):
@@ -26,6 +28,22 @@ def _enter(cwd):
         os.chdir(_HOME)
 
 
+def _write_project(project):
+    """Lay out the project's files, for a document with no folder to mount."""
+    rmtree(_PROJECT, ignore_errors=True)
+    # Where djLint's search for a project root ends.
+    (_PROJECT / ".git").mkdir(parents=True)
+    for name, text in project["files"].items():
+        path = (_PROJECT / name).resolve()
+        if not path.is_relative_to(_PROJECT):
+            continue
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    cwd = _PROJECT / project["cwd"]
+    cwd.mkdir(parents=True, exist_ok=True)
+    return str(cwd)
+
+
 def _forget_project_modules():
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
@@ -34,10 +52,10 @@ def _forget_project_modules():
     importlib.invalidate_caches()
 
 
-def run(mode, src, options, path_options, filename, cwd):
+def run(mode, src, options, path_options, filename, cwd, project):
     """Return the formatted text, or the diagnostics as JSON."""
     _forget_project_modules()
-    _enter(cwd)
+    _enter(cwd if project is None else _write_project(json.loads(project)))
     is_format = mode == "format"
     config = Config(
         "-",

@@ -1,11 +1,5 @@
-import { existsSync } from "node:fs";
 import path from "node:path";
 import * as vscode from "vscode";
-
-export const supportedUriSchemes: ReadonlySet<string> = new Set([
-  "file",
-  "vscode-vfs",
-]);
 
 const NO_FILENAME = "-";
 
@@ -15,18 +9,20 @@ export function workspaceScopeKey(document: vscode.TextDocument): string {
   );
 }
 
-export function getDocumentFolder(
-  document: vscode.TextDocument,
-): string | undefined {
-  if (document.uri.scheme !== "file") {
-    return void 0;
-  }
-  const folder = vscode.Uri.joinPath(document.uri, "..").fsPath;
-  return existsSync(folder) ? folder : void 0;
+export function isVirtualDocument(document: vscode.TextDocument): boolean {
+  return (
+    document.uri.scheme !== "file" &&
+    (document.uri.scheme === "vscode-vfs" ||
+      vscode.workspace.getWorkspaceFolder(document.uri) != null)
+  );
+}
+
+export function isSupportedDocument(document: vscode.TextDocument): boolean {
+  return document.uri.scheme === "file" || isVirtualDocument(document);
 }
 
 export function deriveStdinFilename(document: vscode.TextDocument): string {
-  if (!supportedUriSchemes.has(document.uri.scheme)) {
+  if (!isSupportedDocument(document)) {
     return NO_FILENAME;
   }
   const relativePath = vscode.workspace.asRelativePath(document.uri, false);
@@ -39,7 +35,7 @@ function resolveAgainstWorkspaceRoot(
 ): string {
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
   return folder?.uri.scheme === "file"
-    ? path.resolve(folder.uri.fsPath, value)
+    ? vscode.Uri.joinPath(folder.uri, value).fsPath
     : value;
 }
 
