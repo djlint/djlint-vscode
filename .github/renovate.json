@@ -32,11 +32,6 @@
     },
     { "matchManagers": ["github-actions", "pre-commit"], "automerge": true },
     {
-      "description": "They only run at a release, so no CI vouches for them.",
-      "matchPackageNames": ["actions/download-artifact", "ovsx"],
-      "automerge": false
-    },
-    {
       "description": "Our own package: uv.lock takes it as soon as it is out.",
       "matchPackageNames": ["djlint"],
       "minimumReleaseAge": null
