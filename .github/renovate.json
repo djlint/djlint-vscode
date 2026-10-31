@@ -2,14 +2,6 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "branchTopic": "{{{depNameSanitized}}}-{{{newMajor}}}{{#if separateMinorPatch}}{{#if isPatch}}.{{{newMinor}}}{{/if}}{{/if}}{{#if separateMultipleMinor}}{{#if isMinor}}.{{{newMinor}}}{{/if}}{{/if}}.x",
   "configMigration": true,
-  "customManagers": [
-    {
-      "customType": "regex",
-      "datasourceTemplate": "npm",
-      "managerFilePatterns": ["/^\\.github/workflows/.+\\.yml$/"],
-      "matchStrings": ["npx --yes (?<depName>@?[^@\\s]+)@(?<currentValue>\\S+)"]
-    }
-  ],
   "dependencyDashboard": false,
   "extends": [
     "config:recommended",
@@ -39,6 +31,11 @@
       "automerge": true
     },
     { "matchManagers": ["github-actions", "pre-commit"], "automerge": true },
+    {
+      "description": "They only run at a release, so no CI vouches for them.",
+      "matchPackageNames": ["actions/download-artifact", "ovsx"],
+      "automerge": false
+    },
     {
       "description": "Our own package: uv.lock takes it as soon as it is out.",
       "matchPackageNames": ["djlint"],

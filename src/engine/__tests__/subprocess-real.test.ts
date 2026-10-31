@@ -1,9 +1,10 @@
 // SubprocessEngine against whatever djLint is installed: that its command line
 // takes every flag the extension sends, and that its findings, which exit 1,
 // come back as findings. Skipped where none is installed, such as CI.
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import process from "node:process";
 import { execa } from "execa";
 import {
   afterAll,
@@ -44,11 +45,14 @@ describe.skipIf(installed.failed)(
     let engine: SubprocessEngine;
 
     beforeAll(async () => {
+      // Where this is set, djLint prints GitHub annotations whatever output format it is told.
+      vi.stubEnv("GITHUB_ACTIONS", "");
       root = await mkdtemp(path.join(os.tmpdir(), "djlint-subprocess-"));
       await writeFile(path.join(root, "t.html"), DIRTY);
     });
 
     afterAll(async () => {
+      vi.unstubAllEnvs();
       await rm(root, { force: true, recursive: true });
     });
 
@@ -182,3 +186,57 @@ describe.runIf(process.platform === "win32")("a Windows wrapper", () => {
     },
   );
 });
+
+const SHIM = `#!/bin/sh
+if [ "$1" = "--version" ]; then
+  echo "djlint, version $(cat .python-version)"
+fi
+`;
+
+describe.skipIf(process.platform === "win32")(
+  "a version manager's shim",
+  () => {
+    let root: string;
+
+    beforeAll(async () => {
+      root = await mkdtemp(path.join(os.tmpdir(), "djlint-shim-"));
+      await mkdir(path.join(root, "bin"));
+      await writeFile(path.join(root, "bin", "djlint"), SHIM);
+      await chmod(path.join(root, "bin", "djlint"), 0o755);
+      await Promise.all(
+        ["1.30.0", "1.48.0"].map(async (version) => {
+          await mkdir(path.join(root, version));
+          await writeFile(path.join(root, version, ".python-version"), version);
+        }),
+      );
+      vi.stubEnv(
+        "PATH",
+        `${path.join(root, "bin")}${path.delimiter}${process.env["PATH"] ?? ""}`,
+      );
+    });
+
+    afterAll(async () => {
+      vi.unstubAllEnvs();
+      await rm(root, { force: true, recursive: true });
+    });
+
+    it("gets the version it picks in each folder", async () => {
+      resetVscode();
+      setWorkspaceFolders(root);
+      const status = makeStatus();
+      const engine = new SubprocessEngine(
+        makeChannel(),
+        makePythonEnvironments().environments,
+        status,
+      );
+      for (const version of ["1.30.0", "1.48.0"]) {
+        const document = makeDocument(
+          vscode.Uri.file(path.join(root, version, "t.html")),
+        );
+        // eslint-disable-next-line no-await-in-loop -- the order is the point
+        await engine.lint(document, makeConfig(), liveToken());
+        expect(vi.mocked(status.update).mock.lastCall?.[1]).toBe(version);
+      }
+    });
+  },
+);
