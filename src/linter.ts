@@ -24,10 +24,37 @@ function visibleFirst(
       );
 }
 
-function toDiagnostic(d: LintDiagnostic): vscode.Diagnostic {
-  const editorLine = d.line - 1;
-  const range = new vscode.Range(editorLine, d.column, editorLine, d.column);
-  const diagnostic = new vscode.Diagnostic(range, d.message);
+// The editor counts UTF-16 code units and djLint characters, which differ past an emoji.
+function toEditorColumn(text: string, column: number): number {
+  let offset = 0;
+  for (let index = 0; index < column; index += 1) {
+    offset += (text.codePointAt(offset) ?? 0) > 0xff_ff ? 2 : 1;
+  }
+  return offset;
+}
+
+function toRange(
+  d: LintDiagnostic,
+  document: vscode.TextDocument,
+): vscode.Range {
+  const line = d.line - 1;
+  const { text } =
+    line < document.lineCount ? document.lineAt(line) : { text: "" };
+  const start = toEditorColumn(text, d.column);
+  if (d.endLine == null || d.endColumn == null) {
+    return new vscode.Range(line, start, line, start);
+  }
+  // A finding over several lines is underlined on its first: a block in red says less than its tag.
+  const end =
+    d.endLine === d.line ? toEditorColumn(text, d.endColumn) : text.length;
+  return new vscode.Range(line, start, line, Math.max(start, end));
+}
+
+function toDiagnostic(
+  d: LintDiagnostic,
+  document: vscode.TextDocument,
+): vscode.Diagnostic {
+  const diagnostic = new vscode.Diagnostic(toRange(d, document), d.message);
   diagnostic.source = "djLint";
   diagnostic.code = {
     target: vscode.Uri.parse(
@@ -173,7 +200,7 @@ export class Linter {
     if (!wasSuperseded) {
       this.#collection.set(
         document.uri,
-        diagnostics.map((d) => toDiagnostic(d)),
+        diagnostics.map((d) => toDiagnostic(d, document)),
       );
     }
   }

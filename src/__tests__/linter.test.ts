@@ -186,6 +186,47 @@ describe("published diagnostics", () => {
   });
 });
 
+describe("the range of a diagnostic", () => {
+  async function rangeOf(
+    text: string,
+    found: Omit<LintDiagnostic, "code" | "message">,
+  ): Promise<unknown> {
+    const document = makeDocument("/w/a.html", text);
+    control.documents = [document];
+    const { linter } = makeLinter(async () => [
+      { ...found, code: "H013", message: "m" },
+    ]);
+    await linter.refreshAll();
+    const [diagnostic] = (diagnosticsOf(document) ??
+      []) as readonly vscode.Diagnostic[];
+    return diagnostic?.range;
+  }
+
+  it("covers what djLint found", async () => {
+    await expect(
+      rangeOf("<img>", { column: 1, endColumn: 4, endLine: 1, line: 1 }),
+    ).resolves.toStrictEqual(new vscode.Range(0, 1, 0, 4));
+  });
+
+  it("stops at the end of the first line of a finding over several", async () => {
+    await expect(
+      rangeOf("<img\n  src>", { column: 1, endColumn: 6, endLine: 2, line: 1 }),
+    ).resolves.toStrictEqual(new vscode.Range(0, 1, 0, 4));
+  });
+
+  it("counts an emoji as the two units the editor does", async () => {
+    await expect(
+      rangeOf("\u{1F600}<a>", { column: 1, endColumn: 4, endLine: 1, line: 1 }),
+    ).resolves.toStrictEqual(new vscode.Range(0, 2, 0, 5));
+  });
+
+  it("is empty when djLint gives no end", async () => {
+    await expect(
+      rangeOf("<img>", { column: 1, line: 1 }),
+    ).resolves.toStrictEqual(new vscode.Range(0, 1, 0, 1));
+  });
+});
+
 describe("clearing diagnostics", () => {
   beforeEach(() => {
     control.documents = [document];

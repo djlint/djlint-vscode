@@ -14,6 +14,8 @@
 - Remove the `djlint.useNewLinterOutputParser` setting. The extension now picks the most reliable linter output format your djLint supports on its own.
 - Refresh diagnostics immediately when a setting that affects linting changes, instead of waiting for the next save. A language's warnings now clear as soon as linting is disabled for it.
 - Show the rule code of a diagnostic as a link to its documentation, instead of at the end of the message.
+- Underline what djLint found, with the bundled djLint and an installed djLint 1.48 or newer, instead of a single point. A finding over several lines is underlined on its first.
+- Put a diagnostic in the right column on a line with an emoji before it.
 - Stop an unresponsive djLint from hanging a format or lint indefinitely. Such a run is now given up on, and the stuck process ended, instead of surviving for the rest of the session.
 - Error notifications now show what djLint actually reported, instead of the whole failed command followed by its output.
 - Always look for `pyproject.toml`/`.djlintrc` starting from the edited file's own folder. Setting `djlint.configuration` or `djlint.rules` previously moved that search to the workspace root, so a monorepo could pick the root config instead of the one next to the file. Relative values for those two settings are still resolved from the workspace root, as documented.

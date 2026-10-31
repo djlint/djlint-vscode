@@ -1,12 +1,19 @@
 import type * as vscode from "vscode";
-import { LINTER_OUTPUT_FORMAT } from "./engine/subprocess/parse-lint-output.js";
+import {
+  LINTER_OUTPUT_FORMAT,
+  LINTER_OUTPUT_FORMAT_WITH_END,
+} from "./engine/subprocess/parse-lint-output.js";
+import { isVersionAtLeast } from "./engine/subprocess/version.js";
 import { deriveStdinFilename, resolveWorkspaceFilePath } from "./paths.js";
 
 export interface ArgContext {
   config: vscode.WorkspaceConfiguration;
   document: vscode.TextDocument;
   formattingOptions?: vscode.FormattingOptions;
+  djlintVersion?: string | null;
 }
+
+const LINTER_END_MIN_VERSION = "1.48";
 
 type ArgValue = boolean | number | string;
 
@@ -112,8 +119,11 @@ class LinterOutputFormatArg extends CliOnlyArg {
   }
 
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
-  protected read(): string {
-    return LINTER_OUTPUT_FORMAT;
+  protected read({ djlintVersion }: ArgContext): string {
+    return djlintVersion != null &&
+      isVersionAtLeast(djlintVersion, LINTER_END_MIN_VERSION)
+      ? LINTER_OUTPUT_FORMAT_WITH_END
+      : LINTER_OUTPUT_FORMAT;
   }
 }
 

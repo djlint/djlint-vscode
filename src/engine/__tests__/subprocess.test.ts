@@ -19,7 +19,10 @@ import {
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
 import type { PythonEnvironments } from "../../python/environment.js";
 import { SubprocessEngine } from "../subprocess/index.js";
-import { LINTER_OUTPUT_FORMAT } from "../subprocess/parse-lint-output.js";
+import {
+  LINTER_OUTPUT_FORMAT,
+  LINTER_OUTPUT_FORMAT_WITH_END,
+} from "../subprocess/parse-lint-output.js";
 import {
   DjlintUnavailableError,
   RESOLUTION_TTL_MS,
@@ -178,6 +181,20 @@ describe("the spawned command", () => {
     expect(args).toContain(LINTER_OUTPUT_FORMAT);
     expect(args).toContain("--stdin-filename");
     expect(args).toContain("sub/t.html");
+  });
+
+  it.each([
+    ["1.47.1", LINTER_OUTPUT_FORMAT],
+    ["1.48.0", LINTER_OUTPUT_FORMAT_WITH_END],
+  ])("asks djLint %s for what it can give", async (version, format) => {
+    installDjlint(void 0, {
+      exitCode: 0,
+      stdout: `djlint, version ${version}`,
+    });
+    const { engine } = makeEngine();
+    await engine.lint(document, config, liveToken());
+    const [[, args]] = runs() as [Parameters<Spawn>];
+    expect(args).toContain(format);
   });
 
   it("leaves out flags the resolved djLint is too old for, warning once", async () => {

@@ -165,6 +165,8 @@ const H013 = [
   {
     code: "H013",
     column: 5,
+    endColumn: 22,
+    endLine: 1,
     line: 1,
     message: "Img tag should have an alt attribute.",
   },
@@ -323,16 +325,24 @@ try {
     path.join(project, "project_rule.py"),
     [
       "def run(rule, config, html, filepath, line_ends, *args, **kwargs):",
-      '    return [{"code": rule["name"], "line": line, "match": "",',
-      '             "message": rule["message"]}',
-      '            for line in ("1:0", "0:0", "-1:0", "x", "1:x")]',
+      '    return [{"code": rule["name"], "line": "0:0", "match": "",',
+      '             "message": rule["message"]}]',
       "",
     ].join("\n"),
   );
   expect(
-    "a custom rule's python_module runs, and a position it made up is dropped",
+    "a custom rule's python_module runs, with its line 0 made line 1",
     JSON.parse(await call("lint", "<div>text</div>", { cwd: folder })),
-    [{ code: "T9001", column: 0, line: 1, message: "From a module" }],
+    [
+      {
+        code: "T9001",
+        column: 0,
+        endColumn: 0,
+        endLine: 0,
+        line: 1,
+        message: "From a module",
+      },
+    ],
   );
   expect(
     "a python_module rule is skipped, not fatal, in a project handed over",

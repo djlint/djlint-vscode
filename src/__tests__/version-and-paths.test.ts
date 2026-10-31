@@ -24,6 +24,33 @@ beforeEach(() => {
 });
 
 describe("parseLinterOutput, pinned format", () => {
+  it("reads the end of a finding", () => {
+    expect(
+      parseLinterOutput(`H025${FS}3:7${FS}m${FS}4:2${RS}\n`),
+    ).toStrictEqual([
+      {
+        code: "H025",
+        column: 7,
+        endColumn: 2,
+        endLine: 4,
+        line: 3,
+        message: "m",
+      },
+    ]);
+  });
+
+  it("does not take a message for an end when there is none", () => {
+    expect(parseLinterOutput(`H025${FS}3:7${FS}4:2${RS}\n`)).toStrictEqual([
+      { code: "H025", column: 7, line: 3, message: "4:2" },
+    ]);
+  });
+
+  it("leaves out an end before the start", () => {
+    expect(
+      parseLinterOutput(`H025${FS}3:7${FS}m${FS}3:1${RS}\n`),
+    ).toStrictEqual([{ code: "H025", column: 7, line: 3, message: "m" }]);
+  });
+
   it("keeps a colon in the message", () => {
     expect(
       parseLinterOutput(

@@ -9,6 +9,8 @@ export type DjlintMode = "format" | "lint";
 export interface LintDiagnostic {
   line: number;
   column: number;
+  endLine?: number;
+  endColumn?: number;
   code: string;
   message: string;
 }
