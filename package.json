@@ -235,6 +235,20 @@
           "description": "Do not attempt to fix the case of known html tags. Requires djLint ≥ 1.23.",
           "scope": "resource"
         },
+        "djlint.importStrategy": {
+          "type": "string",
+          "enum": [
+            "fromEnvironment",
+            "useBundled"
+          ],
+          "default": "fromEnvironment",
+          "markdownEnumDescriptions": [
+            "Use an installed djLint if one is found, otherwise the bundled one.",
+            "Always use the bundled djLint, whatever is installed. `#djlint.executablePath#`, `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored."
+          ],
+          "markdownDescription": "Which djLint to run. See [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
+          "scope": "machine-overridable"
+        },
         "djlint.include": {
           "type": "array",
           "items": {
@@ -611,6 +625,7 @@
       "supported": "limited",
       "restrictedConfigurations": [
         "djlint.executablePath",
+        "djlint.importStrategy",
         "djlint.pythonPath",
         "djlint.useVenv",
         "djlint.configuration",

@@ -125,14 +125,18 @@ describe("EngineManager", () => {
   });
 
   it("passes the document's folder to the worker in a trusted workspace", async () => {
-    vi.mocked(execa).mockResolvedValue({ exitCode: 1, stdout: "" } as never);
     const manager = makeManager();
     void manager.engine
-      .format(document, makeConfig(), formattingOptions, liveToken())
+      .format(
+        document,
+        makeConfig({ importStrategy: "useBundled" }),
+        formattingOptions,
+        liveToken(),
+      )
       .catch(() => void 0);
-    await vi.waitFor(() => {
-      expect(FakeWorker.latest.lastRun.cwd).toBe(Uri.file("/w/sub").fsPath);
-    });
+    await flush();
+    expect(FakeWorker.latest.lastRun.cwd).toBe(Uri.file("/w/sub").fsPath);
+    expect(execa).not.toHaveBeenCalled();
     manager.dispose();
   });
 });

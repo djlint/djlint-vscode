@@ -12,6 +12,7 @@ import {
 
 export const engineSettingKeys: readonly string[] = [
   "executablePath",
+  "importStrategy",
   "pythonPath",
   "useVenv",
 ];
@@ -33,7 +34,7 @@ export class FallbackEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
-    return this.#dispatch(document, async (engine) =>
+    return this.#dispatch(document, config, async (engine) =>
       engine.format(document, config, formattingOptions, token),
     );
   }
@@ -43,7 +44,7 @@ export class FallbackEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
-    return this.#dispatch(document, async (engine) =>
+    return this.#dispatch(document, config, async (engine) =>
       engine.lint(document, config, token),
     );
   }
@@ -56,8 +57,12 @@ export class FallbackEngine implements DjlintEngine {
 
   async #dispatch<R>(
     document: vscode.TextDocument,
+    config: vscode.WorkspaceConfiguration,
     call: (engine: DjlintEngine) => Promise<R>,
   ): Promise<R> {
+    if (config.get<string>("importStrategy") === "useBundled") {
+      return call(this.#secondaryEngine());
+    }
     const scope = workspaceScopeKey(document);
     const until = this.#unavailableUntil.get(scope);
     if (until != null && Date.now() < until) {

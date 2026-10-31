@@ -54,7 +54,7 @@ The extension looks for a djLint to run, in this order:
 
 A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
 
-An untrusted workspace always uses the bundled djLint.
+Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 
 With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 
