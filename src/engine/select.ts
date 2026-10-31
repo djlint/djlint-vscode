@@ -1,6 +1,7 @@
 import * as vscode from "vscode";
 import { workspaceScopeKey } from "../paths.js";
 import type { PythonEnvironments } from "../python/environment.js";
+import type { DjlintStatus } from "../status.js";
 import { PyodideEngine } from "./pyodide/index.js";
 import { SubprocessEngine } from "./subprocess/index.js";
 import {
@@ -106,6 +107,7 @@ export class EngineManager implements vscode.Disposable {
     private readonly extensionUri: vscode.Uri,
     private readonly outputChannel: vscode.LogOutputChannel,
     private readonly pythonEnvironments: PythonEnvironments,
+    private readonly status: DjlintStatus,
   ) {}
 
   get engine(): DjlintEngine {
@@ -131,10 +133,15 @@ export class EngineManager implements vscode.Disposable {
         vscode.Uri.joinPath(this.extensionUri, "assets", "pyodide").fsPath,
         this.outputChannel,
         isTrusted,
+        this.status,
       );
     return isTrusted
       ? new FallbackEngine(
-          new SubprocessEngine(this.outputChannel, this.pythonEnvironments),
+          new SubprocessEngine(
+            this.outputChannel,
+            this.pythonEnvironments,
+            this.status,
+          ),
           makePyodide,
           this.outputChannel,
         )

@@ -11,6 +11,7 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
+  makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
@@ -40,6 +41,7 @@ function makeManager(): EngineManager {
     Uri.file(extensionPath) as never,
     makeChannel(),
     {} as PythonEnvironments,
+    makeStatus(),
   );
 }
 

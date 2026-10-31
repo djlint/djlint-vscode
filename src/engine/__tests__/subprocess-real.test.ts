@@ -14,6 +14,7 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
+  makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode } from "../../__tests__/vscode-stub.js";
@@ -49,7 +50,11 @@ describe.skipIf(installed.failed)(
         vscode.Uri.file(path.join(root, "t.html")),
         DIRTY,
       );
-      engine = new SubprocessEngine(makeChannel(), {} as PythonEnvironments);
+      engine = new SubprocessEngine(
+        makeChannel(),
+        {} as PythonEnvironments,
+        makeStatus(),
+      );
     });
 
     it("formats, with the document's final newline left to djLint", async () => {

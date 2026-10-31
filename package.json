@@ -53,6 +53,10 @@
       {
         "command": "djlint.restart",
         "title": "djLint: Restart"
+      },
+      {
+        "command": "djlint.showLogs",
+        "title": "djLint: Show Logs"
       }
     ],
     "configuration": {

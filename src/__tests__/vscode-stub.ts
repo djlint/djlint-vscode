@@ -244,6 +244,7 @@ interface FormattingProviderRecord {
 }
 
 function initialState(): {
+  statusItems: StatusItem[];
   commands: Map<string, () => unknown>;
   configuration: Record<string, unknown>;
   diagnostics: Map<string, readonly Diagnostic[]>;
@@ -258,6 +259,7 @@ function initialState(): {
   workspaceFolders: readonly WorkspaceFolder[];
 } {
   return {
+    statusItems: [],
     commands: new Map(),
     configuration: {},
     diagnostics: new Map(),
@@ -378,7 +380,22 @@ export const extensions = {
   getExtension: (id: string): unknown => control.extensions.get(id),
 };
 
+interface StatusItem {
+  command?: unknown;
+  detail?: string;
+  dispose: () => void;
+  id: string;
+  name?: string;
+  selector: unknown;
+  text: string;
+}
+
 export const languages = {
+  createLanguageStatusItem: (id: string, selector: unknown): StatusItem => {
+    const item: StatusItem = { dispose: () => void 0, id, selector, text: "" };
+    control.statusItems.push(item);
+    return item;
+  },
   createDiagnosticCollection: (
     _name?: string,
   ): Disposable & {

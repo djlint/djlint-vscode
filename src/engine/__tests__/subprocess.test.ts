@@ -13,6 +13,7 @@ import {
   makeConfig,
   makeDocument,
   makeExecaError,
+  makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
@@ -76,9 +77,11 @@ function makeEngine(
   const channel = makeChannel();
   return {
     channel,
-    engine: new SubprocessEngine(channel, {
-      getActive,
-    } as unknown as PythonEnvironments),
+    engine: new SubprocessEngine(
+      channel,
+      { getActive } as unknown as PythonEnvironments,
+      makeStatus(),
+    ),
   };
 }
 
