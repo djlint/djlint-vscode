@@ -166,6 +166,24 @@ describe.runIf(process.platform === "win32")("a Windows wrapper", () => {
   it.each(["djlint-wrapper.cmd", "djlint-wrapper", "wrapper.py"])(
     "is found as %s",
     async (name) => {
+      resetVscode();
+      setWorkspaceFolders(root);
+      const status = makeStatus();
+      const engine = new SubprocessEngine(
+        makeChannel(),
+        makePythonEnvironments().environments,
+        status,
+      );
+      await engine.lint(
+        makeDocument(vscode.Uri.file(path.join(root, "t.html"))),
+        makeConfig({ executablePath: path.join(root, name) }),
+        liveToken(),
+      );
+      expect(status.update).toHaveBeenCalledOnce();
+    },
+  );
+});
+
 const SHIM = `#!/bin/sh
 if [ "$1" = "--version" ]; then
   echo "djlint, version $(cat .python-version)"
@@ -208,15 +226,6 @@ describe.skipIf(process.platform === "win32")(
         makePythonEnvironments().environments,
         status,
       );
-      await engine.lint(
-        makeDocument(vscode.Uri.file(path.join(root, "t.html"))),
-        makeConfig({ executablePath: path.join(root, name) }),
-        liveToken(),
-      );
-      expect(status.update).toHaveBeenCalledOnce();
-    },
-  );
-});
       for (const version of ["1.30.0", "1.48.0"]) {
         const document = makeDocument(
           vscode.Uri.file(path.join(root, version, "t.html")),
