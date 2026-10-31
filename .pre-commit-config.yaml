@@ -21,6 +21,7 @@ repos:
     rev: 0b38d622dd760f14333c8cf6b49cd6588f7d2427 # frozen: v1.9.7
     hooks:
       - id: tombi-format
+        exclude: ^uv.lock$
   - repo: https://github.com/rbubley/mirrors-prettier
     rev: 331f33fa4dfbcbca7c3da3620c137fde0faab273 # frozen: v3.9.10
     hooks:

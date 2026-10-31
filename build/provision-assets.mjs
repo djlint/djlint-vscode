@@ -11,7 +11,6 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import process from "node:process";
 import { download } from "./download.mjs";
 import { pyodideLicenses } from "./pyodide-licenses.mjs";
 
@@ -28,9 +27,9 @@ import { pyodideLicenses } from "./pyodide-licenses.mjs";
  *   packages: Record<string, LockEntry>,
  * }} Lock
  * @typedef {Map<string, string>} Pins
+ * @typedef {Map<string, { version: string, hashes: string[] }>} Closure
  */
 
-const REQUIREMENTS = "djlint-requirements.txt";
 const PYTHON_LICENSES = "assets/python-licenses.txt";
 const OUT = "assets/pyodide";
 
@@ -57,13 +56,7 @@ const PYODIDE_CORE_FILES = [
  */
 function runUv(args, options = {}) {
   try {
-    return String(
-      execFileSync("uv", args, {
-        encoding: "utf8",
-        ...options,
-        env: { ...process.env, UV_EXCLUDE_NEWER: "3 days" },
-      }),
-    );
+    return String(execFileSync("uv", args, { encoding: "utf8", ...options }));
   } catch (e) {
     if (/** @type {NodeJS.ErrnoException} */ (e).code === "ENOENT") {
       throw new Error(
@@ -76,25 +69,35 @@ function runUv(args, options = {}) {
 }
 
 /**
- * @param {string} resolved
- * @returns {Pins}
+ * @returns {Closure} What uv.lock pins, with the hashes of its files.
  */
-function parsePins(resolved) {
-  /** @type {Pins} */
-  const pins = new Map();
-  for (const line of resolved.split(/\r?\n/u)) {
+function readClosure() {
+  const exported = runUv([
+    "export",
+    "--locked",
+    "--no-emit-project",
+    "--no-header",
+    "--no-annotate",
+  ]);
+  /** @type {Closure} */
+  const closure = new Map();
+  for (const line of exported.replaceAll(/\\\r?\n\s*/gu, " ").split(/\r?\n/u)) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("#")) {
       continue;
     }
-    const pin = /^([\w.-]+)==(\S+)$/u.exec(trimmed);
-    if (!pin) {
-      throw new Error(`unrecognized line from uv pip compile: ${trimmed}`);
+    const pin = /^([\w.-]+)==([^\s;]+)/u.exec(trimmed);
+    const hashes = trimmed
+      .matchAll(/--hash=sha256:([\da-f]+)/gu)
+      .map((match) => match[1])
+      .toArray();
+    if (!pin || hashes.length === 0) {
+      throw new Error(`unrecognized line from uv export: ${trimmed}`);
     }
     const [, name = "", version = ""] = pin;
-    pins.set(name.toLowerCase(), version);
+    closure.set(name.toLowerCase(), { hashes, version });
   }
-  return pins;
+  return closure;
 }
 
 /**
@@ -147,10 +150,10 @@ async function downloadVerified(url, name, expectedSha) {
 
 /**
  * @param {string} pkg
- * @param {string} version
+ * @param {{ version: string, hashes: string[] }} pin
  * @returns {Promise<{ filename: string, sha: string }>}
  */
-async function downloadPureWheelFromPypi(pkg, version) {
+async function downloadPureWheelFromPypi(pkg, { hashes, version }) {
   const meta =
     /** @type {{ urls: { filename: string, url: string, digests: { sha256: string } }[] }} */
     (
@@ -160,9 +163,15 @@ async function downloadPureWheelFromPypi(pkg, version) {
         ).toString("utf8"),
       )
     );
-  const wheel = meta.urls.find((u) => u.filename.endsWith("-py3-none-any.whl"));
+  const wheel = meta.urls.find(
+    (u) =>
+      u.filename.endsWith("-py3-none-any.whl") &&
+      hashes.includes(u.digests.sha256),
+  );
   if (!wheel) {
-    throw new Error(`no pure-python wheel for ${pkg}==${version} on PyPI`);
+    throw new Error(
+      `no pure-python wheel for ${pkg}==${version} on PyPI matches uv.lock`,
+    );
   }
   await downloadVerified(wheel.url, wheel.filename, wheel.digests.sha256);
   return { filename: wheel.filename, sha: wheel.digests.sha256 };
@@ -214,7 +223,7 @@ function describePins(pairs) {
 }
 
 /**
- * @param {Pins} closure
+ * @param {Closure} closure
  * @param {Pins} shipped
  * @param {string} djlintVersion
  * @param {string} python
@@ -226,7 +235,7 @@ function assertPyodideVersionsSatisfyDjlint(
   python,
 ) {
   const skewed = [...shipped].filter(
-    ([name, version]) => closure.get(name) !== version,
+    ([name, version]) => closure.get(name)?.version !== version,
   );
   if (skewed.length === 0) {
     return;
@@ -253,7 +262,7 @@ function assertPyodideVersionsSatisfyDjlint(
 
 /**
  * @param {Lock} lock
- * @param {Pins} closure
+ * @param {Closure} closure
  * @param {Pins} shipped
  * @param {string[]} dependencyNames
  */
@@ -261,10 +270,12 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
   for (const name of dependencyNames) {
     const shippedVersion = shipped.get(name);
     if (shippedVersion == null) {
-      const version = closure.get(name) ?? "";
-      const { filename, sha } = await downloadPureWheelFromPypi(name, version);
-      lock.packages[name] = lockEntry(name, version, filename, sha, []);
-      console.log(`+ ${name} ${version} (from PyPI)`);
+      const pin = /** @type {{ version: string, hashes: string[] }} */ (
+        closure.get(name)
+      );
+      const { filename, sha } = await downloadPureWheelFromPypi(name, pin);
+      lock.packages[name] = lockEntry(name, pin.version, filename, sha, []);
+      console.log(`+ ${name} ${pin.version} (from PyPI)`);
     } else {
       const { file_name: fileName, sha256: sha } = lock.packages[name];
       await downloadVerified(`${CDN}/${fileName}`, fileName, sha);
@@ -295,15 +306,18 @@ function writePythonLicenses(wheels, python) {
 const lock = copyPyodideCore();
 const python = pythonVersion(lock);
 
-const closure = parsePins(
-  runUv(["pip", "compile", REQUIREMENTS, ...resolverTarget(python)]),
-);
-const djlintVersion = closure.get("djlint");
-if (!djlintVersion) {
+if (!readFileSync("pyproject.toml", "utf8").includes(`"==${python}.*"`)) {
   throw new Error(
-    `${REQUIREMENTS} must pin djlint, but the resolved closure has no djlint`,
+    `Pyodide ${PYODIDE_VERSION} runs Python ${python}: update requires-python in pyproject.toml and run uv lock`,
   );
 }
+
+const closure = readClosure();
+const djlintPin = closure.get("djlint");
+if (!djlintPin) {
+  throw new Error("uv.lock has no djlint");
+}
+const djlintVersion = djlintPin.version;
 const dependencyNames = closure
   .keys()
   .filter((name) => name !== "djlint")
@@ -322,7 +336,7 @@ const shipped = new Map(
 assertPyodideVersionsSatisfyDjlint(closure, shipped, djlintVersion, python);
 await fetchDependencies(lock, closure, shipped, dependencyNames);
 
-const djlint = await downloadPureWheelFromPypi("djlint", djlintVersion);
+const djlint = await downloadPureWheelFromPypi("djlint", djlintPin);
 lock.packages["djlint"] = lockEntry(
   "djlint",
   djlintVersion,
