@@ -45,7 +45,14 @@ function pythonOf(environment) {
  * @param {string} version
  */
 function installDjlint(python, version) {
-  run("uv", ["pip", "install", "--python", python, `djlint==${version}`]);
+  run("uv", [
+    "pip",
+    "install",
+    "--compile-bytecode",
+    "--python",
+    python,
+    `djlint==${version}`,
+  ]);
 }
 
 /**
@@ -113,15 +120,19 @@ try {
   const [cli = "", ...cliArgs] =
     resolveCliArgsFromVSCodeExecutablePath(executable);
   const extensionsDir = path.join(workspace, ".extensions");
+  // A .cmd needs a shell on Windows, which needs the quotes.
+  const quote = isWindows
+    ? (/** @type {string} */ arg) => `"${arg}"`
+    : (/** @type {string} */ arg) => arg;
   run(
-    isWindows ? `"${cli}"` : cli,
+    quote(cli),
     [
       ...cliArgs.filter((arg) => !arg.startsWith("--extensions-dir")),
-      `"--extensions-dir=${extensionsDir}"`,
+      `--extensions-dir=${extensionsDir}`,
       "--install-extension",
       "ms-python.python",
-    ],
-    true,
+    ].map(quote),
+    isWindows,
   );
 
   for (const useEnvironmentsExtension of [false, true]) {

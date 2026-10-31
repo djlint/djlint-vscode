@@ -2,8 +2,10 @@
 const { execFileSync } = require("node:child_process");
 const vscode = require("vscode");
 
-const TIMEOUT_MS = 120_000;
-const RETRY_MS = 3000;
+const TIMEOUT_MS = 180_000;
+// Saving again cancels the lint in progress, which on a runner can take seconds.
+const RETRY_MS = 15_000;
+const POLL_MS = 250;
 // djLint 1.48 reports where a finding ends. Before it, a finding has no length.
 const WHOLE_MATCH = 13;
 const NO_LENGTH = 0;
@@ -76,10 +78,13 @@ exports.run = async () => {
     while (Date.now() < deadline) {
       await select(executable);
       await lintAgain();
-      await sleep(RETRY_MS);
-      if (findingLength() === length) {
-        console.log(`ok   ${label}`);
-        return;
+      const retryAt = Date.now() + RETRY_MS;
+      while (Date.now() < retryAt) {
+        if (findingLength() === length) {
+          console.log(`ok   ${label}`);
+          return;
+        }
+        await sleep(POLL_MS);
       }
     }
     throw new Error(
