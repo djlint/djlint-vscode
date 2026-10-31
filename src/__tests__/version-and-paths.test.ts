@@ -114,6 +114,19 @@ describe("parseLinterOutput, pinned format", () => {
       { code: "H1", column: 5, line: 1, message: "m" },
     ]);
   });
+
+  it("moves the end on line 0 with it", () => {
+    expect(parseLinterOutput(`H1${FS}0:5${FS}m${FS}0:9${RS}\n`)).toStrictEqual([
+      {
+        code: "H1",
+        column: 5,
+        endColumn: 9,
+        endLine: 1,
+        line: 1,
+        message: "m",
+      },
+    ]);
+  });
 });
 
 describe("parseLinterOutput, legacy format", () => {

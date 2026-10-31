@@ -45,7 +45,7 @@ function endOf(
   if (!groups) {
     return {};
   }
-  const endLine = Number(groups["line"]);
+  const endLine = Math.max(Number(groups["line"]), 1);
   const endColumn = Number(groups["column"]);
   const isAfterStart =
     endLine > line || (endLine === line && endColumn >= column);
@@ -75,8 +75,9 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
     if (!lineText || !isValidPosition(line, column)) {
       continue;
     }
-    const end = hasEnd ? endOf(parts.at(-1), line, column) : {};
-    diags.push({ code, column, line: Math.max(line, 1), message, ...end });
+    const firstLine = Math.max(line, 1);
+    const end = hasEnd ? endOf(parts.at(-1), firstLine, column) : {};
+    diags.push({ code, column, line: firstLine, message, ...end });
   }
   return diags;
 }
