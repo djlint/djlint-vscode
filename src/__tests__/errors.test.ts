@@ -81,9 +81,12 @@ describe("checkErrors", () => {
 
   it("falls back to the short message without stderr", () => {
     const { message } = report(
-      makeExecaError({ exitCode: 3, shortMessage: "Command failed: djlint" }),
+      makeExecaError({
+        exitCode: 3,
+        shortMessage: "Command failed: djlint - --stdin-filename a.html",
+      }),
     );
-    expect(message).toBe("Command failed: djlint");
+    expect(message).toBe("djLint failed with exit code 3.");
   });
 
   it("logs and rethrows the original error", () => {
@@ -145,8 +148,15 @@ describe("isValidLintResult", () => {
 });
 
 describe("isDjlintUnavailable", () => {
-  it("recognizes a missing executable", () => {
-    expect(isDjlintUnavailable(makeExecaError({ code: "ENOENT" }))).toBe(true);
+  it.each(["EACCES", "ENOENT", "ENOEXEC", "UNKNOWN"])(
+    "recognizes a command that cannot start, %s",
+    (code) => {
+      expect(isDjlintUnavailable(makeExecaError({ code }))).toBe(true);
+    },
+  );
+
+  it.each([127, 9009])("recognizes the exit code %d of a shell", (exitCode) => {
+    expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
   });
 
   it.each([

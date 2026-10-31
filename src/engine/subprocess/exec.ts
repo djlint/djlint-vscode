@@ -18,9 +18,24 @@ export function isCustomExecaError(e: unknown): e is CustomExecaError {
 const NO_DJLINT_MODULE_REGEX =
   /No\s+module\s+named\s+['"]?djlint['"]?(?![\w.])/u;
 
+const CANNOT_START: ReadonlySet<string | undefined> = new Set([
+  "EACCES",
+  "ENOENT",
+  "ENOEXEC",
+  "UNKNOWN",
+]);
+
+// How a shell, or a version manager's shim, says that a command is not there.
+const COMMAND_NOT_FOUND: ReadonlySet<number | undefined> = new Set([127, 9009]);
+
 export function isDjlintUnavailable(e: {
   code?: string | undefined;
+  exitCode?: number | undefined;
   stderr: string;
 }): boolean {
-  return e.code === "ENOENT" || NO_DJLINT_MODULE_REGEX.test(e.stderr);
+  return (
+    CANNOT_START.has(e.code) ||
+    COMMAND_NOT_FOUND.has(e.exitCode) ||
+    NO_DJLINT_MODULE_REGEX.test(e.stderr)
+  );
 }

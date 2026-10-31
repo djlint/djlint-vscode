@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as vscode from "vscode";
 import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
+import { DjlintStatus } from "../status.js";
 import { changeOf, flush, makeContext, makeDocument } from "./helpers.js";
 import {
   control,
@@ -19,6 +20,9 @@ import {
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
   stat: vi.fn(async () => ({})),
+}));
+vi.mock("which-command", () => ({
+  whichCommand: async (command: string) => command,
 }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
@@ -169,6 +173,18 @@ describe("activate", () => {
           fireEnvironmentChange();
         }),
       ).resolves.toBe(true);
+    });
+
+    it("lints after forgetting, so the status shows the new djLint", async () => {
+      control.documents = [document];
+      fireWorkspaceEvent("open", document);
+      await flush();
+      const update = vi.spyOn(DjlintStatus.prototype, "update");
+      activePath = "/other";
+      fireEnvironmentChange();
+      await flush();
+      expect(update).toHaveBeenCalled();
+      update.mockRestore();
     });
 
     it("keeps the engines, and with them a running Pyodide", async () => {
