@@ -442,6 +442,57 @@ describe("resolution through the engine", () => {
     expect(probes()).toBe(2);
   });
 
+  it("detects per folder when an environment falls through to PATH", async () => {
+    spawn.mockImplementation(async (exec, args, options) => {
+      const isMissing =
+        ["/venv/python", "python", "python3"].includes(exec) ||
+        String(options["cwd"]).includes("none");
+      if (isMissing) {
+        return { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+      }
+      return isProbe(args) ? VERSION_OUTPUT : { stdout: "" };
+    });
+    const { engine } = makeEngine(async () => ({
+      command: { args: [], executable: "/venv/python" },
+    }));
+    const lint = makeConfig({ useVenv: true });
+    await expect(
+      engine.lint(makeDocument("/w/none/t.html"), lint, liveToken()),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(
+      engine.lint(makeDocument("/w/some/t.html"), lint, liveToken()),
+    ).resolves.toStrictEqual([]);
+  });
+
+  it("shows no djLint from before a change of environment", async () => {
+    const gate = Promise.withResolvers<undefined>();
+    spawn.mockImplementation(async (exec, args) => {
+      if (exec === "/old/python" && isProbe(args)) {
+        await gate.promise;
+      }
+      return isProbe(args) ? VERSION_OUTPUT : { stdout: "" };
+    });
+    let active = "/old/python";
+    const { environments, fireChange } = makePythonEnvironments(async () => ({
+      command: { args: [], executable: active },
+    }));
+    const status = makeStatus();
+    const engine = new SubprocessEngine(makeChannel(), environments, status);
+    const lint = makeConfig({ useVenv: true });
+    const stale = engine.lint(document, lint, liveToken());
+    await vi.waitFor(() => {
+      expect(probes()).toBe(1);
+    });
+    active = "/new/python";
+    fireChange();
+    await engine.lint(document, lint, liveToken());
+    gate.resolve(void 0);
+    await stale;
+    expect(vi.mocked(status.update).mock.lastCall?.[2]).toBe(
+      "/new/python -m djlint",
+    );
+  });
+
   it("detects once per folder of a workspace for an absolute path", async () => {
     installDjlint();
     const { engine } = makeEngine();

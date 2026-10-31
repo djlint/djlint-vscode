@@ -3,7 +3,7 @@
 ## [Unreleased]
 
 - Follow the interpreter selected in the Python extension while `python.useEnvironmentsExtension` is off, which is the default, instead of the environment of the Python Environments extension that it installs.
-- Let `djlint.executablePath`, `djlint.pythonPath`, `djlint.useVenv` and `djlint.importStrategy` apply again from the user settings of the local machine in a remote window, and sync with Settings Sync. They can be set per workspace folder.
+- Let `djlint.executablePath`, `djlint.pythonPath`, `djlint.useVenv` and `djlint.importStrategy` apply again from the user settings of the local machine in a remote window, and sync with Settings Sync. They can be set per workspace folder and per language.
 - Try `python -m djlint` before `python3 -m djlint` when looking on PATH, so a `python` that used to run keeps running.
 - Run the djLint of the environment of each project when a workspace folder holds several, and of each language that sets its own `djlint.executablePath` or `djlint.pythonPath`, instead of the one found first for five minutes.
 - Detect the version of a djLint found on PATH per folder, because a version manager's shim can pick another one in each.

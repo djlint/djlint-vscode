@@ -38,8 +38,8 @@ describe("CommandResolver", () => {
       await gate.promise;
       return "1.44.2";
     });
-    const format = resolver.resolve(deps, "ws");
-    const lint = resolver.resolve(deps, "ws");
+    const format = resolver.resolve(deps, "ws", "dir");
+    const lint = resolver.resolve(deps, "ws", "dir");
     gate.resolve(void 0);
     const results = await Promise.all([format, lint]);
     expect(results.map(({ exec }) => exec)).toStrictEqual([
@@ -56,16 +56,16 @@ describe("CommandResolver", () => {
       probes += 1;
       return "1.44.2";
     });
-    await resolver.resolve(deps, "ws");
-    await resolver.resolve(deps, "ws");
+    await resolver.resolve(deps, "ws", "dir");
+    await resolver.resolve(deps, "ws", "dir");
     expect(probes).toBe(1);
 
     vi.advanceTimersByTime(RESOLUTION_TTL_MS - 1);
-    await resolver.resolve(deps, "ws");
+    await resolver.resolve(deps, "ws", "dir");
     expect(probes).toBe(1);
 
     vi.advanceTimersByTime(1);
-    await resolver.resolve(deps, "ws");
+    await resolver.resolve(deps, "ws", "dir");
     expect(probes).toBe(2);
   });
 
@@ -77,8 +77,8 @@ describe("CommandResolver", () => {
       return "1.44.2";
     });
     await Promise.all([
-      resolver.resolve(deps, "ws-a"),
-      resolver.resolve(deps, "ws-b"),
+      resolver.resolve(deps, "ws-a", "dir"),
+      resolver.resolve(deps, "ws-b", "dir"),
     ]);
     expect(seen).toHaveLength(2);
   });
@@ -92,13 +92,13 @@ describe("CommandResolver", () => {
       await gate.promise;
       return "1.44.2";
     });
-    const inFlight = resolver.resolve(deps, "ws");
+    const inFlight = resolver.resolve(deps, "ws", "dir");
     resolver.invalidate(); // e.g. the user runs djLint: Restart
     gate.resolve(void 0);
     await expect(inFlight).resolves.toMatchObject({ exec: "/bin/djlint" });
     expect(probes).toBe(1);
 
-    await resolver.resolve(deps, "ws");
+    await resolver.resolve(deps, "ws", "dir");
     expect(probes).toBe(2);
   });
 
@@ -113,14 +113,14 @@ describe("CommandResolver", () => {
       calls += 1;
       return gates[calls - 1]?.promise ?? null;
     });
-    const stale = resolver.resolve(deps, "ws");
+    const stale = resolver.resolve(deps, "ws", "dir");
     resolver.invalidate();
-    const fresh = resolver.resolve(deps, "ws");
+    const fresh = resolver.resolve(deps, "ws", "dir");
     gates[0]?.resolve("1.0");
     await stale;
     gates[1]?.resolve("2.0");
     await expect(fresh).resolves.toMatchObject({ version: "2.0" });
-    await expect(resolver.resolve(deps, "ws")).resolves.toMatchObject({
+    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({
       version: "2.0",
     });
     expect(calls).toBe(2);
@@ -134,19 +134,19 @@ describe("CommandResolver", () => {
       probes += 1;
       return installed ? "1.44.2" : null;
     });
-    await expect(resolver.resolve(deps, "ws")).rejects.toBeInstanceOf(
+    await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
       DjlintUnavailableError,
     );
     const probesWhileMissing = probes;
 
     installed = true;
-    await expect(resolver.resolve(deps, "ws")).rejects.toBeInstanceOf(
+    await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
       DjlintUnavailableError,
     );
     expect(probes).toBe(probesWhileMissing);
 
     vi.advanceTimersByTime(RESOLUTION_TTL_MS);
-    await expect(resolver.resolve(deps, "ws")).resolves.toMatchObject({
+    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({
       exec: "/bin/djlint",
     });
   });
@@ -155,12 +155,12 @@ describe("CommandResolver", () => {
     const resolver = new CommandResolver();
     let installed = false;
     const deps = makeDeps(async () => (installed ? "1.44.2" : null));
-    await expect(resolver.resolve(deps, "ws")).rejects.toBeInstanceOf(
+    await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
       DjlintUnavailableError,
     );
     installed = true;
     resolver.invalidate();
-    await expect(resolver.resolve(deps, "ws")).resolves.toMatchObject({
+    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({
       exec: "/bin/djlint",
     });
   });

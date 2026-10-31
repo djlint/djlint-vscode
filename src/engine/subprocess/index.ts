@@ -187,6 +187,7 @@ export class SubprocessEngine implements DjlintEngine {
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,
   ): Promise<RunnerCommand> {
+    const epochAtStart = this.#resolver.epoch;
     const activeEnvironment = config.get<boolean>("useVenv")
       ? await this.#pythonEnvironments.getActive(document.uri)
       : null;
@@ -200,15 +201,9 @@ export class SubprocessEngine implements DjlintEngine {
     }
     const executablePath = configuredExecutable("executablePath");
     const pythonPath = configuredExecutable("pythonPath");
-    // What is found on PATH can be a shim, which picks a djLint by the folder it runs from.
-    const isPickedByFolder =
-      activeEnvironment?.command == null &&
-      !path.isAbsolute(executablePath) &&
-      !path.isAbsolute(pythonPath);
     // A language can set its own paths, and a workspace folder can hold projects with environments of their own.
     const scopeKey = [
       workspaceScopeKey(document),
-      isPickedByFolder ? directoryScopeKey(document) : "",
       executablePath,
       pythonPath,
       ...(activeEnvironment?.command == null
@@ -232,9 +227,12 @@ export class SubprocessEngine implements DjlintEngine {
         pythonPath,
       },
       scopeKey,
+      directoryScopeKey(document),
     );
     const source = [command.exec, ...command.prefixArgs].join(" ");
-    this.#status.update(document, command.version ?? "", source);
+    if (epochAtStart === this.#resolver.epoch) {
+      this.#status.update(document, command.version ?? "", source);
+    }
     const description = `djLint ${command.version ?? "of unknown version"}: ${source}`;
     const logKey = [workspaceScopeKey(document), description].join("\0");
     if (!this.#loggedCommands.has(logKey)) {

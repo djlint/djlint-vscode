@@ -123,7 +123,7 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Path to the `djlint` executable, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded. When empty or without a working djLint, djLint is looked for through `#djlint.pythonPath#`, the active Python environment and PATH, and the bundled djLint is used if none is found.",
-          "scope": "resource"
+          "scope": "language-overridable"
         },
         "djlint.exclude": {
           "type": "array",
@@ -256,7 +256,7 @@
             "Always use the bundled djLint, whatever is installed. `#djlint.executablePath#`, `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored."
           ],
           "markdownDescription": "Which djLint to run. See [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
-          "scope": "resource"
+          "scope": "language-overridable"
         },
         "djlint.include": {
           "type": "array",
@@ -416,7 +416,7 @@
           "type": "string",
           "default": "",
           "markdownDescription": "Path to a Python interpreter used to run `python -m djlint`, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded. When empty or without a working djLint, the active Python environment is tried next (see `#djlint.useVenv#`).",
-          "scope": "resource"
+          "scope": "language-overridable"
         },
         "djlint.quoteStyle": {
           "type": "string",
@@ -480,7 +480,7 @@
           "type": "boolean",
           "default": true,
           "markdownDescription": "When enabled, run djLint with the Python interpreter of the active environment if neither `#djlint.executablePath#` nor `#djlint.pythonPath#` gives a working djLint. The environment is read from the Python Environments extension (`ms-python.vscode-python-envs`) when `python.useEnvironmentsExtension` is on, otherwise from the Python extension (`ms-python.python`).",
-          "scope": "resource"
+          "scope": "language-overridable"
         }
       }
     },

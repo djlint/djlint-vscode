@@ -1,3 +1,4 @@
+import path from "node:path";
 import { configSection } from "../../config.js";
 import type { PythonEnvironmentDetails } from "../../python/environment.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../types.js";
@@ -92,6 +93,10 @@ export class CommandResolver {
   readonly #inFlight = new Map<string, Promise<RunnerCommand>>();
   #epoch = 0;
 
+  get epoch(): number {
+    return this.#epoch;
+  }
+
   invalidate(): void {
     this.#epoch += 1;
     this.#cache.clear();
@@ -101,9 +106,11 @@ export class CommandResolver {
   async resolve(
     deps: ResolveDjlintCommandDeps,
     scopeKey: string,
+    directoryKey: string,
   ): Promise<RunnerCommand> {
-    const cached = this.#cache.get(scopeKey);
-    if (cached != null && Date.now() - cached.resolvedAt < RESOLUTION_TTL_MS) {
+    const perDirectoryKey = [scopeKey, directoryKey].join("\0");
+    const cached = this.#fresh(scopeKey) ?? this.#fresh(perDirectoryKey);
+    if (cached != null) {
       if (cached.outcome instanceof DjlintUnavailableError) {
         throw cached.outcome;
       }
@@ -111,26 +118,43 @@ export class CommandResolver {
     }
 
     const pending =
-      this.#inFlight.get(scopeKey) ?? this.#resolveAndCache(deps, scopeKey);
-    this.#inFlight.set(scopeKey, pending);
+      this.#inFlight.get(perDirectoryKey) ??
+      this.#resolveAndCache(deps, scopeKey, perDirectoryKey);
+    this.#inFlight.set(perDirectoryKey, pending);
     try {
       return await pending;
     } finally {
-      if (this.#inFlight.get(scopeKey) === pending) {
-        this.#inFlight.delete(scopeKey);
+      if (this.#inFlight.get(perDirectoryKey) === pending) {
+        this.#inFlight.delete(perDirectoryKey);
       }
     }
+  }
+
+  #fresh(key: string): CommandCacheEntry | undefined {
+    const entry = this.#cache.get(key);
+    return entry != null && Date.now() - entry.resolvedAt < RESOLUTION_TTL_MS
+      ? entry
+      : void 0;
   }
 
   async #resolveAndCache(
     deps: ResolveDjlintCommandDeps,
     scopeKey: string,
+    perDirectoryKey: string,
   ): Promise<RunnerCommand> {
     const epochAtStart = this.#epoch;
     const remember = (outcome: CommandCacheEntry["outcome"]): void => {
-      if (epochAtStart === this.#epoch) {
-        this.#cache.set(scopeKey, { outcome, resolvedAt: Date.now() });
+      if (epochAtStart !== this.#epoch) {
+        return;
       }
+      // What comes from PATH can be a shim, which picks a djLint by the folder it runs from.
+      const isPickedByDirectory =
+        outcome instanceof DjlintUnavailableError ||
+        !path.isAbsolute(outcome.exec);
+      this.#cache.set(isPickedByDirectory ? perDirectoryKey : scopeKey, {
+        outcome,
+        resolvedAt: Date.now(),
+      });
     };
     try {
       const command = await resolveDjlintCommand(deps);
