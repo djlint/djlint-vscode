@@ -1,7 +1,7 @@
 # What the extension bundles. Run `uv lock` after changing it.
 # requires-python must be the Python that Pyodide runs, so Renovate leaves it
 # alone. When a Pyodide bump moves to a new Python, `npm run assets` fails until
-# this and the python-version in the workflows are updated.
+# this is updated, and the python-version in the workflows has to follow.
 [project]
 name = "djlint-vscode"
 version = "0"

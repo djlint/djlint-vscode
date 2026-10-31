@@ -21,10 +21,15 @@ import {
 // Where this is set, djLint prints GitHub annotations whatever output format it is told.
 delete process.env["GITHUB_ACTIONS"];
 
-const INSTALLED = "1.48.0";
 const WITHOUT_END = "1.47.1";
 
 const root = path.resolve(import.meta.dirname, "../..");
+const INSTALLED = /"djlint==(?<version>[^"]+)"/u.exec(
+  readFileSync(path.join(root, "pyproject.toml"), "utf8"),
+)?.groups?.["version"];
+if (INSTALLED == null) {
+  throw new Error("pyproject.toml pins no djLint");
+}
 const isWindows = process.platform === "win32";
 
 /**
