@@ -1,5 +1,14 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
 contact_links:
-  - name: 👉 Problem with djLint? Open an issue here.
-    url: https://github.com/djlint/djLint/issues
-    about: Having a problem with djLint's formatting, linting, or other features?
+  - name: "👉 Problem with djLint? Open an issue here."
+    url: https://github.com/djlint/djLint/issues/new/choose
+    about: >-
+      Having a problem with djLint's formatting, linting, or other features?
+  - name: 💬 Discord Server
+    url: https://discord.gg/taghAqebzU
+    about: >-
+      Chat with the community, ask questions and learn about best practices.
+  - name: 🔒 Report a security vulnerability
+    url: >-
+      https://github.com/djlint/djlint-vscode/security/advisories/new
+    about: Report it privately instead of opening a public issue.

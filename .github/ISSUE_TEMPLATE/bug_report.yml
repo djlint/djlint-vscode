@@ -1,0 +1,133 @@
+name: "🕹️ Bug report"
+description: >-
+  Having a problem using the djLint extension in Visual Studio Code?
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Wrong formatting or lint results usually come from djLint itself. If
+        `djlint` on the command line or the [online
+        playground](https://djlint.com/demo/) gives the same result, report
+        it in the [djLint
+        tracker](https://github.com/djlint/djLint/issues/new/choose).
+  - type: checkboxes
+    id: preflight
+    attributes:
+      label: Before you start
+      options:
+        - label: >-
+            I searched the [existing
+            issues](https://github.com/djlint/djlint-vscode/issues?q=is%3Aissue)
+            and found nothing about this.
+          required: true
+        - label: I can reproduce this on the latest version of the extension.
+          required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: "What happened?"
+      description: What you did, what you expected and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |-
+        1. Open a project with ...
+        2. Set ...
+        3. Run Format Document
+    validations:
+      required: true
+  - type: textarea
+    id: template
+    attributes:
+      label: Template
+      description: >-
+        The smallest template that shows the problem, if it depends on the
+        file.
+      render: html
+  - type: input
+    id: language_mode
+    attributes:
+      label: Language mode
+      description: >-
+        Shown in the status bar, or the identifier from Change Language
+        Mode.
+      placeholder: django-html
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Extension version
+      description: Shown in the Extensions view.
+    validations:
+      required: true
+  - type: dropdown
+    id: editor
+    attributes:
+      label: Editor
+      options:
+        - Visual Studio Code
+        - Visual Studio Code Insiders
+        - VSCodium
+        - Cursor
+        - Windsurf
+        - vscode.dev or github.dev
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: editor_version
+    attributes:
+      label: Editor version
+      description: "Help → About, or `code --version`."
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      description: Add the remote, if you use one.
+      placeholder: Windows 11, Ubuntu 24.04 over Remote - SSH
+    validations:
+      required: true
+  - type: dropdown
+    id: djlint_source
+    attributes:
+      label: "Which djLint is used?"
+      description: >-
+        The djLint item in the status bar shows it. See [Which djLint is
+        used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).
+      options:
+        - Bundled with the extension
+        - djlint.executablePath
+        - djlint.pythonPath
+        - Active Python environment
+        - PATH
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: djlint_version
+    attributes:
+      label: djLint version
+      description: "`djlint --version`, for an installed djLint."
+  - type: textarea
+    id: settings
+    attributes:
+      label: Settings
+      description: >-
+        The `djlint.*` settings from your `settings.json`, and your djLint
+        configuration file if you have one.
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: >-
+        Run **djLint: Show Logs** from the Command Palette and paste what is
+        there.
+      render: text
