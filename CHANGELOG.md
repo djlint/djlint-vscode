@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.0] - 2026-11-01
+
 - Pass `djlint.closeVoidTags`, `djlint.customBlocks`, `djlint.customHtml`, `djlint.ignoreBlocks`, `djlint.ignoreCase`, `djlint.maxBlankLines` and `djlint.preserveBlankLines` when linting too, because they change what djLint reports. The linter flagged what the formatter had just kept.
 - Show the findings of an installed djLint that also writes a warning to stderr, instead of failing and clearing them. It is logged in the "djLint" output channel, and so is such a warning while formatting.
 - Lint again when a document changes during a lint, instead of showing findings at the positions of the older text.
