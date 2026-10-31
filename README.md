@@ -8,17 +8,17 @@ Visual Studio Code extension for formatting and linting HTML templates (Django, 
 
 ## Installation
 
-1. Install djLint into your project's environment with [uv](https://docs.astral.sh/uv/) or pip. The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
+Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint). It ships with its own djLint, so you do not need to install djLint or Python.
 
-   ```bash
-   uv add --dev djlint
-   # or, with the project's environment activated
-   pip install djlint
-   ```
+Install djLint yourself to choose its version. Add it to your project with [uv](https://docs.astral.sh/uv/) or pip:
 
-1. Install the extension from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=monosans.djlint) or [Open VSX](https://open-vsx.org/extension/monosans/djlint).
+```bash
+uv add --dev djlint
+# or, with the project's environment activated
+pip install djlint
+```
 
-The extension finds djLint through the Python environment selected in VS Code. If another environment is selected, or no Python environment extension is installed, set `djlint.pythonPath` or `djlint.executablePath`, see [Which djLint is used](#which-djlint-is-used).
+The extension finds it through the Python environment selected in VS Code. If another environment is selected, or no Python environment extension is installed, the extension may fall back to its own djLint. In that case set `djlint.pythonPath` or `djlint.executablePath`, see [Which djLint is used](#which-djlint-is-used). The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
 
 ## Usage
 
@@ -50,10 +50,13 @@ The extension looks for a djLint to run, in this order:
 2. `djlint.pythonPath`, a path to a Python interpreter to run djLint from (`python -m djlint`).
 3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) or, if that one isn't installed or is turned off via `python.useEnvironmentsExtension`, by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). Skipped when neither is installed, or when `djlint.useVenv` is `false`.
 4. `djlint` on PATH, then `python3 -m djlint` and `python -m djlint`.
+5. The djLint bundled with the extension.
 
 A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
 
-The extension detects the version of djLint and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
+An untrusted workspace always uses the bundled djLint.
+
+With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected again after five minutes, and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 
 ### djLint installed with uv tool or pipx
 
@@ -65,15 +68,15 @@ The extension detects the version of djLint and passes only the command-line opt
 
 ## Configuration files
 
-djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root.
+djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root. The bundled djLint does the same, except in an untrusted workspace, where it reads no files.
 
 `djlint.configuration` and `djlint.rules` point to a file of your choice. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
 
-[`per-file-ignores`](https://djlint.com/docs/configuration/#per-file-ignores) is read from the configuration file too. It works while linting from the editor with djLint 1.43.0 or newer.
+[`per-file-ignores`](https://djlint.com/docs/configuration/#per-file-ignores) is read from the configuration file too. It works while linting from the editor with the bundled djLint and with an installed djLint 1.43.0 or newer.
 
 ## Known issues
 
-These are bugs in old djLint versions. Updating djLint fixes all of them.
+These are bugs in old djLint versions, so they only affect an installed djLint. The bundled djLint is unaffected, and updating djLint fixes all of them.
 
 - Before v1.1.1: non-ASCII characters break formatting and linting on Windows.
 - v1.12.1: file contents are duplicated after formatting.

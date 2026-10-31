@@ -6,7 +6,7 @@ import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 
 export default defineConfig(
-  { ignores: ["dist", "**/__tests__"] },
+  { ignores: ["dist", "assets", "**/__tests__"] },
   eslint.configs.all,
   eslintPluginUnicorn.configs.all,
   tseslint.configs.all,
@@ -83,6 +83,50 @@ export default defineConfig(
       "unicorn/prefer-top-level-await": "off",
       "unicorn/single-line-block-comment-style": ["error", "single-line"],
       "unicorn/try-complexity": "off",
+    },
+  },
+  {
+    files: ["build/**/*.mjs"],
+    rules: {
+      "@typescript-eslint/dot-notation": "off",
+      "@typescript-eslint/explicit-function-return-type": "off",
+      "@typescript-eslint/explicit-module-boundary-types": "off",
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/no-unsafe-argument": "off",
+      "@typescript-eslint/no-unsafe-assignment": "off",
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-return": "off",
+      "@typescript-eslint/strict-boolean-expressions": "off",
+      camelcase: "off",
+      "capitalized-comments": "off",
+      "no-await-in-loop": "off",
+      "no-console": "off",
+      "no-inline-comments": "off",
+      "no-undef": "off",
+      "prefer-named-capture-group": "off",
+      "sort-keys": "off",
+      "unicorn/no-asterisk-prefix-in-documentation-comments": "off",
+      "unicorn/no-await-expression-member": "off",
+      "unicorn/prefer-error-is-error": "off",
+    },
+  },
+  {
+    files: ["src/engine/pyodide/worker.ts"],
+    rules: {
+      "@typescript-eslint/no-unsafe-call": "off",
+      "@typescript-eslint/no-unsafe-member-access": "off",
+      "@typescript-eslint/no-unsafe-type-assertion": "off",
+      "unicorn/prefer-error-is-error": "off",
+      "unicorn/require-post-message-target-origin": "off",
+    },
+  },
+  {
+    files: ["src/engine/pyodide/index.ts"],
+    rules: {
+      "@typescript-eslint/promise-function-async": "off",
+      "unicorn/prefer-error-is-error": "off",
+      "unicorn/require-post-message-target-origin": "off",
     },
   },
 );

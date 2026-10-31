@@ -18,7 +18,7 @@ import {
   type DjlintMode,
   type LintDiagnostic,
 } from "../types.js";
-import { checkErrors, isValidLintResult, showInstallError } from "./errors.js";
+import { checkErrors, isValidLintResult } from "./errors.js";
 import {
   isCustomExecaError,
   isDjlintUnavailable,
@@ -86,11 +86,7 @@ export class SubprocessEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
-    return this.#runOrReport(
-      "format",
-      { config, document, formattingOptions },
-      token,
-    );
+    return this.#run("format", { config, document, formattingOptions }, token);
   }
 
   async lint(
@@ -99,7 +95,7 @@ export class SubprocessEngine implements DjlintEngine {
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
     return parseLinterOutput(
-      await this.#runOrReport("lint", { config, document }, token),
+      await this.#run("lint", { config, document }, token),
     );
   }
 
@@ -186,22 +182,6 @@ export class SubprocessEngine implements DjlintEngine {
     };
     const { stdout } = await execa(command.exec, childArgs, childOptions);
     return stdout;
-  }
-
-  async #runOrReport(
-    mode: DjlintMode,
-    context: ArgContext,
-    token: vscode.CancellationToken,
-  ): Promise<string> {
-    try {
-      return await this.#run(mode, context, token);
-    } catch (e) {
-      if (e instanceof DjlintUnavailableError) {
-        this.outputChannel.error(e);
-        showInstallError(context.config, this.outputChannel);
-      }
-      throw e;
-    }
   }
 
   async #run(

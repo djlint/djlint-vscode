@@ -374,39 +374,6 @@ describe("how a run ends", () => {
     expect(runs()).toHaveLength(4);
   });
 
-  it("offers the install instructions when no djLint is left", async () => {
-    installDjlint(async () => {
-      throw makeExecaError({ code: "ENOENT" });
-    });
-    const { engine } = makeEngine();
-    await expect(
-      engine.format(
-        document,
-        makeConfig({ showInstallError: true }),
-        formattingOptions,
-        liveToken(),
-      ),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
-    expect(control.shownErrors).toHaveLength(1);
-    expect(control.shownErrors[0]).toContain("not installed");
-  });
-
-  it("stays quiet about a missing djLint when told to", async () => {
-    installDjlint(async () => {
-      throw makeExecaError({ code: "ENOENT" });
-    });
-    const { engine } = makeEngine();
-    await expect(
-      engine.format(
-        document,
-        makeConfig({ showInstallError: false }),
-        formattingOptions,
-        liveToken(),
-      ),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
-    expect(control.shownErrors).toHaveLength(0);
-  });
-
   it("looks for djLint again when the one it had vanished", async () => {
     let isFirstRun = true;
     installDjlint(async () => {

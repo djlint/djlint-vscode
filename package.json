@@ -36,12 +36,16 @@
   "type": "module",
   "main": "./dist/extension.cjs",
   "scripts": {
+    "assets": "node ./build/provision-assets.mjs",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.20.0",
+    "esbuild-worker": "esbuild ./src/engine/pyodide/worker.ts --bundle --loader:.py=text --outfile=dist/pyodide-worker.cjs --format=cjs --platform=node --target=node22.20.0",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "test": "vitest run",
-    "vscode:prepublish": "node ./build/minify-package-json.mjs && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt dist/extension.meta.json",
+    "verify-bundle": "node ./build/verify-bundle.mjs",
+    "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt dist/extension.meta.json dist/pyodide-worker.meta.json && node ./build/minify-package-json.mjs",
     "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
+    "watch:esbuild-worker": "npm run esbuild-worker -- --sourcemap --watch",
     "watch:tsc": "tsc --watch"
   },
   "contributes": {
@@ -110,7 +114,7 @@
         "djlint.executablePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `djlint` executable, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. When empty or without a working djLint, djLint is looked for through `#djlint.pythonPath#`, the active Python environment and PATH.",
+          "markdownDescription": "Path to the `djlint` executable, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. When empty or without a working djLint, djLint is looked for through `#djlint.pythonPath#`, the active Python environment and PATH, and the bundled djLint is used if none is found.",
           "scope": "machine-overridable"
         },
         "djlint.exclude": {
@@ -419,11 +423,6 @@
           "markdownDescription": "Path to a custom rules file in .djlint_rules.yaml format. Relative paths, including a bare filename, are resolved from the workspace root. Requires djLint ≥ 1.41.",
           "scope": "resource"
         },
-        "djlint.showInstallError": {
-          "type": "boolean",
-          "default": true,
-          "description": "Show error message when djLint is not installed."
-        },
         "djlint.singleAttributePerLine": {
           "type": "boolean",
           "default": false,
@@ -598,6 +597,7 @@
     "eslint-plugin-unicorn": "79.0.0",
     "prettier": "3.9.10",
     "prettier-plugin-packagejson": "3.0.3",
+    "pyodide": "314.0.7",
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.1",
     "vitest": "5.0.5"
@@ -605,5 +605,25 @@
   "engines": {
     "vscode": "^1.106.0"
   },
-  "icon": "icon.png"
+  "icon": "icon.png",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "restrictedConfigurations": [
+        "djlint.executablePath",
+        "djlint.pythonPath",
+        "djlint.useVenv",
+        "djlint.configuration",
+        "djlint.rules"
+      ],
+      "description": "In an untrusted workspace, only the bundled djLint runs, and it reads no files."
+    },
+    "virtualWorkspaces": {
+      "supported": "limited",
+      "description": "In a virtual workspace, djLint cannot read the project's configuration files."
+    }
+  },
+  "extensionKind": [
+    "workspace"
+  ]
 }
