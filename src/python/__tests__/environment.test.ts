@@ -3,7 +3,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { makeChannel } from "../../__tests__/helpers.js";
-import { control, resetVscode } from "../../__tests__/vscode-stub.js";
+import {
+  control,
+  fireWorkspaceEvent,
+  resetVscode,
+} from "../../__tests__/vscode-stub.js";
 import { PythonEnvironments } from "../environment.js";
 
 vi.mock("@vscode/python-environments", () => ({
@@ -143,6 +147,37 @@ describe("provider selection", () => {
     await expect(environments.getActive(void 0)).resolves.toStrictEqual(
       classicResult,
     );
+  });
+
+  it("picks up a Python extension installed while running", async () => {
+    const { environments } = makeEnvironments();
+    const onChange = vi.fn();
+    environments.onDidChange(onChange);
+    await environments.getActive(void 0);
+
+    control.extensions.set(
+      PY_ID,
+      classicExtension("/usr/bin/python").extension,
+    );
+    fireWorkspaceEvent("extensions");
+    expect(onChange).toHaveBeenCalledOnce();
+    await expect(environments.getActive(void 0)).resolves.toStrictEqual(
+      classicResult,
+    );
+  });
+
+  it("ignores other extensions once it has a provider", async () => {
+    control.extensions.set(
+      PY_ID,
+      classicExtension("/usr/bin/python").extension,
+    );
+    const { environments } = makeEnvironments();
+    const onChange = vi.fn();
+    environments.onDidChange(onChange);
+    await environments.getActive(void 0);
+
+    fireWorkspaceEvent("extensions");
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it("prefers Python Environments over the classic extension", async () => {

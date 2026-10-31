@@ -66,13 +66,9 @@ export class FallbackEngine implements DjlintEngine {
   ): Promise<R> {
     // Only the bundled djLint can read the configuration of a virtual workspace.
     const shouldPreferBundled =
-      isVirtualDocument(document) &&
-      !getConfiguredPath(config, "executablePath") &&
-      !getConfiguredPath(config, "pythonPath");
-    if (
-      shouldPreferBundled ||
-      config.get<string>("importStrategy") === "useBundled"
-    ) {
+      config.get<string>("importStrategy") === "useBundled" ||
+      (isVirtualDocument(document) && !getConfiguredPath(config, "pythonPath"));
+    if (shouldPreferBundled && !getConfiguredPath(config, "executablePath")) {
       return call(this.#secondaryEngine());
     }
     try {

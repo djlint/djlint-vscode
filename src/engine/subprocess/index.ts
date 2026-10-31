@@ -181,14 +181,17 @@ export class SubprocessEngine implements DjlintEngine {
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,
   ): Promise<RunnerCommand> {
-    const activeEnvironment = config.get<boolean>("useVenv")
-      ? await this.#pythonEnvironments.getActive(document.uri)
-      : null;
+    const shouldUseBundled =
+      config.get<string>("importStrategy") === "useBundled";
+    const activeEnvironment =
+      !shouldUseBundled && config.get<boolean>("useVenv")
+        ? await this.#pythonEnvironments.getActive(document.uri)
+        : null;
+    const { args = [], executable = "" } = activeEnvironment?.command ?? {};
     // A workspace folder can hold projects with environments of their own.
-    const scopeKey = [
-      workspaceScopeKey(document),
-      activeEnvironment?.command?.executable ?? "",
-    ].join("\0");
+    const scopeKey = [workspaceScopeKey(document), executable, ...args].join(
+      "\0",
+    );
     function configuredExecutable(
       key: Parameters<typeof getConfiguredPath>[1],
     ): string {
@@ -209,6 +212,7 @@ export class SubprocessEngine implements DjlintEngine {
         probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
         pythonPath: configuredExecutable("pythonPath"),
+        shouldUseBundled,
       },
       scopeKey,
     );

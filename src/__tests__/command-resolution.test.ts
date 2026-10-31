@@ -25,6 +25,7 @@ function makeDeps(
       return works.includes(exec) ? "1.44.2" : null;
     },
     pythonPath: "",
+    shouldUseBundled: false,
     ...overrides,
   };
   return { deps, probed, rejected };
@@ -161,6 +162,23 @@ describe("resolveDjlintCommand", () => {
       exec: "python",
     });
     expect(probed).toStrictEqual(["djlint", "python -m djlint"]);
+  });
+
+  it("looks no further than executablePath with useBundled", async () => {
+    const { deps, probed, rejected } = makeDeps(
+      {
+        activeEnvironment: condaEnvironment,
+        executablePath: "/typo/djlint",
+        pythonPath: "/py",
+        shouldUseBundled: true,
+      },
+      ["/py", "conda", "djlint", "python"],
+    );
+    await expect(resolveDjlintCommand(deps)).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
+    expect(probed).toStrictEqual(["/typo/djlint"]);
+    expect(rejected).toStrictEqual(["executablePath:/typo/djlint"]);
   });
 
   it("prefers `djlint` on PATH over a python on PATH", async () => {

@@ -59,6 +59,15 @@ export class PythonEnvironments implements vscode.Disposable {
   constructor(outputChannel: vscode.LogOutputChannel) {
     this.#outputChannel = outputChannel;
     this.onDidChange = this.#changeEmitter.event;
+    this.#disposables.push(
+      vscode.extensions.onDidChange(() => {
+        if (!this.#isUnavailable) {
+          return;
+        }
+        this.resetIfUnavailable();
+        this.#changeEmitter.fire();
+      }),
+    );
   }
 
   async getActive(

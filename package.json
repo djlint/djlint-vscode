@@ -253,7 +253,7 @@
           "default": "fromEnvironment",
           "markdownEnumDescriptions": [
             "Use an installed djLint if one is found, otherwise the bundled one.",
-            "Always use the bundled djLint, whatever is installed. `#djlint.executablePath#`, `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored."
+            "Use the bundled djLint, unless `#djlint.executablePath#` is set. `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored."
           ],
           "markdownDescription": "Which djLint to run. See [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
           "scope": "resource"

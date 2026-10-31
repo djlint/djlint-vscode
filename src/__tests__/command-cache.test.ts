@@ -17,6 +17,7 @@ function makeDeps(
     onConfiguredPathRejected: () => void 0,
     probe,
     pythonPath: "",
+    shouldUseBundled: false,
   };
 }
 

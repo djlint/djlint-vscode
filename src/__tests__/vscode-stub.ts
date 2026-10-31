@@ -10,7 +10,8 @@ interface Disposable {
   dispose: () => void;
 }
 
-export type WorkspaceEventKind = "close" | "config" | "open" | "save" | "trust";
+export type WorkspaceEventKind =
+  "close" | "config" | "extensions" | "open" | "save" | "trust";
 
 const URI_REGEX =
   /^(?<scheme>[a-z][a-z\d+.-]*):(?:\/\/(?<authority>[^/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/iu;
@@ -435,6 +436,7 @@ export const window = {
 
 export const extensions = {
   getExtension: (id: string): unknown => control.extensions.get(id),
+  onDidChange: onWorkspaceEvent<unknown>("extensions"),
 };
 
 interface StatusItem {

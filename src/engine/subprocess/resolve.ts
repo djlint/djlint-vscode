@@ -18,6 +18,7 @@ const PYTHONS_ON_PATH: readonly string[] = ["python", "python3"];
 export interface ResolveDjlintCommandDeps {
   executablePath: string;
   pythonPath: string;
+  shouldUseBundled: boolean;
   activeEnvironment: PythonEnvironmentDetails | null;
   probe: (exec: string, prefixArgs: readonly string[]) => Promise<ProbeResult>;
   onConfiguredPathRejected: (setting: string, exec: string) => void;
@@ -44,6 +45,12 @@ export async function resolveDjlintCommand(
       return command;
     }
     deps.onConfiguredPathRejected("executablePath", executablePath);
+  }
+
+  if (deps.shouldUseBundled) {
+    throw new DjlintUnavailableError(
+      `${configSection}.importStrategy is useBundled.`,
+    );
   }
 
   const pythonPath = deps.pythonPath.trim();

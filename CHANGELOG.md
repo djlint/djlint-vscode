@@ -6,6 +6,8 @@
 - Try `python -m djlint` before `python3 -m djlint` when looking on PATH, so a `python` that used to run keeps running.
 - Run the djLint of the environment of each project when a workspace folder holds several, instead of the one found first for five minutes.
 - Keep the bundled djLint running when the active Python environment changes.
+- Pick up the Python extensions as soon as they are installed or enabled, as before 2026.10.2, instead of after `djLint: Restart`.
+- Let `djlint.executablePath` win over `djlint.importStrategy: useBundled`, as `ruff.path` does over `ruff.importStrategy`.
 - Expand `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` in `djlint.executablePath` and `djlint.pythonPath`.
 
 ## [2026.10.2] - 2026-10-31
