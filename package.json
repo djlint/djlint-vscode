@@ -18,7 +18,6 @@
     "go template",
     "golang",
     "hugo",
-    "helm",
     "mustache",
     "tera",
     "askama"
@@ -194,10 +193,10 @@
             "njk",
             "nunjucks",
             "handlebars",
-            "hbs",
             "spacebars",
             "liquid",
             "jekyll",
+            "pos-liquid",
             "go-template",
             "go-tmpl",
             "gotemplate",
@@ -209,6 +208,7 @@
             "mustache",
             "htmlmustache",
             "tera",
+            "tera-html",
             "askama-html",
             "html"
           ],
@@ -529,10 +529,6 @@
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
       },
-      "[hbs]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
       "[spacebars]": {
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
@@ -542,6 +538,10 @@
         "djlint.profile": "liquid"
       },
       "[jekyll]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "liquid"
+      },
+      "[pos-liquid]": {
         "djlint.enableLinting": true,
         "djlint.profile": "liquid"
       },
@@ -586,6 +586,10 @@
         "djlint.profile": "handlebars"
       },
       "[tera]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "tera"
+      },
+      "[tera-html]": {
         "djlint.enableLinting": true,
         "djlint.profile": "tera"
       },
