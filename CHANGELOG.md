@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - Bundle djLint 1.47.1, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Add the `djlint.importStrategy` setting. `useBundled` always uses the bundled djLint, whatever is installed.
 - Honor `per-file-ignores` when linting from the editor, with the bundled djLint and with an installed djLint 1.43 or newer, which added `--stdin-filename` ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
 - Add a `djLint: Restart` command that detects djLint again, for example after upgrading it in the same environment.
 - Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.

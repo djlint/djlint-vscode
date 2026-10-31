@@ -231,4 +231,45 @@ describe("FallbackEngine", () => {
     await format(engine);
     expect(channel.of("info")).toHaveLength(2);
   });
+
+  describe('with importStrategy "useBundled"', () => {
+    const bundled = makeConfig({ importStrategy: "useBundled" });
+
+    it("goes straight to the secondary", async () => {
+      const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
+      await expect(format(engine, document, bundled)).resolves.toBe(
+        "SECONDARY",
+      );
+      await expect(
+        engine.lint(document, bundled, liveToken()),
+      ).resolves.toStrictEqual([finding]);
+      expect(calls).toStrictEqual(["secondary", "secondary"]);
+      expect(secondaryBuilds()).toBe(1);
+    });
+
+    it("does not log a fallback nobody fell back from", async () => {
+      const { channel, engine } = makeFallback(() => "PRIMARY");
+      await format(engine, document, bundled);
+      expect(channel.of("info")).toStrictEqual([]);
+    });
+
+    it("refuses work once disposed", async () => {
+      const { engine } = makeFallback(() => "PRIMARY");
+      engine.dispose();
+      await expect(format(engine, document, bundled)).rejects.toBeInstanceOf(
+        vscode.CancellationError,
+      );
+    });
+
+    it("leaves other strategies on the primary", async () => {
+      const { engine } = makeFallback(() => "PRIMARY");
+      await expect(
+        format(
+          engine,
+          document,
+          makeConfig({ importStrategy: "fromEnvironment" }),
+        ),
+      ).resolves.toBe("PRIMARY");
+    });
+  });
 });
