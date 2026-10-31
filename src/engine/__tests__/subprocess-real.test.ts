@@ -45,11 +45,14 @@ describe.skipIf(installed.failed)(
     let engine: SubprocessEngine;
 
     beforeAll(async () => {
+      // Where this is set, djLint prints GitHub annotations whatever output format it is told.
+      vi.stubEnv("GITHUB_ACTIONS", "");
       root = await mkdtemp(path.join(os.tmpdir(), "djlint-subprocess-"));
       await writeFile(path.join(root, "t.html"), DIRTY);
     });
 
     afterAll(async () => {
+      vi.unstubAllEnvs();
       await rm(root, { force: true, recursive: true });
     });
 
