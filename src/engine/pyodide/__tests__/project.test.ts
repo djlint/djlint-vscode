@@ -1,7 +1,12 @@
 // How a document with no folder to mount gets its configuration to the worker.
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeChannel, makeDocument } from "../../../__tests__/helpers.js";
-import { control, resetVscode, Uri } from "../../../__tests__/vscode-stub.js";
+import {
+  control,
+  resetVscode,
+  Uri,
+  workspace,
+} from "../../../__tests__/vscode-stub.js";
 import { readProject } from "../project.js";
 
 const FOLDER = Uri.parse("memfs://repo/app");
@@ -78,6 +83,18 @@ describe("readProject", () => {
       cwd: "templates/sub",
       files: { "pyproject.toml": "root", "templates/djlint.toml": "nearest" },
     });
+  });
+
+  it("reads no more than the configuration a folder lists", async () => {
+    control.files = new Map([
+      ["memfs://repo/app/.djlintrc", "root"],
+      ["memfs://repo/app/templates/page.html", "not configuration"],
+      ["memfs://repo/app/templates/pyproject.toml/not-a-file", "a folder"],
+    ]);
+    const readFile = vi.spyOn(workspace.fs, "readFile");
+    const read = await readProject(document("templates/a.html"), {}, channel);
+    expect(read?.project.files).toStrictEqual({ ".djlintrc": "root" });
+    expect(readFile).toHaveBeenCalledOnce();
   });
 
   it("runs from the root for a document at the root", async () => {

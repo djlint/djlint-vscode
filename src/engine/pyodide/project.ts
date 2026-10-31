@@ -2,7 +2,7 @@ import path from "node:path";
 import * as vscode from "vscode";
 import type { ProjectSnapshot, RunRequest } from "./protocol.js";
 
-const CONFIG_FILES = [
+const CONFIG_FILES: ReadonlySet<string> = new Set([
   ".djlint.toml",
   ".djlint_rules.yaml",
   ".djlintrc",
@@ -10,7 +10,7 @@ const CONFIG_FILES = [
   ".gitignore",
   "djlint.toml",
   "pyproject.toml",
-];
+]);
 
 interface NamedFile {
   file: string;
@@ -24,6 +24,27 @@ async function readText(uri: vscode.Uri): Promise<string | undefined> {
     return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
   } catch {
     return void 0;
+  }
+}
+
+// One request per folder, where asking for each file by name would be seven. Each can be a network round trip, and this runs on every format and lint.
+async function listConfigFiles(
+  folder: vscode.Uri,
+  directory: string,
+): Promise<string[]> {
+  const uri = vscode.Uri.joinPath(folder, ...directory.split("/"));
+  try {
+    const entries = await vscode.workspace.fs.readDirectory(uri);
+    return entries
+      .filter(
+        ([name, type]) =>
+          CONFIG_FILES.has(name) &&
+          // eslint-disable-next-line no-bitwise -- a bit field, as a symbolic link to a file sets two bits
+          (type & vscode.FileType.File) !== 0,
+      )
+      .map(([name]) => (directory === "" ? name : `${directory}/${name}`));
+  } catch {
+    return [];
   }
 }
 
@@ -83,12 +104,12 @@ export async function readProject(
   );
   const parts = cwd === "." ? [] : cwd.split("/");
   const parents = parts.map((_, depth) => parts.slice(0, depth + 1).join("/"));
-  const candidates = [
-    ...CONFIG_FILES,
-    ...parents.flatMap((parent) =>
-      CONFIG_FILES.map((name) => `${parent}/${name}`),
+  const listed = await Promise.all(
+    ["", ...parents].map(async (directory) =>
+      listConfigFiles(folder.uri, directory),
     ),
-  ];
+  );
+  const candidates = listed.flat();
   const texts = await Promise.all(
     candidates.map(async (file) =>
       readText(vscode.Uri.joinPath(folder.uri, ...file.split("/"))),

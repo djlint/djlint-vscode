@@ -16,6 +16,10 @@ import {
   workspaceListenerCount,
 } from "./vscode-stub.js";
 
+vi.mock("node:fs/promises", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:fs/promises")>()),
+  stat: vi.fn(async () => ({})),
+}));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn(),

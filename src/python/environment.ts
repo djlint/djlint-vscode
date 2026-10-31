@@ -11,7 +11,7 @@ import {
 } from "@vscode/python-extension";
 import * as vscode from "vscode";
 
-export interface PythonCommand {
+interface PythonCommand {
   args: readonly string[];
   executable: string;
 }
@@ -54,8 +54,10 @@ export class PythonEnvironments implements vscode.Disposable {
   readonly #disposables: vscode.Disposable[] = [this.#changeEmitter];
   #provider: Promise<EnvironmentProvider | null> | undefined;
   #isUnavailable = false;
+  readonly #outputChannel: vscode.LogOutputChannel;
 
-  constructor(private readonly outputChannel: vscode.LogOutputChannel) {
+  constructor(outputChannel: vscode.LogOutputChannel) {
+    this.#outputChannel = outputChannel;
     this.onDidChange = this.#changeEmitter.event;
   }
 
@@ -99,30 +101,30 @@ export class PythonEnvironments implements vscode.Disposable {
       PythonEnvironmentApi | undefined
     >(pythonEnvironmentsExtensionId);
     if (extension == null) {
-      this.outputChannel.info(
+      this.#outputChannel.info(
         "The Python Environments extension is not installed or is disabled.",
       );
       return null;
     }
 
-    this.outputChannel.info("Initializing the Python Environments extension");
+    this.#outputChannel.info("Initializing the Python Environments extension");
     try {
       const api = extension.isActive
         ? extension.exports
         : await extension.activate();
       if (api == null) {
-        this.outputChannel.info(
+        this.#outputChannel.info(
           "The Python Environments extension exports no API; it is disabled by python.useEnvironmentsExtension.",
         );
         return null;
       }
       const provider = this.#createPythonEnvironmentsProvider(api);
-      this.outputChannel.info(
+      this.#outputChannel.info(
         "Using the Python Environments extension for Python environment detection",
       );
       return provider;
     } catch (e) {
-      this.outputChannel.warn(
+      this.#outputChannel.warn(
         `The Python Environments extension is not available: ${String(e)}`,
       );
       return null;
@@ -144,7 +146,7 @@ export class PythonEnvironments implements vscode.Disposable {
           isDeepStrictEqual(previous, details);
         lastSeen.set(key, details);
         if (isUnchanged) {
-          this.outputChannel.debug(
+          this.#outputChannel.debug(
             `Ignoring a Python Environments change event for "${event.uri?.toString() ?? "workspace"}": the active environment is unchanged.`,
           );
           return;
@@ -158,7 +160,7 @@ export class PythonEnvironments implements vscode.Disposable {
     ): Promise<PythonEnvironmentDetails | null> => {
       const environment = await api.getEnvironment(uri);
       if (environment?.error) {
-        this.outputChannel.warn(
+        this.#outputChannel.warn(
           `Ignoring the Python environment at "${environment.environmentPath.toString()}": ${environment.error}`,
         );
       }
@@ -172,23 +174,23 @@ export class PythonEnvironments implements vscode.Disposable {
 
   async #activateClassicPythonExtension(): Promise<EnvironmentProvider | null> {
     if (vscode.extensions.getExtension(pythonExtensionId) == null) {
-      this.outputChannel.info(
+      this.#outputChannel.info(
         "The Python extension is not installed or is disabled.",
       );
       return null;
     }
 
-    this.outputChannel.info("Initializing the Python extension");
+    this.#outputChannel.info("Initializing the Python extension");
     try {
       const provider = this.#createClassicPythonProvider(
         await PythonExtensionApi.api(),
       );
-      this.outputChannel.info(
+      this.#outputChannel.info(
         "Using the Python extension for Python environment detection",
       );
       return provider;
     } catch (e) {
-      this.outputChannel.warn(
+      this.#outputChannel.warn(
         `The Python extension is not available: ${String(e)}`,
       );
       return null;

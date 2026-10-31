@@ -244,6 +244,8 @@ interface FormattingProviderRecord {
 }
 
 function initialState(): {
+  activeDocument: unknown;
+  activeEditorListeners: Set<() => void>;
   files: Map<string, string>;
   statusItems: StatusItem[];
   commands: Map<string, () => unknown>;
@@ -260,6 +262,8 @@ function initialState(): {
   workspaceFolders: readonly WorkspaceFolder[];
 } {
   return {
+    activeDocument: void 0,
+    activeEditorListeners: new Set(),
     files: new Map(),
     statusItems: [],
     commands: new Map(),
@@ -331,8 +335,32 @@ function findWorkspaceFolder(uri: Uri): WorkspaceFolder | undefined {
     .toSorted((a, b) => b.uri.path.length - a.uri.path.length)[0];
 }
 
+export function setActiveDocument(document: unknown): void {
+  control.activeDocument = document;
+  for (const listener of control.activeEditorListeners) {
+    listener();
+  }
+}
+
+export const FileType = { Directory: 2, File: 1, SymbolicLink: 64 };
+
 export const workspace = {
   fs: {
+    readDirectory: async (uri: Uri): Promise<[string, number][]> => {
+      const prefix = `${uri.toString().replace(/\/$/u, "")}/`;
+      const entries = new Map<string, number>();
+      for (const file of control.files.keys()) {
+        if (!file.startsWith(prefix)) {
+          continue;
+        }
+        const [name = "", ...rest] = file.slice(prefix.length).split("/");
+        entries.set(name, rest.length > 0 ? FileType.Directory : FileType.File);
+      }
+      if (entries.size === 0) {
+        throw new Error(`no such folder: ${uri.toString()}`);
+      }
+      return [...entries];
+    },
     readFile: async (uri: Uri): Promise<Uint8Array> => {
       const text = control.files.get(uri.toString());
       if (text == null) {
@@ -367,6 +395,21 @@ export const workspace = {
 };
 
 export const window = {
+  get activeTextEditor(): { document: unknown } | undefined {
+    return control.activeDocument == null
+      ? void 0
+      : { document: control.activeDocument };
+  },
+  onDidChangeActiveTextEditor: (
+    listener: () => void,
+  ): { dispose: () => void } => {
+    control.activeEditorListeners.add(listener);
+    return {
+      dispose: (): void => {
+        control.activeEditorListeners.delete(listener);
+      },
+    };
+  },
   createOutputChannel: (
     _name: string,
     _options?: unknown,

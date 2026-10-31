@@ -16,8 +16,11 @@ sys.dont_write_bytecode = True
 
 _HOME = os.getcwd()
 _GUEST_ROOTS = ("/host/", "/project/")
-_BASE_SYS_PATH = list(sys.path)
+# Without the working directory, which Python searches first. It is the project's by the time djLint imports the rest of what it needs, and those modules stay imported: a project's html.py would stand in for the standard library's in every project after it.
+_BASE_SYS_PATH = [entry for entry in sys.path if entry]
+sys.path[:] = _BASE_SYS_PATH
 _PROJECT = Path("/project")
+_skipped_rules = set()
 
 
 def _enter(cwd):
@@ -44,10 +47,33 @@ def _write_project(project):
     return str(cwd)
 
 
+def _skip_module_rules(config):
+    """Skip the custom rules whose module a project handed over cannot have."""
+    kept = []
+    for entry in config.linter_rules:
+        rule = entry["rule"]
+        if rule.get("python_module", "djlint.").startswith("djlint."):
+            kept.append(entry)
+        elif rule["name"] not in _skipped_rules:
+            _skipped_rules.add(rule["name"])
+            print(
+                f"Skipping rule {rule['name']}: python_module is not available"
+                " here.",
+                file=sys.stderr,
+            )
+    config.linter_rules = tuple(kept)
+
+
+def _is_project_module(module):
+    """Tell by its file or, for a namespace package, by its folders."""
+    locations = (getattr(module, "__file__", ""), *getattr(module, "__path__", ()))
+    return any(str(location).startswith(_GUEST_ROOTS) for location in locations)
+
+
 def _forget_project_modules():
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
-        if str(getattr(module, "__file__", "")).startswith(_GUEST_ROOTS):
+        if _is_project_module(module):
             del sys.modules[name]
     importlib.invalidate_caches()
 
@@ -66,8 +92,10 @@ def run(mode, src, options, path_options, filename, cwd, project):
         **json.loads(options),
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
-    # Where a custom rule's python_module is, as for `python -m djlint`.
-    sys.path[:] = [str(config.project_root), *_BASE_SYS_PATH]
+    # Where a custom rule's python_module is, as for `python -m djlint`, but behind the standard library, so a module named like one of its own is not found.
+    sys.path[:] = [*_BASE_SYS_PATH, str(config.project_root), ""]
+    if project is not None:
+        _skip_module_rules(config)
     if config.require_pragma and not has_pragma(config, src.split("\n", 1)[0]):
         return src if is_format else "[]"
     output, formatted = process_stdin(config, src)
@@ -76,6 +104,9 @@ def run(mode, src, options, path_options, filename, cwd, project):
     diagnostics = []
     for error in output["lint_message"][filename]:
         line, _, column = str(error["line"]).partition(":")
+        # A python_module rule can return any position at all.
+        if not (line.isdecimal() and int(line) and (column or "0").isdecimal()):
+            continue
         diagnostics.append(
             {
                 "code": error["code"],

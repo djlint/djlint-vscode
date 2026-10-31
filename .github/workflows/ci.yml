@@ -53,9 +53,9 @@ jobs:
           package-manager-cache: false
           check-latest: true
       - run: npm ci
-      - run: npx --yes @vscode/vsce package --out djlint.vsix
-      - run: unzip -l djlint.vsix | grep -F extension/THIRD-PARTY-NOTICES.txt
-      - run: npm run verify-bundle
+      - run: npx --yes @vscode/vsce@4.0.0 package --out djlint.vsix
+      - run: unzip -q djlint.vsix -d unpacked
+      - run: npm run verify-bundle -- unpacked/extension
       - run: npx vitest run
   e2e:
     strategy:

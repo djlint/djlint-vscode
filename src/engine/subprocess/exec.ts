@@ -18,6 +18,9 @@ export function isCustomExecaError(e: unknown): e is CustomExecaError {
 const NO_DJLINT_MODULE_REGEX =
   /No\s+module\s+named\s+['"]?djlint['"]?(?![\w.])/u;
 
-export function isDjlintUnavailable(e: CustomExecaError): boolean {
+export function isDjlintUnavailable(e: {
+  code?: string | undefined;
+  stderr: string;
+}): boolean {
   return e.code === "ENOENT" || NO_DJLINT_MODULE_REGEX.test(e.stderr);
 }

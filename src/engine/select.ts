@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
 import {
   DjlintUnavailableError,
@@ -18,12 +19,19 @@ export class FallbackEngine implements DjlintEngine {
   #secondary: DjlintEngine | undefined;
   readonly #unavailableUntil = new Map<string, number>();
   #disposed = false;
+  readonly #primary: DjlintEngine;
+  readonly #makeSecondary: () => DjlintEngine;
+  readonly #outputChannel: vscode.LogOutputChannel;
 
   constructor(
-    private readonly primary: DjlintEngine,
-    private readonly makeSecondary: () => DjlintEngine,
-    private readonly outputChannel: vscode.LogOutputChannel,
-  ) {}
+    primary: DjlintEngine,
+    makeSecondary: () => DjlintEngine,
+    outputChannel: vscode.LogOutputChannel,
+  ) {
+    this.#primary = primary;
+    this.#makeSecondary = makeSecondary;
+    this.#outputChannel = outputChannel;
+  }
 
   async format(
     document: vscode.TextDocument,
@@ -48,7 +56,7 @@ export class FallbackEngine implements DjlintEngine {
 
   dispose(): void {
     this.#disposed = true;
-    this.primary.dispose();
+    this.#primary.dispose();
     this.#secondary?.dispose();
   }
 
@@ -60,8 +68,8 @@ export class FallbackEngine implements DjlintEngine {
     // Only the bundled djLint can read the configuration of a virtual workspace.
     const shouldPreferBundled =
       isVirtualDocument(document) &&
-      !config.get<string>("executablePath") &&
-      !config.get<string>("pythonPath");
+      !getConfiguredPath(config, "executablePath") &&
+      !getConfiguredPath(config, "pythonPath");
     if (
       shouldPreferBundled ||
       config.get<string>("importStrategy") === "useBundled"
@@ -74,7 +82,7 @@ export class FallbackEngine implements DjlintEngine {
       return call(this.#secondaryEngine());
     }
     try {
-      return await call(this.primary);
+      return await call(this.#primary);
     } catch (e) {
       this.#markUnavailableOrThrow(scope, e);
       return call(this.#secondaryEngine());
@@ -85,7 +93,7 @@ export class FallbackEngine implements DjlintEngine {
     if (this.#disposed) {
       throw new vscode.CancellationError();
     }
-    this.#secondary ??= this.makeSecondary();
+    this.#secondary ??= this.#makeSecondary();
     return this.#secondary;
   }
 
@@ -97,7 +105,7 @@ export class FallbackEngine implements DjlintEngine {
       (this.#unavailableUntil.get(scope) ?? 0) > Date.now();
     this.#unavailableUntil.set(scope, Date.now() + RESOLUTION_TTL_MS);
     if (!wasAlreadyMarked) {
-      this.outputChannel.info(
+      this.#outputChannel.info(
         "djLint not found in the environment; using the bundled runtime.",
       );
     }
@@ -106,11 +114,14 @@ export class FallbackEngine implements DjlintEngine {
 
 export class EngineManager implements vscode.Disposable {
   #engine: DjlintEngine | undefined;
+  readonly #createEngine: () => DjlintEngine;
 
-  constructor(private readonly createEngine: () => DjlintEngine) {}
+  constructor(createEngine: () => DjlintEngine) {
+    this.#createEngine = createEngine;
+  }
 
   get engine(): DjlintEngine {
-    this.#engine ??= this.createEngine();
+    this.#engine ??= this.#createEngine();
     return this.#engine;
   }
 

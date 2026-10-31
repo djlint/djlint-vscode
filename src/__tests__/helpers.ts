@@ -10,7 +10,7 @@ import { control, RecordingChannel, Uri } from "./vscode-stub.js";
 export type TestChannel = RecordingChannel & vscode.LogOutputChannel;
 
 export function makeStatus(): DjlintStatus {
-  return { update: vi.fn() } as unknown as DjlintStatus;
+  return { clear: vi.fn(), update: vi.fn() } as unknown as DjlintStatus;
 }
 
 export function makeChannel(): TestChannel {

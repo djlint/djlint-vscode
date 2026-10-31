@@ -12,16 +12,21 @@ type ArgValue = boolean | number | string;
 
 export abstract class CliArg {
   readonly isPath: boolean = false;
-  readonly kwargName: string;
   readonly displayName: string;
+  readonly #kwargName: string;
 
   constructor(
     readonly vscodeName: string,
     readonly cliName: string,
     readonly minVersion: string,
   ) {
-    this.kwargName = cliName.replace(/^--/u, "").replaceAll("-", "_");
+    this.#kwargName = cliName.replace(/^--/u, "").replaceAll("-", "_");
     this.displayName = vscodeName ? `djlint.${vscodeName}` : cliName;
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- what ProfileArg goes by
+  requiredVersion(_context: ArgContext): string {
+    return this.minVersion;
   }
 
   build(context: ArgContext): string[] {
@@ -34,7 +39,7 @@ export abstract class CliArg {
 
   buildKwarg(context: ArgContext): [string, ArgValue] | undefined {
     const value = this.read(context);
-    return value == null ? void 0 : [this.kwargName, value];
+    return value == null ? void 0 : [this.#kwargName, value];
   }
 
   protected abstract read(context: ArgContext): ArgValue | undefined;
@@ -79,6 +84,25 @@ class StringArg extends CliArg {
   protected read({ config }: ArgContext): string | undefined {
     const value = config.get<string>(this.vscodeName);
     return value === "" ? void 0 : value;
+  }
+}
+
+const PROFILE_MIN_VERSIONS: ReadonlyMap<string, string> = new Map([
+  ["all", "1.44"],
+  ["askama", "1.42"],
+  ["liquid", "1.42"],
+  ["tera", "1.42"],
+]);
+
+class ProfileArg extends StringArg {
+  constructor() {
+    super("profile", "--profile", "0.4.5");
+  }
+
+  override requiredVersion(context: ArgContext): string {
+    return (
+      PROFILE_MIN_VERSIONS.get(this.read(context) ?? "") ?? this.minVersion
+    );
   }
 }
 
@@ -141,7 +165,7 @@ const commonArgs = [
   new SimpleArg("--quiet", "0.0.9"),
   new BoolArg("requirePragma", "--require-pragma", "0.5.8"),
   new BoolArg("useGitignore", "--use-gitignore", "0.5.9"),
-  new StringArg("profile", "--profile", "0.4.5"),
+  new ProfileArg(),
   new StringArg("quoteStyle", "--quote-style", "1.45"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),

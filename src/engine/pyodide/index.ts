@@ -27,8 +27,9 @@ export interface RuntimeWorker {
 }
 
 interface Pending {
+  document: vscode.TextDocument;
   isCancelled: boolean;
-  stopWaiting: () => void;
+  stopListening: () => void;
   reject: (reason: Error) => void;
   resolve: (output: string) => void;
 }
@@ -70,18 +71,30 @@ export class PyodideEngine implements DjlintEngine {
   #seq = 0;
   #disposed = false;
   #version = "";
+  #watchdog: ReturnType<typeof setTimeout> | undefined;
   readonly #pending = new Map<number, Pending>();
   readonly #reported = new Set<string>();
+  readonly #createWorker: () => RuntimeWorker;
+  readonly #outputChannel: vscode.LogOutputChannel;
+  readonly #canReadProjectFiles: boolean;
+  readonly #status: DjlintStatus;
+  readonly #getHostFolder: (
+    document: vscode.TextDocument,
+  ) => string | undefined;
 
   constructor(
-    private readonly createWorker: () => RuntimeWorker,
-    private readonly outputChannel: vscode.LogOutputChannel,
-    private readonly canReadProjectFiles: boolean,
-    private readonly status: DjlintStatus,
-    private readonly getHostFolder: (
-      document: vscode.TextDocument,
-    ) => string | undefined,
-  ) {}
+    createWorker: () => RuntimeWorker,
+    outputChannel: vscode.LogOutputChannel,
+    canReadProjectFiles: boolean,
+    status: DjlintStatus,
+    getHostFolder: (document: vscode.TextDocument) => string | undefined,
+  ) {
+    this.#createWorker = createWorker;
+    this.#outputChannel = outputChannel;
+    this.#canReadProjectFiles = canReadProjectFiles;
+    this.#status = status;
+    this.#getHostFolder = getHostFolder;
+  }
 
   async format(
     document: vscode.TextDocument,
@@ -112,7 +125,21 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     this.#reported.add(message);
-    void showFailure(message, this.outputChannel);
+    void showFailure(message, this.#outputChannel);
+  }
+
+  // Python blocks the worker, so silence is the only sign of a stuck run, and only this can end one. Each answer resets it, so a long queue is not mistaken for that, and a cancelled run stays watched until its answer arrives.
+  #watch(): void {
+    clearTimeout(this.#watchdog);
+    this.#watchdog =
+      this.#pending.size === 0
+        ? void 0
+        : setTimeout(() => {
+            this.#fail(
+              `Bundled djLint did not respond within ${RUN_TIMEOUT_MS / 1000} seconds; restarting it.`,
+              new Error("Bundled djLint timed out"),
+            );
+          }, RUN_TIMEOUT_MS);
   }
 
   #take(id: number): Pending | undefined {
@@ -121,7 +148,7 @@ export class PyodideEngine implements DjlintEngine {
       return void 0;
     }
     this.#pending.delete(id);
-    pending.stopWaiting();
+    pending.stopListening();
     return pending;
   }
 
@@ -129,9 +156,10 @@ export class PyodideEngine implements DjlintEngine {
     const abandoned = this.#pending.values().toArray();
     this.#pending.clear();
     for (const pending of abandoned) {
-      pending.stopWaiting();
+      pending.stopListening();
       pending.reject(reason);
     }
+    this.#watch();
   }
 
   #discardWorker(reason: Error): void {
@@ -147,10 +175,10 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     if (response.ok) {
-      this.status.update(this.#version, "bundled");
+      this.#status.update(pending.document, this.#version, "bundled");
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
-      this.outputChannel.error(response.error);
+      this.#outputChannel.error(response.error);
       this.#report(
         `Bundled djLint failed: ${lastLine(response.error) ?? response.error}`,
       );
@@ -159,28 +187,42 @@ export class PyodideEngine implements DjlintEngine {
   }
 
   #fail(message: string, reason: Error): void {
-    this.outputChannel.error(message);
+    this.#outputChannel.error(message);
     this.#report(message);
     this.#discardWorker(reason);
   }
 
   #receive(response: WorkerResponse): void {
+    this.#handle(response);
+    this.#watch();
+  }
+
+  #handle(response: WorkerResponse): void {
     // eslint-disable-next-line default-case -- every type has a case
     switch (response.type) {
       case "boot-failed": {
-        this.outputChannel.error(response.error);
+        this.#outputChannel.error(response.error);
         const reason = lastLine(response.error) ?? response.error;
         const message = `Bundled djLint runtime failed to start: ${reason}`;
         this.#fail(message, new Error(message));
         break;
       }
+      case "crashed": {
+        this.#outputChannel.error(response.error);
+        const reason = lastLine(response.error) ?? response.error;
+        const message = `Bundled djLint runtime crashed: ${reason}`;
+        this.#fail(message, new Error(message));
+        break;
+      }
       case "log": {
-        this.outputChannel[response.level](response.line);
+        this.#outputChannel[response.level](response.line);
         break;
       }
       case "ready": {
         this.#version = response.version;
-        this.outputChannel.info(`Using the bundled djLint ${response.version}`);
+        this.#outputChannel.info(
+          `Using the bundled djLint ${response.version}`,
+        );
         break;
       }
       case "result": {
@@ -197,10 +239,12 @@ export class PyodideEngine implements DjlintEngine {
     if (this.#worker) {
       return this.#worker;
     }
-    const worker = this.createWorker();
+    const worker = this.#createWorker();
     const isCurrent = (): boolean => this.#worker === worker;
     worker.onMessage((response) => {
-      this.#receive(response);
+      if (isCurrent()) {
+        this.#receive(response);
+      }
     });
     worker.onError((e) => {
       if (isCurrent()) {
@@ -223,10 +267,10 @@ export class PyodideEngine implements DjlintEngine {
     document: vscode.TextDocument,
     pathOptions: RunRequest["pathOptions"],
   ): ProjectLocation | undefined {
-    if (!this.canReadProjectFiles) {
+    if (!this.#canReadProjectFiles) {
       return { cwd: void 0, pathOptions: {}, project: void 0 };
     }
-    const hostFolder = this.getHostFolder(document);
+    const hostFolder = this.#getHostFolder(document);
     return hostFolder == null
       ? void 0
       : {
@@ -247,7 +291,7 @@ export class PyodideEngine implements DjlintEngine {
     const { options, pathOptions } = buildOptions(context, mode);
     const request: RunRequest = {
       ...(this.#locateOnHost(document, pathOptions) ??
-        (await readProject(document, pathOptions, this.outputChannel)) ?? {
+        (await readProject(document, pathOptions, this.#outputChannel)) ?? {
           cwd: void 0,
           pathOptions: absoluteOnly(pathOptions),
           project: void 0,
@@ -264,13 +308,6 @@ export class PyodideEngine implements DjlintEngine {
         reject(new vscode.CancellationError());
         return;
       }
-      const timer = setTimeout(() => {
-        this.#fail(
-          `Bundled djLint did not respond within ${RUN_TIMEOUT_MS / 1000} seconds; restarting it.`,
-          new Error("Bundled djLint timed out"),
-        );
-      }, RUN_TIMEOUT_MS);
-      // Python blocks the worker, so the run is only over once it says so. Until then the timer stays armed: nothing else can end a stuck run.
       const cancellation = token.onCancellationRequested(() => {
         const pending = this.#pending.get(id);
         if (!pending) {
@@ -282,18 +319,22 @@ export class PyodideEngine implements DjlintEngine {
         this.#worker?.postMessage(cancel);
       });
       this.#pending.set(id, {
+        document,
         isCancelled: false,
         reject,
         resolve,
-        stopWaiting: () => {
-          clearTimeout(timer);
+        stopListening: () => {
           cancellation.dispose();
         },
       });
+      if (this.#watchdog == null) {
+        this.#watch();
+      }
       try {
         this.#ensureWorker().postMessage(request);
       } catch (e) {
         this.#take(id)?.reject(e instanceof Error ? e : new Error(String(e)));
+        this.#watch();
       }
     });
   }

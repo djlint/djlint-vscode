@@ -54,7 +54,7 @@ The extension looks for a djLint to run, in this order:
 4. `djlint` on PATH, then `python3 -m djlint` and `python -m djlint`.
 5. The djLint bundled with the extension.
 
-The language status item in the status bar shows which one is in use, and opens the logs. A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
+The language status item in the status bar shows which one is in use, and opens the logs. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. The exceptions are `python3` and `python` from PATH, which count only if `-m djlint --version` answers, because a stub such as the Windows Store one fails the same way. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. The old defaults, `"djlint"` for `djlint.executablePath` and `"python"` for `djlint.pythonPath`, count as unset, so use a path if one of them has to win over the active environment.
 
 Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 
@@ -70,7 +70,7 @@ With an installed djLint, the extension detects its version and passes only the 
 
 ## Configuration files
 
-djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root. The bundled djLint does the same, except in an untrusted workspace, where it reads no files. In a virtual workspace, the bundled djLint is used unless `djlint.executablePath` or `djlint.pythonPath` is set, because an installed djLint cannot read files there. The search stops at the workspace root, and a custom rule's `python_module` is not available.
+djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djlint.toml` or `.djlintrc`) upward from the edited file's folder, so in a monorepo the one nearest the file wins over one at the workspace root. The bundled djLint does the same, except in an untrusted workspace, where it reads no files. In a virtual workspace, the bundled djLint is used unless `djlint.executablePath` or `djlint.pythonPath` is set, because an installed djLint cannot read files there. The search stops at the workspace root, and a custom rule with a `python_module` is skipped, because that module is not read.
 
 `djlint.configuration` and `djlint.rules` point to a file of your choice. Relative values, including a bare filename such as `.djlintrc`, are resolved from the workspace root.
 
@@ -84,12 +84,8 @@ These are bugs in old djLint versions, so they only affect an installed djLint. 
 - v1.12.1: file contents are duplicated after formatting.
 - Before v1.19.2: a config file in the project root is ignored on some Python versions.
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
-
 ## License
 
-The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
+[MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)
 
-The published package also bundles djLint, which is GPL-3.0-or-later, and runs it in the same process, so the package as a whole is distributed under GPL-3.0-or-later. See [THIRD_PARTY.md](THIRD_PARTY.md).
+The bundled djLint and the worker that loads it are distributed together under GPL-3.0-or-later. What the package bundles keeps its own license, collected in `THIRD-PARTY-NOTICES.txt` in the extension.

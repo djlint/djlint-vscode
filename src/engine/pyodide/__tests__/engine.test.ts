@@ -23,11 +23,6 @@ import { PyodideEngine } from "../index.js";
 import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
 
-vi.mock("node:fs", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("node:fs")>()),
-  existsSync: vi.fn(() => true),
-}));
-
 vi.mock("node:worker_threads", async () => {
   const { FakeWorker: Worker } =
     await import("../../../__tests__/fake-worker.js");
@@ -291,6 +286,41 @@ describe("a runtime that fails to start", () => {
   });
 });
 
+describe("a runtime that crashes", () => {
+  it("is replaced, because nothing it runs next can be trusted", async () => {
+    const { engine } = makeEngine();
+    const first = format(engine);
+    const crashed = FakeWorker.latest;
+    crashed.respond({ error: "fatal", type: "crashed" });
+    await expect(first).rejects.toThrow(
+      "Bundled djLint runtime crashed: fatal",
+    );
+    expect(crashed.terminated).toBe(true);
+
+    const second = format(engine);
+    expect(FakeWorker.instances).toHaveLength(2);
+    FakeWorker.latest.succeed(2, "ok");
+    await expect(second).resolves.toBe("ok");
+  });
+});
+
+describe("a replaced worker", () => {
+  it("is not listened to any more", async () => {
+    const { engine } = makeEngine();
+    const first = format(engine);
+    const old = FakeWorker.latest;
+    old.emit("exit", 1);
+    await expect(first).rejects.toThrow("exited unexpectedly");
+
+    const second = format(engine);
+    const current = FakeWorker.latest;
+    old.respond({ error: "too late", type: "boot-failed" });
+    expect(current.terminated).toBe(false);
+    current.succeed(2, "ok");
+    await expect(second).resolves.toBe("ok");
+  });
+});
+
 describe("djLint failures", () => {
   const TRACEBACK =
     'Traceback (most recent call last):\n  File "glue.py", line 26, in run\nValueError: bad value\n';
@@ -479,6 +509,22 @@ describe("timeouts", () => {
 
     const { id } = FakeWorker.latest.lastRun;
     FakeWorker.latest.failRun(id, "cancelled");
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("does not mistake a long queue for a stuck run", async () => {
+    const { engine } = makeEngine();
+    format(engine).catch(() => void 0);
+    const first = FakeWorker.latest.lastRun.id;
+    format(engine).catch(() => void 0);
+    const second = FakeWorker.latest.lastRun.id;
+
+    await vi.advanceTimersByTimeAsync(RUN_TIMEOUT_MS - 1);
+    FakeWorker.latest.succeed(first, "x");
+    await vi.advanceTimersByTimeAsync(RUN_TIMEOUT_MS - 1);
+    expect(FakeWorker.latest.terminated).toBe(false);
+
+    FakeWorker.latest.succeed(second, "x");
     expect(vi.getTimerCount()).toBe(0);
   });
 
