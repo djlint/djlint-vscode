@@ -347,7 +347,7 @@ try {
   rmSync(project, { force: true, recursive: true });
 }
 
-// Creating a file link takes a privilege on Windows, and only links to folders can be resolved up front.
+// Creating a link to a file takes a privilege on Windows.
 if (process.platform !== "win32") {
   const links = mkdtempSync(path.join(tmpdir(), "djlint-links-"));
   try {

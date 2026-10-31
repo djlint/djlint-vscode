@@ -1,4 +1,3 @@
-import { realpathSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parentPort, workerData } from "node:worker_threads";
@@ -12,23 +11,45 @@ if (!parentPort) {
 const port = parentPort;
 const { indexURL } = workerData as WorkerData;
 
+interface NodeFilesystems {
+  // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
+  NODEFS: {
+    // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
+    node_ops: { readlink: (node: unknown) => string };
+  };
+}
+
 const mountedRoots = new Map<string, string>();
 
-// The mount hands back a link's target as written on the host, which leads nowhere inside it. An installed djLint also sees the real path, as its working directory.
-function resolveLinks(hostPath: string): string {
-  try {
-    return realpathSync(hostPath);
-  } catch {
-    return hostPath;
-  }
+// The mount hands back a link's target as written on the host, which leads nowhere inside it.
+function translateLinks(
+  pyodide: PyodideAPI,
+  toGuest: (target: string) => string,
+): void {
+  const nodeOperations = (pyodide.FS.filesystems as unknown as NodeFilesystems)
+    .NODEFS.node_ops;
+  const { readlink } = nodeOperations;
+  nodeOperations.readlink = (node): string => {
+    const target = readlink(node);
+    if (!path.isAbsolute(target)) {
+      return target.replaceAll(path.sep, "/");
+    }
+    try {
+      return toGuest(target);
+    } catch {
+      return target;
+    }
+  };
 }
 
 // Mounting the whole filesystem root lets djLint look for its configuration above the workspace folder, as it does when installed.
-function toGuestPath(pyodide: PyodideAPI, requestedPath: string): string {
-  const hostPath = resolveLinks(requestedPath);
+function toGuestPath(pyodide: PyodideAPI, hostPath: string): string {
   const { root } = path.parse(hostPath);
   let guestRoot = mountedRoots.get(root);
   if (guestRoot == null) {
+    if (mountedRoots.size === 0) {
+      translateLinks(pyodide, (target) => toGuestPath(pyodide, target));
+    }
     guestRoot = `/host/${mountedRoots.size}`;
     pyodide.FS.mkdirTree(guestRoot);
     pyodide.mountNodeFS(guestRoot, root);
