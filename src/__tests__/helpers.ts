@@ -61,6 +61,7 @@ export function makeDocument(
     lineAt: (line: number) => ({ text: lines[line] ?? "" }),
     lineCount: lines.length,
     uri: typeof location === "string" ? vscode.Uri.file(location) : location,
+    version: 1,
   } as unknown as vscode.TextDocument;
 }
 

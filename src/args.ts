@@ -179,6 +179,14 @@ const commonArgs = [
   new StringArg("quoteStyle", "--quote-style", "1.45"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
+  // These change what the linter reports, not only how the formatter writes.
+  new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
+  new BoolArg("ignoreCase", "--ignore-case", "1.23"),
+  new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
+  new NumberOrNullArg("maxBlankLines", "--max-blank-lines", "1.31"),
+  new StringArrayArg("customBlocks", "--custom-blocks", "1.25"),
+  new StringArrayArg("customHtml", "--custom-html", "1.25"),
+  new StringArrayArg("ignoreBlocks", "--ignore-blocks", "1.24"),
 ] as const;
 
 export const lintingArgs = [
@@ -193,7 +201,6 @@ export const lintingArgs = [
 export const formattingArgs = [
   ...commonArgs,
   new SimpleArg("--reformat", "0.0.9"),
-  new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new BoolArg("formatAttributeJsJson", "--format-attribute-js-json", "1.37"),
   new NumberOrNullArg(
     "formatAttributeJsJsonMinProps",
@@ -212,7 +219,6 @@ export const formattingArgs = [
   ),
   new BoolArg("formatCss", "--format-css", "1.9"),
   new BoolArg("formatJs", "--format-js", "1.9"),
-  new BoolArg("ignoreCase", "--ignore-case", "1.23"),
   new BoolArg("keepBrInline", "--keep-br-inline", "1.45"),
   new BoolArg("nameEndblocks", "--name-endblocks", "1.45"),
   new BoolArg("noEntityFormatting", "--no-entity-formatting", "1.45"),
@@ -220,7 +226,6 @@ export const formattingArgs = [
   new BoolArg("noIndentInnerHtml", "--no-indent-inner-html", "1.45"),
   new BoolArg("noLineAfterYaml", "--no-line-after-yaml", "1.29"),
   new BoolArg("noSetFormatting", "--no-set-formatting", "1.30.2"),
-  new BoolArg("preserveBlankLines", "--preserve-blank-lines", "1.3"),
   new BoolArg("preserveClassNewlines", "--preserve-class-newlines", "1.39"),
   new BoolArg("preserveLeadingSpace", "--preserve-leading-space", "1.2"),
   new BoolArg("singleAttributePerLine", "--single-attribute-per-line", "1.40"),
@@ -234,12 +239,8 @@ export const formattingArgs = [
     "1.27",
   ),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
-  new NumberOrNullArg("maxBlankLines", "--max-blank-lines", "1.31"),
   new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new StringArrayArg("blankLineAfterTag", "--blank-line-after-tag", "1.25"),
   new StringArrayArg("blankLineBeforeTag", "--blank-line-before-tag", "1.25"),
-  new StringArrayArg("customBlocks", "--custom-blocks", "1.25"),
-  new StringArrayArg("customHtml", "--custom-html", "1.25"),
-  new StringArrayArg("ignoreBlocks", "--ignore-blocks", "1.24"),
   new UseEditorIndentationArg(),
 ] as const;

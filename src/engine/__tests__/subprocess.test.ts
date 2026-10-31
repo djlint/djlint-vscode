@@ -4,8 +4,6 @@
 import { stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { execa } from "execa";
-import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import {
@@ -40,9 +38,14 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
 vi.mock("which-command", () => ({
   whichCommand: async (command: string) => command,
 }));
+const { spawn } = vi.hoisted(() => ({ spawn: vi.fn<Spawn>() }));
+
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn(),
+  execa: async (...args: Parameters<Spawn>) => ({
+    stderr: "",
+    ...(await spawn(...args)),
+  }),
 }));
 
 type Spawn = (
@@ -57,8 +60,6 @@ type Spawn = (
   stdout: string;
   timedOut?: boolean;
 }>;
-
-const spawn = execa as unknown as Mock<Spawn>;
 
 const VERSION_OUTPUT = { exitCode: 0, stdout: "djlint, version 1.44.2" };
 const NO_MODULE = "No module named djlint";
@@ -339,6 +340,19 @@ describe("resolution through the engine", () => {
     await expect(
       engine.lint(document, config, liveToken()),
     ).rejects.toBeInstanceOf(DjlintUnavailableError);
+  });
+
+  it("logs what djLint warns about, once", async () => {
+    installDjlint(async () => ({
+      stderr: "Invalid pyproject.toml",
+      stdout: "<p>x</p>\n",
+    }));
+    const { channel, engine } = makeEngine();
+    await engine.format(document, config, formattingOptions, liveToken());
+    await engine.format(document, config, formattingOptions, liveToken());
+    expect(
+      channel.of("warn").filter((line) => line.includes("pyproject")),
+    ).toHaveLength(1);
   });
 
   it("does not wipe a document when nothing comes back", async () => {

@@ -132,7 +132,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Override the default exclude paths. Requires djLint ≥ 1.25.",
+          "description": "Override the default exclude paths. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
         "djlint.extendExclude": {
@@ -141,7 +141,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add additional paths to the default exclude. Requires djLint ≥ 1.25.",
+          "description": "Add additional paths to the default exclude. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
         "djlint.formatAttributeJsJson": {
@@ -153,7 +153,7 @@
         "djlint.formatAttributeJsJsonMinProps": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "description": "Minimum number of properties a JavaScript/JSON object must have to be formatted. Objects with fewer properties stay on a single line. Leave unset for djLint's default of 2. Requires djLint ≥ 1.37.",
@@ -271,7 +271,7 @@
         "djlint.indentCss": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "markdownDescription": "Indent width for the contents of `<style>` tags, used when `#djlint.formatCss#` is enabled. Requires djLint ≥ 1.25.",
@@ -280,7 +280,7 @@
         "djlint.indentJs": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "markdownDescription": "Indent width for the contents of `<script>` tags, used when `#djlint.formatJs#` is enabled. Requires djLint ≥ 1.25.",
@@ -301,7 +301,7 @@
         "djlint.maxAttributeLength": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "description": "Attempt to wrap tag attributes once the attribute length exceeds this value. Requires djLint ≥ 1.25.",
@@ -310,7 +310,7 @@
         "djlint.maxBlankLines": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "description": "Consolidate blank lines down to this many lines. Leave unset for djLint's default of 0, which removes blank lines. Requires djLint ≥ 1.31.",
@@ -319,7 +319,7 @@
         "djlint.maxLineLength": {
           "type": [
             "integer",
-            null
+            "null"
           ],
           "default": null,
           "description": "Attempt to put some html and template tags on a single line instead of wrapping them, as long as the line does not exceed this length. Requires djLint ≥ 1.25.",
@@ -474,7 +474,7 @@
         "djlint.useGitignore": {
           "type": "boolean",
           "default": false,
-          "description": "Add .gitignore excludes to the default exclude. Requires djLint ≥ 0.5.9.",
+          "description": "Add .gitignore excludes to the default exclude. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 0.5.9.",
           "scope": "resource"
         },
         "djlint.useVenv": {

@@ -35,7 +35,8 @@ export function isValidLintResult(
   return (
     isLint &&
     e.exitCode === 1 &&
-    /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr)
+    (e.stdout.trim() !== "" ||
+      /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr))
   );
 }
 

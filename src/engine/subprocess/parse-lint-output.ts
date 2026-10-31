@@ -26,10 +26,11 @@ const END_REGEX = /^(?<line>\d+):(?<column>\d+)$/u;
 const LEGACY_OUTPUT_REGEX =
   /^(?<code>[A-Z]+\d+)\s+(?<line>\d+):(?<column>\d+)\s+(?<message>.+)$/gmu;
 
+// A rule module can report line 0, which the bundled djLint moves to line 1 too.
 function isValidPosition(line: number, column: number): boolean {
   return (
     Number.isSafeInteger(line) &&
-    line >= 1 &&
+    line >= 0 &&
     Number.isSafeInteger(column) &&
     column >= 0
   );
@@ -71,11 +72,11 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
     const [lineText, columnText] = lineColumnParts;
     const line = Number(lineText);
     const column = Number(columnText);
-    if (!isValidPosition(line, column)) {
+    if (!lineText || !isValidPosition(line, column)) {
       continue;
     }
     const end = hasEnd ? endOf(parts.at(-1), line, column) : {};
-    diags.push({ code, column, line, message, ...end });
+    diags.push({ code, column, line: Math.max(line, 1), message, ...end });
   }
   return diags;
 }
@@ -94,7 +95,7 @@ function parseLegacyFormat(stdout: string): LintDiagnostic[] {
     diags.push({
       code: groups["code"],
       column,
-      line,
+      line: Math.max(line, 1),
       message: groups["message"],
     });
   }

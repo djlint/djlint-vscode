@@ -78,10 +78,11 @@ djLint looks for its configuration file (`pyproject.toml`, `djlint.toml`, `.djli
 
 ## Known issues
 
-These are bugs in old djLint versions, so they only affect an installed djLint. The bundled djLint is unaffected, and updating djLint fixes all of them.
+These are bugs in djLint itself, so they only affect an installed djLint. The bundled djLint is unaffected, and updating djLint fixes the ones with a version.
 
 - Before v1.1.1: non-ASCII characters break formatting and linting on Windows.
 - v1.12.1: file contents are duplicated after formatting.
+- With `files` in the project's configuration: djLint works on those files instead of the text it is given, so formatting from the editor rewrites them.
 - Before v1.19.2: a config file in the project root is ignored on some Python versions.
 
 ## License

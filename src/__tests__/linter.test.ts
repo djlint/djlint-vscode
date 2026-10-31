@@ -166,6 +166,25 @@ describe("published diagnostics", () => {
     expect(range.end).toMatchObject({ character: 5, line: 2 });
   });
 
+  it("lints again when the document changed under a lint", async () => {
+    const document = makeDocument("/w/a.html", "<p>x</p>");
+    let runs = 0;
+    const { linter } = makeLinter(async () => {
+      runs += 1;
+      if (runs === 1) {
+        (document as { version: number }).version += 1;
+      }
+      return [{ code: "H013", column: runs, line: 1, message: "m" }];
+    });
+    control.documents = [document];
+    linter.activate();
+    await flush();
+    expect(runs).toBe(2);
+    expect(diagnosticsOf(document)).toMatchObject([
+      { range: { start: { character: 2 } } },
+    ]);
+  });
+
   it("carries the message", async () => {
     expect((await published()).message).toBe(H013.message);
   });
