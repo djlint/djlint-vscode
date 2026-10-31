@@ -342,8 +342,25 @@ export function setActiveDocument(document: unknown): void {
   }
 }
 
+export const FileType = { Directory: 2, File: 1, SymbolicLink: 64 };
+
 export const workspace = {
   fs: {
+    readDirectory: async (uri: Uri): Promise<[string, number][]> => {
+      const prefix = `${uri.toString().replace(/\/$/u, "")}/`;
+      const entries = new Map<string, number>();
+      for (const file of control.files.keys()) {
+        if (!file.startsWith(prefix)) {
+          continue;
+        }
+        const [name = "", ...rest] = file.slice(prefix.length).split("/");
+        entries.set(name, rest.length > 0 ? FileType.Directory : FileType.File);
+      }
+      if (entries.size === 0) {
+        throw new Error(`no such folder: ${uri.toString()}`);
+      }
+      return [...entries];
+    },
     readFile: async (uri: Uri): Promise<Uint8Array> => {
       const text = control.files.get(uri.toString());
       if (text == null) {

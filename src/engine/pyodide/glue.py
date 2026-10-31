@@ -16,8 +16,11 @@ sys.dont_write_bytecode = True
 
 _HOME = os.getcwd()
 _GUEST_ROOTS = ("/host/", "/project/")
-_BASE_SYS_PATH = list(sys.path)
+# Without the working directory, which Python searches first. It is the project's by the time djLint imports the rest of what it needs, and those modules stay imported: a project's html.py would stand in for the standard library's in every project after it.
+_BASE_SYS_PATH = [entry for entry in sys.path if entry]
+sys.path[:] = _BASE_SYS_PATH
 _PROJECT = Path("/project")
+_skipped_rules = set()
 
 
 def _enter(cwd):
@@ -44,6 +47,22 @@ def _write_project(project):
     return str(cwd)
 
 
+def _skip_module_rules(config):
+    """Skip the rules that need a module a project handed over cannot have."""
+    kept = []
+    for rule in config.linter_rules:
+        if "python_module" not in rule["rule"]:
+            kept.append(rule)
+        elif rule["rule"]["name"] not in _skipped_rules:
+            _skipped_rules.add(rule["rule"]["name"])
+            print(
+                f"Skipping rule {rule['rule']['name']}: python_module is not"
+                " available here.",
+                file=sys.stderr,
+            )
+    config.linter_rules = tuple(kept)
+
+
 def _forget_project_modules():
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
@@ -67,7 +86,9 @@ def run(mode, src, options, path_options, filename, cwd, project):
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
     # Where a custom rule's python_module is, as for `python -m djlint`.
-    sys.path[:] = [str(config.project_root), *_BASE_SYS_PATH]
+    sys.path[:] = [*_BASE_SYS_PATH, str(config.project_root), ""]
+    if project is not None:
+        _skip_module_rules(config)
     if config.require_pragma and not has_pragma(config, src.split("\n", 1)[0]):
         return src if is_format else "[]"
     output, formatted = process_stdin(config, src)

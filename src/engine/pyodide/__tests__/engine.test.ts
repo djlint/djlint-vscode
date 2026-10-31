@@ -286,6 +286,41 @@ describe("a runtime that fails to start", () => {
   });
 });
 
+describe("a runtime that crashes", () => {
+  it("is replaced, because nothing it runs next can be trusted", async () => {
+    const { engine } = makeEngine();
+    const first = format(engine);
+    const crashed = FakeWorker.latest;
+    crashed.respond({ error: "fatal", type: "crashed" });
+    await expect(first).rejects.toThrow(
+      "Bundled djLint runtime crashed: fatal",
+    );
+    expect(crashed.terminated).toBe(true);
+
+    const second = format(engine);
+    expect(FakeWorker.instances).toHaveLength(2);
+    FakeWorker.latest.succeed(2, "ok");
+    await expect(second).resolves.toBe("ok");
+  });
+});
+
+describe("a replaced worker", () => {
+  it("is not listened to any more", async () => {
+    const { engine } = makeEngine();
+    const first = format(engine);
+    const old = FakeWorker.latest;
+    old.emit("exit", 1);
+    await expect(first).rejects.toThrow("exited unexpectedly");
+
+    const second = format(engine);
+    const current = FakeWorker.latest;
+    old.respond({ error: "too late", type: "boot-failed" });
+    expect(current.terminated).toBe(false);
+    current.succeed(2, "ok");
+    await expect(second).resolves.toBe("ok");
+  });
+});
+
 describe("djLint failures", () => {
   const TRACEBACK =
     'Traceback (most recent call last):\n  File "glue.py", line 26, in run\nValueError: bad value\n';

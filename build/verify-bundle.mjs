@@ -6,6 +6,7 @@ import {
   mkdtempSync,
   readFileSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,11 +19,27 @@ import { Worker } from "node:worker_threads";
  * @typedef {import("../src/engine/pyodide/protocol.js").WorkerResponse} WorkerResponse
  */
 
-const WORKER = path.resolve("dist/pyodide-worker.cjs");
-const INDEX_URL = path.resolve("assets/pyodide");
+// An unpacked VSIX, to check what is shipped rather than the working tree.
+const packaged = /** @type {string | undefined} */ (process.argv.at(2));
+const ROOT = path.resolve(packaged ?? ".");
+const WORKER = path.join(ROOT, "dist/pyodide-worker.cjs");
+const INDEX_URL = path.join(ROOT, "assets/pyodide");
 const TIMEOUT_MS = 180_000;
 
-for (const required of [WORKER, INDEX_URL]) {
+const RUNTIME_FILES = [
+  WORKER,
+  INDEX_URL,
+  ...(packaged == null
+    ? []
+    : [
+        "THIRD-PARTY-NOTICES.txt",
+        "dist/extension.cjs",
+        "dist/web/extension.cjs",
+        "dist/web/pyodide-worker.js",
+      ].map((file) => path.join(ROOT, file))),
+];
+
+for (const required of RUNTIME_FILES) {
   if (!existsSync(required)) {
     throw new Error(
       `${required} is missing. Build first: npm run assets && npm run esbuild-worker`,
@@ -62,6 +79,9 @@ worker.on("message", (/** @type {WorkerResponse} */ response) => {
   switch (response.type) {
     case "boot-failed": {
       throw new Error(`bundled worker failed to start: ${response.error}`);
+    }
+    case "crashed": {
+      throw new Error(`bundled worker crashed: ${response.error}`);
     }
     case "log": {
       console.log(`     ${response.line}`);
@@ -149,6 +169,22 @@ const H013 = [
     message: "Img tag should have an alt attribute.",
   },
 ];
+
+// First, while the worker has yet to import the modules djLint imports late.
+const shadowing = mkdtempSync(path.join(tmpdir(), "djlint-shadowing-"));
+try {
+  writeFileSync(
+    path.join(shadowing, "html.py"),
+    'def unescape(text):\n    return "replaced"\n',
+  );
+  expect(
+    "a project's module does not replace the standard library's",
+    await call("format", "<div>&copy;</div>", { cwd: shadowing }),
+    "<div>©</div>\n",
+  );
+} finally {
+  rmSync(shadowing, { force: true, recursive: true });
+}
 
 expect(
   "format applies indent, profile and close_void_tags",
@@ -249,8 +285,89 @@ try {
     ),
     [],
   );
+
+  const linkedFolder = `${project}-link`;
+  const linkedConfiguration = path.join(linkedFolder, path.basename(global));
+  symlinkSync(project, linkedFolder, "junction");
+  try {
+    expect(
+      "the configuration is found through a linked folder",
+      await call("format", "<div><p>hi</p>\n</div>", {
+        cwd: path.join(linkedFolder, "templates"),
+      }),
+      "<div>\n       <p>hi</p>\n</div>\n",
+    );
+    expect(
+      "the configuration option takes a path through a linked folder",
+      JSON.parse(
+        await call("lint", IMG, {
+          pathOptions: { configuration: linkedConfiguration },
+        }),
+      ),
+      [],
+    );
+  } finally {
+    rmSync(linkedFolder, { force: true });
+  }
+
+  const rules = [
+    "- rule:",
+    "    name: T9001",
+    "    message: From a module",
+    "    flags: re.I",
+    "    python_module: project_rule",
+    "",
+  ].join("\n");
+  writeFileSync(path.join(project, ".djlint_rules.yaml"), rules);
+  writeFileSync(
+    path.join(project, "project_rule.py"),
+    [
+      "def run(rule, config, html, filepath, line_ends, *args, **kwargs):",
+      '    return [{"code": rule["name"], "line": "1:0", "match": "",',
+      '             "message": rule["message"]}]',
+      "",
+    ].join("\n"),
+  );
+  expect(
+    "a custom rule's python_module runs",
+    JSON.parse(await call("lint", "<div>text</div>", { cwd: folder })),
+    [{ code: "T9001", column: 0, line: 1, message: "From a module" }],
+  );
+  expect(
+    "a python_module rule is skipped, not fatal, in a project handed over",
+    JSON.parse(
+      await call("lint", IMG, {
+        options: { profile: "django" },
+        project: { cwd: ".", files: { ".djlint_rules.yaml": rules } },
+      }),
+    ),
+    H013,
+  );
 } finally {
   rmSync(project, { force: true, recursive: true });
+}
+
+// Creating a file link takes a privilege on Windows, and only links to folders can be resolved up front.
+if (process.platform !== "win32") {
+  const links = mkdtempSync(path.join(tmpdir(), "djlint-links-"));
+  try {
+    const real = path.join(links, "real");
+    const linking = path.join(links, "linking");
+    mkdirSync(real);
+    mkdirSync(path.join(linking, ".git"), { recursive: true });
+    writeFileSync(path.join(real, "djlint.toml"), "indent = 7\n");
+    symlinkSync(
+      path.join(real, "djlint.toml"),
+      path.join(linking, "djlint.toml"),
+    );
+    expect(
+      "a configuration file that is a link is read",
+      await call("format", "<div><p>hi</p>\n</div>", { cwd: linking }),
+      "<div>\n       <p>hi</p>\n</div>\n",
+    );
+  } finally {
+    rmSync(links, { force: true, recursive: true });
+  }
 }
 
 await worker.terminate();

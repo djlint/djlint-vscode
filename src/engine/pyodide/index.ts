@@ -196,6 +196,13 @@ export class PyodideEngine implements DjlintEngine {
         this.#fail(message, new Error(message));
         break;
       }
+      case "crashed": {
+        this.outputChannel.error(response.error);
+        const reason = lastLine(response.error) ?? response.error;
+        const message = `Bundled djLint runtime crashed: ${reason}`;
+        this.#fail(message, new Error(message));
+        break;
+      }
       case "log": {
         this.outputChannel[response.level](response.line);
         break;
@@ -222,7 +229,9 @@ export class PyodideEngine implements DjlintEngine {
     const worker = this.createWorker();
     const isCurrent = (): boolean => this.#worker === worker;
     worker.onMessage((response) => {
-      this.#receive(response);
+      if (isCurrent()) {
+        this.#receive(response);
+      }
     });
     worker.onError((e) => {
       if (isCurrent()) {

@@ -30,6 +30,11 @@ interface WorkerHost {
   toGuestPath: (pyodide: PyodideAPI, hostPath: string) => string;
 }
 
+// After a fatal error, Pyodide makes no promises about anything it runs next.
+function isFatal(e: unknown): boolean {
+  return e instanceof Error && "pyodide_fatal_error" in e;
+}
+
 export function serve(host: WorkerHost): void {
   function logDebug(line: string): void {
     host.send({ level: "debug", line, type: "log" });
@@ -109,12 +114,12 @@ export function serve(host: WorkerHost): void {
         type: "result",
       };
     } catch (e) {
-      response = {
-        error: e instanceof Error ? e.message : String(e),
-        id,
-        ok: false,
-        type: "result",
-      };
+      const error = e instanceof Error ? e.message : String(e);
+      if (isFatal(e)) {
+        host.send({ error, type: "crashed" });
+        return;
+      }
+      response = { error, id, ok: false, type: "result" };
     }
     queue.delete(id);
     host.send(response);

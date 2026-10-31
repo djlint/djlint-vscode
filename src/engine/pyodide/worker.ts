@@ -1,3 +1,4 @@
+import { realpathSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parentPort, workerData } from "node:worker_threads";
@@ -13,8 +14,18 @@ const { indexURL } = workerData as WorkerData;
 
 const mountedRoots = new Map<string, string>();
 
+// The mount hands back a link's target as written on the host, which leads nowhere inside it. An installed djLint also sees the real path, as its working directory.
+function resolveLinks(hostPath: string): string {
+  try {
+    return realpathSync(hostPath);
+  } catch {
+    return hostPath;
+  }
+}
+
 // Mounting the whole filesystem root lets djLint look for its configuration above the workspace folder, as it does when installed.
-function toGuestPath(pyodide: PyodideAPI, hostPath: string): string {
+function toGuestPath(pyodide: PyodideAPI, requestedPath: string): string {
+  const hostPath = resolveLinks(requestedPath);
   const { root } = path.parse(hostPath);
   let guestRoot = mountedRoots.get(root);
   if (guestRoot == null) {

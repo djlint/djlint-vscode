@@ -48,5 +48,10 @@ interface BootFailedMessage {
   error: string;
 }
 
+interface CrashedMessage {
+  type: "crashed";
+  error: string;
+}
+
 export type WorkerResponse =
-  BootFailedMessage | LogMessage | ReadyMessage | RunResponse;
+  BootFailedMessage | CrashedMessage | LogMessage | ReadyMessage | RunResponse;
