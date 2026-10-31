@@ -1,0 +1,6 @@
+{
+  "[html]": { "editor.defaultFormatter": "monosans.djlint" },
+  "djlint.enableLinting": true,
+  "djlint.importStrategy": "useBundled",
+  "djlint.useEditorIndentation": false
+}
