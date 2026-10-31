@@ -11,6 +11,8 @@ export interface ArgContext {
 type ArgValue = boolean | number | string;
 
 export abstract class CliArg {
+  readonly isPath: boolean = false;
+  readonly kwargName: string;
   readonly displayName: string;
 
   constructor(
@@ -18,6 +20,7 @@ export abstract class CliArg {
     readonly cliName: string,
     readonly minVersion: string,
   ) {
+    this.kwargName = cliName.replace(/^--/u, "").replaceAll("-", "_");
     this.displayName = vscodeName ? `djlint.${vscodeName}` : cliName;
   }
 
@@ -29,10 +32,20 @@ export abstract class CliArg {
     return value === true ? [this.cliName] : [this.cliName, String(value)];
   }
 
+  buildKwarg(context: ArgContext): [string, ArgValue] | undefined {
+    const value = this.read(context);
+    return value == null ? void 0 : [this.kwargName, value];
+  }
+
   protected abstract read(context: ArgContext): ArgValue | undefined;
 }
 
-class SimpleArg extends CliArg {
+abstract class CliOnlyArg extends CliArg {
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  override buildKwarg(): undefined {}
+}
+
+class SimpleArg extends CliOnlyArg {
   constructor(cliName: string, minVersion: string) {
     super("", cliName, minVersion);
   }
@@ -69,7 +82,7 @@ class StringArg extends CliArg {
   }
 }
 
-class LinterOutputFormatArg extends CliArg {
+class LinterOutputFormatArg extends CliOnlyArg {
   constructor() {
     super("", "--linter-output-format", "1.25");
   }
@@ -80,7 +93,7 @@ class LinterOutputFormatArg extends CliArg {
   }
 }
 
-class StdinFilenameArg extends CliArg {
+class StdinFilenameArg extends CliOnlyArg {
   constructor() {
     super("", "--stdin-filename", "1.43.0");
   }
@@ -92,6 +105,8 @@ class StdinFilenameArg extends CliArg {
 }
 
 class WorkspacePathArg extends CliArg {
+  override readonly isPath = true;
+
   protected read({ config, document }: ArgContext): string | undefined {
     const value = config.get<string>(this.vscodeName);
     return value ? resolveWorkspaceFilePath(value, document) : void 0;

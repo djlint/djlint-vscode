@@ -1,6 +1,7 @@
 // The behaviour that only exists inside Linter: what reaches the Problems
 // panel, when diagnostics are cleared, which documents are skipped, and the
 // supersession guard that stops a slow run from wiping a newer run's results.
+// integration.test.ts drives the same path through the real bundled runtime.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import type { DjlintEngine, LintDiagnostic } from "../engine/types.js";

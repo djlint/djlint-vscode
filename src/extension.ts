@@ -11,7 +11,11 @@ export function activate(context: vscode.ExtensionContext): void {
   });
 
   const pythonEnvironments = new PythonEnvironments(outputChannel);
-  const engines = new EngineManager(outputChannel, pythonEnvironments);
+  const engines = new EngineManager(
+    context.extensionUri,
+    outputChannel,
+    pythonEnvironments,
+  );
   const formatter = new Formatter(context, engines);
   const linter = new Linter(context, outputChannel, engines);
 

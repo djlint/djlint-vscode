@@ -77,6 +77,17 @@ describe("path arguments", () => {
       }),
     ).toStrictEqual([]);
   });
+
+  it("are kwargs the bundled runtime maps to its own view of the path", () => {
+    expect(configurationArg.isPath).toBe(true);
+    expect(rulesArg.isPath).toBe(true);
+    const kwarg = configurationArg.buildKwarg({
+      config: makeConfig({ configuration: ".djlintrc" }),
+      document: nested,
+    });
+    expect(kwarg?.[0]).toBe("configuration");
+    expect(portable(String(kwarg?.[1]))).toBe("/ws/.djlintrc");
+  });
 });
 
 // Configured EXECUTABLES follow a deliberately different rule, and the two

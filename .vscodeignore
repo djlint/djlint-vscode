@@ -1,6 +1,8 @@
 **
 !dist/extension.cjs
+!dist/pyodide-worker.cjs
 !THIRD-PARTY-NOTICES.txt
+!assets/pyodide/**
 !CHANGELOG.md
 !icon.png
 !LICENSE

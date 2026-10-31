@@ -2,7 +2,8 @@
 
 ## [Unreleased]
 
-- Honor `per-file-ignores` when linting from the editor, with djLint 1.43 or newer, which added `--stdin-filename` ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
+- Bundle djLint 1.47.1, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Honor `per-file-ignores` when linting from the editor, with the bundled djLint and with an installed djLint 1.43 or newer, which added `--stdin-filename` ([#1676](https://github.com/djlint/djlint-vscode/issues/1676)).
 - Add a `djLint: Restart` command that detects djLint again, for example after upgrading it in the same environment.
 - Detect the installed djLint version and pass only the command-line options that version supports, instead of erroring when a configured option is too new for it.
 - Remove the `djlint.useNewLinterOutputParser` setting. The extension now picks the most reliable linter output format your djLint supports on its own.
@@ -14,6 +15,7 @@
 - Read the active Python environment from the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) when it is installed and enabled, falling back to the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) otherwise. Interpreters that need extra launch arguments (conda, uv) are now run correctly.
 - `djlint.executablePath` and `djlint.pythonPath` now take precedence over the active Python environment instead of being ignored while `djlint.useVenv` is enabled, and both now default to `""` (unset) rather than `"djlint"`/`"python"`. Setting either no longer requires disabling `djlint.useVenv`. Unset, `djlint` on PATH is still found, and so is `python -m djlint`.
 - `djlint.pythonPath` is no longer deprecated.
+- Remove the `djlint.showInstallError` setting; a missing djLint now falls back to the bundled one instead of showing an error.
 - Move the licenses of the bundled npm packages from `dist/THIRD-PARTY-NOTICES.txt` to `THIRD-PARTY-NOTICES.txt` in the root of the extension.
 
 ## [2026.10.1] - 2026-10-22

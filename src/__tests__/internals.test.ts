@@ -181,7 +181,7 @@ describe("a wedged djLint run", () => {
     ).resolves.toBe("error");
   });
 
-  it("reports djLint as unavailable when it is gone too", async () => {
+  it("falls back to the bundled runtime when djLint is gone too", async () => {
     await expect(
       classifyRunFailure(
         timedOut,

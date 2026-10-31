@@ -41,6 +41,10 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          python-version: "3.14"
+          enable-cache: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version-file: .nvmrc
@@ -49,6 +53,7 @@ jobs:
       - run: npm ci
       - run: npx --yes @vscode/vsce package --out djlint.vsix
       - run: unzip -l djlint.vsix | grep -F extension/THIRD-PARTY-NOTICES.txt
+      - run: npm run verify-bundle
       - run: npx vitest run
   pre-commit:
     runs-on: ubuntu-26.04
