@@ -1,17 +1,35 @@
 import type * as vscode from "vscode";
+import { LINTER_OUTPUT_FORMAT } from "./engine/subprocess/parse-lint-output.js";
+import { deriveStdinFilename, resolveWorkspaceFilePath } from "./paths.js";
+
+export interface ArgContext {
+  config: vscode.WorkspaceConfiguration;
+  document: vscode.TextDocument;
+  formattingOptions?: vscode.FormattingOptions;
+}
+
+type ArgValue = boolean | number | string;
 
 export abstract class CliArg {
+  readonly displayName: string;
+
   constructor(
     readonly vscodeName: string,
     readonly cliName: string,
     readonly minVersion: string,
-  ) {}
+  ) {
+    this.displayName = vscodeName ? `djlint.${vscodeName}` : cliName;
+  }
 
-  abstract build(
-    config: vscode.WorkspaceConfiguration,
-    document: vscode.TextDocument,
-    formattingOptions?: vscode.FormattingOptions,
-  ): string[];
+  build(context: ArgContext): string[] {
+    const value = this.read(context);
+    if (value == null) {
+      return [];
+    }
+    return value === true ? [this.cliName] : [this.cliName, String(value)];
+  }
+
+  protected abstract read(context: ArgContext): ArgValue | undefined;
 }
 
 class SimpleArg extends CliArg {
@@ -19,51 +37,64 @@ class SimpleArg extends CliArg {
     super("", cliName, minVersion);
   }
 
-  build(): string[] {
-    return [this.cliName];
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  protected read(): true {
+    return true;
   }
 }
 
 class BoolArg extends CliArg {
-  build(config: vscode.WorkspaceConfiguration): string[] {
-    const value = config.get<boolean>(this.vscodeName);
-    return value ? [this.cliName] : [];
+  protected read({ config }: ArgContext): true | undefined {
+    return config.get<boolean>(this.vscodeName) ? true : void 0;
   }
 }
 
 class NumberOrNullArg extends CliArg {
-  build(config: vscode.WorkspaceConfiguration): string[] {
-    const value = config.get<number | null>(this.vscodeName);
-    return value == null ? [] : [this.cliName, value.toString()];
+  protected read({ config }: ArgContext): number | undefined {
+    return config.get<number | null>(this.vscodeName) ?? void 0;
   }
 }
 
 class StringArrayArg extends CliArg {
-  build(config: vscode.WorkspaceConfiguration): string[] {
+  protected read({ config }: ArgContext): string | undefined {
     const value = config.get<string[]>(this.vscodeName);
-    return value?.length ? [this.cliName, value.join(",")] : [];
+    return value?.length ? value.join(",") : void 0;
   }
 }
 
 class StringArg extends CliArg {
-  build(config: vscode.WorkspaceConfiguration): string[] {
+  protected read({ config }: ArgContext): string | undefined {
     const value = config.get<string>(this.vscodeName);
-    return value ? [this.cliName, value] : [];
+    return value === "" ? void 0 : value;
   }
 }
 
 class LinterOutputFormatArg extends CliArg {
   constructor() {
-    super("useNewLinterOutputParser", "--linter-output-format", "1.25");
+    super("", "--linter-output-format", "1.25");
   }
 
-  build(config: vscode.WorkspaceConfiguration): string[] {
-    return config.get<boolean>(this.vscodeName)
-      ? [
-          this.cliName,
-          "<filename>{filename}</filename><line>{line}</line><code>{code}</code><message>{message}</message>",
-        ]
-      : [];
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  protected read(): string {
+    return LINTER_OUTPUT_FORMAT;
+  }
+}
+
+class StdinFilenameArg extends CliArg {
+  constructor() {
+    super("", "--stdin-filename", "1.43.0");
+  }
+
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  protected read({ document }: ArgContext): string {
+    return deriveStdinFilename(document);
+  }
+}
+
+class WorkspacePathArg extends CliArg {
+  protected read({ config, document }: ArgContext): string | undefined {
+    const value = config.get<string>(this.vscodeName);
+    return value ? resolveWorkspaceFilePath(value, document) : void 0;
   }
 }
 
@@ -72,24 +103,23 @@ class UseEditorIndentationArg extends CliArg {
     super("useEditorIndentation", "--indent", "0.4.3");
   }
 
-  build(
-    config: vscode.WorkspaceConfiguration,
-    _document: vscode.TextDocument,
-    formattingOptions: vscode.FormattingOptions,
-  ): string[] {
+  protected read({
+    config,
+    formattingOptions,
+  }: ArgContext): number | undefined {
     return config.get<boolean>(this.vscodeName)
-      ? [this.cliName, formattingOptions.tabSize.toString()]
-      : [];
+      ? formattingOptions?.tabSize
+      : void 0;
   }
 }
 
-export const configurationArg = new StringArg(
+export const configurationArg = new WorkspacePathArg(
   "configuration",
   "--configuration",
   "1.13",
 );
 
-export const rulesArg = new StringArg("rules", "--rules", "1.41");
+export const rulesArg = new WorkspacePathArg("rules", "--rules", "1.41");
 
 const commonArgs = [
   configurationArg,
@@ -106,6 +136,7 @@ export const lintingArgs = [
   ...commonArgs,
   new LinterOutputFormatArg(),
   rulesArg,
+  new StdinFilenameArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
 ] as const;
