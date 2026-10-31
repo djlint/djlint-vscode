@@ -1,7 +1,14 @@
 // Runs test/e2e/python-suite.cjs in a downloaded VS Code with the real Python extensions and real
 // environments, with python.useEnvironmentsExtension off and on.
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import {
+  globSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
@@ -99,7 +106,8 @@ function makeCondaEnvironment(workspace) {
   return python;
 }
 
-const workspace = mkdtempSync(path.join(os.tmpdir(), "djlint-python-"));
+const logs = mkdtempSync(path.join(os.tmpdir(), "djlint-logs-"));
+const workspace = mkdtempSync(path.join(os.tmpdir(), "djlint python "));
 try {
   mkdirSync(path.join(workspace, ".vscode"));
   writeFileSync(
@@ -167,12 +175,18 @@ try {
       launchArgs: [
         workspace,
         `--extensions-dir=${extensionsDir}`,
+        `--logsPath=${logs}`,
         `--user-data-dir=${path.join(workspace, `.user-${useEnvironmentsExtension}`)}`,
         "--disable-workspace-trust",
       ],
       version,
     });
   }
+} catch (e) {
+  for (const file of globSync("**/djLint.log", { cwd: logs })) {
+    console.log(readFileSync(path.join(logs, file), "utf8"));
+  }
+  throw e;
 } finally {
   rmSync(workspace, { force: true, maxRetries: 3, recursive: true });
 }
