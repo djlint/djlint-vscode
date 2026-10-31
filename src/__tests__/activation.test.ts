@@ -177,6 +177,7 @@ describe("activate", () => {
 
     it("lints after forgetting, so the status shows the new djLint", async () => {
       control.documents = [document];
+      fireWorkspaceEvent("open", document);
       await flush();
       const update = vi.spyOn(DjlintStatus.prototype, "update");
       activePath = "/other";

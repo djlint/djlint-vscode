@@ -50,6 +50,7 @@ type Spawn = (
   args: readonly string[],
   options: Record<string, unknown>,
 ) => Promise<{
+  code?: string;
   exitCode?: number | undefined;
   failed?: boolean;
   stderr?: string;
@@ -69,7 +70,7 @@ function isProbe(args: readonly string[]): boolean {
 /** A djLint that answers `--version` and leaves the run to `run`. */
 function installDjlint(
   run: Spawn = async () => ({ stdout: "" }),
-  version = VERSION_OUTPUT,
+  version: Awaited<ReturnType<Spawn>> = VERSION_OUTPUT,
 ): void {
   spawn.mockImplementation(async (exec, args, options) =>
     isProbe(args) ? version : run(exec, args, options),

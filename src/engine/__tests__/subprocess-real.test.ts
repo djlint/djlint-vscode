@@ -105,6 +105,7 @@ describe.skipIf(installed.failed)(
 );
 
 describe("a command that is not there", () => {
+  const absolute = path.join(os.tmpdir(), "djlint no such folder");
   let root: string;
 
   beforeAll(async () => {
@@ -119,10 +120,7 @@ describe("a command that is not there", () => {
 
   it.each([
     ["no-such-djlint", "no-such-python"],
-    [
-      path.join(root ?? os.tmpdir(), "no", "djlint"),
-      path.join(os.tmpdir(), "no", "python"),
-    ],
+    [path.join(absolute, "djlint"), path.join(absolute, "python")],
   ])(
     "is passed over for what comes next: %s",
     async (executablePath, pythonPath) => {
