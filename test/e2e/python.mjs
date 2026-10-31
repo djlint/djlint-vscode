@@ -18,6 +18,9 @@ import {
   runTests,
 } from "@vscode/test-electron";
 
+// Where this is set, djLint prints GitHub annotations whatever output format it is told.
+delete process.env["GITHUB_ACTIONS"];
+
 const INSTALLED = "1.48.0";
 const WITHOUT_END = "1.47.1";
 
@@ -176,7 +179,6 @@ try {
         workspace,
         `--extensions-dir=${extensionsDir}`,
         `--logsPath=${logs}`,
-        "--log=monosans.djlint:debug",
         `--user-data-dir=${path.join(workspace, `.user-${useEnvironmentsExtension}`)}`,
         "--disable-workspace-trust",
       ],
