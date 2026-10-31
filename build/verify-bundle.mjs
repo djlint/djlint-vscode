@@ -62,6 +62,10 @@ worker.on("message", (/** @type {WorkerResponse} */ response) => {
     console.log(`     ${response.line}`);
     return;
   }
+  if (response.type === "ready") {
+    console.log(`     bundled djLint ${response.version}`);
+    return;
+  }
   pending.get(response.id)?.(response);
   pending.delete(response.id);
 });

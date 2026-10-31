@@ -4,6 +4,7 @@ import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";
 import { deriveStdinFilename, getDocumentFolder } from "../../paths.js";
+import type { DjlintStatus } from "../../status.js";
 import {
   RUN_TIMEOUT_MS,
   type DjlintEngine,
@@ -51,6 +52,7 @@ export class PyodideEngine implements DjlintEngine {
   #worker: Worker | undefined;
   #seq = 0;
   #disposed = false;
+  #version = "";
   readonly #pending = new Map<number, Pending>();
   readonly #reported = new Set<string>();
 
@@ -59,6 +61,7 @@ export class PyodideEngine implements DjlintEngine {
     private readonly indexURL: string,
     private readonly outputChannel: vscode.LogOutputChannel,
     private readonly canReadProjectFiles: boolean,
+    private readonly status: DjlintStatus,
   ) {}
 
   async format(
@@ -125,6 +128,7 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     if (response.ok) {
+      this.status.update(this.#version, "bundled");
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
       this.outputChannel.error(response.error);
@@ -154,6 +158,9 @@ export class PyodideEngine implements DjlintEngine {
     worker.on("message", (response: WorkerResponse) => {
       if (response.type === "log") {
         this.outputChannel[response.level](response.line);
+      } else if (response.type === "ready") {
+        this.#version = response.version;
+        this.outputChannel.info(`Using the bundled djLint ${response.version}`);
       } else {
         this.#settle(response);
       }

@@ -11,6 +11,7 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
+  makeStatus,
   portable,
   setWorkspaceFolders,
 } from "../../../__tests__/helpers.js";
@@ -46,6 +47,7 @@ function makeEngine(canReadProjectFiles = true): {
       "/ext/pyodide",
       channel,
       canReadProjectFiles,
+      makeStatus(),
     ),
   };
 }
@@ -262,10 +264,10 @@ describe("responses", () => {
     const worker = FakeWorker.latest;
     worker.respond({ level: "debug", line: "stdout line", type: "log" });
     worker.respond({ level: "warn", line: "stderr line", type: "log" });
-    worker.respond({ level: "info", line: "booted", type: "log" });
+    worker.respond({ type: "ready", version: "1.47.1" });
     expect(channel.of("debug").join()).toContain("stdout line");
     expect(channel.of("warn").join()).toContain("stderr line");
-    expect(channel.of("info").join()).toContain("booted");
+    expect(channel.of("info").join()).toContain("bundled djLint 1.47.1");
     engine.dispose();
   });
 });

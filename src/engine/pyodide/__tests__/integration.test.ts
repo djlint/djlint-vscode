@@ -27,6 +27,7 @@ import {
   makeConfig,
   makeContext,
   makeDocument,
+  makeStatus,
   setWorkspaceFolders,
 } from "../../../__tests__/helpers.js";
 import {
@@ -69,7 +70,13 @@ function makeEngine(
   canReadProjectFiles = true,
   channel = makeChannel(),
 ): PyodideEngine {
-  return new PyodideEngine(workerPath, indexURL, channel, canReadProjectFiles);
+  return new PyodideEngine(
+    workerPath,
+    indexURL,
+    channel,
+    canReadProjectFiles,
+    makeStatus(),
+  );
 }
 
 async function settle(pending: Promise<unknown>): Promise<string> {
@@ -526,6 +533,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         repositoryContext().extensionUri,
         uiChannel,
         {} as PythonEnvironments,
+        makeStatus(),
       );
     });
 

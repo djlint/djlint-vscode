@@ -13,6 +13,7 @@ import type {
   PythonEnvironmentDetails,
   PythonEnvironments,
 } from "../../python/environment.js";
+import type { DjlintStatus } from "../../status.js";
 import {
   DjlintUnavailableError,
   RUN_TIMEOUT_MS,
@@ -105,6 +106,7 @@ export class SubprocessEngine implements DjlintEngine {
   constructor(
     private readonly outputChannel: vscode.LogOutputChannel,
     private readonly pythonEnvironments: PythonEnvironments,
+    private readonly status: DjlintStatus,
   ) {}
 
   async format(
@@ -159,7 +161,9 @@ export class SubprocessEngine implements DjlintEngine {
       },
       scopeKey,
     );
-    const description = `djLint ${command.version}: ${[command.exec, ...command.prefixArgs].join(" ")}`;
+    const source = [command.exec, ...command.prefixArgs].join(" ");
+    this.status.update(command.version, source);
+    const description = `djLint ${command.version}: ${source}`;
     if (this.#loggedCommands.get(scopeKey) !== description) {
       this.#loggedCommands.set(scopeKey, description);
       this.outputChannel.info(`Using ${description}`);

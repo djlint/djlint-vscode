@@ -52,7 +52,7 @@ The extension looks for a djLint to run, in this order:
 4. `djlint` on PATH, then `python3 -m djlint` and `python -m djlint`.
 5. The djLint bundled with the extension.
 
-A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
+The language status item in the status bar shows which one is in use, and opens the logs. A candidate without a working djLint is skipped. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
 
 Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 

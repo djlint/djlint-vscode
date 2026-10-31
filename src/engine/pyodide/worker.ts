@@ -59,11 +59,7 @@ async function boot(): Promise<Runtime> {
   const version = pyodide.runPython(
     'import importlib.metadata; importlib.metadata.version("djlint")',
   ) as string;
-  send({
-    level: "info",
-    line: `Using the bundled djLint ${version}`,
-    type: "log",
-  });
+  send({ type: "ready", version });
   return { pyodide, run: pyodide.globals["get"]("run") as Run };
 }
 

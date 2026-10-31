@@ -1,11 +1,17 @@
 import { ExecaError } from "execa";
+import { vi } from "vitest";
 import * as vscode from "vscode";
 import type { EngineManager } from "../engine/select.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import type { DjlintEngine } from "../engine/types.js";
+import type { DjlintStatus } from "../status.js";
 import { control, RecordingChannel, Uri } from "./vscode-stub.js";
 
 export type TestChannel = RecordingChannel & vscode.LogOutputChannel;
+
+export function makeStatus(): DjlintStatus {
+  return { update: vi.fn() } as unknown as DjlintStatus;
+}
 
 export function makeChannel(): TestChannel {
   return new RecordingChannel() as unknown as TestChannel;

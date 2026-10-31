@@ -28,8 +28,13 @@ export type RunResponse =
 
 export interface LogMessage {
   type: "log";
-  level: "debug" | "info" | "warn";
+  level: "debug" | "warn";
   line: string;
 }
 
-export type WorkerResponse = LogMessage | RunResponse;
+export interface ReadyMessage {
+  type: "ready";
+  version: string;
+}
+
+export type WorkerResponse = LogMessage | ReadyMessage | RunResponse;
