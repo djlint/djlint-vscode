@@ -338,7 +338,7 @@ try {
         code: "T9001",
         column: 0,
         endColumn: 0,
-        endLine: 0,
+        endLine: 1,
         line: 1,
         message: "From a module",
       },

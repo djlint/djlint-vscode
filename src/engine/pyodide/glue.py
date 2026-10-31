@@ -77,14 +77,14 @@ def run(mode, src, options, path_options, filename, cwd, project):
     _report_skipped_rules(config)
     if mode == "format":
         return format_text(config, src)
+    # A rule module can count lines from zero.
     return json.dumps(
         [
             {
                 "code": finding.code,
                 "column": finding.column,
                 "endColumn": finding.end_column,
-                "endLine": finding.end_line,
-                # A rule module can count lines from zero.
+                "endLine": max(finding.end_line, 1),
                 "line": max(finding.line, 1),
                 "message": finding.message,
             }
