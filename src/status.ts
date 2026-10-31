@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
 import { getConfig } from "./config.js";
-import { workspaceScopeKey } from "./paths.js";
+import { directoryScopeKey } from "./paths.js";
 
 interface InUse {
   source: string;
@@ -29,7 +29,9 @@ export class DjlintStatus implements vscode.Disposable {
   }
 
   update(document: vscode.TextDocument, version: string, source: string): void {
-    this.#inUse.set(workspaceScopeKey(document), { source, version });
+    const inUse = { source, version };
+    this.#inUse.set(document.uri.toString(), inUse);
+    this.#inUse.set(directoryScopeKey(document), inUse);
     this.#render();
   }
 
@@ -49,9 +51,10 @@ export class DjlintStatus implements vscode.Disposable {
 
   #render(): void {
     const document = vscode.window.activeTextEditor?.document;
-    const inUse = this.#inUse.get(
-      document == null ? "" : workspaceScopeKey(document),
-    );
+    const inUse =
+      document &&
+      (this.#inUse.get(document.uri.toString()) ??
+        this.#inUse.get(directoryScopeKey(document)));
     this.#item.text = inUse?.version ? `djLint ${inUse.version}` : "djLint";
     this.#item.detail = inUse?.source ?? "";
   }

@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
   );
 
-  const restart = startExtension(
+  const refresh = startExtension(
     context,
     outputChannel,
     status,
@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     pythonEnvironments,
-    pythonEnvironments.onDidChange(restart),
+    // SubprocessEngine forgets what it found. Nothing else depends on the environment, least of all a running Pyodide.
+    pythonEnvironments.onDidChange(refresh),
   );
 }

@@ -9,6 +9,11 @@ export function workspaceScopeKey(document: vscode.TextDocument): string {
   );
 }
 
+export function directoryScopeKey(document: vscode.TextDocument): string {
+  const uri = document.uri.toString();
+  return uri.slice(0, uri.lastIndexOf("/") + 1) || uri;
+}
+
 export function isVirtualDocument(document: vscode.TextDocument): boolean {
   return (
     document.uri.scheme !== "file" &&

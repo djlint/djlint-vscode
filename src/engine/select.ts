@@ -3,7 +3,6 @@ import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
 import {
   DjlintUnavailableError,
-  RESOLUTION_TTL_MS,
   type DjlintEngine,
   type LintDiagnostic,
 } from "./types.js";
@@ -17,7 +16,7 @@ export const engineSettingKeys: readonly string[] = [
 
 export class FallbackEngine implements DjlintEngine {
   #secondary: DjlintEngine | undefined;
-  readonly #unavailableUntil = new Map<string, number>();
+  readonly #fallbackLogged = new Set<string>();
   #disposed = false;
   readonly #primary: DjlintEngine;
   readonly #makeSecondary: () => DjlintEngine;
@@ -76,15 +75,13 @@ export class FallbackEngine implements DjlintEngine {
     ) {
       return call(this.#secondaryEngine());
     }
-    const scope = workspaceScopeKey(document);
-    const until = this.#unavailableUntil.get(scope);
-    if (until != null && Date.now() < until) {
-      return call(this.#secondaryEngine());
-    }
     try {
       return await call(this.#primary);
     } catch (e) {
-      this.#markUnavailableOrThrow(scope, e);
+      if (!(e instanceof DjlintUnavailableError)) {
+        throw e;
+      }
+      this.#logFallback(workspaceScopeKey(document));
       return call(this.#secondaryEngine());
     }
   }
@@ -97,18 +94,14 @@ export class FallbackEngine implements DjlintEngine {
     return this.#secondary;
   }
 
-  #markUnavailableOrThrow(scope: string, e: unknown): void {
-    if (!(e instanceof DjlintUnavailableError)) {
-      throw e;
+  #logFallback(scope: string): void {
+    if (this.#fallbackLogged.has(scope)) {
+      return;
     }
-    const wasAlreadyMarked =
-      (this.#unavailableUntil.get(scope) ?? 0) > Date.now();
-    this.#unavailableUntil.set(scope, Date.now() + RESOLUTION_TTL_MS);
-    if (!wasAlreadyMarked) {
-      this.#outputChannel.info(
-        "djLint not found in the environment; using the bundled runtime.",
-      );
-    }
+    this.#fallbackLogged.add(scope);
+    this.#outputChannel.info(
+      "djLint not found in the environment; using the bundled runtime.",
+    );
   }
 }
 

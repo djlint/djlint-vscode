@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { execa } from "execa";
@@ -5,13 +6,11 @@ import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import {
+  directoryScopeKey,
   normalizeConfiguredExecutable,
   workspaceScopeKey,
 } from "../../paths.js";
-import type {
-  PythonEnvironmentDetails,
-  PythonEnvironments,
-} from "../../python/environment.js";
+import type { PythonEnvironments } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
 import { getExistingDocumentFolder } from "../document-folder.js";
 import {
@@ -63,6 +62,41 @@ function moduleSearchEnv({
   };
 }
 
+/** The variables `ruff.path` accepts, except `${cwd}`, which means nothing to an extension. */
+export function expandVariables(
+  value: string,
+  document: vscode.TextDocument,
+): string {
+  function workspaceFolderPath(name?: string): string | undefined {
+    const folder =
+      name == null
+        ? vscode.workspace.getWorkspaceFolder(document.uri)
+        : vscode.workspace.workspaceFolders?.find(
+            (candidate) => candidate.name === name,
+          );
+    return folder?.uri.scheme === "file" ? folder.uri.fsPath : void 0;
+  }
+
+  return value.replaceAll(/\$\{(?<variable>[^}]+)\}/gu, (match, variable) => {
+    const [kind = "", ...rest] = String(variable).split(":");
+    const argument = rest.join(":");
+    switch (kind) {
+      case "env": {
+        return process.env[argument] ?? "";
+      }
+      case "userHome": {
+        return os.homedir();
+      }
+      case "workspaceFolder": {
+        return workspaceFolderPath(argument || void 0) ?? match;
+      }
+      default: {
+        return match;
+      }
+    }
+  });
+}
+
 type RunFailureClassification = "error" | "lint-result" | "unavailable";
 
 export async function classifyRunFailure(
@@ -105,12 +139,13 @@ async function probeExecutable(
 
 export class SubprocessEngine implements DjlintEngine {
   readonly #resolver = new CommandResolver();
-  readonly #loggedCommands = new Map<string, string>();
+  readonly #loggedCommands = new Set<string>();
   readonly #warnedSkippedArgs = new Set<string>();
   readonly #schemesWarnedAboutCwd = new Set<string>();
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #pythonEnvironments: PythonEnvironments;
   readonly #status: DjlintStatus;
+  readonly #environmentChange: vscode.Disposable;
 
   constructor(
     outputChannel: vscode.LogOutputChannel,
@@ -120,6 +155,9 @@ export class SubprocessEngine implements DjlintEngine {
     this.#outputChannel = outputChannel;
     this.#pythonEnvironments = pythonEnvironments;
     this.#status = status;
+    this.#environmentChange = pythonEnvironments.onDidChange(() => {
+      this.#resolver.invalidate();
+    });
   }
 
   async format(
@@ -141,24 +179,44 @@ export class SubprocessEngine implements DjlintEngine {
     );
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
-  dispose(): void {}
+  dispose(): void {
+    this.#environmentChange.dispose();
+  }
 
   async #getCommand(
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,
   ): Promise<RunnerCommand> {
-    const scopeKey = workspaceScopeKey(document);
+    const epochAtStart = this.#resolver.epoch;
+    const activeEnvironment = config.get<boolean>("useVenv")
+      ? await this.#pythonEnvironments.getActive(document.uri)
+      : null;
+    function configuredExecutable(
+      key: Parameters<typeof getConfiguredPath>[1],
+    ): string {
+      return normalizeConfiguredExecutable(
+        expandVariables(getConfiguredPath(config, key), document),
+        document,
+      );
+    }
+    const executablePath = configuredExecutable("executablePath");
+    const pythonPath = configuredExecutable("pythonPath");
+    // A language can set its own paths, and a workspace folder can hold projects with environments of their own.
+    const scopeKey = [
+      workspaceScopeKey(document),
+      executablePath,
+      pythonPath,
+      ...(activeEnvironment?.command == null
+        ? []
+        : [
+            activeEnvironment.command.executable,
+            ...activeEnvironment.command.args,
+          ]),
+    ].join("\0");
     const command = await this.#resolver.resolve(
       {
-        executablePath: normalizeConfiguredExecutable(
-          getConfiguredPath(config, "executablePath"),
-          document,
-        ),
-        getActiveEnvironment: config.get<boolean>("useVenv")
-          ? async (uri): Promise<PythonEnvironmentDetails | null> =>
-              this.#pythonEnvironments.getActive(uri)
-          : null,
+        activeEnvironment,
+        executablePath,
         onConfiguredPathRejected: (setting, exec): void => {
           this.#outputChannel.warn(
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
@@ -166,19 +224,19 @@ export class SubprocessEngine implements DjlintEngine {
         },
         probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
-        pythonPath: normalizeConfiguredExecutable(
-          getConfiguredPath(config, "pythonPath"),
-          document,
-        ),
-        uri: document.uri,
+        pythonPath,
       },
       scopeKey,
+      directoryScopeKey(document),
     );
     const source = [command.exec, ...command.prefixArgs].join(" ");
-    this.#status.update(document, command.version ?? "", source);
+    if (epochAtStart === this.#resolver.epoch) {
+      this.#status.update(document, command.version ?? "", source);
+    }
     const description = `djLint ${command.version ?? "of unknown version"}: ${source}`;
-    if (this.#loggedCommands.get(scopeKey) !== description) {
-      this.#loggedCommands.set(scopeKey, description);
+    const logKey = [workspaceScopeKey(document), description].join("\0");
+    if (!this.#loggedCommands.has(logKey)) {
+      this.#loggedCommands.add(logKey);
       this.#outputChannel.info(`Using ${description}`);
     }
     return command;

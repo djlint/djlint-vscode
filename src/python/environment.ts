@@ -59,6 +59,15 @@ export class PythonEnvironments implements vscode.Disposable {
   constructor(outputChannel: vscode.LogOutputChannel) {
     this.#outputChannel = outputChannel;
     this.onDidChange = this.#changeEmitter.event;
+    this.#disposables.push(
+      vscode.extensions.onDidChange(() => {
+        if (!this.#isUnavailable) {
+          return;
+        }
+        this.resetIfUnavailable();
+        this.#changeEmitter.fire();
+      }),
+    );
   }
 
   async getActive(
@@ -89,9 +98,15 @@ export class PythonEnvironments implements vscode.Disposable {
   }
 
   async #activateProvider(): Promise<EnvironmentProvider | null> {
-    const provider =
-      (await this.#activatePythonEnvironmentsExtension()) ??
-      (await this.#activateClassicPythonExtension());
+    // The Python extension installs the other one, which exports an API even with this off, without what is selected in the Python extension.
+    const isOn = vscode.workspace
+      .getConfiguration("python")
+      .get<boolean>("useEnvironmentsExtension");
+    const provider = isOn
+      ? ((await this.#activatePythonEnvironmentsExtension()) ??
+        (await this.#activateClassicPythonExtension()))
+      : ((await this.#activateClassicPythonExtension()) ??
+        (await this.#activatePythonEnvironmentsExtension()));
     this.#isUnavailable = provider == null;
     return provider;
   }

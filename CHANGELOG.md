@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- Follow the interpreter selected in the Python extension while `python.useEnvironmentsExtension` is off, which is the default, instead of the environment of the Python Environments extension that it installs.
+- Let `djlint.executablePath`, `djlint.pythonPath`, `djlint.useVenv` and `djlint.importStrategy` apply again from the user settings of the local machine in a remote window, and sync with Settings Sync. They can be set per workspace folder and per language.
+- Try `python -m djlint` before `python3 -m djlint` when looking on PATH, so a `python` that used to run keeps running.
+- Run the djLint of the environment of each project when a workspace folder holds several, and of each language that sets its own `djlint.executablePath` or `djlint.pythonPath`, instead of the one found first for five minutes.
+- Detect the version of a djLint found on PATH per folder, because a version manager's shim can pick another one in each.
+- Show the djLint of the active file in the status bar, instead of the last one used in the workspace folder.
+- Keep the bundled djLint running when the active Python environment changes.
+- Pick up a Python extension as soon as it is installed or enabled when there was none, as before 2026.10.2, instead of after `djLint: Restart`.
+- Expand `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` in `djlint.executablePath` and `djlint.pythonPath`.
+
 ## [2026.10.2] - 2026-10-31
 
 - Bundle djLint 1.48.0, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).

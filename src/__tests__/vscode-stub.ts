@@ -10,7 +10,8 @@ interface Disposable {
   dispose: () => void;
 }
 
-export type WorkspaceEventKind = "close" | "config" | "open" | "save" | "trust";
+export type WorkspaceEventKind =
+  "close" | "config" | "extensions" | "open" | "save" | "trust";
 
 const URI_REGEX =
   /^(?<scheme>[a-z][a-z\d+.-]*):(?:\/\/(?<authority>[^/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/iu;
@@ -381,6 +382,9 @@ export const workspace = {
     get: (key) => control.configuration[key],
   }),
   getWorkspaceFolder: findWorkspaceFolder,
+  get workspaceFolders(): readonly WorkspaceFolder[] {
+    return control.workspaceFolders;
+  },
   get isTrusted(): boolean {
     return control.isTrusted;
   },
@@ -432,6 +436,7 @@ export const window = {
 
 export const extensions = {
   getExtension: (id: string): unknown => control.extensions.get(id),
+  onDidChange: onWorkspaceEvent<unknown>("extensions"),
 };
 
 interface StatusItem {

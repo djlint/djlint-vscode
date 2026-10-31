@@ -27,6 +27,7 @@ import {
   makeConfig,
   makeContext,
   makeDocument,
+  makePythonEnvironments,
   makeStatus,
   setWorkspaceFolders,
 } from "../../../__tests__/helpers.js";
@@ -43,7 +44,6 @@ import {
 } from "../../../args.js";
 import { Formatter } from "../../../formatter.js";
 import { Linter } from "../../../linter.js";
-import type { PythonEnvironments } from "../../../python/environment.js";
 import { createDesktopEngine } from "../../desktop.js";
 import { getDocumentFolder } from "../../document-folder.js";
 import { EngineManager } from "../../select.js";
@@ -551,7 +551,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         createDesktopEngine(
           repositoryContext().extensionUri,
           uiChannel,
-          {} as PythonEnvironments,
+          makePythonEnvironments().environments,
           makeStatus(),
         ),
       );
