@@ -10,7 +10,7 @@ Run `npm run assets` once to build the bundled runtime, then press <kbd>F5</kbd>
 
 The djLint version is pinned in `pyproject.toml` and what it depends on in `uv.lock`, both kept current by Renovate; run `uv lock` after changing the first. The Pyodide runtime is pinned by the `pyodide` devDependency, and its own click, PyYAML and regex replace the locked ones, which the build checks djLint accepts. `requires-python` must be the Python that Pyodide runs.
 
-`npm run verify-bundle` boots the built bundle and formats and lints through it, reading a project's configuration from disk as it does in the editor. CI runs it after packaging and before publishing, because packaging cleanly does not on its own prove the bundled runtime still works after a dependency bump.
+`npm run verify-bundle` boots the built bundle and formats and lints through it, reading a project's configuration from disk as it does in the editor. CI runs it on the unpacked VSIX, with `npm run verify-bundle -- unpacked/extension`, after packaging and before publishing, because packaging cleanly does not on its own prove that what is shipped still works after a dependency bump.
 
 The licenses of everything bundled are collected into `THIRD-PARTY-NOTICES.txt` at packaging; see [THIRD_PARTY.md](THIRD_PARTY.md). If a Pyodide bump links a new library into its runtime, `npm run assets` fails until its license is added to `build/pyodide-licenses.mjs`.
 
