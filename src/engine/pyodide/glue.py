@@ -48,25 +48,32 @@ def _write_project(project):
 
 
 def _skip_module_rules(config):
-    """Skip the rules that need a module a project handed over cannot have."""
+    """Skip the custom rules whose module a project handed over cannot have."""
     kept = []
-    for rule in config.linter_rules:
-        if "python_module" not in rule["rule"]:
-            kept.append(rule)
-        elif rule["rule"]["name"] not in _skipped_rules:
-            _skipped_rules.add(rule["rule"]["name"])
+    for entry in config.linter_rules:
+        rule = entry["rule"]
+        if rule.get("python_module", "djlint.").startswith("djlint."):
+            kept.append(entry)
+        elif rule["name"] not in _skipped_rules:
+            _skipped_rules.add(rule["name"])
             print(
-                f"Skipping rule {rule['rule']['name']}: python_module is not"
-                " available here.",
+                f"Skipping rule {rule['name']}: python_module is not available"
+                " here.",
                 file=sys.stderr,
             )
     config.linter_rules = tuple(kept)
 
 
+def _is_project_module(module):
+    """Tell by its file or, for a namespace package, by its folders."""
+    locations = (getattr(module, "__file__", ""), *getattr(module, "__path__", ()))
+    return any(str(location).startswith(_GUEST_ROOTS) for location in locations)
+
+
 def _forget_project_modules():
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
-        if str(getattr(module, "__file__", "")).startswith(_GUEST_ROOTS):
+        if _is_project_module(module):
             del sys.modules[name]
     importlib.invalidate_caches()
 
@@ -85,7 +92,7 @@ def run(mode, src, options, path_options, filename, cwd, project):
         **json.loads(options),
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
-    # Where a custom rule's python_module is, as for `python -m djlint`.
+    # Where a custom rule's python_module is, as for `python -m djlint`, but behind the standard library, so a module named like one of its own is not found.
     sys.path[:] = [*_BASE_SYS_PATH, str(config.project_root), ""]
     if project is not None:
         _skip_module_rules(config)

@@ -16,6 +16,7 @@ interface NodeFilesystems {
   NODEFS: {
     // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
     node_ops: { readlink: (node: unknown) => string };
+    realPath: (node: unknown) => string;
   };
 }
 
@@ -26,16 +27,14 @@ function translateLinks(
   pyodide: PyodideAPI,
   toGuest: (target: string) => string,
 ): void {
-  const nodeOperations = (pyodide.FS.filesystems as unknown as NodeFilesystems)
-    .NODEFS.node_ops;
-  const { readlink } = nodeOperations;
-  nodeOperations.readlink = (node): string => {
+  const { NODEFS: nodeFilesystem } = pyodide.FS
+    .filesystems as unknown as NodeFilesystems;
+  const { readlink } = nodeFilesystem.node_ops;
+  nodeFilesystem.node_ops.readlink = (node): string => {
     const target = readlink(node);
-    if (!path.isAbsolute(target)) {
-      return target.replaceAll(path.sep, "/");
-    }
     try {
-      return toGuest(target);
+      const folder = path.dirname(nodeFilesystem.realPath(node));
+      return toGuest(path.resolve(folder, target));
     } catch {
       return target;
     }
@@ -47,12 +46,12 @@ function toGuestPath(pyodide: PyodideAPI, hostPath: string): string {
   const { root } = path.parse(hostPath);
   let guestRoot = mountedRoots.get(root);
   if (guestRoot == null) {
-    if (mountedRoots.size === 0) {
-      translateLinks(pyodide, (target) => toGuestPath(pyodide, target));
-    }
     guestRoot = `/host/${mountedRoots.size}`;
     pyodide.FS.mkdirTree(guestRoot);
     pyodide.mountNodeFS(guestRoot, root);
+    if (mountedRoots.size === 0) {
+      translateLinks(pyodide, (target) => toGuestPath(pyodide, target));
+    }
     mountedRoots.set(root, guestRoot);
   }
   return path.posix.join(

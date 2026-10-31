@@ -344,6 +344,18 @@ try {
     ),
     H013,
   );
+  expect(
+    "a rule built into djLint still runs in a project handed over",
+    /** @type {{ code: string }[]} */ (
+      JSON.parse(
+        await call("lint", "<div>", {
+          options: { profile: "django" },
+          project: { cwd: ".", files: { ".djlint_rules.yaml": rules } },
+        }),
+      )
+    ).map(({ code }) => code),
+    ["H025"],
+  );
 } finally {
   rmSync(project, { force: true, recursive: true });
 }
@@ -363,6 +375,16 @@ if (process.platform !== "win32") {
     );
     expect(
       "a configuration file that is a link is read",
+      await call("format", "<div><p>hi</p>\n</div>", { cwd: linking }),
+      "<div>\n       <p>hi</p>\n</div>\n",
+    );
+    rmSync(path.join(linking, "djlint.toml"));
+    symlinkSync(
+      path.join("..", "real", "djlint.toml"),
+      path.join(linking, "djlint.toml"),
+    );
+    expect(
+      "a configuration file that is a relative link is read",
       await call("format", "<div><p>hi</p>\n</div>", { cwd: linking }),
       "<div>\n       <p>hi</p>\n</div>\n",
     );

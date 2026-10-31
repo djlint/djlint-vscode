@@ -54,7 +54,7 @@ The extension looks for a djLint to run, in this order:
 4. `djlint` on PATH, then `python3 -m djlint` and `python -m djlint`.
 5. The djLint bundled with the extension.
 
-The language status item in the status bar shows which one is in use, and opens the logs. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH.
+The language status item in the status bar shows which one is in use, and opens the logs. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. The exceptions are `python3` and `python` from PATH, which count only if `-m djlint --version` answers, because a stub such as the Windows Store one fails the same way. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. The old defaults, `"djlint"` for `djlint.executablePath` and `"python"` for `djlint.pythonPath`, count as unset, so use a path if one of them has to win over the active environment.
 
 Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 
@@ -88,4 +88,4 @@ These are bugs in old djLint versions, so they only affect an installed djLint. 
 
 [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)
 
-The bundled djLint is GPL-3.0-or-later. It and the rest of what the package bundles keep their own licenses, collected in `THIRD-PARTY-NOTICES.txt` in the extension.
+The bundled djLint and the worker that loads it are distributed together under GPL-3.0-or-later. What the package bundles keeps its own license, collected in `THIRD-PARTY-NOTICES.txt` in the extension.
