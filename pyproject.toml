@@ -6,9 +6,10 @@
 name = "djlint-vscode"
 version = "0"
 requires-python = "==3.14.*"
-dependencies = ["djlint==1.47.1"]
+dependencies = ["djlint==1.48.0"]
 
 [tool.uv]
 environments = ["sys_platform == 'linux'"]
 exclude-newer = "3 days"
+exclude-newer-package = { djlint = false }
 package = false

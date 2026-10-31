@@ -40,6 +40,11 @@
     },
     { "matchManagers": ["github-actions", "pre-commit"], "automerge": true },
     {
+      "description": "Our own package: uv.lock takes it as soon as it is out.",
+      "matchPackageNames": ["djlint"],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "The Python version Pyodide runs: it moves with the pyodide package, not on its own.",
       "matchDepTypes": ["requires-python"],
       "enabled": false

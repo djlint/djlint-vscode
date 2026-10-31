@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Bundle djLint 1.47.1, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
+- Bundle djLint 1.48.0, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).
 - Work in VS Code for the Web and in virtual workspaces, with the bundled djLint, which reads the project's configuration files there too. A custom rule with a `python_module` is skipped there.
 - Register the formatter and enable linting by default for the `tera-html` language ID, which the main Tera extension gives to `.tera` and `.html.tera` files, and `pos-liquid`, used by platformOS.
 - Remove the `hbs` language ID from the defaults. `.hbs` files are `handlebars`. To keep it, add it to `djlint.formatLanguages` and set `djlint.enableLinting` to `true` and `djlint.profile` to `"handlebars"` for it.
