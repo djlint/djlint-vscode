@@ -355,6 +355,54 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       ).resolves.toContain("H999");
     });
 
+    it("imports a rule's python_module from the project", async () => {
+      await write(
+        "custom_rules/rule.py",
+        [
+          "def run(rule, config, html, filepath, line_ends):",
+          '    return [{"code": rule["name"], "line": "1:0", "match": "x", "message": "custom"}]',
+          "",
+        ].join("\n"),
+      );
+      await write(
+        "conf/module-rules.yaml",
+        "- rule:\n    name: H998\n    message: custom\n    python_module: custom_rules.rule\n",
+      );
+      await expect(
+        lintCodes(
+          "<p>x</p>",
+          { rules: "conf/module-rules.yaml" },
+          documentIn("t.html", "<p>x</p>"),
+        ),
+      ).resolves.toContain("H998");
+    });
+
+    it("imports a rule's python_module afresh on every run, leaving no cache behind", async () => {
+      const rule = (code: string): string =>
+        [
+          "def run(rule, config, html, filepath, line_ends):",
+          `    return [{"code": "${code}", "line": "1:0", "match": "x", "message": "x"}]`,
+          "",
+        ].join("\n");
+      await write("fresh_rules/rule.py", rule("H991"));
+      await write(
+        "conf/fresh-rules.yaml",
+        "- rule:\n    name: H990\n    message: custom\n    python_module: fresh_rules.rule\n",
+      );
+      const lint = async (): Promise<string[]> =>
+        lintCodes(
+          "<p>x</p>",
+          { rules: "conf/fresh-rules.yaml" },
+          documentIn("t.html", "<p>x</p>"),
+        );
+      await expect(lint()).resolves.toContain("H991");
+      await write("fresh_rules/rule.py", rule("H992"));
+      await expect(lint()).resolves.toContain("H992");
+      expect(existsSync(path.join(root, "fresh_rules/__pycache__"))).toBe(
+        false,
+      );
+    });
+
     it("still works when the document's folder is gone", async () => {
       await expect(
         format(NESTED, {}, documentIn("deleted/t.html", NESTED)),
