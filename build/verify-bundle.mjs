@@ -31,9 +31,9 @@ for (const required of [WORKER, INDEX_URL]) {
 }
 
 function assertBundledDjlintIsPinnedVersion() {
-  const pinned = readFileSync("djlint-requirements.txt", "utf8")
-    .trim()
-    .replace(/^djlint\s*==\s*/u, "");
+  const pinned = /"djlint==(?<version>[^"]+)"/u.exec(
+    readFileSync("pyproject.toml", "utf8"),
+  )?.groups?.["version"];
   const lock =
     /** @type {{ packages: Record<string, { version: string }> }} */
     (
@@ -44,7 +44,7 @@ function assertBundledDjlintIsPinnedVersion() {
   const bundled = lock.packages["djlint"].version;
   if (bundled !== pinned) {
     throw new Error(
-      `bundled djLint is ${bundled}, but djlint-requirements.txt pins ${pinned}`,
+      `bundled djLint is ${bundled}, but pyproject.toml pins ${pinned}`,
     );
   }
   console.log(`ok   bundled djLint is the pinned ${pinned}`);

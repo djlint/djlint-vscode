@@ -6,9 +6,9 @@ Run `npm run assets` once to build the bundled runtime, then press <kbd>F5</kbd>
 
 ## Building the bundled runtime
 
-`npm run assets` (also run by `vscode:prepublish`) assembles `assets/pyodide/`: the pinned Pyodide runtime, djLint, and djLint's dependency closure, all sha256-verified. It needs [`uv`](https://docs.astral.sh/uv/) on PATH.
+`npm run assets` (also run by `vscode:prepublish`) assembles `assets/pyodide/`: the pinned Pyodide runtime, djLint, and what djLint depends on, all sha256-verified against `uv.lock` or Pyodide's lock file. It needs [`uv`](https://docs.astral.sh/uv/) on PATH.
 
-The djLint version is pinned in `djlint-requirements.txt` and kept current by Renovate; the Pyodide runtime is pinned by the `pyodide` devDependency. Everything else follows from resolving those two, so there is no hand-maintained list to keep in sync.
+The djLint version is pinned in `pyproject.toml` and what it depends on in `uv.lock`, both kept current by Renovate; run `uv lock` after changing the first. The Pyodide runtime is pinned by the `pyodide` devDependency, and its own click, PyYAML and regex replace the locked ones, which the build checks djLint accepts. `requires-python` must be the Python that Pyodide runs.
 
 `npm run verify-bundle` boots the built bundle and formats and lints through it, reading a project's configuration from disk as it does in the editor. CI runs it after packaging and before publishing, because packaging cleanly does not on its own prove the bundled runtime still works after a dependency bump.
 
