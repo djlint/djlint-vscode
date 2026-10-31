@@ -112,7 +112,11 @@ export default defineConfig(
     },
   },
   {
-    files: ["src/engine/pyodide/worker.ts"],
+    files: [
+      "src/engine/pyodide/runtime.ts",
+      "src/engine/pyodide/worker.ts",
+      "src/engine/pyodide/worker.web.ts",
+    ],
     rules: {
       "@typescript-eslint/no-unsafe-call": "off",
       "@typescript-eslint/no-unsafe-member-access": "off",
@@ -122,7 +126,11 @@ export default defineConfig(
     },
   },
   {
-    files: ["src/engine/pyodide/index.ts"],
+    files: [
+      "src/engine/pyodide/browser-worker.ts",
+      "src/engine/pyodide/index.ts",
+      "src/engine/pyodide/node-worker.ts",
+    ],
     rules: {
       "@typescript-eslint/promise-function-async": "off",
       "unicorn/prefer-error-is-error": "off",

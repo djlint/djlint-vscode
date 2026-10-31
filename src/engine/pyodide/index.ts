@@ -1,9 +1,8 @@
 import path from "node:path";
-import { Worker } from "node:worker_threads";
 import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";
-import { deriveStdinFilename, getDocumentFolder } from "../../paths.js";
+import { deriveStdinFilename } from "../../paths.js";
 import type { DjlintStatus } from "../../status.js";
 import {
   RUN_TIMEOUT_MS,
@@ -11,13 +10,21 @@ import {
   type DjlintMode,
   type LintDiagnostic,
 } from "../types.js";
+import { readProject } from "./project.js";
 import type {
   RunRequest,
   RunResponse,
-  WorkerData,
   WorkerRequest,
   WorkerResponse,
 } from "./protocol.js";
+
+export interface RuntimeWorker {
+  onError: (listener: (e: Error) => void) => void;
+  onExit: (listener: (code: number) => void) => void;
+  onMessage: (listener: (response: WorkerResponse) => void) => void;
+  postMessage: (request: WorkerRequest) => void;
+  terminate: () => void;
+}
 
 interface Pending {
   isCancelled: boolean;
@@ -41,15 +48,25 @@ function buildOptions(
     const [name, value] = kwarg;
     if (!arg.isPath) {
       options[name] = value;
-    } else if (typeof value === "string" && path.isAbsolute(value)) {
+    } else if (typeof value === "string") {
       pathOptions[name] = value;
     }
   }
   return { options, pathOptions };
 }
 
+type ProjectLocation = Pick<RunRequest, "cwd" | "pathOptions" | "project">;
+
+function absoluteOnly(
+  pathOptions: RunRequest["pathOptions"],
+): RunRequest["pathOptions"] {
+  return Object.fromEntries(
+    Object.entries(pathOptions).filter(([, value]) => path.isAbsolute(value)),
+  );
+}
+
 export class PyodideEngine implements DjlintEngine {
-  #worker: Worker | undefined;
+  #worker: RuntimeWorker | undefined;
   #seq = 0;
   #disposed = false;
   #version = "";
@@ -57,11 +74,13 @@ export class PyodideEngine implements DjlintEngine {
   readonly #reported = new Set<string>();
 
   constructor(
-    private readonly workerPath: string,
-    private readonly indexURL: string,
+    private readonly createWorker: () => RuntimeWorker,
     private readonly outputChannel: vscode.LogOutputChannel,
     private readonly canReadProjectFiles: boolean,
     private readonly status: DjlintStatus,
+    private readonly getHostFolder: (
+      document: vscode.TextDocument,
+    ) => string | undefined,
   ) {}
 
   async format(
@@ -118,7 +137,7 @@ export class PyodideEngine implements DjlintEngine {
   #discardWorker(reason: Error): void {
     const worker = this.#worker;
     this.#worker = void 0;
-    void worker?.terminate();
+    worker?.terminate();
     this.#rejectPending(reason);
   }
 
@@ -145,32 +164,50 @@ export class PyodideEngine implements DjlintEngine {
     this.#discardWorker(reason);
   }
 
-  #ensureWorker(): Worker {
+  #receive(response: WorkerResponse): void {
+    // eslint-disable-next-line default-case -- every type has a case
+    switch (response.type) {
+      case "boot-failed": {
+        this.outputChannel.error(response.error);
+        const reason = lastLine(response.error) ?? response.error;
+        const message = `Bundled djLint runtime failed to start: ${reason}`;
+        this.#fail(message, new Error(message));
+        break;
+      }
+      case "log": {
+        this.outputChannel[response.level](response.line);
+        break;
+      }
+      case "ready": {
+        this.#version = response.version;
+        this.outputChannel.info(`Using the bundled djLint ${response.version}`);
+        break;
+      }
+      case "result": {
+        this.#settle(response);
+        break;
+      }
+    }
+  }
+
+  #ensureWorker(): RuntimeWorker {
     if (this.#disposed) {
       throw new vscode.CancellationError();
     }
     if (this.#worker) {
       return this.#worker;
     }
-    const workerData: WorkerData = { indexURL: this.indexURL };
-    const worker = new Worker(this.workerPath, { workerData });
+    const worker = this.createWorker();
     const isCurrent = (): boolean => this.#worker === worker;
-    worker.on("message", (response: WorkerResponse) => {
-      if (response.type === "log") {
-        this.outputChannel[response.level](response.line);
-      } else if (response.type === "ready") {
-        this.#version = response.version;
-        this.outputChannel.info(`Using the bundled djLint ${response.version}`);
-      } else {
-        this.#settle(response);
-      }
+    worker.onMessage((response) => {
+      this.#receive(response);
     });
-    worker.on("error", (e) => {
+    worker.onError((e) => {
       if (isCurrent()) {
         this.#fail(`Bundled djLint runtime failed: ${e.message}`, e);
       }
     });
-    worker.on("exit", (code) => {
+    worker.onExit((code) => {
       if (!isCurrent()) {
         return;
       }
@@ -181,7 +218,25 @@ export class PyodideEngine implements DjlintEngine {
     return worker;
   }
 
-  #call(
+  // Sync where it can be: a request for a local file reaches the worker with no delay.
+  #locateOnHost(
+    document: vscode.TextDocument,
+    pathOptions: RunRequest["pathOptions"],
+  ): ProjectLocation | undefined {
+    if (!this.canReadProjectFiles) {
+      return { cwd: void 0, pathOptions: {}, project: void 0 };
+    }
+    const hostFolder = this.getHostFolder(document);
+    return hostFolder == null
+      ? void 0
+      : {
+          cwd: hostFolder,
+          pathOptions: absoluteOnly(pathOptions),
+          project: void 0,
+        };
+  }
+
+  async #call(
     mode: DjlintMode,
     context: ArgContext,
     token: vscode.CancellationToken,
@@ -191,12 +246,16 @@ export class PyodideEngine implements DjlintEngine {
     const { document } = context;
     const { options, pathOptions } = buildOptions(context, mode);
     const request: RunRequest = {
-      cwd: this.canReadProjectFiles ? getDocumentFolder(document) : void 0,
+      ...(this.#locateOnHost(document, pathOptions) ??
+        (await readProject(document, pathOptions, this.outputChannel)) ?? {
+          cwd: void 0,
+          pathOptions: absoluteOnly(pathOptions),
+          project: void 0,
+        }),
       filename: deriveStdinFilename(document),
       id,
       mode,
       options,
-      pathOptions: this.canReadProjectFiles ? pathOptions : {},
       src: document.getText(),
       type: "run",
     };

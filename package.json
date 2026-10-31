@@ -35,15 +35,18 @@
   "publisher": "monosans",
   "type": "module",
   "main": "./dist/extension.cjs",
+  "browser": "./dist/web/extension.cjs",
   "scripts": {
     "assets": "node ./build/provision-assets.mjs",
     "esbuild-base": "esbuild ./src/extension.ts --bundle --outfile=dist/extension.cjs --external:vscode --format=cjs --platform=node --target=node22.20.0",
+    "esbuild-web": "esbuild ./src/extension.web.ts --bundle --outfile=dist/web/extension.cjs --external:vscode --format=cjs --platform=browser --target=es2023 --alias:node:path=path-browserify",
+    "esbuild-web-worker": "esbuild ./src/engine/pyodide/worker.web.ts --bundle --loader:.py=text --outfile=dist/web/pyodide-worker.js --format=iife --platform=browser --target=es2023",
     "esbuild-worker": "esbuild ./src/engine/pyodide/worker.ts --bundle --loader:.py=text --outfile=dist/pyodide-worker.cjs --format=cjs --platform=node --target=node22.20.0",
     "format": "prettier --write .",
     "lint": "eslint --max-warnings 0 . && tsc",
     "test": "vitest run",
     "verify-bundle": "node ./build/verify-bundle.mjs",
-    "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt licenses/NOTICE.txt dist/extension.meta.json dist/pyodide-worker.meta.json assets/python-licenses.txt assets/pyodide-licenses.txt && node ./build/minify-package-json.mjs",
+    "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && npm run esbuild-web -- --minify --metafile=dist/web/extension.meta.json && npm run esbuild-web-worker -- --minify --metafile=dist/web/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt licenses/NOTICE.txt dist/extension.meta.json dist/pyodide-worker.meta.json dist/web/extension.meta.json dist/web/pyodide-worker.meta.json assets/python-licenses.txt assets/pyodide-licenses.txt && node ./build/minify-package-json.mjs",
     "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
     "watch:esbuild-worker": "npm run esbuild-worker -- --sourcemap --watch",
     "watch:tsc": "tsc --watch"
@@ -613,6 +616,7 @@
     "eslint": "10.13.0",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-unicorn": "79.0.0",
+    "path-browserify": "1.0.1",
     "prettier": "3.9.10",
     "prettier-plugin-packagejson": "3.0.3",
     "pyodide": "314.0.7",
@@ -637,10 +641,7 @@
       ],
       "description": "In an untrusted workspace, only the bundled djLint runs, and it reads no files."
     },
-    "virtualWorkspaces": {
-      "supported": "limited",
-      "description": "In a virtual workspace, djLint cannot read the project's configuration files."
-    }
+    "virtualWorkspaces": true
   },
   "extensionKind": [
     "workspace"

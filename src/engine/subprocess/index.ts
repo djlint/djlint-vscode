@@ -5,7 +5,6 @@ import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { configSection } from "../../config.js";
 import {
-  getDocumentFolder,
   normalizeConfiguredExecutable,
   workspaceScopeKey,
 } from "../../paths.js";
@@ -14,6 +13,7 @@ import type {
   PythonEnvironments,
 } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
+import { getDocumentFolder } from "../document-folder.js";
 import {
   DjlintUnavailableError,
   RUN_TIMEOUT_MS,

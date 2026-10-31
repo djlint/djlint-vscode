@@ -4,7 +4,7 @@ import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
 import type { EngineManager } from "./engine/select.js";
 import type { LintDiagnostic } from "./engine/types.js";
-import { supportedUriSchemes } from "./paths.js";
+import { isSupportedDocument } from "./paths.js";
 
 const lintSettingKeys: readonly string[] = [
   "enableLinting",
@@ -141,7 +141,7 @@ export class Linter {
       return;
     }
 
-    if (!supportedUriSchemes.has(document.uri.scheme)) {
+    if (!isSupportedDocument(document)) {
       this.#outputChannel.debug(
         `Not linting "${document.uri.toString()}" (unsupported scheme)`,
       );

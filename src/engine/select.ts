@@ -1,9 +1,5 @@
 import * as vscode from "vscode";
-import { workspaceScopeKey } from "../paths.js";
-import type { PythonEnvironments } from "../python/environment.js";
-import type { DjlintStatus } from "../status.js";
-import { PyodideEngine } from "./pyodide/index.js";
-import { SubprocessEngine } from "./subprocess/index.js";
+import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
 import {
   DjlintUnavailableError,
   RESOLUTION_TTL_MS,
@@ -61,7 +57,15 @@ export class FallbackEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     call: (engine: DjlintEngine) => Promise<R>,
   ): Promise<R> {
-    if (config.get<string>("importStrategy") === "useBundled") {
+    // Only the bundled djLint can read the configuration of a virtual workspace.
+    const shouldPreferBundled =
+      isVirtualDocument(document) &&
+      !config.get<string>("executablePath") &&
+      !config.get<string>("pythonPath");
+    if (
+      shouldPreferBundled ||
+      config.get<string>("importStrategy") === "useBundled"
+    ) {
       return call(this.#secondaryEngine());
     }
     const scope = workspaceScopeKey(document);
@@ -103,15 +107,10 @@ export class FallbackEngine implements DjlintEngine {
 export class EngineManager implements vscode.Disposable {
   #engine: DjlintEngine | undefined;
 
-  constructor(
-    private readonly extensionUri: vscode.Uri,
-    private readonly outputChannel: vscode.LogOutputChannel,
-    private readonly pythonEnvironments: PythonEnvironments,
-    private readonly status: DjlintStatus,
-  ) {}
+  constructor(private readonly createEngine: () => DjlintEngine) {}
 
   get engine(): DjlintEngine {
-    this.#engine ??= this.#create();
+    this.#engine ??= this.createEngine();
     return this.#engine;
   }
 
@@ -122,29 +121,5 @@ export class EngineManager implements vscode.Disposable {
 
   dispose(): void {
     this.reset();
-  }
-
-  #create(): DjlintEngine {
-    const { isTrusted } = vscode.workspace;
-    const makePyodide = (): DjlintEngine =>
-      new PyodideEngine(
-        vscode.Uri.joinPath(this.extensionUri, "dist", "pyodide-worker.cjs")
-          .fsPath,
-        vscode.Uri.joinPath(this.extensionUri, "assets", "pyodide").fsPath,
-        this.outputChannel,
-        isTrusted,
-        this.status,
-      );
-    return isTrusted
-      ? new FallbackEngine(
-          new SubprocessEngine(
-            this.outputChannel,
-            this.pythonEnvironments,
-            this.status,
-          ),
-          makePyodide,
-          this.outputChannel,
-        )
-      : makePyodide();
   }
 }

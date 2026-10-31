@@ -232,6 +232,31 @@ describe("FallbackEngine", () => {
     expect(channel.of("info")).toHaveLength(2);
   });
 
+  it("gives a virtual document to the secondary, which can read its configuration", async () => {
+    const { calls, engine } = makeFallback(() => "PRIMARY");
+    await expect(
+      engine.format(
+        makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")),
+        config,
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toBe("SECONDARY");
+    expect(calls).toStrictEqual(["secondary"]);
+  });
+
+  it("keeps a virtual document with the primary when a path is set", async () => {
+    const { engine } = makeFallback(() => "PRIMARY");
+    await expect(
+      engine.format(
+        makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")),
+        makeConfig({ executablePath: "/bin/djlint" }),
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toBe("PRIMARY");
+  });
+
   describe('with importStrategy "useBundled"', () => {
     const bundled = makeConfig({ importStrategy: "useBundled" });
 
