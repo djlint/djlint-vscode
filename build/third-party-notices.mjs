@@ -11,6 +11,31 @@ if (output === "" || inputs.length === 0) {
   throw new Error("usage: third-party-notices.mjs OUTPUT INPUT...");
 }
 
+// Comes first in the file: how the package is licensed, and where its source is.
+const NOTICE = `djLint for Visual Studio Code: licenses of this package
+
+The extension is licensed under the MIT License, in LICENSE.txt.
+
+This package also contains djLint, licensed under the GNU General Public
+License, version 3 or later, whose text is in the djlint section below. It
+runs on the bundled Pyodide runtime in a worker, apart from the extension,
+which talks to it through messages as it talks to an installed djLint. The
+worker loads djLint directly, so the worker (dist/pyodide-worker.cjs and
+dist/web/pyodide-worker.js) and djLint are together distributed under the
+GNU General Public License, version 3 or later. The worker's own code also
+remains under the MIT License, and each bundled component under its own
+license, collected below.
+
+The Corresponding Source of that program is:
+
+- the source of the worker and the scripts that build the package, at
+  https://github.com/djlint/djlint-vscode under the tag of this version;
+- the Python source of djLint and of the packages it uses, contained in the
+  wheels under assets/pyodide/, except the compiled parts of regex and PyYAML,
+  whose source is at https://pypi.org/project/regex/,
+  https://pypi.org/project/PyYAML/ and https://github.com/yaml/libyaml;
+- the Pyodide source, at the location given in its section below.`;
+
 const LICENSE_FILE = /^(?:licen[cs]e|copying|notice)(?:[-.]|$)/iu;
 const RULE = "=".repeat(80);
 
@@ -53,7 +78,7 @@ for (const root of roots) {
   );
 }
 
-const parts = [];
+const parts = [NOTICE];
 let isNpmWritten = false;
 for (const input of inputs) {
   if (input.endsWith(".json")) {
