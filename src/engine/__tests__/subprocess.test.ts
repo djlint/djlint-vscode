@@ -37,6 +37,9 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
   stat: vi.fn(async () => ({})),
 }));
 
+vi.mock("which-command", () => ({
+  whichCommand: async (command: string) => command,
+}));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn(),
@@ -47,6 +50,7 @@ type Spawn = (
   args: readonly string[],
   options: Record<string, unknown>,
 ) => Promise<{
+  code?: string;
   exitCode?: number | undefined;
   failed?: boolean;
   stderr?: string;
@@ -65,8 +69,8 @@ function isProbe(args: readonly string[]): boolean {
 
 /** A djLint that answers `--version` and leaves the run to `run`. */
 function installDjlint(
-  run: Spawn = async () => ({ stdout: "" }),
-  version = VERSION_OUTPUT,
+  run: Spawn = async () => ({ stdout: "<p>x</p>\n" }),
+  version: Awaited<ReturnType<Spawn>> = VERSION_OUTPUT,
 ): void {
   spawn.mockImplementation(async (exec, args, options) =>
     isProbe(args) ? version : run(exec, args, options),
@@ -337,6 +341,53 @@ describe("resolution through the engine", () => {
     ).rejects.toBeInstanceOf(DjlintUnavailableError);
   });
 
+  it("does not wipe a document when nothing comes back", async () => {
+    installDjlint(async () => ({ stdout: "" }));
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(document, config, formattingOptions, liveToken()),
+    ).rejects.toThrow("printed nothing");
+    expect(control.shownErrors).toHaveLength(1);
+  });
+
+  it("formats an empty document to nothing", async () => {
+    installDjlint(async () => ({ stdout: "" }));
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(
+        makeDocument("/w/sub/empty.html", " \n"),
+        config,
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toBe("");
+  });
+
+  it.each([
+    [
+      "a shim whose command is not there",
+      { exitCode: 127, stderr: "x: not found", stdout: "" },
+    ],
+    [
+      "a cmd.exe that finds no command",
+      { exitCode: 9009, stderr: "", stdout: "" },
+    ],
+    [
+      "a file that cannot run",
+      { code: "ENOEXEC", exitCode: void 0, stderr: "", stdout: "" },
+    ],
+    [
+      "a corrupt executable",
+      { code: "UNKNOWN", exitCode: void 0, stderr: "", stdout: "" },
+    ],
+  ])("treats %s as no djLint", async (_label, version) => {
+    installDjlint(void 0, version);
+    const { engine } = makeEngine();
+    await expect(
+      engine.lint(document, config, liveToken()),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+  });
+
   it("asks for the active environment of the document with useVenv on", async () => {
     installDjlint();
     const getActive = vi.fn(async () => ({
@@ -493,12 +544,12 @@ describe("resolution through the engine", () => {
     );
   });
 
-  it("detects once per folder of a workspace for an absolute path", async () => {
+  it("detects per folder for a configured path, which can be a shim", async () => {
     installDjlint();
     const { engine } = makeEngine();
     await engine.lint(makeDocument("/w/one/t.html"), config, liveToken());
     await engine.lint(makeDocument("/w/two/t.html"), config, liveToken());
-    expect(probes()).toBe(1);
+    expect(probes()).toBe(2);
   });
 
   it("detects once for an active environment", async () => {

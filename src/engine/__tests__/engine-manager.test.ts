@@ -25,6 +25,9 @@ vi.mock("node:worker_threads", async () => {
   return { Worker };
 });
 
+vi.mock("which-command", () => ({
+  whichCommand: async (command: string) => command,
+}));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn(),

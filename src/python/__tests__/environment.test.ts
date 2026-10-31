@@ -1,6 +1,6 @@
 // Provider selection between the Python Environments extension and the classic
 // Python extension, plus the change-event dedup and the unavailable-latch.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { makeChannel } from "../../__tests__/helpers.js";
 import {
@@ -8,7 +8,7 @@ import {
   fireWorkspaceEvent,
   resetVscode,
 } from "../../__tests__/vscode-stub.js";
-import { PythonEnvironments } from "../environment.js";
+import { ENVIRONMENT_TIMEOUT_MS, PythonEnvironments } from "../environment.js";
 
 vi.mock("@vscode/python-environments", () => ({
   EXTENSION_ID: "ms-python.vscode-python-envs",
@@ -208,6 +208,104 @@ describe("provider selection", () => {
       await expect(environments.getActive(void 0)).resolves.toMatchObject({
         command: { args: ["run"] },
       });
+    });
+  });
+
+  describe("with an extension that never answers", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function hangingExtension(): {
+      answer: (value: unknown) => void;
+      extension: unknown;
+      fireChange: () => void;
+      lookups: () => number;
+      subscriptions: () => number;
+    } {
+      const { promise, resolve } = Promise.withResolvers<unknown>();
+      const { extension } = envsExtension(void 0);
+      const listeners: ((event: unknown) => void)[] = [];
+      const api = {
+        getEnvironment: vi.fn(async () => promise),
+        onDidChangeEnvironment: (listener: (event: unknown) => void) => {
+          listeners.push(listener);
+          return { dispose: () => void 0 };
+        },
+      };
+      return {
+        answer: resolve,
+        extension: { ...extension, exports: api },
+        fireChange: () => {
+          for (const listener of listeners) {
+            listener({ new: environment("/new", []) });
+          }
+        },
+        lookups: () => api.getEnvironment.mock.calls.length,
+        subscriptions: () => listeners.length,
+      };
+    }
+
+    it("stops waiting, then does not wait again", async () => {
+      const { extension } = hangingExtension();
+      control.extensions.set(ENVS_ID, extension);
+      const { channel, environments } = makeEnvironments();
+      const first = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await expect(first).resolves.toBeNull();
+      expect(channel.of("warn")).toHaveLength(1);
+      await expect(environments.getActive(void 0)).resolves.toBeNull();
+    });
+
+    it("tells when it does answer", async () => {
+      const { answer, extension } = hangingExtension();
+      control.extensions.set(ENVS_ID, extension);
+      const { environments } = makeEnvironments();
+      const onChange = vi.fn();
+      environments.onDidChange(onChange);
+      const first = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await first;
+      answer(environment("/late", []));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(onChange).toHaveBeenCalledOnce();
+    });
+
+    it("tries again on a restart, on the same subscription", async () => {
+      const { answer, extension, subscriptions } = hangingExtension();
+      control.extensions.set(ENVS_ID, extension);
+      const { environments } = makeEnvironments();
+      const first = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await first;
+      environments.resetIfUnavailable();
+      const second = environments.getActive(void 0);
+      answer(environment("/py", []));
+      await expect(second).resolves.toMatchObject({
+        command: { executable: "/py" },
+      });
+      expect(subscriptions()).toBe(1);
+    });
+
+    it("takes a change of environment for an answer", async () => {
+      const { extension, fireChange, lookups } = hangingExtension();
+      control.extensions.set(ENVS_ID, extension);
+      const { environments } = makeEnvironments();
+      const onChange = vi.fn();
+      environments.onDidChange(onChange);
+      const first = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await first;
+      fireChange();
+      expect(onChange).toHaveBeenCalledOnce();
+      const second = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await second;
+      expect(lookups()).toBe(2);
     });
   });
 

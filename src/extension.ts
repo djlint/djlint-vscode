@@ -32,7 +32,10 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     pythonEnvironments,
-    // SubprocessEngine forgets what it found. Nothing else depends on the environment, least of all a running Pyodide.
-    pythonEnvironments.onDidChange(refresh),
+    // SubprocessEngine forgets what it found, in a listener of its own, which has to run first.
+    // Nothing else depends on the environment, least of all a running Pyodide.
+    pythonEnvironments.onDidChange(() => {
+      queueMicrotask(refresh);
+    }),
   );
 }

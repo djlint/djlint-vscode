@@ -69,6 +69,11 @@ describe("checkErrors", () => {
     expect(message).not.toContain("does not support the");
   });
 
+  it("says why djLint could not start", () => {
+    const { message } = report(makeExecaError({ code: "E2BIG" }));
+    expect(message).toBe("djLint could not start: E2BIG.");
+  });
+
   it("summarizes stderr by its last non-empty line", () => {
     const { message } = report(
       makeExecaError({
@@ -81,9 +86,12 @@ describe("checkErrors", () => {
 
   it("falls back to the short message without stderr", () => {
     const { message } = report(
-      makeExecaError({ exitCode: 3, shortMessage: "Command failed: djlint" }),
+      makeExecaError({
+        exitCode: 3,
+        shortMessage: "Command failed: djlint - --stdin-filename a.html",
+      }),
     );
-    expect(message).toBe("Command failed: djlint");
+    expect(message).toBe("djLint failed with exit code 3.");
   });
 
   it("logs and rethrows the original error", () => {
@@ -145,9 +153,19 @@ describe("isValidLintResult", () => {
 });
 
 describe("isDjlintUnavailable", () => {
-  it("recognizes a missing executable", () => {
-    expect(isDjlintUnavailable(makeExecaError({ code: "ENOENT" }))).toBe(true);
-  });
+  it.each(["EACCES", "ENOENT", "ENOEXEC", "UNKNOWN"])(
+    "recognizes a command that cannot start, %s",
+    (code) => {
+      expect(isDjlintUnavailable(makeExecaError({ code }))).toBe(true);
+    },
+  );
+
+  it.each([103, 127, 9009])(
+    "recognizes the exit code %d of a launcher",
+    (exitCode) => {
+      expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
+    },
+  );
 
   it.each([
     "No module named djlint",
