@@ -45,6 +45,7 @@
     "lint": "eslint --max-warnings 0 . && tsc",
     "test": "vitest run",
     "test:e2e": "node ./test/e2e/desktop.mjs",
+    "test:e2e:python": "node ./test/e2e/python.mjs",
     "test:e2e:web": "node ./test/e2e/web.mjs",
     "verify-bundle": "node ./build/verify-bundle.mjs",
     "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && npm run esbuild-web -- --minify --metafile=dist/web/extension.meta.json && npm run esbuild-web-worker -- --minify --metafile=dist/web/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt dist/extension.meta.json dist/pyodide-worker.meta.json dist/web/extension.meta.json dist/web/pyodide-worker.meta.json assets/python-licenses.txt assets/pyodide-licenses.txt && node ./build/minify-package-json.mjs",
