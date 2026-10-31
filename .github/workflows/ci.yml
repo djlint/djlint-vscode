@@ -49,6 +49,7 @@ jobs:
       - run: npm ci
       - run: npx --yes @vscode/vsce package --out djlint.vsix
       - run: unzip -l djlint.vsix | grep -F extension/THIRD-PARTY-NOTICES.txt
+      - run: npx vitest run
   pre-commit:
     runs-on: ubuntu-26.04
     steps:

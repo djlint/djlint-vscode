@@ -1,0 +1,258 @@
+import { execa } from "execa";
+import * as vscode from "vscode";
+import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
+import { configSection } from "../../config.js";
+import {
+  getDocumentFolder,
+  normalizeConfiguredExecutable,
+  workspaceScopeKey,
+} from "../../paths.js";
+import type {
+  PythonEnvironmentDetails,
+  PythonEnvironments,
+} from "../../python/environment.js";
+import {
+  DjlintUnavailableError,
+  RUN_TIMEOUT_MS,
+  type DjlintEngine,
+  type DjlintMode,
+  type LintDiagnostic,
+} from "../types.js";
+import { checkErrors, isValidLintResult, showInstallError } from "./errors.js";
+import {
+  isCustomExecaError,
+  isDjlintUnavailable,
+  type ChildOptions,
+  type CustomExecaError,
+} from "./exec.js";
+import { parseLinterOutput } from "./parse-lint-output.js";
+import { CommandResolver, type RunnerCommand } from "./resolve.js";
+import { parseDjlintVersion, selectSupportedArgs } from "./version.js";
+
+const PROBE_TIMEOUT_MS = 10_000;
+
+export type RunFailureClassification = "error" | "lint-result" | "unavailable";
+
+export async function classifyRunFailure(
+  e: CustomExecaError,
+  isValidResult: (e: CustomExecaError) => boolean,
+  isUnavailableFast: (e: CustomExecaError) => boolean,
+  reprobe: () => Promise<string | null>,
+): Promise<RunFailureClassification> {
+  if (isValidResult(e)) {
+    return "lint-result";
+  }
+  if (isUnavailableFast(e)) {
+    return "unavailable";
+  }
+  const version = await reprobe();
+  return version == null ? "unavailable" : "error";
+}
+
+// Version managers' shims pick the Python of the folder they run from.
+async function probeExecutable(
+  exec: string,
+  prefixArgs: readonly string[],
+  document: vscode.TextDocument,
+): Promise<string | null> {
+  const cwd = getDocumentFolder(document);
+  try {
+    const result = await execa(exec, [...prefixArgs, "--version"], {
+      ...(cwd != null && { cwd }),
+      reject: false,
+      stdin: "ignore",
+      timeout: PROBE_TIMEOUT_MS,
+    });
+    return result.exitCode === 0 ? parseDjlintVersion(result.stdout) : null;
+  } catch {
+    return null;
+  }
+}
+
+export class SubprocessEngine implements DjlintEngine {
+  readonly #resolver = new CommandResolver();
+  readonly #loggedCommands = new Map<string, string>();
+  readonly #warnedSkippedArgs = new Set<string>();
+  readonly #schemesWarnedAboutCwd = new Set<string>();
+
+  constructor(
+    private readonly outputChannel: vscode.LogOutputChannel,
+    private readonly pythonEnvironments: PythonEnvironments,
+  ) {}
+
+  async format(
+    document: vscode.TextDocument,
+    config: vscode.WorkspaceConfiguration,
+    formattingOptions: vscode.FormattingOptions,
+    token: vscode.CancellationToken,
+  ): Promise<string> {
+    return this.#runOrReport(
+      "format",
+      { config, document, formattingOptions },
+      token,
+    );
+  }
+
+  async lint(
+    document: vscode.TextDocument,
+    config: vscode.WorkspaceConfiguration,
+    token: vscode.CancellationToken,
+  ): Promise<LintDiagnostic[]> {
+    return parseLinterOutput(
+      await this.#runOrReport("lint", { config, document }, token),
+    );
+  }
+
+  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  dispose(): void {}
+
+  async #getCommand(
+    document: vscode.TextDocument,
+    config: vscode.WorkspaceConfiguration,
+  ): Promise<RunnerCommand> {
+    const scopeKey = workspaceScopeKey(document);
+    const command = await this.#resolver.resolve(
+      {
+        executablePath: normalizeConfiguredExecutable(
+          config.get<string>("executablePath") ?? "",
+          document,
+        ),
+        getActiveEnvironment: config.get<boolean>("useVenv")
+          ? async (uri): Promise<PythonEnvironmentDetails | null> =>
+              this.pythonEnvironments.getActive(uri)
+          : null,
+        onConfiguredPathRejected: (setting, exec): void => {
+          this.outputChannel.warn(
+            `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
+          );
+        },
+        probe: async (exec, prefixArgs): Promise<string | null> =>
+          probeExecutable(exec, prefixArgs, document),
+        pythonPath: normalizeConfiguredExecutable(
+          config.get<string>("pythonPath") ?? "",
+          document,
+        ),
+        uri: document.uri,
+      },
+      scopeKey,
+    );
+    const description = `djLint ${command.version}: ${[command.exec, ...command.prefixArgs].join(" ")}`;
+    if (this.#loggedCommands.get(scopeKey) !== description) {
+      this.#loggedCommands.set(scopeKey, description);
+      this.outputChannel.info(`Using ${description}`);
+    }
+    return command;
+  }
+
+  #getCwd(document: vscode.TextDocument): { cwd?: string } {
+    const cwd = getDocumentFolder(document);
+    if (cwd != null) {
+      return { cwd };
+    }
+    const { scheme } = document.uri;
+    if (!this.#schemesWarnedAboutCwd.has(scheme)) {
+      this.#schemesWarnedAboutCwd.add(scheme);
+      this.outputChannel.warn(
+        `djLint cannot be run from the folder of "${document.uri.toString()}", so configuration files next to it are not found.`,
+      );
+    }
+    return {};
+  }
+
+  async #exec(
+    command: RunnerCommand,
+    mode: DjlintMode,
+    context: ArgContext,
+    cancelSignal: AbortSignal,
+  ): Promise<string> {
+    const supportedArgs = selectSupportedArgs(
+      mode === "format" ? formattingArgs : lintingArgs,
+      command.version,
+      context,
+      this.#warnedSkippedArgs,
+      this.outputChannel,
+    );
+    const childArgs = [
+      ...command.prefixArgs,
+      "-",
+      ...supportedArgs.flatMap((arg) => arg.build(context)),
+    ];
+    const childOptions: ChildOptions = {
+      ...this.#getCwd(context.document),
+      cancelSignal,
+      input: context.document.getText(),
+      stripFinalNewline: false,
+      timeout: RUN_TIMEOUT_MS,
+    };
+    const { stdout } = await execa(command.exec, childArgs, childOptions);
+    return stdout;
+  }
+
+  async #runOrReport(
+    mode: DjlintMode,
+    context: ArgContext,
+    token: vscode.CancellationToken,
+  ): Promise<string> {
+    try {
+      return await this.#run(mode, context, token);
+    } catch (e) {
+      if (e instanceof DjlintUnavailableError) {
+        this.outputChannel.error(e);
+        showInstallError(context.config, this.outputChannel);
+      }
+      throw e;
+    }
+  }
+
+  async #run(
+    mode: DjlintMode,
+    context: ArgContext,
+    token: vscode.CancellationToken,
+    isRetry = false,
+  ): Promise<string> {
+    const { config, document } = context;
+    const command = await this.#getCommand(document, config);
+    if (token.isCancellationRequested) {
+      throw new vscode.CancellationError();
+    }
+    const controller = new AbortController();
+    const cancellation = token.onCancellationRequested(() => {
+      controller.abort();
+    });
+    try {
+      return await this.#exec(command, mode, context, controller.signal);
+    } catch (e) {
+      if (!isCustomExecaError(e) || e.isCanceled) {
+        throw e;
+      }
+
+      const classification = await classifyRunFailure(
+        e,
+        (err) => isValidLintResult(err, mode === "lint"),
+        isDjlintUnavailable,
+        async () => probeExecutable(command.exec, command.prefixArgs, document),
+      );
+
+      if (classification === "lint-result") {
+        return e.stdout;
+      }
+
+      if (classification === "unavailable") {
+        this.#resolver.invalidate();
+        this.outputChannel.debug(
+          `djLint is no longer available (${e.shortMessage}).`,
+        );
+        if (!isRetry) {
+          return await this.#run(mode, context, token, true);
+        }
+        throw new DjlintUnavailableError("djLint is no longer available.", {
+          cause: e,
+        });
+      }
+
+      return checkErrors(e, this.outputChannel);
+    } finally {
+      cancellation.dispose();
+    }
+  }
+}
