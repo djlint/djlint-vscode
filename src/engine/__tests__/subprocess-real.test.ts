@@ -142,3 +142,43 @@ describe("a command that is not there", () => {
     },
   );
 });
+
+describe.runIf(process.platform === "win32")("a Windows wrapper", () => {
+  let root: string;
+
+  beforeAll(async () => {
+    root = await mkdtemp(path.join(os.tmpdir(), "djlint wrapper "));
+    await writeFile(
+      path.join(root, "djlint-wrapper.cmd"),
+      "@echo off\r\necho djlint, version 1.48.0\r\n",
+    );
+    await writeFile(
+      path.join(root, "wrapper.py"),
+      "#!/usr/bin/env node\nconsole.log('djlint, version 1.48.0');\n",
+    );
+  });
+
+  afterAll(async () => {
+    await rm(root, { force: true, recursive: true });
+  });
+
+  it.each(["djlint-wrapper.cmd", "djlint-wrapper", "wrapper.py"])(
+    "is found as %s",
+    async (name) => {
+      resetVscode();
+      setWorkspaceFolders(root);
+      const status = makeStatus();
+      const engine = new SubprocessEngine(
+        makeChannel(),
+        makePythonEnvironments().environments,
+        status,
+      );
+      await engine.lint(
+        makeDocument(vscode.Uri.file(path.join(root, "t.html"))),
+        makeConfig({ executablePath: path.join(root, name) }),
+        liveToken(),
+      );
+      expect(status.update).toHaveBeenCalledOnce();
+    },
+  );
+});

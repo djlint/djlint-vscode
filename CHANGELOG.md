@@ -5,7 +5,7 @@
 - On Windows, go on to the next place to look for djLint, and in the end to the bundled one, when a command does not exist, instead of showing an error on every run. Until now this needed `djlint` on PATH, and also failed for a removed interpreter.
 - Do the same for a shim that says its command is not there, and for a file that cannot run, such as an environment built on another system.
 - Go on without the active Python environment if the Python extension does not answer within 30 seconds, instead of leaving formatting and linting waiting. `djLint: Restart` tries again, and so does the extension once it answers.
-- Run an executable whose `--version` does not name a djLint version, such as a wrapper, instead of passing over it.
+- Leave the document as it is when djLint prints nothing for one with content, for example when a `djlint.py` next to the template answers to `python -m djlint`, instead of emptying it.
 - Detect the version per folder for `djlint.executablePath` and `djlint.pythonPath` too, because they can point to a shim.
 - Show the djLint in use right after a change of environment or a restart, instead of after the next run.
 - Stop showing the whole command line, with the file name in it, when a failed djLint writes nothing to stderr.

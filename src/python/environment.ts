@@ -65,6 +65,9 @@ export class PythonEnvironments implements vscode.Disposable {
     this.#outputChannel = outputChannel;
     this.onDidChange = this.#changeEmitter.event;
     this.#disposables.push(
+      this.#changeEmitter.event(() => {
+        this.#isStalled = false;
+      }),
       vscode.extensions.onDidChange(() => {
         if (!this.#isUnavailable) {
           return;
@@ -97,22 +100,20 @@ export class PythonEnvironments implements vscode.Disposable {
     );
     this.#isStalled = true;
     void lookup.then(() => {
-      if (!this.#isStalled) {
-        return;
+      if (this.#isStalled) {
+        this.#changeEmitter.fire();
       }
-      this.#isStalled = false;
-      this.#changeEmitter.fire();
     });
     return null;
   }
 
   resetIfUnavailable(): void {
-    if (!this.#isUnavailable && !this.#isStalled) {
+    this.#isStalled = false;
+    if (!this.#isUnavailable) {
       return;
     }
     this.#provider = void 0;
     this.#isUnavailable = false;
-    this.#isStalled = false;
   }
 
   dispose(): void {

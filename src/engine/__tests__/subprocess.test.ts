@@ -69,7 +69,8 @@ function isProbe(args: readonly string[]): boolean {
 
 /** A djLint that answers `--version` and leaves the run to `run`. */
 function installDjlint(
-  run: Spawn = async () => ({ stdout: "" }),
+  run: Spawn = async () => ({ stdout: "<p>x</p>
+" }),
   version: Awaited<ReturnType<Spawn>> = VERSION_OUTPUT,
 ): void {
   spawn.mockImplementation(async (exec, args, options) =>
@@ -333,13 +334,34 @@ describe("resolution through the engine", () => {
     ).rejects.toBeInstanceOf(DjlintUnavailableError);
   });
 
-  it("runs a wrapper that does not say which version it runs", async () => {
-    installDjlint(void 0, { exitCode: 0, stdout: "some wrapper" });
+  it("treats a probe that answers garbage as no djLint", async () => {
+    installDjlint(void 0, { exitCode: 0, stdout: "not djlint" });
     const { engine } = makeEngine();
     await expect(
       engine.lint(document, config, liveToken()),
-    ).resolves.toStrictEqual([]);
-    expect(runs()).toHaveLength(1);
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+  });
+
+  it("does not wipe a document when nothing comes back", async () => {
+    installDjlint(async () => ({ stdout: "" }));
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(document, config, formattingOptions, liveToken()),
+    ).rejects.toThrow("printed nothing");
+    expect(control.shownErrors).toHaveLength(1);
+  });
+
+  it("formats an empty document to nothing", async () => {
+    installDjlint(async () => ({ stdout: "" }));
+    const { engine } = makeEngine();
+    await expect(
+      engine.format(
+        makeDocument("/w/sub/empty.html", " \n"),
+        config,
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toBe("");
   });
 
   it.each([

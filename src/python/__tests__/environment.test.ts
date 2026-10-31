@@ -223,14 +223,31 @@ describe("provider selection", () => {
     function hangingExtension(): {
       answer: (value: unknown) => void;
       extension: unknown;
+      fireChange: () => void;
+      lookups: () => number;
+      subscriptions: () => number;
     } {
       const { promise, resolve } = Promise.withResolvers<unknown>();
       const { extension } = envsExtension(void 0);
+      const listeners: ((event: unknown) => void)[] = [];
       const api = {
         getEnvironment: vi.fn(async () => promise),
-        onDidChangeEnvironment: () => ({ dispose: () => void 0 }),
+        onDidChangeEnvironment: (listener: (event: unknown) => void) => {
+          listeners.push(listener);
+          return { dispose: () => void 0 };
+        },
       };
-      return { answer: resolve, extension: { ...extension, exports: api } };
+      return {
+        answer: resolve,
+        extension: { ...extension, exports: api },
+        fireChange: () => {
+          for (const listener of listeners) {
+            listener({ new: environment("/new", []) });
+          }
+        },
+        lookups: () => api.getEnvironment.mock.calls.length,
+        subscriptions: () => listeners.length,
+      };
     }
 
     it("stops waiting, then does not wait again", async () => {
@@ -258,21 +275,37 @@ describe("provider selection", () => {
       expect(onChange).toHaveBeenCalledOnce();
     });
 
-    it("tries again on a restart", async () => {
-      const { extension } = hangingExtension();
+    it("tries again on a restart, on the same subscription", async () => {
+      const { answer, extension, subscriptions } = hangingExtension();
       control.extensions.set(ENVS_ID, extension);
       const { environments } = makeEnvironments();
       const first = environments.getActive(void 0);
       await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
       await first;
-      control.extensions.set(
-        ENVS_ID,
-        envsExtension(environment("/py", [])).extension,
-      );
       environments.resetIfUnavailable();
-      await expect(environments.getActive(void 0)).resolves.toMatchObject({
+      const second = environments.getActive(void 0);
+      answer(environment("/py", []));
+      await expect(second).resolves.toMatchObject({
         command: { executable: "/py" },
       });
+      expect(subscriptions()).toBe(1);
+    });
+
+    it("takes a change of environment for an answer", async () => {
+      const { extension, fireChange, lookups } = hangingExtension();
+      control.extensions.set(ENVS_ID, extension);
+      const { environments } = makeEnvironments();
+      const onChange = vi.fn();
+      environments.onDidChange(onChange);
+      const first = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await first;
+      fireChange();
+      expect(onChange).toHaveBeenCalledOnce();
+      const second = environments.getActive(void 0);
+      await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
+      await second;
+      expect(lookups()).toBe(2);
     });
   });
 

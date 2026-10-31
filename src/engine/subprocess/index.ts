@@ -6,6 +6,7 @@ import * as vscode from "vscode";
 import { whichCommand } from "which-command";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
+import { showFailure } from "../../notify.js";
 import {
   directoryScopeKey,
   normalizeConfiguredExecutable,
@@ -115,6 +116,22 @@ export async function classifyRunFailure(
   return (await reprobe()) === null ? "unavailable" : "error";
 }
 
+// On Windows, execa leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
+// Like execa, this tries the extension a command is written with, even one PATHEXT lacks: execa runs such a script by its shebang.
+async function isCommandFound(
+  exec: string,
+  cwd: string | undefined,
+): Promise<boolean> {
+  const extension = path.extname(exec);
+  const found = await whichCommand(exec, {
+    ...(cwd != null && { cwd }),
+    ...(extension && {
+      pathExt: [extension, process.env["PATHEXT"] ?? ""].join(path.delimiter),
+    }),
+  });
+  return found !== void 0;
+}
+
 // Version managers' shims pick the Python of the folder they run from.
 async function probeExecutable(
   exec: string,
@@ -122,8 +139,7 @@ async function probeExecutable(
   document: vscode.TextDocument,
 ): Promise<ProbeResult> {
   const cwd = await getExistingDocumentFolder(document);
-  // On Windows, execa leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
-  if ((await whichCommand(exec, cwd == null ? {} : { cwd })) === void 0) {
+  if (!(await isCommandFound(exec, cwd))) {
     return null;
   }
   try {
@@ -134,7 +150,7 @@ async function probeExecutable(
       timeout: PROBE_TIMEOUT_MS,
     });
     if (result.exitCode === 0) {
-      return parseDjlintVersion(result.stdout) ?? void 0;
+      return parseDjlintVersion(result.stdout);
     }
     return isDjlintUnavailable(result) ? null : void 0;
   } catch {
@@ -171,7 +187,20 @@ export class SubprocessEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
-    return this.#run("format", { config, document, formattingOptions }, token);
+    const output = await this.#run(
+      "format",
+      { config, document, formattingOptions },
+      token,
+    );
+    // Something else answering to the command, such as a djlint.py beside the template, must not empty the document.
+    if (output.trim() === "" && document.getText().trim() !== "") {
+      const message =
+        "djLint printed nothing for a document with content, so the document was left as it is.";
+      this.#outputChannel.error(message);
+      void showFailure(message, this.#outputChannel);
+      throw new Error(message);
+    }
+    return output;
   }
 
   async lint(
