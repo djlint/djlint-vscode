@@ -5,6 +5,7 @@ export interface ChildOptions {
   stripFinalNewline: boolean;
   cwd?: string;
   cancelSignal: AbortSignal;
+  env?: NodeJS.ProcessEnv;
   timeout: number;
 }
 

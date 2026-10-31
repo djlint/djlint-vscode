@@ -1,3 +1,5 @@
+import path from "node:path";
+import process from "node:process";
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
@@ -30,6 +32,31 @@ import { CommandResolver, type RunnerCommand } from "./resolve.js";
 import { parseDjlintVersion, selectSupportedArgs } from "./version.js";
 
 const PROBE_TIMEOUT_MS = 10_000;
+
+// A custom rule's python_module used to be found because djLint ran from the workspace root whenever these two were set.
+function moduleSearchEnv({
+  config,
+  document,
+}: ArgContext): { env: NodeJS.ProcessEnv } | undefined {
+  const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+  if (
+    folder?.uri.scheme !== "file" ||
+    [config.get<string>("configuration"), config.get<string>("rules")].every(
+      (value) => !value,
+    )
+  ) {
+    return void 0;
+  }
+  const { PYTHONPATH: inherited } = process.env;
+  return {
+    env: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention -- environment variable name
+      PYTHONPATH: [folder.uri.fsPath, ...(inherited ? [inherited] : [])].join(
+        path.delimiter,
+      ),
+    },
+  };
+}
 
 export type RunFailureClassification = "error" | "lint-result" | "unavailable";
 
@@ -175,6 +202,7 @@ export class SubprocessEngine implements DjlintEngine {
     ];
     const childOptions: ChildOptions = {
       ...this.#getCwd(context.document),
+      ...moduleSearchEnv(context),
       cancelSignal,
       input: context.document.getText(),
       stripFinalNewline: false,

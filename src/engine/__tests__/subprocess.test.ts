@@ -1,6 +1,7 @@
 // SubprocessEngine with execa replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
 import { existsSync } from "node:fs";
+import path from "node:path";
 import { execa } from "execa";
 import type { Mock } from "vitest";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -106,6 +107,30 @@ describe("the spawned command", () => {
       stripFinalNewline: false,
       timeout: RUN_TIMEOUT_MS,
     });
+  });
+
+  it("puts the workspace root on PYTHONPATH when a rules file is set", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.format(
+      document,
+      makeConfig({ rules: "rules.yaml" }),
+      formattingOptions,
+      liveToken(),
+    );
+    const [[, , options]] = runs() as [Parameters<Spawn>];
+    const { env } = options as { env: NodeJS.ProcessEnv };
+    expect(env["PYTHONPATH"]?.split(path.delimiter)[0]).toBe(
+      Uri.file("/w").fsPath,
+    );
+  });
+
+  it("leaves PYTHONPATH alone otherwise", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.format(document, config, formattingOptions, liveToken());
+    const [[, , options]] = runs() as [Parameters<Spawn>];
+    expect(options).not.toHaveProperty("env");
   });
 
   it("runs a python with its module args ahead of `-`", async () => {
