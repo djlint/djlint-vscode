@@ -69,8 +69,7 @@ function isProbe(args: readonly string[]): boolean {
 
 /** A djLint that answers `--version` and leaves the run to `run`. */
 function installDjlint(
-  run: Spawn = async () => ({ stdout: "<p>x</p>
-" }),
+  run: Spawn = async () => ({ stdout: "<p>x</p>\n" }),
   version: Awaited<ReturnType<Spawn>> = VERSION_OUTPUT,
 ): void {
   spawn.mockImplementation(async (exec, args, options) =>
