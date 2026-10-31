@@ -31,7 +31,7 @@
     "type": "git",
     "url": "https://github.com/djlint/djlint-vscode"
   },
-  "license": "MIT",
+  "license": "GPL-3.0-or-later",
   "publisher": "monosans",
   "type": "module",
   "main": "./dist/extension.cjs",
@@ -43,7 +43,7 @@
     "lint": "eslint --max-warnings 0 . && tsc",
     "test": "vitest run",
     "verify-bundle": "node ./build/verify-bundle.mjs",
-    "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt dist/extension.meta.json dist/pyodide-worker.meta.json && node ./build/minify-package-json.mjs",
+    "vscode:prepublish": "npm run assets && npm run esbuild-base -- --minify --metafile=dist/extension.meta.json && npm run esbuild-worker -- --minify --metafile=dist/pyodide-worker.meta.json && node ./build/third-party-notices.mjs THIRD-PARTY-NOTICES.txt licenses/NOTICE.txt dist/extension.meta.json dist/pyodide-worker.meta.json assets/python-licenses.txt assets/pyodide-licenses.txt && node ./build/minify-package-json.mjs",
     "watch:esbuild": "npm run esbuild-base -- --sourcemap --watch",
     "watch:esbuild-worker": "npm run esbuild-worker -- --sourcemap --watch",
     "watch:tsc": "tsc --watch"

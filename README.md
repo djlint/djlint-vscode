@@ -88,4 +88,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-[MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE)
+The extension's own code is [MIT](https://github.com/djlint/djlint-vscode/blob/main/LICENSE).
+
+The published package also bundles djLint, which is GPL-3.0-or-later, and runs it in the same process, so the package as a whole is distributed under GPL-3.0-or-later. See [THIRD_PARTY.md](THIRD_PARTY.md).
