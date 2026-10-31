@@ -11,6 +11,10 @@ import {
 } from "@vscode/python-extension";
 import * as vscode from "vscode";
 
+export const ENVIRONMENT_TIMEOUT_MS = 30_000;
+
+const STALLED = Symbol("stalled");
+
 interface PythonCommand {
   args: readonly string[];
   executable: string;
@@ -54,6 +58,7 @@ export class PythonEnvironments implements vscode.Disposable {
   readonly #disposables: vscode.Disposable[] = [this.#changeEmitter];
   #provider: Promise<EnvironmentProvider | null> | undefined;
   #isUnavailable = false;
+  #isStalled = false;
   readonly #outputChannel: vscode.LogOutputChannel;
 
   constructor(outputChannel: vscode.LogOutputChannel) {
@@ -73,21 +78,41 @@ export class PythonEnvironments implements vscode.Disposable {
   async getActive(
     uri: vscode.Uri | undefined,
   ): Promise<PythonEnvironmentDetails | null> {
-    try {
-      this.#provider ??= this.#activateProvider();
-      const provider = await this.#provider;
-      return (await provider?.getActiveEnvironment(uri)) ?? null;
-    } catch {
+    if (this.#isStalled) {
       return null;
     }
+    const lookup = this.#lookUp(uri);
+    const { promise: timedOut, resolve } =
+      Promise.withResolvers<typeof STALLED>();
+    const timer = setTimeout(() => {
+      resolve(STALLED);
+    }, ENVIRONMENT_TIMEOUT_MS);
+    const result = await Promise.race([lookup, timedOut]);
+    clearTimeout(timer);
+    if (result !== STALLED) {
+      return result;
+    }
+    this.#outputChannel.warn(
+      "The Python extension is not answering; going on without the active environment until it does.",
+    );
+    this.#isStalled = true;
+    void lookup.then(() => {
+      if (!this.#isStalled) {
+        return;
+      }
+      this.#isStalled = false;
+      this.#changeEmitter.fire();
+    });
+    return null;
   }
 
   resetIfUnavailable(): void {
-    if (!this.#isUnavailable) {
+    if (!this.#isUnavailable && !this.#isStalled) {
       return;
     }
     this.#provider = void 0;
     this.#isUnavailable = false;
+    this.#isStalled = false;
   }
 
   dispose(): void {
@@ -95,6 +120,18 @@ export class PythonEnvironments implements vscode.Disposable {
       disposable.dispose();
     }
     this.#disposables.length = 0;
+  }
+
+  async #lookUp(
+    uri: vscode.Uri | undefined,
+  ): Promise<PythonEnvironmentDetails | null> {
+    try {
+      this.#provider ??= this.#activateProvider();
+      const provider = await this.#provider;
+      return (await provider?.getActiveEnvironment(uri)) ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async #activateProvider(): Promise<EnvironmentProvider | null> {

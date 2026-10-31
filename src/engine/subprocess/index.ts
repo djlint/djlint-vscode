@@ -3,6 +3,7 @@ import path from "node:path";
 import process from "node:process";
 import { execa } from "execa";
 import * as vscode from "vscode";
+import { whichCommand } from "which-command";
 import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import {
@@ -121,6 +122,10 @@ async function probeExecutable(
   document: vscode.TextDocument,
 ): Promise<ProbeResult> {
   const cwd = await getExistingDocumentFolder(document);
+  // On Windows, execa leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
+  if ((await whichCommand(exec, cwd == null ? {} : { cwd })) === void 0) {
+    return null;
+  }
   try {
     const result = await execa(exec, [...prefixArgs, "--version"], {
       ...(cwd != null && { cwd }),
@@ -129,7 +134,7 @@ async function probeExecutable(
       timeout: PROBE_TIMEOUT_MS,
     });
     if (result.exitCode === 0) {
-      return parseDjlintVersion(result.stdout);
+      return parseDjlintVersion(result.stdout) ?? void 0;
     }
     return isDjlintUnavailable(result) ? null : void 0;
   } catch {

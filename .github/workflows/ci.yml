@@ -87,6 +87,10 @@ jobs:
         run: xvfb-run -a npm run test:e2e
       - if: ${{ runner.os != 'Linux' }}
         run: npm run test:e2e
+      - if: ${{ runner.os == 'Linux' }}
+        run: xvfb-run -a npm run test:e2e:python
+      - if: ${{ runner.os != 'Linux' }}
+        run: npm run test:e2e:python
   e2e-web:
     runs-on: ubuntu-26.04
     steps:

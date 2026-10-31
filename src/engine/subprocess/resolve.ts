@@ -1,4 +1,3 @@
-import path from "node:path";
 import { configSection } from "../../config.js";
 import type { PythonEnvironmentDetails } from "../../python/environment.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../types.js";
@@ -147,11 +146,11 @@ export class CommandResolver {
       if (epochAtStart !== this.#epoch) {
         return;
       }
-      // What comes from PATH can be a shim, which picks a djLint by the folder it runs from.
-      const isPickedByDirectory =
-        outcome instanceof DjlintUnavailableError ||
-        !path.isAbsolute(outcome.exec);
-      this.#cache.set(isPickedByDirectory ? perDirectoryKey : scopeKey, {
+      // Anything but an active environment can be a shim, which picks a djLint by the folder it runs from.
+      const isOfEnvironment =
+        !(outcome instanceof DjlintUnavailableError) &&
+        outcome.exec === deps.activeEnvironment?.command?.executable;
+      this.#cache.set(isOfEnvironment ? scopeKey : perDirectoryKey, {
         outcome,
         resolvedAt: Date.now(),
       });
