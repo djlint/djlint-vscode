@@ -20,8 +20,12 @@ The licenses of everything bundled are collected into `THIRD-PARTY-NOTICES.txt` 
 
 ## Checks
 
+The end-to-end tests need `npm run assets` and every `esbuild` script run first.
+
 ```sh
 npm test              # vitest
+npm run test:e2e      # the built extension in a real VS Code
+npm run test:e2e:web  # the built extension in VS Code for the Web
 npm run lint          # eslint + tsc
 npm run format        # prettier
 ```
