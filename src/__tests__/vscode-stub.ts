@@ -381,6 +381,9 @@ export const workspace = {
     get: (key) => control.configuration[key],
   }),
   getWorkspaceFolder: findWorkspaceFolder,
+  get workspaceFolders(): readonly WorkspaceFolder[] {
+    return control.workspaceFolders;
+  },
   get isTrusted(): boolean {
     return control.isTrusted;
   },

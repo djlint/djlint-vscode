@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- Let `djlint.executablePath`, `djlint.pythonPath`, `djlint.useVenv` and `djlint.importStrategy` apply again from the user settings of the local machine in a remote window, and sync with Settings Sync. They can be set per workspace folder.
+- Try `python -m djlint` before `python3 -m djlint` when looking on PATH, so a `python` that used to run keeps running.
+- Run the djLint of the environment of each project when a workspace folder holds several, instead of the one found first for five minutes.
+- Keep the bundled djLint running when the active Python environment changes.
+- Expand `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` in `djlint.executablePath` and `djlint.pythonPath`.
+
 ## [2026.10.2] - 2026-10-31
 
 - Bundle djLint 1.48.0, so the extension works when neither djLint nor Python is installed. It is used automatically when no djLint is found, and it reads the project's configuration files like an installed djLint ([#780](https://github.com/djlint/djlint-vscode/issues/780)).

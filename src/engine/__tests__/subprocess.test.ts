@@ -1,6 +1,8 @@
+/* eslint-disable no-template-curly-in-string -- the variables of a setting, as written */
 // SubprocessEngine with execa replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
 import { stat } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { execa } from "execa";
 import type { Mock } from "vitest";
@@ -18,7 +20,7 @@ import {
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
 import type { PythonEnvironments } from "../../python/environment.js";
-import { SubprocessEngine } from "../subprocess/index.js";
+import { expandVariables, SubprocessEngine } from "../subprocess/index.js";
 import {
   LINTER_OUTPUT_FORMAT,
   LINTER_OUTPUT_FORMAT_WITH_END,
@@ -347,6 +349,60 @@ describe("resolution through the engine", () => {
     expect(args.slice(0, 3)).toStrictEqual(["-m", "djlint", "-"]);
   });
 
+  it("runs the environment of each project in a workspace folder", async () => {
+    installDjlint();
+    const environments: Record<string, string> = {
+      "/w/one/t.html": "/w/one/.venv/python",
+      "/w/two/t.html": "/w/two/.venv/python",
+    };
+    const { engine } = makeEngine(async (uri) => ({
+      command: { args: [], executable: environments[uri?.path ?? ""] ?? "" },
+    }));
+    const lint = makeConfig({ useVenv: true });
+    await engine.lint(makeDocument("/w/one/t.html"), lint, liveToken());
+    await engine.lint(makeDocument("/w/two/t.html"), lint, liveToken());
+    expect(runs().map(([exec]) => exec)).toStrictEqual([
+      "/w/one/.venv/python",
+      "/w/two/.venv/python",
+    ]);
+  });
+
+  it("does not let one project's missing djLint hide another's", async () => {
+    spawn.mockImplementation(async (exec, args) => {
+      if (!exec.startsWith("/w/two/")) {
+        return { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+      }
+      return isProbe(args) ? VERSION_OUTPUT : { stdout: "" };
+    });
+    const { engine } = makeEngine(async (uri) => ({
+      command: {
+        args: [],
+        executable: uri?.path.startsWith("/w/two/")
+          ? "/w/two/.venv/python"
+          : "/w/one/.venv/python",
+      },
+    }));
+    const lint = makeConfig({ useVenv: true });
+    await expect(
+      engine.lint(makeDocument("/w/one/t.html"), lint, liveToken()),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(
+      engine.lint(makeDocument("/w/two/t.html"), lint, liveToken()),
+    ).resolves.toStrictEqual([]);
+  });
+
+  it("expands a variable in a configured path", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.lint(
+      document,
+      makeConfig({ executablePath: "${workspaceFolder}/.venv/djlint" }),
+      liveToken(),
+    );
+    const [[exec]] = runs() as [Parameters<Spawn>];
+    expect(exec.replaceAll("\\", "/")).toBe("/w/.venv/djlint");
+  });
+
   it("never asks for an environment with useVenv off", async () => {
     installDjlint();
     const getActive = vi.fn(async () => null);
@@ -355,6 +411,43 @@ describe("resolution through the engine", () => {
     expect(getActive).not.toHaveBeenCalled();
     const [[exec]] = runs() as [Parameters<Spawn>];
     expect(exec).toBe("djlint");
+  });
+});
+
+describe("expandVariables", () => {
+  beforeEach(() => {
+    setWorkspaceFolders("/w", "/other");
+  });
+
+  it.each([
+    ["${workspaceFolder}/x", `${Uri.file("/w").fsPath}/x`],
+    ["${workspaceFolder:other}/x", `${Uri.file("/other").fsPath}/x`],
+    ["${userHome}/x", `${os.homedir()}/x`],
+  ])("expands %s", (value, expanded) => {
+    expect(expandVariables(value, document)).toBe(expanded);
+  });
+
+  it("expands an environment variable, and an unset one to nothing", () => {
+    vi.stubEnv("DJLINT_TEST_ROOT", "/root");
+    expect(expandVariables("${env:DJLINT_TEST_ROOT}/x", document)).toBe(
+      "/root/x",
+    );
+    vi.unstubAllEnvs();
+    expect(expandVariables("${env:DJLINT_TEST_ROOT}/x", document)).toBe("/x");
+  });
+
+  it.each(["${unknown}/x", "${workspaceFolder:missing}/x", "/plain/x"])(
+    "leaves %s as written",
+    (value) => {
+      expect(expandVariables(value, document)).toBe(value);
+    },
+  );
+
+  it("leaves ${workspaceFolder} outside a workspace as written", () => {
+    const value = "${workspaceFolder}/x";
+    expect(expandVariables(value, makeDocument("/elsewhere/t.html"))).toBe(
+      value,
+    );
   });
 });
 

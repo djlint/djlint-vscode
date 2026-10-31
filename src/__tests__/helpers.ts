@@ -40,6 +40,7 @@ export function makeDocument(
 
 export function setWorkspaceFolders(...folders: readonly string[]): void {
   control.workspaceFolders = folders.map((folder) => ({
+    name: folder.split("/").at(-1) ?? "",
     uri: Uri.file(folder),
   }));
 }

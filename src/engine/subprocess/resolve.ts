@@ -1,4 +1,3 @@
-import type * as vscode from "vscode";
 import { configSection } from "../../config.js";
 import type { PythonEnvironmentDetails } from "../../python/environment.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../types.js";
@@ -14,17 +13,12 @@ export type ProbeResult = string | null | undefined;
 
 const MODULE_ARGS: readonly string[] = ["-m", "djlint"];
 
-const PYTHONS_ON_PATH: readonly string[] = ["python3", "python"];
+const PYTHONS_ON_PATH: readonly string[] = ["python", "python3"];
 
 export interface ResolveDjlintCommandDeps {
   executablePath: string;
   pythonPath: string;
-  getActiveEnvironment:
-    | ((
-        uri: vscode.Uri | undefined,
-      ) => Promise<PythonEnvironmentDetails | null>)
-    | null;
-  uri: vscode.Uri | undefined;
+  activeEnvironment: PythonEnvironmentDetails | null;
   probe: (exec: string, prefixArgs: readonly string[]) => Promise<ProbeResult>;
   onConfiguredPathRejected: (setting: string, exec: string) => void;
 }
@@ -61,9 +55,8 @@ export async function resolveDjlintCommand(
     deps.onConfiguredPathRejected("pythonPath", pythonPath);
   }
 
-  const active = await deps.getActiveEnvironment?.(deps.uri);
-  if (active?.command) {
-    const { args, executable } = active.command;
+  if (deps.activeEnvironment?.command) {
+    const { args, executable } = deps.activeEnvironment.command;
     const command = await tryCommand(executable, [...args, ...MODULE_ARGS]);
     if (command) {
       return command;
@@ -90,7 +83,7 @@ export async function resolveDjlintCommand(
 }
 
 interface CommandCacheEntry {
-  command: RunnerCommand;
+  outcome: DjlintUnavailableError | RunnerCommand;
   resolvedAt: number;
 }
 
@@ -111,7 +104,10 @@ export class CommandResolver {
   ): Promise<RunnerCommand> {
     const cached = this.#cache.get(scopeKey);
     if (cached != null && Date.now() - cached.resolvedAt < RESOLUTION_TTL_MS) {
-      return cached.command;
+      if (cached.outcome instanceof DjlintUnavailableError) {
+        throw cached.outcome;
+      }
+      return cached.outcome;
     }
 
     const pending =
@@ -131,10 +127,22 @@ export class CommandResolver {
     scopeKey: string,
   ): Promise<RunnerCommand> {
     const epochAtStart = this.#epoch;
-    const command = await resolveDjlintCommand(deps);
-    if (epochAtStart === this.#epoch && command.version != null) {
-      this.#cache.set(scopeKey, { command, resolvedAt: Date.now() });
+    const remember = (outcome: CommandCacheEntry["outcome"]): void => {
+      if (epochAtStart === this.#epoch) {
+        this.#cache.set(scopeKey, { outcome, resolvedAt: Date.now() });
+      }
+    };
+    try {
+      const command = await resolveDjlintCommand(deps);
+      if (command.version != null) {
+        remember(command);
+      }
+      return command;
+    } catch (e) {
+      if (e instanceof DjlintUnavailableError) {
+        remember(e);
+      }
+      throw e;
     }
-    return command;
   }
 }

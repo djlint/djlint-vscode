@@ -15,11 +15,15 @@ export function startExtension(
   const formatter = new Formatter(context, engines);
   const linter = new Linter(context, outputChannel, engines);
 
+  function refresh(): void {
+    status.clear();
+    void linter.refreshAll();
+  }
+
   function restart(): void {
     engines.reset();
-    status.clear();
     beforeRestart?.();
-    void linter.refreshAll();
+    refresh();
   }
 
   context.subscriptions.push(
@@ -49,5 +53,5 @@ export function startExtension(
 
   formatter.activate();
   linter.activate();
-  return restart;
+  return refresh;
 }

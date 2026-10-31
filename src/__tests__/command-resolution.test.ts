@@ -1,5 +1,5 @@
 // Which djLint actually runs: executablePath > pythonPath > active environment
-// > `djlint` on PATH > `python3 -m djlint` > `python -m djlint`.
+// > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
 import { describe, expect, it } from "vitest";
 import {
   resolveDjlintCommand,
@@ -15,8 +15,8 @@ function makeDeps(
   const probed: string[] = [];
   const rejected: string[] = [];
   const deps: ResolveDjlintCommandDeps = {
+    activeEnvironment: null,
     executablePath: "",
-    getActiveEnvironment: async () => null,
     onConfiguredPathRejected: (setting, exec) => {
       rejected.push(`${setting}:${exec}`);
     },
@@ -25,7 +25,6 @@ function makeDeps(
       return works.includes(exec) ? "1.44.2" : null;
     },
     pythonPath: "",
-    uri: void 0,
     ...overrides,
   };
   return { deps, probed, rejected };
@@ -63,10 +62,9 @@ describe("resolveDjlintCommand", () => {
   });
 
   it("keeps an environment's launch args ahead of `-m djlint`", async () => {
-    const { deps, probed } = makeDeps(
-      { getActiveEnvironment: async () => condaEnvironment },
-      ["conda"],
-    );
+    const { deps, probed } = makeDeps({ activeEnvironment: condaEnvironment }, [
+      "conda",
+    ]);
     await expect(resolveDjlintCommand(deps)).resolves.toStrictEqual({
       exec: "conda",
       prefixArgs: ["run", "-p", "/env", "-m", "djlint"],
@@ -76,9 +74,7 @@ describe("resolveDjlintCommand", () => {
   });
 
   it("skips the environment entirely without a lookup (useVenv off)", async () => {
-    const { deps, probed } = makeDeps({ getActiveEnvironment: null }, [
-      "djlint",
-    ]);
+    const { deps, probed } = makeDeps({ activeEnvironment: null }, ["djlint"]);
     await expect(resolveDjlintCommand(deps)).resolves.toStrictEqual({
       exec: "djlint",
       prefixArgs: [],
@@ -88,10 +84,9 @@ describe("resolveDjlintCommand", () => {
   });
 
   it("skips an environment with no runnable command", async () => {
-    const { deps } = makeDeps(
-      { getActiveEnvironment: async () => ({ command: null }) },
-      ["djlint"],
-    );
+    const { deps } = makeDeps({ activeEnvironment: { command: null } }, [
+      "djlint",
+    ]);
     await expect(resolveDjlintCommand(deps)).resolves.toMatchObject({
       exec: "djlint",
     });
@@ -109,7 +104,7 @@ describe("resolveDjlintCommand", () => {
 
   it("does not report an environment that lacks djLint as misconfigured", async () => {
     const { deps, rejected } = makeDeps(
-      { getActiveEnvironment: async () => condaEnvironment },
+      { activeEnvironment: condaEnvironment },
       ["djlint"],
     );
     await resolveDjlintCommand(deps);
@@ -129,7 +124,7 @@ describe("resolveDjlintCommand", () => {
     const { deps, probed, rejected } = makeDeps(
       {
         executablePath: "/a",
-        getActiveEnvironment: async () => condaEnvironment,
+        activeEnvironment: condaEnvironment,
         pythonPath: "/b",
       },
       [],
@@ -142,15 +137,15 @@ describe("resolveDjlintCommand", () => {
       "/b -m djlint",
       "conda run -p /env -m djlint",
       "djlint",
-      "python3 -m djlint",
       "python -m djlint",
+      "python3 -m djlint",
     ]);
     expect(rejected).toStrictEqual(["executablePath:/a", "pythonPath:/b"]);
   });
 
   it.each([
-    ["python3", ["-m", "djlint"]],
     ["python", ["-m", "djlint"]],
+    ["python3", ["-m", "djlint"]],
   ])("reaches %s when nothing before it works", async (exec, prefixArgs) => {
     const { deps } = makeDeps({}, [exec]);
     await expect(resolveDjlintCommand(deps)).resolves.toStrictEqual({
@@ -160,12 +155,12 @@ describe("resolveDjlintCommand", () => {
     });
   });
 
-  it("prefers python3 over python", async () => {
+  it("prefers python over python3, the one it has always run", async () => {
     const { deps, probed } = makeDeps({}, ["python3", "python"]);
     await expect(resolveDjlintCommand(deps)).resolves.toMatchObject({
-      exec: "python3",
+      exec: "python",
     });
-    expect(probed).toStrictEqual(["djlint", "python3 -m djlint"]);
+    expect(probed).toStrictEqual(["djlint", "python -m djlint"]);
   });
 
   it("prefers `djlint` on PATH over a python on PATH", async () => {

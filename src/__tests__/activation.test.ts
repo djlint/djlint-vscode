@@ -139,27 +139,45 @@ describe("activate", () => {
     ).resolves.toBe(true);
   });
 
-  it("re-resolves when the active Python environment changes", async () => {
+  describe("when the active Python environment changes", () => {
     let fireEnvironmentChange = (): void => void 0;
-    const environments = {
-      getActiveEnvironmentPath: () => ({ path: "/py" }),
-      onDidChangeActiveEnvironmentPath: (listener: () => void) => {
-        fireEnvironmentChange = listener;
-        return { dispose: () => void 0 };
-      },
-      resolveEnvironment: async () => null,
-    };
-    control.extensions.set("ms-python.python", {
-      exports: { environments },
-      isActive: true,
-    });
-    control.configuration = { enableLinting: true, useVenv: true };
+    let activePath = "/py";
 
-    await expect(
-      reacted(() => {
-        fireEnvironmentChange();
-      }),
-    ).resolves.toBe(true);
+    beforeEach(() => {
+      activePath = "/py";
+      const environments = {
+        getActiveEnvironmentPath: () => ({ path: activePath }),
+        onDidChangeActiveEnvironmentPath: (listener: () => void) => {
+          fireEnvironmentChange = listener;
+          return { dispose: () => void 0 };
+        },
+        resolveEnvironment: async ({ path }: { path: string }) => ({
+          executable: { uri: { fsPath: path } },
+        }),
+      };
+      control.extensions.set("ms-python.python", {
+        exports: { environments },
+        isActive: true,
+      });
+      control.configuration = { enableLinting: true, useVenv: true };
+    });
+
+    it("resolves djLint for the new environment", async () => {
+      await expect(
+        reacted(() => {
+          activePath = "/other";
+          fireEnvironmentChange();
+        }),
+      ).resolves.toBe(true);
+    });
+
+    it("keeps the engines, and with them a running Pyodide", async () => {
+      await expect(
+        reacted(() => {
+          fireEnvironmentChange();
+        }),
+      ).resolves.toBe(false);
+    });
   });
 
   it("relints open documents after a restart", async () => {

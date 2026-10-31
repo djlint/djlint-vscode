@@ -1,3 +1,4 @@
+import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { execa } from "execa";
@@ -8,10 +9,7 @@ import {
   normalizeConfiguredExecutable,
   workspaceScopeKey,
 } from "../../paths.js";
-import type {
-  PythonEnvironmentDetails,
-  PythonEnvironments,
-} from "../../python/environment.js";
+import type { PythonEnvironments } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
 import { getExistingDocumentFolder } from "../document-folder.js";
 import {
@@ -61,6 +59,41 @@ function moduleSearchEnv({
       ),
     },
   };
+}
+
+/** The variables `ruff.path` accepts, except `${cwd}`, which means nothing to an extension. */
+export function expandVariables(
+  value: string,
+  document: vscode.TextDocument,
+): string {
+  function workspaceFolderPath(name?: string): string | undefined {
+    const folder =
+      name == null
+        ? vscode.workspace.getWorkspaceFolder(document.uri)
+        : vscode.workspace.workspaceFolders?.find(
+            (candidate) => candidate.name === name,
+          );
+    return folder?.uri.scheme === "file" ? folder.uri.fsPath : void 0;
+  }
+
+  return value.replaceAll(/\$\{(?<variable>[^}]+)\}/gu, (match, variable) => {
+    const [kind = "", ...rest] = String(variable).split(":");
+    const argument = rest.join(":");
+    switch (kind) {
+      case "env": {
+        return process.env[argument] ?? "";
+      }
+      case "userHome": {
+        return os.homedir();
+      }
+      case "workspaceFolder": {
+        return workspaceFolderPath(argument || void 0) ?? match;
+      }
+      default: {
+        return match;
+      }
+    }
+  });
 }
 
 type RunFailureClassification = "error" | "lint-result" | "unavailable";
@@ -148,17 +181,26 @@ export class SubprocessEngine implements DjlintEngine {
     document: vscode.TextDocument,
     config: vscode.WorkspaceConfiguration,
   ): Promise<RunnerCommand> {
-    const scopeKey = workspaceScopeKey(document);
+    const activeEnvironment = config.get<boolean>("useVenv")
+      ? await this.#pythonEnvironments.getActive(document.uri)
+      : null;
+    // A workspace folder can hold projects with environments of their own.
+    const scopeKey = [
+      workspaceScopeKey(document),
+      activeEnvironment?.command?.executable ?? "",
+    ].join("\0");
+    function configuredExecutable(
+      key: Parameters<typeof getConfiguredPath>[1],
+    ): string {
+      return normalizeConfiguredExecutable(
+        expandVariables(getConfiguredPath(config, key), document),
+        document,
+      );
+    }
     const command = await this.#resolver.resolve(
       {
-        executablePath: normalizeConfiguredExecutable(
-          getConfiguredPath(config, "executablePath"),
-          document,
-        ),
-        getActiveEnvironment: config.get<boolean>("useVenv")
-          ? async (uri): Promise<PythonEnvironmentDetails | null> =>
-              this.#pythonEnvironments.getActive(uri)
-          : null,
+        activeEnvironment,
+        executablePath: configuredExecutable("executablePath"),
         onConfiguredPathRejected: (setting, exec): void => {
           this.#outputChannel.warn(
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,
@@ -166,11 +208,7 @@ export class SubprocessEngine implements DjlintEngine {
         },
         probe: async (exec, prefixArgs): Promise<ProbeResult> =>
           probeExecutable(exec, prefixArgs, document),
-        pythonPath: normalizeConfiguredExecutable(
-          getConfiguredPath(config, "pythonPath"),
-          document,
-        ),
-        uri: document.uri,
+        pythonPath: configuredExecutable("pythonPath"),
       },
       scopeKey,
     );

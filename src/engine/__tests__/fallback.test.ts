@@ -1,6 +1,6 @@
 // FallbackEngine decides whether a user gets their own djLint or the bundled
-// runtime, and for how long.
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+// runtime. How long a missing djLint is remembered is up to CommandResolver.
+import { beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
 import {
   formattingOptions,
@@ -14,7 +14,6 @@ import { resetVscode } from "../../__tests__/vscode-stub.js";
 import { FallbackEngine } from "../select.js";
 import {
   DjlintUnavailableError,
-  RESOLUTION_TTL_MS,
   type DjlintEngine,
   type LintDiagnostic,
 } from "../types.js";
@@ -91,11 +90,6 @@ async function format(
 beforeEach(() => {
   resetVscode();
   setWorkspaceFolders("/w", "/bad", "/good");
-  vi.useFakeTimers({ toFake: ["Date"] });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
 });
 
 describe("FallbackEngine", () => {
@@ -107,22 +101,9 @@ describe("FallbackEngine", () => {
     expect(secondaryBuilds()).toBe(0);
   });
 
-  it("falls back and stays on the secondary for the TTL", async () => {
+  it("falls back on every run the primary is unavailable", async () => {
     const { calls, engine } = makeFallback(unavailable);
     await expect(format(engine)).resolves.toBe("SECONDARY");
-    await format(engine);
-    expect(calls).toStrictEqual(["primary", "secondary", "secondary"]);
-
-    vi.advanceTimersByTime(RESOLUTION_TTL_MS - 1);
-    await format(engine);
-    expect(calls).toHaveLength(4);
-    expect(calls[3]).toBe("secondary");
-  });
-
-  it("retries the primary once the TTL lapses", async () => {
-    const { calls, engine } = makeFallback(unavailable);
-    await format(engine);
-    vi.advanceTimersByTime(RESOLUTION_TTL_MS + 1);
     await format(engine);
     expect(calls).toStrictEqual([
       "primary",
@@ -139,7 +120,6 @@ describe("FallbackEngine", () => {
     );
     await format(engine);
     isMissing = false;
-    vi.advanceTimersByTime(RESOLUTION_TTL_MS + 1);
     await expect(format(engine)).resolves.toBe("PRIMARY");
   });
 
@@ -221,15 +201,11 @@ describe("FallbackEngine", () => {
     expect(channel.of("info")).toHaveLength(1);
   });
 
-  it("logs the fallback again only after the TTL", async () => {
+  it("logs the fallback once for a folder", async () => {
     const { channel, engine } = makeFallback(unavailable);
     await format(engine);
     await format(engine);
     expect(channel.of("info")).toHaveLength(1);
-
-    vi.advanceTimersByTime(RESOLUTION_TTL_MS + 1);
-    await format(engine);
-    expect(channel.of("info")).toHaveLength(2);
   });
 
   it("gives a virtual document to the secondary, which can read its configuration", async () => {

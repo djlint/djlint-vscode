@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
     ),
   );
 
-  const restart = startExtension(
+  const refresh = startExtension(
     context,
     outputChannel,
     status,
@@ -32,6 +32,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     pythonEnvironments,
-    pythonEnvironments.onDidChange(restart),
+    // The next run resolves djLint for the new environment. Nothing else depends on it, least of all a running Pyodide.
+    pythonEnvironments.onDidChange(refresh),
   );
 }

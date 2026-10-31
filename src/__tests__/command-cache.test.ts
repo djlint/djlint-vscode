@@ -12,12 +12,11 @@ function makeDeps(
   probe: ResolveDjlintCommandDeps["probe"],
 ): ResolveDjlintCommandDeps {
   return {
+    activeEnvironment: null,
     executablePath: "/bin/djlint",
-    getActiveEnvironment: null,
     onConfiguredPathRejected: () => void 0,
     probe,
     pythonPath: "",
-    uri: void 0,
   };
 }
 
@@ -127,7 +126,7 @@ describe("CommandResolver", () => {
     expect(calls).toBe(2);
   });
 
-  it("never caches a failure, so installing djLint is picked up at once", async () => {
+  it("remembers a missing djLint until the TTL lapses", async () => {
     const resolver = new CommandResolver();
     let installed = false;
     let probes = 0;
@@ -141,9 +140,28 @@ describe("CommandResolver", () => {
     const probesWhileMissing = probes;
 
     installed = true;
+    await expect(resolver.resolve(deps, "ws")).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
+    expect(probes).toBe(probesWhileMissing);
+
+    vi.advanceTimersByTime(RESOLUTION_TTL_MS);
     await expect(resolver.resolve(deps, "ws")).resolves.toMatchObject({
       exec: "/bin/djlint",
     });
-    expect(probes).toBeGreaterThan(probesWhileMissing);
+  });
+
+  it("forgets a missing djLint on invalidation", async () => {
+    const resolver = new CommandResolver();
+    let installed = false;
+    const deps = makeDeps(async () => (installed ? "1.44.2" : null));
+    await expect(resolver.resolve(deps, "ws")).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
+    installed = true;
+    resolver.invalidate();
+    await expect(resolver.resolve(deps, "ws")).resolves.toMatchObject({
+      exec: "/bin/djlint",
+    });
   });
 });
