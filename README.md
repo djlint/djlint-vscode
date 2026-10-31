@@ -50,7 +50,7 @@ The extension looks for a djLint to run, in this order:
 
 1. `djlint.executablePath`, a path to a djLint executable.
 2. `djlint.pythonPath`, a path to a Python interpreter to run djLint from (`python -m djlint`).
-3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) or, if that one isn't installed or is turned off via `python.useEnvironmentsExtension`, by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). Skipped when neither is installed, or when `djlint.useVenv` is `false`.
+3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) if `python.useEnvironmentsExtension` is on, otherwise by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). Skipped when neither is installed, or when `djlint.useVenv` is `false`.
 4. `djlint` on PATH, then `python -m djlint` and `python3 -m djlint`.
 5. The djLint bundled with the extension.
 

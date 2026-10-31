@@ -125,6 +125,7 @@ const classicResult = { command: { args: [], executable: "/usr/bin/python" } };
 
 beforeEach(() => {
   resetVscode();
+  control.configuration = { useEnvironmentsExtension: true };
 });
 
 describe("provider selection", () => {
@@ -178,6 +179,36 @@ describe("provider selection", () => {
 
     fireWorkspaceEvent("extensions");
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  describe("with python.useEnvironmentsExtension off, the default", () => {
+    beforeEach(() => {
+      control.configuration = {};
+    });
+
+    it("follows the classic extension, which holds the selection", async () => {
+      control.extensions.set(
+        ENVS_ID,
+        envsExtension(environment("conda", ["run"])).extension,
+      );
+      control.extensions.set(
+        PY_ID,
+        classicExtension("/usr/bin/python").extension,
+      );
+      const { environments } = makeEnvironments();
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
+        classicResult,
+      );
+    });
+
+    it("still reads Python Environments when it is all there is", async () => {
+      const conda = environment("conda", ["run"]);
+      control.extensions.set(ENVS_ID, envsExtension(conda).extension);
+      const { environments } = makeEnvironments();
+      await expect(environments.getActive(void 0)).resolves.toMatchObject({
+        command: { args: ["run"] },
+      });
+    });
   });
 
   it("prefers Python Environments over the classic extension", async () => {
