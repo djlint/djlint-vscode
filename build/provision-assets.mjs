@@ -1,5 +1,5 @@
 // Assembles assets/pyodide/: the Pyodide runtime, djLint and what djLint needs,
-// every file verified against its sha256.
+// every file verified against its sha256, plus the licenses of all of it.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import {
@@ -13,6 +13,7 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
 import { download } from "./download.mjs";
+import { pyodideLicenses } from "./pyodide-licenses.mjs";
 
 /**
  * @typedef {{
@@ -30,6 +31,7 @@ import { download } from "./download.mjs";
  */
 
 const REQUIREMENTS = "djlint-requirements.txt";
+const PYTHON_LICENSES = "assets/python-licenses.txt";
 const OUT = "assets/pyodide";
 
 const PYODIDE_DIR = path.dirname(
@@ -271,6 +273,25 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
   }
 }
 
+/**
+ * @param {string[]} wheels
+ * @param {string} python
+ */
+function writePythonLicenses(wheels, python) {
+  runUv(
+    [
+      "run",
+      "--no-project",
+      "--python",
+      python,
+      "build/wheel_licenses.py",
+      PYTHON_LICENSES,
+      ...wheels.map((wheel) => `${OUT}/${wheel}`),
+    ],
+    { stdio: "inherit" },
+  );
+}
+
 const lock = copyPyodideCore();
 const python = pythonVersion(lock);
 
@@ -318,6 +339,14 @@ const packages = Object.fromEntries(
 writeFileSync(
   `${OUT}/pyodide-lock.json`,
   JSON.stringify({ ...lock, packages }),
+);
+writePythonLicenses(
+  Object.values(packages).map((entry) => entry.file_name),
+  python,
+);
+writeFileSync(
+  "assets/pyodide-licenses.txt",
+  await pyodideLicenses(PYODIDE_VERSION),
 );
 
 console.log(`\nassembled offline Pyodide assets in ${OUT}`);

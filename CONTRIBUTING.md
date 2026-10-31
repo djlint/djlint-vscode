@@ -12,6 +12,8 @@ The djLint version is pinned in `djlint-requirements.txt` and kept current by Re
 
 `npm run verify-bundle` boots the built bundle and formats and lints through it, reading a project's configuration from disk as it does in the editor. CI runs it after packaging and before publishing, because packaging cleanly does not on its own prove the bundled runtime still works after a dependency bump.
 
+The licenses of everything bundled are collected into `THIRD-PARTY-NOTICES.txt` at packaging; see [THIRD_PARTY.md](THIRD_PARTY.md). If a Pyodide bump links a new library into its runtime, `npm run assets` fails until its license is added to `build/pyodide-licenses.mjs`.
+
 ## Packaging locally
 
 `vsce package` runs `vscode:prepublish`, which rewrites `package.json` minified **in place**. CI builds from a throwaway checkout, so this only matters on a working copy: restore the file afterwards, and note that `git checkout -- package.json` also discards any uncommitted changes you had there.
