@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.2] - 2026-11-01
+
 - Bundle djLint 1.49.0.
 - Run djLint 1.49 and newer as a language server, one process that stays running while you work and stops after 30 seconds with nothing to do, instead of starting one for every format and lint. Formatting and linting a typical template take about a tenth of the time. If it fails, the extension goes back to the command line until `djLint: Restart`.
 - Tell djLint the path of the file when formatting too, and the absolute path with djLint 1.49 and newer, so `exclude`, `extend_exclude` and `use_gitignore` apply and `files` in the configuration doesn't get its files rewritten.
