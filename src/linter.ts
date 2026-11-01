@@ -7,6 +7,7 @@ import type { LintDiagnostic } from "./engine/types.js";
 import { isSupportedDocument } from "./paths.js";
 
 const lintOnTypeDelayMs = 300;
+const lintOnTypeMaxDelayMs = 1000;
 
 const lintSettingKeys: readonly string[] = [
   "enableLinting",
@@ -77,6 +78,7 @@ export class Linter {
   readonly #registry: CancellationRegistry;
   readonly #typingTimers = new Map<string, NodeJS.Timeout>();
   #disposed = false;
+  #lastLintMs = 0;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -143,12 +145,18 @@ export class Linter {
     }
     const key = document.uri.toString();
     this.#stopTypingTimer(key);
+    // A pause shorter than a run would start one after another while typing, as the command line takes half a second.
+    // A first run can also include starting djLint or a stalled lookup of the environment, which mustn't hold up the next for long.
+    const delay = Math.min(
+      Math.max(lintOnTypeDelayMs, this.#lastLintMs),
+      lintOnTypeMaxDelayMs,
+    );
     this.#typingTimers.set(
       key,
       setTimeout(() => {
         this.#typingTimers.delete(key);
         void this.#safeLint(document);
-      }, lintOnTypeDelayMs),
+      }, delay),
     );
   }
 
@@ -220,6 +228,7 @@ export class Linter {
     const key = document.uri.toString();
     const source = this.#registry.start(key);
     const versionAtStart = document.version;
+    const startedAt = performance.now();
 
     let diagnostics;
     try {
@@ -228,6 +237,7 @@ export class Linter {
         config,
         source.token,
       );
+      this.#lastLintMs = performance.now() - startedAt;
     } catch (e) {
       const wasSuperseded = source.token.isCancellationRequested;
       if (!wasSuperseded) {

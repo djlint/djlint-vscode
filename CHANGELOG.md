@@ -2,21 +2,24 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.49.2. The bundled djLint formats and lints in about half the time, and an installed djLint 1.49.2 answers about three times as fast as 1.49.1.
+- On macOS and Linux, djLint keeps running for ten minutes with nothing to do, instead of 30 seconds, so the first format after a pause in work is fast too. Windows keeps 30 seconds, as a running djLint stops `pip install` and `uv sync` in its environment.
+- While you type, linting waits at least as long as the last lint took, so a djLint started for every run, which takes about half a second, doesn't run back to back.
+
 ## [2026.11.3] - 2026-11-01
 
 - Bundle djLint 1.49.1.
-- Add `djlint.lintOnType`, on by default: with `djlint.enableLinting`, findings update after a short pause in typing, as well as on opening and saving. Findings no longer sit at the positions of the older text until the next save.
-- Move the link to the language server's docs, which are part of Integrations now.
-- Give the bundled djLint the absolute path of a file, as the command line and the language server have it, so `per-file-ignores` and rule modules see the same path.
-- Find what rules on blank lines report in a CRLF file through the command line too.
-- Let go of a run that is cancelled while the language server starts, instead of holding the runs behind it.
-- Don't start a language server for an environment that was left during the lookup of its command, and stop the one of a workspace folder that is removed, so Windows lets the folder be deleted.
+- Add `djlint.lintOnType`, on by default: with `djlint.enableLinting`, findings update after a short pause in typing, as well as on opening and saving.
+- The bundled djLint matches `per-file-ignores` against the same path as an installed djLint does.
+- Rules on blank lines report what they find in a file with Windows line endings with any djLint older than 1.49 too.
+- Cancelling a format or lint while djLint starts no longer holds up the ones after it.
+- Removing a workspace folder, or switching the Python environment, no longer keeps djLint running there, so Windows lets you delete the folder.
 
 ## [2026.11.2] - 2026-11-01
 
 - Bundle djLint 1.49.0.
-- Run djLint 1.49 and newer as a language server, one process that stays running while you work and stops after 30 seconds with nothing to do, instead of starting one for every format and lint. Formatting and linting a typical template take about a tenth of the time. If it fails, the extension goes back to the command line until `djLint: Restart`.
-- Tell djLint the path of the file when formatting too, and the absolute path with djLint 1.49 and newer, so `exclude`, `extend_exclude` and `use_gitignore` apply and `files` in the configuration doesn't get its files rewritten.
+- With djLint 1.49 or newer, formatting and linting a typical template take about a tenth of the time, as djLint keeps running while you work, and stops after 30 seconds with nothing to do. If that fails, the extension starts djLint for every run as before, until `djLint: Restart`.
+- `exclude`, `extend_exclude` and `use_gitignore` apply to the file you format, and `files` in the configuration no longer gets its files rewritten instead.
 
 ## [2026.11.1] - 2026-11-01
 
@@ -34,7 +37,7 @@
 - Do the same for a shim that says its command is not there, and for a file that cannot run, such as an environment built on another system.
 - Go on without the active Python environment if the Python extension does not answer within 30 seconds, instead of leaving formatting and linting waiting. `djLint: Restart` tries again, and so does the extension once it answers.
 - Leave the document as it is when djLint prints nothing for one with content, for example when a `djlint.py` next to the template answers to `python -m djlint`, instead of emptying it.
-- Detect the version per folder for `djlint.executablePath` and `djlint.pythonPath` too, because they can point to a shim.
+- With `djlint.executablePath` or `djlint.pythonPath` pointing to a version manager's shim, the options passed match the djLint each folder gets.
 - Show the djLint in use right after a change of environment or a restart, instead of after the next run.
 - Stop showing the whole command line, with the file name in it, when a failed djLint writes nothing to stderr.
 

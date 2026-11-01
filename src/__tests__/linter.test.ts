@@ -100,6 +100,42 @@ describe("typing", () => {
     expect(diagnosticsOf(document)).toHaveLength(1);
   });
 
+  it("waits as long as the last lint took, when that is longer", async () => {
+    const lint = vi.fn<Lint>().mockImplementation(async () => {
+      vi.advanceTimersByTime(800);
+      return [];
+    });
+    vi.spyOn(performance, "now")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(800);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    fireWorkspaceEvent("save", document);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(1);
+    type();
+    vi.advanceTimersByTime(700);
+    expect(lint).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(100);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(2);
+  });
+
+  it("waits no more than a second, after a lint that took long", async () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    vi.spyOn(performance, "now")
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(30_000);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    fireWorkspaceEvent("save", document);
+    await flush();
+    type();
+    vi.advanceTimersByTime(1000);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(2);
+  });
+
   it("doesn't lint without lintOnType", () => {
     control.configuration = { enableLinting: true, lintOnType: false };
     const lint = vi.fn<Lint>().mockResolvedValue([]);

@@ -12,7 +12,8 @@ const LOG_WARNING = 2;
 const STOP_TIMEOUT_MS = 1000;
 const CANCEL_GRACE_MS = 1000;
 // Windows keeps a running environment's files locked, which stops `pip install` and `uv sync` in it.
-export const IDLE_STOP_MS = 30_000;
+// Elsewhere a server waits out a pause in work, as starting one takes most of a second, but one of a djLint since upgraded is never used again.
+export const IDLE_STOP_MS = process.platform === "win32" ? 30_000 : 600_000;
 
 interface Position {
   character: number;
