@@ -1,6 +1,7 @@
 // When SubprocessEngine starts and stops its language servers, with DjlintServer
 // replaced: a server left running keeps its environment and folder locked on Windows.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
   liveToken,
   makeChannel,

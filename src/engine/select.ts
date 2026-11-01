@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
 import { DjlintUnavailableError } from "./types.js";

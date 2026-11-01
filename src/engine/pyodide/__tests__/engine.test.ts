@@ -3,6 +3,7 @@
 // would hang the editor's "Formatting..." state with nothing to retry against.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import { everySetting } from "../../../__tests__/every-setting.js";
 import { FakeWorker } from "../../../__tests__/fake-worker.js";
 import {

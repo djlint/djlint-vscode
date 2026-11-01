@@ -1,6 +1,7 @@
 // Runs test/e2e/suite.cjs in a downloaded VS Code, oldest supported and stable.
 import { readFileSync } from "node:fs";
 import path from "node:path";
+
 import { runTests } from "@vscode/test-electron";
 
 const root = path.resolve(import.meta.dirname, "../..");

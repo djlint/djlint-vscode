@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+
 import {
   LINTER_OUTPUT_FORMAT,
   LINTER_OUTPUT_FORMAT_WITH_END,

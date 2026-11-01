@@ -1,4 +1,5 @@
 import path from "node:path";
+
 import * as vscode from "vscode";
 
 const NO_FILENAME = "-";

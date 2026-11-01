@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
 import type { EngineManager } from "./engine/select.js";

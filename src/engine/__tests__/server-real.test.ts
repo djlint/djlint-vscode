@@ -3,9 +3,11 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
 import { execa } from "execa";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,

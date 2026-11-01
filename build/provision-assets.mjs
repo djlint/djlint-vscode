@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+
 import { download } from "./download.mjs";
 import { pyodideLicenses } from "./pyodide-licenses.mjs";
 

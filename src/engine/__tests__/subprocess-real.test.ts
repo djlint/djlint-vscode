@@ -5,9 +5,11 @@ import { chmod, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+
 import { execa } from "execa";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import { everySetting } from "../../__tests__/every-setting.js";
 import {
   formattingOptions,

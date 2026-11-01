@@ -1,6 +1,7 @@
 import { ExecaError } from "execa";
 import { vi } from "vitest";
 import * as vscode from "vscode";
+
 import type { EngineManager } from "../engine/select.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import type { DjlintEngine } from "../engine/types.js";

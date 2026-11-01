@@ -1,5 +1,7 @@
 import path from "node:path";
+
 import * as vscode from "vscode";
+
 import { buildOptions } from "../../args.js";
 import type { ArgContext } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";

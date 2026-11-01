@@ -1,4 +1,5 @@
 import { isDeepStrictEqual } from "node:util";
+
 import { EXTENSION_ID as pythonEnvironmentsExtensionId } from "@vscode/python-environments";
 import type { PythonEnvironment, PythonEnvironmentApi } from "@vscode/python-environments";
 import {

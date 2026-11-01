@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+
 import { formattingArgs, lintingArgs } from "../../args.js";
 import type { CliArg } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";

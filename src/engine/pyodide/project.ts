@@ -1,5 +1,7 @@
 import path from "node:path";
+
 import * as vscode from "vscode";
+
 import type { ProjectSnapshot, RunRequest } from "./protocol.js";
 
 const CONFIG_FILES: ReadonlySet<string> = new Set([

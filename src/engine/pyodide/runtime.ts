@@ -1,4 +1,5 @@
 import type { loadPyodide, PyodideAPI } from "pyodide";
+
 import GLUE from "./glue.py";
 import type { RunRequest, RunResponse, WorkerRequest, WorkerResponse } from "./protocol.js";
 

@@ -4,6 +4,7 @@
 // WORKSPACE root, while cwd stays beside the DOCUMENT so discovery finds the
 // nearest config.
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { configurationArg, rulesArg } from "../args.js";
 import { normalizeConfiguredExecutable, resolveWorkspaceFilePath } from "../paths.js";
 import { makeConfig, makeDocument, portable, setWorkspaceFolders } from "./helpers.js";

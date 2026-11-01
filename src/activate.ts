@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { configSection } from "./config.js";
 import { engineSettingKeys } from "./engine/select.js";
 import type { EngineManager } from "./engine/select.js";

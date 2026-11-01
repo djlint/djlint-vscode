@@ -3,6 +3,7 @@
 // used for that rejection.
 import { execa } from "execa";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { checkErrors, isValidLintResult } from "../engine/subprocess/errors.js";
 import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";

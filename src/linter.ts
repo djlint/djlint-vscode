@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { lintingArgs } from "./args.js";
 import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";

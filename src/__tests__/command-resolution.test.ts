@@ -1,6 +1,7 @@
 // Which djLint actually runs: executablePath > pythonPath > active environment
 // > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
 import { describe, expect, it } from "vitest";
+
 import { resolveDjlintCommand } from "../engine/subprocess/resolve.js";
 import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError } from "../engine/types.js";

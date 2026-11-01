@@ -1,5 +1,6 @@
 // How a document with no folder to mount gets its configuration to the worker.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { makeChannel, makeDocument } from "../../../__tests__/helpers.js";
 import { control, resetVscode, Uri, workspace } from "../../../__tests__/vscode-stub.js";
 import { readProject } from "../project.js";

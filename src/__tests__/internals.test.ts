@@ -4,6 +4,7 @@
 // classified.
 import { execa } from "execa";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+
 import { formattingArgs } from "../args.js";
 import { CancellationRegistry } from "../cancellation-registry.js";
 import { isValidLintResult } from "../engine/subprocess/errors.js";

@@ -2,6 +2,7 @@
 // Python extension, plus the change-event dedup and the unavailable-latch.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import { makeChannel } from "../../__tests__/helpers.js";
 import { control, fireWorkspaceEvent, resetVscode } from "../../__tests__/vscode-stub.js";
 import { ENVIRONMENT_TIMEOUT_MS, PythonEnvironments } from "../environment.js";

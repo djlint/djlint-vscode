@@ -4,6 +4,7 @@
 // real bundled runtime.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import type { DjlintEngine } from "../engine/types.js";
 import { Formatter } from "../formatter.js";
 import {

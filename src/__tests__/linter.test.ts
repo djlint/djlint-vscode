@@ -4,6 +4,7 @@
 // integration.test.ts drives the same path through the real bundled runtime.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import type { DjlintEngine, LintDiagnostic } from "../engine/types.js";
 import { Linter } from "../linter.js";
 import { changeOf, flush, makeChannel, makeContext, makeDocument, makeEngines } from "./helpers.js";

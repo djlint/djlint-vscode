@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { DjlintStatus } from "../status.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, setActiveDocument } from "./vscode-stub.js";

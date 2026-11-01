@@ -1,4 +1,5 @@
 import type * as vscode from "vscode";
+
 import type { ArgContext, CliArg } from "../../args.js";
 
 export function parseDjlintVersion(stdout: string): string | null {

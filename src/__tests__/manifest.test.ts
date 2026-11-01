@@ -1,5 +1,6 @@
 // The language IDs are written out in three places that have to agree.
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 interface Manifest {

@@ -1,4 +1,5 @@
 import { stat } from "node:fs/promises";
+
 import * as vscode from "vscode";
 
 export function getDocumentFolder(document: vscode.TextDocument): string | undefined {

@@ -1,9 +1,11 @@
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { whichCommand } from "which-command";
+
 import { buildOptions, formattingArgs, lintingArgs } from "../../args.js";
 import type { ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";

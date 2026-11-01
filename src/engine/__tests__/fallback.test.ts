@@ -2,6 +2,7 @@
 // runtime. How long a missing djLint is remembered is up to CommandResolver.
 import { beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,

@@ -1,8 +1,10 @@
 // What EngineManager builds decides whether workspace code can run at all: an
 // untrusted workspace must never reach a subprocess or its own project files.
 import path from "node:path";
+
 import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { FakeWorker } from "../../__tests__/fake-worker.js";
 import {
   flush,

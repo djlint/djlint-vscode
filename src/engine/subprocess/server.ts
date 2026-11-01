@@ -1,6 +1,7 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion -- what the server sends is the protocol's */
 import { execa } from "execa";
 import * as vscode from "vscode";
+
 import { showFailure } from "../../notify.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 import type { LintDiagnostic } from "../types.js";

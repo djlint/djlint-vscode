@@ -1,7 +1,9 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parentPort, workerData } from "node:worker_threads";
+
 import type { loadPyodide, PyodideAPI } from "pyodide";
+
 import type { WorkerData, WorkerRequest } from "./protocol.js";
 import { serve } from "./runtime.js";
 

@@ -6,6 +6,7 @@ import { execa } from "execa";
 import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as vscode from "vscode";
+
 import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
 import { DjlintStatus } from "../status.js";

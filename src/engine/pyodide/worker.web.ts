@@ -1,4 +1,5 @@
 import type { loadPyodide } from "pyodide";
+
 import type { WorkerData, WorkerRequest } from "./protocol.js";
 import { serve } from "./runtime.js";
 

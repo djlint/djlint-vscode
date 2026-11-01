@@ -8,8 +8,10 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
+
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
+
 import { everySetting } from "../../../__tests__/every-setting.js";
 import {
   flush,

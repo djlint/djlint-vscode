@@ -2,6 +2,7 @@
 // callers actually require of them.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import { getDocumentFolder, getExistingDocumentFolder } from "../engine/document-folder.js";
 import { parseLinterOutput } from "../engine/subprocess/parse-lint-output.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../engine/subprocess/version.js";
