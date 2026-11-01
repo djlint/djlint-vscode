@@ -12,7 +12,8 @@
   "lockFileMaintenance": { "enabled": true, "schedule": ["at any time"] },
   "minimumReleaseAge": "3 days",
   "packageRules": [
-    { "matchPackageNames": ["prettier", "rbubley/mirrors-prettier"], "groupName": "prettier" },
+    { "matchPackageNames": ["oxfmt", "oxc-project/mirrors-oxfmt"], "groupName": "oxfmt" },
+    { "matchPackageNames": ["oxlint", "oxlint-tsgolint"], "groupName": "oxlint" },
     { "matchCurrentVersion": "!/^0/", "matchUpdateTypes": ["minor"], "automerge": true },
     { "matchUpdateTypes": ["lockFileMaintenance", "patch", "replacement"], "automerge": true },
     { "matchDepTypes": ["devDependencies"], "matchManagers": ["npm"], "automerge": true },
