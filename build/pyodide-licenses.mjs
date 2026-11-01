@@ -68,9 +68,7 @@ export async function pyodideLicenses(version) {
   const setup = await fetchText(pyodide("cpython/Setup.local"));
 
   assertSame(
-    capture(makefile, /^all: \S+ (.+)$/mu, "the libraries it builds").split(
-      /\s+/u,
-    ),
+    capture(makefile, /^all: \S+ (.+)$/mu, "the libraries it builds").split(/\s+/u),
     KNOWN_BUILT,
     "the libraries",
   );
@@ -103,34 +101,20 @@ export async function pyodideLicenses(version) {
    */
   async function port(name) {
     return capture(
-      await fetchText(
-        `${RAW}/emscripten-core/emscripten/${emscripten}/tools/ports/${name}.py`,
-      ),
+      await fetchText(`${RAW}/emscripten-core/emscripten/${emscripten}/tools/ports/${name}.py`),
       /^VERSION = '([^']+)'$/mu,
       `the version of the ${name} port`,
     );
   }
   const libffi = capture(makefile, /^LIBFFI_COMMIT=(\S+)$/mu, "libffi");
   const hiwire = capture(makefile, /^HIWIRE_COMMIT=(\S+)$/mu, "hiwire");
-  const xz = capture(
-    makefile,
-    /^LZMATARBALL=.*\/xz-([\d.]+)\.tar\.gz$/mu,
-    "xz",
-  );
-  const zstd = capture(
-    makefile,
-    /^ZSTDTARBALL=.*\/zstd-([\d.]+)\.tar\.gz$/mu,
-    "zstd",
-  );
+  const xz = capture(makefile, /^LZMATARBALL=.*\/xz-([\d.]+)\.tar\.gz$/mu, "xz");
+  const zstd = capture(makefile, /^ZSTDTARBALL=.*\/zstd-([\d.]+)\.tar\.gz$/mu, "zstd");
   const bzip2 = await port("bzip2");
   const zlib = await port("zlib");
 
-  const license = await fetchText(
-    `${RAW}/python/cpython/v${python}/Doc/license.rst`,
-  );
-  const incorporated = license.indexOf(
-    "Licenses and Acknowledgements for Incorporated Software",
-  );
+  const license = await fetchText(`${RAW}/python/cpython/v${python}/Doc/license.rst`);
+  const incorporated = license.indexOf("Licenses and Acknowledgements for Incorporated Software");
   if (incorporated === -1) {
     throw new Error("CPython's Doc/license.rst has no incorporated software");
   }
@@ -182,9 +166,7 @@ export async function pyodideLicenses(version) {
     ],
     [
       `Emscripten ${emscripten} (the runtime in pyodide.asm.mjs and pyodide.asm.wasm)`,
-      await fetchText(
-        `${RAW}/emscripten-core/emscripten/${emscripten}/LICENSE`,
-      ),
+      await fetchText(`${RAW}/emscripten-core/emscripten/${emscripten}/LICENSE`),
     ],
     [
       `musl libc, as shipped with Emscripten ${emscripten}, linked into pyodide.asm.wasm`,

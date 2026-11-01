@@ -2,15 +2,9 @@
 // callers actually require of them.
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
-import {
-  getDocumentFolder,
-  getExistingDocumentFolder,
-} from "../engine/document-folder.js";
+import { getDocumentFolder, getExistingDocumentFolder } from "../engine/document-folder.js";
 import { parseLinterOutput } from "../engine/subprocess/parse-lint-output.js";
-import {
-  isVersionAtLeast,
-  parseDjlintVersion,
-} from "../engine/subprocess/version.js";
+import { isVersionAtLeast, parseDjlintVersion } from "../engine/subprocess/version.js";
 import { deriveStdinFilename, workspaceScopeKey } from "../paths.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, Uri } from "./vscode-stub.js";
@@ -25,17 +19,8 @@ beforeEach(() => {
 
 describe("parseLinterOutput, pinned format", () => {
   it("reads the end of a finding", () => {
-    expect(
-      parseLinterOutput(`H025${FS}3:7${FS}m${FS}4:2${RS}\n`),
-    ).toStrictEqual([
-      {
-        code: "H025",
-        column: 7,
-        endColumn: 2,
-        endLine: 4,
-        line: 3,
-        message: "m",
-      },
+    expect(parseLinterOutput(`H025${FS}3:7${FS}m${FS}4:2${RS}\n`)).toStrictEqual([
+      { code: "H025", column: 7, endColumn: 2, endLine: 4, line: 3, message: "m" },
     ]);
   });
 
@@ -46,38 +31,27 @@ describe("parseLinterOutput, pinned format", () => {
   });
 
   it("leaves out an end before the start", () => {
-    expect(
-      parseLinterOutput(`H025${FS}3:7${FS}m${FS}3:1${RS}\n`),
-    ).toStrictEqual([{ code: "H025", column: 7, line: 3, message: "m" }]);
+    expect(parseLinterOutput(`H025${FS}3:7${FS}m${FS}3:1${RS}\n`)).toStrictEqual([
+      { code: "H025", column: 7, line: 3, message: "m" },
+    ]);
   });
 
   it("keeps a colon in the message", () => {
     expect(
-      parseLinterOutput(
-        `H025${FS}3:7${FS}Tag seems to be orphan: <div>${RS}\n`,
-      ),
+      parseLinterOutput(`H025${FS}3:7${FS}Tag seems to be orphan: <div>${RS}\n`),
     ).toStrictEqual([
-      {
-        code: "H025",
-        column: 7,
-        line: 3,
-        message: "Tag seems to be orphan: <div>",
-      },
+      { code: "H025", column: 7, line: 3, message: "Tag seems to be orphan: <div>" },
     ]);
   });
 
   it("keeps a newline in the message", () => {
-    expect(
-      parseLinterOutput(`H025${FS}3:7${FS}line one\nline two${RS}\n`),
-    ).toStrictEqual([
+    expect(parseLinterOutput(`H025${FS}3:7${FS}line one\nline two${RS}\n`)).toStrictEqual([
       { code: "H025", column: 7, line: 3, message: "line one\nline two" },
     ]);
   });
 
   it("reads multiple records", () => {
-    expect(
-      parseLinterOutput(`A1${FS}1:0${FS}m1${RS}\nB2${FS}2:3${FS}m2${RS}\n`),
-    ).toStrictEqual([
+    expect(parseLinterOutput(`A1${FS}1:0${FS}m1${RS}\nB2${FS}2:3${FS}m2${RS}\n`)).toStrictEqual([
       { code: "A1", column: 0, line: 1, message: "m1" },
       { code: "B2", column: 3, line: 2, message: "m2" },
     ]);
@@ -90,9 +64,7 @@ describe("parseLinterOutput, pinned format", () => {
 
   it("ignores the summary after the last record (no --quiet)", () => {
     expect(
-      parseLinterOutput(
-        `H013${FS}1:5${FS}msg${RS}\r\nLinted 1 file, found 1 error.\r\n`,
-      ),
+      parseLinterOutput(`H013${FS}1:5${FS}msg${RS}\r\nLinted 1 file, found 1 error.\r\n`),
     ).toStrictEqual([{ code: "H013", column: 5, line: 1, message: "msg" }]);
   });
 
@@ -104,9 +76,9 @@ describe("parseLinterOutput, pinned format", () => {
   });
 
   it("does not lose the good records to a bad one", () => {
-    expect(
-      parseLinterOutput(`H1${FS}x:5${FS}bad${RS}\nH2${FS}4:1${FS}good${RS}\n`),
-    ).toStrictEqual([{ code: "H2", column: 1, line: 4, message: "good" }]);
+    expect(parseLinterOutput(`H1${FS}x:5${FS}bad${RS}\nH2${FS}4:1${FS}good${RS}\n`)).toStrictEqual([
+      { code: "H2", column: 1, line: 4, message: "good" },
+    ]);
   });
 
   it("moves line 0 to the first line", () => {
@@ -117,30 +89,23 @@ describe("parseLinterOutput, pinned format", () => {
 
   it("moves the end on line 0 with it", () => {
     expect(parseLinterOutput(`H1${FS}0:5${FS}m${FS}0:9${RS}\n`)).toStrictEqual([
-      {
-        code: "H1",
-        column: 5,
-        endColumn: 9,
-        endLine: 1,
-        line: 1,
-        message: "m",
-      },
+      { code: "H1", column: 5, endColumn: 9, endLine: 1, line: 1, message: "m" },
     ]);
   });
 });
 
 describe("parseLinterOutput, legacy format", () => {
   it("reads a single finding", () => {
-    expect(
-      parseLinterOutput("H013 1:5 Img tag should have an alt attribute. <img>"),
-    ).toStrictEqual([
-      {
-        code: "H013",
-        column: 5,
-        line: 1,
-        message: "Img tag should have an alt attribute. <img>",
-      },
-    ]);
+    expect(parseLinterOutput("H013 1:5 Img tag should have an alt attribute. <img>")).toStrictEqual(
+      [
+        {
+          code: "H013",
+          column: 5,
+          line: 1,
+          message: "Img tag should have an alt attribute. <img>",
+        },
+      ],
+    );
   });
 
   it("moves line 0 to the first line", () => {
@@ -157,9 +122,7 @@ describe("parseLinterOutput, legacy format", () => {
   });
 
   it("does not leak the /g regex's lastIndex between calls", () => {
-    expect(parseLinterOutput("H013 1:5 x")).toStrictEqual(
-      parseLinterOutput("H013 1:5 x"),
-    );
+    expect(parseLinterOutput("H013 1:5 x")).toStrictEqual(parseLinterOutput("H013 1:5 x"));
   });
 });
 
@@ -170,31 +133,23 @@ describe(deriveStdinFilename, () => {
   });
 
   it("normalizes backslashes", () => {
-    vi.spyOn(vscode.workspace, "asRelativePath").mockReturnValue(
-      String.raw`a\b.html`,
-    );
+    vi.spyOn(vscode.workspace, "asRelativePath").mockReturnValue(String.raw`a\b.html`);
     expect(deriveStdinFilename(makeDocument("/w/a/b.html"))).toBe("a/b.html");
   });
 
   it("uses the full path outside any workspace folder", () => {
     const document = makeDocument("/w/b.html");
-    expect(deriveStdinFilename(document)).toBe(
-      document.uri.fsPath.replaceAll("\\", "/"),
-    );
+    expect(deriveStdinFilename(document)).toBe(document.uri.fsPath.replaceAll("\\", "/"));
   });
 
   it("is `-` for an unsupported scheme", () => {
-    expect(
-      deriveStdinFilename(makeDocument(vscode.Uri.parse("untitled:a.html"))),
-    ).toBe("-");
+    expect(deriveStdinFilename(makeDocument(vscode.Uri.parse("untitled:a.html")))).toBe("-");
   });
 
   it("supports vscode-vfs", () => {
     control.workspaceFolders = [{ uri: Uri.parse("vscode-vfs://github/o/r") }];
     expect(
-      deriveStdinFilename(
-        makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/a.html")),
-      ),
+      deriveStdinFilename(makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/a.html"))),
     ).toBe("a.html");
   });
 
@@ -206,19 +161,15 @@ describe(deriveStdinFilename, () => {
 
 describe(parseDjlintVersion, () => {
   it("takes the last version, past what a wrapper printed", () => {
-    expect(
-      parseDjlintVersion(
-        "mise version 0.4.1 activated\ndjlint, version 1.47.1",
-      ),
-    ).toBe("1.47.1");
+    expect(parseDjlintVersion("mise version 0.4.1 activated\ndjlint, version 1.47.1")).toBe(
+      "1.47.1",
+    );
   });
 });
 
 describe("document location helpers", () => {
   it("finds the folder of a file", () => {
-    expect(getDocumentFolder(makeDocument("/w/a/b.html"))).toBe(
-      vscode.Uri.file("/w/a").fsPath,
-    );
+    expect(getDocumentFolder(makeDocument("/w/a/b.html"))).toBe(vscode.Uri.file("/w/a").fsPath);
   });
 
   it("finds no existing folder for a file whose folder is gone", async () => {
@@ -229,9 +180,7 @@ describe("document location helpers", () => {
 
   it("has no folder for a document that is not a local file", () => {
     expect(
-      getDocumentFolder(
-        makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/a.html")),
-      ),
+      getDocumentFolder(makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/a.html"))),
     ).toBeUndefined();
   });
 

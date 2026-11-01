@@ -2,10 +2,7 @@ import { Worker } from "node:worker_threads";
 import type { RuntimeWorker } from "./index.js";
 import type { WorkerData, WorkerResponse } from "./protocol.js";
 
-export function createNodeWorker(
-  workerPath: string,
-  indexURL: string,
-): RuntimeWorker {
+export function createNodeWorker(workerPath: string, indexURL: string): RuntimeWorker {
   const workerData: WorkerData = { indexURL };
   const worker = new Worker(workerPath, { workerData });
   return {

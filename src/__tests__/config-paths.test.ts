@@ -5,16 +5,8 @@
 // nearest config.
 import { beforeEach, describe, expect, it } from "vitest";
 import { configurationArg, rulesArg } from "../args.js";
-import {
-  normalizeConfiguredExecutable,
-  resolveWorkspaceFilePath,
-} from "../paths.js";
-import {
-  makeConfig,
-  makeDocument,
-  portable,
-  setWorkspaceFolders,
-} from "./helpers.js";
+import { normalizeConfiguredExecutable, resolveWorkspaceFilePath } from "../paths.js";
+import { makeConfig, makeDocument, portable, setWorkspaceFolders } from "./helpers.js";
 import { resetVscode } from "./vscode-stub.js";
 
 const nested = makeDocument("/ws/packages/a/t.html");
@@ -27,21 +19,17 @@ beforeEach(() => {
 
 describe(resolveWorkspaceFilePath, () => {
   it("resolves a bare filename to the workspace root, not the document", () => {
-    expect(portable(resolveWorkspaceFilePath(".djlintrc", nested))).toBe(
-      "/ws/.djlintrc",
-    );
+    expect(portable(resolveWorkspaceFilePath(".djlintrc", nested))).toBe("/ws/.djlintrc");
   });
 
   it("resolves a relative path to the workspace root", () => {
-    expect(
-      portable(resolveWorkspaceFilePath("config/djlint.toml", nested)),
-    ).toBe("/ws/config/djlint.toml");
+    expect(portable(resolveWorkspaceFilePath("config/djlint.toml", nested))).toBe(
+      "/ws/config/djlint.toml",
+    );
   });
 
   it("leaves an absolute path alone", () => {
-    expect(portable(resolveWorkspaceFilePath("/etc/djlint.toml", nested))).toBe(
-      "/etc/djlint.toml",
-    );
+    expect(portable(resolveWorkspaceFilePath("/etc/djlint.toml", nested))).toBe("/etc/djlint.toml");
   });
 
   it("does not guess without a workspace folder", () => {
@@ -53,28 +41,19 @@ describe("path arguments", () => {
   it("emit a path djLint need not interpret against its cwd", () => {
     expect(
       configurationArg
-        .build({
-          config: makeConfig({ configuration: ".djlintrc" }),
-          document: nested,
-        })
+        .build({ config: makeConfig({ configuration: ".djlintrc" }), document: nested })
         .map((part) => portable(part)),
     ).toStrictEqual(["--configuration", "/ws/.djlintrc"]);
     expect(
       rulesArg
-        .build({
-          config: makeConfig({ rules: "rules.yaml" }),
-          document: nested,
-        })
+        .build({ config: makeConfig({ rules: "rules.yaml" }), document: nested })
         .map((part) => portable(part)),
     ).toStrictEqual(["--rules", "/ws/rules.yaml"]);
   });
 
   it("emit nothing when unset", () => {
     expect(
-      configurationArg.build({
-        config: makeConfig({ configuration: "" }),
-        document: nested,
-      }),
+      configurationArg.build({ config: makeConfig({ configuration: "" }), document: nested }),
     ).toStrictEqual([]);
   });
 
@@ -99,24 +78,20 @@ describe(normalizeConfiguredExecutable, () => {
   });
 
   it("differs from a bare config filename", () => {
-    expect(portable(resolveWorkspaceFilePath("djlint", nested))).toBe(
-      "/ws/djlint",
-    );
+    expect(portable(resolveWorkspaceFilePath("djlint", nested))).toBe("/ws/djlint");
   });
 
   it.each(["bin/djlint", "./bin/djlint"])(
     "resolves path-shaped %s to the workspace root",
     (value) => {
-      expect(portable(normalizeConfiguredExecutable(value, nested))).toBe(
-        "/ws/bin/djlint",
-      );
+      expect(portable(normalizeConfiguredExecutable(value, nested))).toBe("/ws/bin/djlint");
     },
   );
 
   it("leaves an absolute path alone", () => {
-    expect(
-      portable(normalizeConfiguredExecutable("/usr/bin/djlint", nested)),
-    ).toBe("/usr/bin/djlint");
+    expect(portable(normalizeConfiguredExecutable("/usr/bin/djlint", nested))).toBe(
+      "/usr/bin/djlint",
+    );
   });
 
   it("trims surrounding whitespace", () => {
@@ -128,8 +103,6 @@ describe(normalizeConfiguredExecutable, () => {
   });
 
   it("does not guess without a workspace folder", () => {
-    expect(normalizeConfiguredExecutable("bin/djlint", loose)).toBe(
-      "bin/djlint",
-    );
+    expect(normalizeConfiguredExecutable("bin/djlint", loose)).toBe("bin/djlint");
   });
 });

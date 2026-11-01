@@ -14,17 +14,11 @@ const lintSettingKeys: readonly string[] = [
   ...lintingArgs.map((arg) => arg.vscodeName).filter(Boolean),
 ];
 
-function visibleFirst(
-  documents: readonly vscode.TextDocument[],
-): readonly vscode.TextDocument[] {
-  const visible = new Set(
-    vscode.window.visibleTextEditors.map((editor) => editor.document),
-  );
+function visibleFirst(documents: readonly vscode.TextDocument[]): readonly vscode.TextDocument[] {
+  const visible = new Set(vscode.window.visibleTextEditors.map((editor) => editor.document));
   return visible.size === 0
     ? documents
-    : documents.toSorted(
-        (a, b) => Number(visible.has(b)) - Number(visible.has(a)),
-      );
+    : documents.toSorted((a, b) => Number(visible.has(b)) - Number(visible.has(a)));
 }
 
 // The editor counts UTF-16 code units and djLint characters, which differ past an emoji.
@@ -36,13 +30,9 @@ function toEditorColumn(text: string, column: number): number {
   return offset;
 }
 
-function toRange(
-  d: LintDiagnostic,
-  document: vscode.TextDocument,
-): vscode.Range {
+function toRange(d: LintDiagnostic, document: vscode.TextDocument): vscode.Range {
   const line = d.line - 1;
-  const { text } =
-    line < document.lineCount ? document.lineAt(line) : { text: "" };
+  const { text } = line < document.lineCount ? document.lineAt(line) : { text: "" };
   function toColumn(column: number): number {
     return d.isUtf16 ? column : toEditorColumn(text, column);
   }
@@ -55,16 +45,11 @@ function toRange(
   return new vscode.Range(line, start, line, Math.max(start, end));
 }
 
-function toDiagnostic(
-  d: LintDiagnostic,
-  document: vscode.TextDocument,
-): vscode.Diagnostic {
+function toDiagnostic(d: LintDiagnostic, document: vscode.TextDocument): vscode.Diagnostic {
   const diagnostic = new vscode.Diagnostic(toRange(d, document), d.message);
   diagnostic.source = "djLint";
   diagnostic.code = {
-    target: vscode.Uri.parse(
-      `https://djlint.com/docs/linter/#${d.code.toLowerCase()}`,
-    ),
+    target: vscode.Uri.parse(`https://djlint.com/docs/linter/#${d.code.toLowerCase()}`),
     value: d.code,
   };
   return diagnostic;
@@ -98,13 +83,11 @@ export class Linter {
       vscode.workspace.onDidOpenTextDocument((document) => {
         void this.#safeLint(document);
       }),
-      vscode.workspace.onDidChangeTextDocument(
-        ({ contentChanges, document }) => {
-          if (contentChanges.length > 0) {
-            this.#lintAfterTyping(document);
-          }
-        },
-      ),
+      vscode.workspace.onDidChangeTextDocument(({ contentChanges, document }) => {
+        if (contentChanges.length > 0) {
+          this.#lintAfterTyping(document);
+        }
+      }),
       vscode.workspace.onDidSaveTextDocument((document) => {
         this.#stopTypingTimer(document.uri.toString());
         void this.#safeLint(document);
@@ -147,10 +130,7 @@ export class Linter {
     this.#stopTypingTimer(key);
     // A pause shorter than a run would start one after another while typing, as the command line takes half a second.
     // A first run can also include starting djLint or a stalled lookup of the environment, which mustn't hold up the next for long.
-    const delay = Math.min(
-      Math.max(lintOnTypeDelayMs, this.#lastLintMs),
-      lintOnTypeMaxDelayMs,
-    );
+    const delay = Math.min(Math.max(lintOnTypeDelayMs, this.#lastLintMs), lintOnTypeMaxDelayMs);
     this.#typingTimers.set(
       key,
       setTimeout(() => {
@@ -165,9 +145,7 @@ export class Linter {
     this.#typingTimers.delete(key);
   }
 
-  async #lintSweep(
-    shouldLint: (document: vscode.TextDocument) => boolean,
-  ): Promise<void> {
+  async #lintSweep(shouldLint: (document: vscode.TextDocument) => boolean): Promise<void> {
     for (const document of visibleFirst(vscode.workspace.textDocuments)) {
       if (this.#disposed) {
         return;
@@ -192,16 +170,12 @@ export class Linter {
   async #onConfigChange(e: vscode.ConfigurationChangeEvent): Promise<void> {
     if (
       !e.affectsConfiguration(configSection) ||
-      lintSettingKeys.every(
-        (key) => !e.affectsConfiguration(`${configSection}.${key}`),
-      )
+      lintSettingKeys.every((key) => !e.affectsConfiguration(`${configSection}.${key}`))
     ) {
       return;
     }
     await this.#lintSweep((document) =>
-      lintSettingKeys.some((key) =>
-        e.affectsConfiguration(`${configSection}.${key}`, document),
-      ),
+      lintSettingKeys.some((key) => e.affectsConfiguration(`${configSection}.${key}`, document)),
     );
   }
 
@@ -219,9 +193,7 @@ export class Linter {
     }
 
     if (!isSupportedDocument(document)) {
-      this.#outputChannel.debug(
-        `Not linting "${document.uri.toString()}" (unsupported scheme)`,
-      );
+      this.#outputChannel.debug(`Not linting "${document.uri.toString()}" (unsupported scheme)`);
       return;
     }
 
@@ -232,11 +204,7 @@ export class Linter {
 
     let diagnostics;
     try {
-      diagnostics = await this.#engines.engine.lint(
-        document,
-        config,
-        source.token,
-      );
+      diagnostics = await this.#engines.engine.lint(document, config, source.token);
       this.#lastLintMs = performance.now() - startedAt;
     } catch (e) {
       const wasSuperseded = source.token.isCancellationRequested;
@@ -248,8 +216,7 @@ export class Linter {
       this.#registry.finish(key, source);
     }
 
-    const wasSuperseded =
-      this.#registry.has(key) || source.token.isCancellationRequested;
+    const wasSuperseded = this.#registry.has(key) || source.token.isCancellationRequested;
     if (wasSuperseded) {
       return;
     }

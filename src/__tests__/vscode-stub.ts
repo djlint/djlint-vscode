@@ -33,13 +33,8 @@ export class Uri {
   ) {}
 
   static file(fsPath: string): Uri {
-    const slashed =
-      process.platform === "win32" ? fsPath.replaceAll("\\", "/") : fsPath;
-    return new Uri(
-      "file",
-      "",
-      slashed.startsWith("/") ? slashed : `/${slashed}`,
-    );
+    const slashed = process.platform === "win32" ? fsPath.replaceAll("\\", "/") : fsPath;
+    return new Uri("file", "", slashed.startsWith("/") ? slashed : `/${slashed}`);
   }
 
   static parse(value: string): Uri {
@@ -75,8 +70,7 @@ export class Uri {
   }
 
   toString(): string {
-    const authority =
-      this.authority || this.scheme === "file" ? `//${this.authority}` : "";
+    const authority = this.authority || this.scheme === "file" ? `//${this.authority}` : "";
     const query = this.query && `?${this.query}`;
     const fragment = this.fragment && `#${this.fragment}`;
     return `${this.scheme}:${authority}${this.path}${query}${fragment}`;
@@ -98,12 +92,7 @@ export class Range {
   readonly start: Position;
   readonly end: Position;
 
-  constructor(
-    startLine: number,
-    startCharacter: number,
-    endLine: number,
-    endCharacter: number,
-  ) {
+  constructor(startLine: number, startCharacter: number, endLine: number, endCharacter: number) {
     this.start = new Position(startLine, startCharacter);
     this.end = new Position(endLine, endCharacter);
   }
@@ -115,18 +104,10 @@ export interface TextEditRecord {
 }
 
 export const TextEdit = {
-  replace: (range: Range, newText: string): TextEditRecord => ({
-    newText,
-    range,
-  }),
+  replace: (range: Range, newText: string): TextEditRecord => ({ newText, range }),
 };
 
-export const DiagnosticSeverity = {
-  Error: 0,
-  Warning: 1,
-  Information: 2,
-  Hint: 3,
-} as const;
+export const DiagnosticSeverity = { Error: 0, Warning: 1, Information: 2, Hint: 3 } as const;
 
 export class Diagnostic {
   source: string | undefined;
@@ -213,9 +194,7 @@ export class RecordingChannel {
   shownCount = 0;
 
   of(level: LogLine["level"]): string[] {
-    return this.lines
-      .filter((line) => line.level === level)
-      .map(({ message }) => message);
+    return this.lines.filter((line) => line.level === level).map(({ message }) => message);
   }
 
   trace(message: unknown): void {
@@ -292,10 +271,7 @@ function initialState(): {
 /** What the suites set up and inspect. `resetVscode()` restores it. */
 export const control = initialState();
 
-const workspaceListeners = new Map<
-  WorkspaceEventKind,
-  Set<Listener<unknown>>
->();
+const workspaceListeners = new Map<WorkspaceEventKind, Set<Listener<unknown>>>();
 
 export function resetVscode(): void {
   Object.assign(control, initialState());
@@ -303,10 +279,7 @@ export function resetVscode(): void {
 }
 
 /** Delivers a workspace event to the listeners the extension registered. */
-export function fireWorkspaceEvent(
-  kind: WorkspaceEventKind,
-  value?: unknown,
-): void {
+export function fireWorkspaceEvent(kind: WorkspaceEventKind, value?: unknown): void {
   for (const listener of workspaceListeners.get(kind) ?? []) {
     listener(value);
   }
@@ -316,9 +289,7 @@ export function workspaceListenerCount(kind: WorkspaceEventKind): number {
   return workspaceListeners.get(kind)?.size ?? 0;
 }
 
-function onWorkspaceEvent<T>(
-  kind: WorkspaceEventKind,
-): (listener: Listener<T>) => Disposable {
+function onWorkspaceEvent<T>(kind: WorkspaceEventKind): (listener: Listener<T>) => Disposable {
   return (listener) => {
     const untyped = listener as Listener<unknown>;
     const listeners = workspaceListeners.get(kind) ?? new Set();
@@ -382,10 +353,7 @@ export const workspace = {
     const folder = findWorkspaceFolder(uri);
     return folder ? path.posix.relative(folder.uri.path, uri.path) : uri.fsPath;
   },
-  getConfiguration: (
-    _section?: string,
-    _scope?: unknown,
-  ): { get: (key: string) => unknown } => ({
+  getConfiguration: (_section?: string, _scope?: unknown): { get: (key: string) => unknown } => ({
     get: (key) => control.configuration[key],
   }),
   getWorkspaceFolder: findWorkspaceFolder,
@@ -411,13 +379,9 @@ export const workspace = {
 
 export const window = {
   get activeTextEditor(): { document: unknown } | undefined {
-    return control.activeDocument == null
-      ? void 0
-      : { document: control.activeDocument };
+    return control.activeDocument == null ? void 0 : { document: control.activeDocument };
   },
-  onDidChangeActiveTextEditor: (
-    listener: () => void,
-  ): { dispose: () => void } => {
+  onDidChangeActiveTextEditor: (listener: () => void): { dispose: () => void } => {
     control.activeEditorListeners.add(listener);
     return {
       dispose: (): void => {
@@ -425,18 +389,12 @@ export const window = {
       },
     };
   },
-  createOutputChannel: (
-    _name: string,
-    _options?: unknown,
-  ): RecordingChannel => {
+  createOutputChannel: (_name: string, _options?: unknown): RecordingChannel => {
     const channel = new RecordingChannel();
     control.outputChannels.push(channel);
     return channel;
   },
-  showErrorMessage: async (
-    message: string,
-    ..._items: string[]
-  ): Promise<string | undefined> => {
+  showErrorMessage: async (message: string, ..._items: string[]): Promise<string | undefined> => {
     control.shownErrors.push(message);
     return control.errorMessageChoice;
   },
@@ -484,10 +442,7 @@ export const languages = {
       control.diagnostics.set(uri.toString(), diagnostics);
     },
   }),
-  registerDocumentFormattingEditProvider: (
-    selector: unknown,
-    provider: unknown,
-  ): Disposable => {
+  registerDocumentFormattingEditProvider: (selector: unknown, provider: unknown): Disposable => {
     const record = { provider, selector };
     control.formattingProviders.push(record);
     return {

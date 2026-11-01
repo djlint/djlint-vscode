@@ -107,9 +107,7 @@ class ProfileArg extends StringArg {
   }
 
   override requiredVersion(context: ArgContext): string {
-    return (
-      PROFILE_MIN_VERSIONS.get(this.read(context) ?? "") ?? this.minVersion
-    );
+    return PROFILE_MIN_VERSIONS.get(this.read(context) ?? "") ?? this.minVersion;
   }
 }
 
@@ -120,8 +118,7 @@ class LinterOutputFormatArg extends CliOnlyArg {
 
   // oxlint-disable-next-line class-methods-use-this
   protected read({ djlintVersion }: ArgContext): string {
-    return djlintVersion != null &&
-      isVersionAtLeast(djlintVersion, LINTER_END_MIN_VERSION)
+    return djlintVersion != null && isVersionAtLeast(djlintVersion, LINTER_END_MIN_VERSION)
       ? LINTER_OUTPUT_FORMAT_WITH_END
       : LINTER_OUTPUT_FORMAT;
   }
@@ -157,21 +154,12 @@ class UseEditorIndentationArg extends CliArg {
     super("useEditorIndentation", "--indent", "0.4.3");
   }
 
-  protected read({
-    config,
-    formattingOptions,
-  }: ArgContext): number | undefined {
-    return config.get<boolean>(this.vscodeName)
-      ? formattingOptions?.tabSize
-      : void 0;
+  protected read({ config, formattingOptions }: ArgContext): number | undefined {
+    return config.get<boolean>(this.vscodeName) ? formattingOptions?.tabSize : void 0;
   }
 }
 
-export const configurationArg = new WorkspacePathArg(
-  "configuration",
-  "--configuration",
-  "1.13",
-);
+export const configurationArg = new WorkspacePathArg("configuration", "--configuration", "1.13");
 
 export const rulesArg = new WorkspacePathArg("rules", "--rules", "1.41");
 
@@ -212,16 +200,8 @@ export const formattingArgs = [
     "--format-attribute-js-json-min-props",
     "1.37",
   ),
-  new StringArg(
-    "formatAttributeJsJsonPattern",
-    "--format-attribute-js-json-pattern",
-    "1.37",
-  ),
-  new BoolArg(
-    "formatAttributeTemplateTags",
-    "--format-attribute-template-tags",
-    "1.25",
-  ),
+  new StringArg("formatAttributeJsJsonPattern", "--format-attribute-js-json-pattern", "1.37"),
+  new BoolArg("formatAttributeTemplateTags", "--format-attribute-template-tags", "1.25"),
   new BoolArg("formatCss", "--format-css", "1.9"),
   new BoolArg("formatJs", "--format-js", "1.9"),
   new BoolArg("keepBrInline", "--keep-br-inline", "1.45"),
@@ -238,11 +218,7 @@ export const formattingArgs = [
   new BoolArg("sortLoadTags", "--sort-load-tags", "1.47"),
   new NumberOrNullArg("indentCss", "--indent-css", "1.25"),
   new NumberOrNullArg("indentJs", "--indent-js", "1.25"),
-  new BoolArg(
-    "lineBreakAfterMultilineTag",
-    "--line-break-after-multiline-tag",
-    "1.27",
-  ),
+  new BoolArg("lineBreakAfterMultilineTag", "--line-break-after-multiline-tag", "1.27"),
   new NumberOrNullArg("maxAttributeLength", "--max-attribute-length", "1.25"),
   new NumberOrNullArg("maxLineLength", "--max-line-length", "1.25"),
   new StringArrayArg("blankLineAfterTag", "--blank-line-after-tag", "1.25"),

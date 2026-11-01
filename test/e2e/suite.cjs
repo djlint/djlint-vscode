@@ -28,20 +28,17 @@ async function waitForDiagnostics(uri) {
 }
 
 async function format(uri) {
-  const edits = await vscode.commands.executeCommand(
-    "vscode.executeFormatDocumentProvider",
-    uri,
-    { insertSpaces: true, tabSize: 2 },
-  );
+  const edits = await vscode.commands.executeCommand("vscode.executeFormatDocumentProvider", uri, {
+    insertSpaces: true,
+    tabSize: 2,
+  });
   return (edits ?? []).map((edit) => edit.newText).join("");
 }
 
 exports.run = async () => {
   const [folder] = vscode.workspace.workspaceFolders;
   const uri = vscode.Uri.joinPath(folder.uri, "templates", "sub", "page.html");
-  await vscode.window.showTextDocument(
-    await vscode.workspace.openTextDocument(uri),
-  );
+  await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(uri));
   await vscode.extensions.getExtension("monosans.djlint").activate();
 
   const [diagnostic] = await waitForDiagnostics(uri);
@@ -54,9 +51,5 @@ exports.run = async () => {
   );
 
   await vscode.commands.executeCommand("djlint.restart");
-  check(
-    "format works after a restart",
-    (await format(uri)).includes(WIDE_INDENT),
-    true,
-  );
+  check("format works after a restart", (await format(uri)).includes(WIDE_INDENT), true);
 };

@@ -1,15 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "eslint",
-    "typescript",
-    "unicorn",
-    "oxc",
-    "import",
-    "jsdoc",
-    "promise",
-    "node"
-  ],
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "jsdoc", "promise", "node"],
   "categories": {
     "correctness": "error",
     "suspicious": "error",
@@ -62,26 +53,13 @@
     "oxc/no-rest-spread-properties": "off",
     "promise/avoid-new": "off",
     "typescript/ban-ts-comment": ["error", { "ts-expect-error": false }],
-    "typescript/explicit-member-accessibility": [
-      "error",
-      { "accessibility": "no-public" }
-    ],
-    "typescript/no-confusing-void-expression": [
-      "error",
-      { "ignoreArrowShorthand": true }
-    ],
-    "typescript/parameter-properties": [
-      "error",
-      { "prefer": "parameter-property" }
-    ],
+    "typescript/explicit-member-accessibility": ["error", { "accessibility": "no-public" }],
+    "typescript/no-confusing-void-expression": ["error", { "ignoreArrowShorthand": true }],
+    "typescript/parameter-properties": ["error", { "prefer": "parameter-property" }],
     "typescript/prefer-readonly-parameter-types": "off",
     "typescript/strict-boolean-expressions": [
       "error",
-      {
-        "allowNullableBoolean": true,
-        "allowNullableNumber": true,
-        "allowNullableString": true
-      }
+      { "allowNullableBoolean": true, "allowNullableNumber": true, "allowNullableString": true }
     ],
     "typescript/use-unknown-in-catch-callback-variable": "off",
     "unicorn/catch-error-name": ["error", { "name": "e" }],
@@ -202,16 +180,10 @@
         "vitest/valid-title": ["error", { "ignoreTypeOfDescribeName": true }]
       }
     },
-    {
-      "files": ["*.config.ts"],
-      "rules": { "import/no-default-export": "off" }
-    },
+    { "files": ["*.config.ts"], "rules": { "import/no-default-export": "off" } },
     {
       "files": ["*.d.ts"],
-      "rules": {
-        "import/no-unassigned-import": "off",
-        "import/unambiguous": "off"
-      }
+      "rules": { "import/no-unassigned-import": "off", "import/unambiguous": "off" }
     }
   ]
 }

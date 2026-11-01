@@ -36,11 +36,7 @@ export function startExtension(
       if (e.affectsConfiguration(`${configSection}.formatLanguages`)) {
         status.refreshLanguages();
       }
-      if (
-        engineSettingKeys.some((key) =>
-          e.affectsConfiguration(`${configSection}.${key}`),
-        )
-      ) {
+      if (engineSettingKeys.some((key) => e.affectsConfiguration(`${configSection}.${key}`))) {
         restart();
       }
     }),

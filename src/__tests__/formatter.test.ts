@@ -58,9 +58,7 @@ describe("provideDocumentFormattingEdits", () => {
   });
 
   it("ends the range at the last line even when that line is empty", async () => {
-    const edits = (await makeFormatter(
-      async () => "",
-    ).provideDocumentFormattingEdits(
+    const edits = (await makeFormatter(async () => "").provideDocumentFormattingEdits(
       makeDocument("/w/t.html", "<p>\n"),
       formattingOptions,
       liveToken(),
@@ -85,9 +83,7 @@ describe("provideDocumentFormattingEdits", () => {
 
   it("yields no edits when cancelled mid-format", async () => {
     const source = new vscode.CancellationTokenSource();
-    const pending = makeFormatter(
-      untilCancelled,
-    ).provideDocumentFormattingEdits(
+    const pending = makeFormatter(untilCancelled).provideDocumentFormattingEdits(
       makeDocument("/w/t.html", UGLY),
       formattingOptions,
       source.token,
@@ -176,10 +172,7 @@ describe("provider registration", () => {
     control.configuration = { formatLanguages: ["html", "django-html"] };
     makeFormatter(async () => "").activate();
     expect(control.formattingProviders).toHaveLength(1);
-    expect(control.formattingProviders[0]?.selector).toStrictEqual([
-      "html",
-      "django-html",
-    ]);
+    expect(control.formattingProviders[0]?.selector).toStrictEqual(["html", "django-html"]);
   });
 
   it("registers nothing for no languages", () => {
@@ -194,9 +187,7 @@ describe("provider registration", () => {
 
     control.configuration = { formatLanguages: ["jinja"] };
     fireWorkspaceEvent("config", changeOf("djlint.formatLanguages"));
-    expect(control.formattingProviders.map((p) => p.selector)).toStrictEqual([
-      ["jinja"],
-    ]);
+    expect(control.formattingProviders.map((p) => p.selector)).toStrictEqual([["jinja"]]);
 
     control.configuration = { formatLanguages: [] };
     fireWorkspaceEvent("config", changeOf("djlint.formatLanguages"));

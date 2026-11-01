@@ -6,9 +6,7 @@ import { EngineManager } from "./engine/select.js";
 import { DjlintStatus } from "./status.js";
 
 export function activate(context: vscode.ExtensionContext): void {
-  const outputChannel = vscode.window.createOutputChannel("djLint", {
-    log: true,
-  });
+  const outputChannel = vscode.window.createOutputChannel("djLint", { log: true });
   const status = new DjlintStatus();
   const { extensionUri } = context;
   const engines = new EngineManager(
@@ -16,15 +14,8 @@ export function activate(context: vscode.ExtensionContext): void {
       new PyodideEngine(
         () =>
           createBrowserWorker(
-            vscode.Uri.joinPath(
-              extensionUri,
-              "dist",
-              "web",
-              "pyodide-worker.js",
-            ).toString(true),
-            vscode.Uri.joinPath(extensionUri, "assets", "pyodide/").toString(
-              true,
-            ),
+            vscode.Uri.joinPath(extensionUri, "dist", "web", "pyodide-worker.js").toString(true),
+            vscode.Uri.joinPath(extensionUri, "assets", "pyodide/").toString(true),
           ),
         outputChannel,
         vscode.workspace.isTrusted,

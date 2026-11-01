@@ -2,13 +2,7 @@
 // every file verified against its sha256, plus the licenses of all of it.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import {
-  copyFileSync,
-  mkdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { download } from "./download.mjs";
@@ -33,9 +27,7 @@ import { pyodideLicenses } from "./pyodide-licenses.mjs";
 const PYTHON_LICENSES = "assets/python-licenses.txt";
 const OUT = "assets/pyodide";
 
-const PYODIDE_DIR = path.dirname(
-  createRequire(import.meta.url).resolve("pyodide/package.json"),
-);
+const PYODIDE_DIR = path.dirname(createRequire(import.meta.url).resolve("pyodide/package.json"));
 const PYODIDE_VERSION =
   /** @type {{ version: string }} */
   (JSON.parse(readFileSync(`${PYODIDE_DIR}/package.json`, "utf8"))).version;
@@ -141,9 +133,7 @@ async function downloadVerified(url, name, expectedSha) {
   const buf = await download(url);
   const actual = sha256(buf);
   if (actual !== expectedSha) {
-    throw new Error(
-      `sha256 mismatch for ${name}: expected ${expectedSha}, got ${actual}`,
-    );
+    throw new Error(`sha256 mismatch for ${name}: expected ${expectedSha}, got ${actual}`);
   }
   writeFileSync(`${OUT}/${name}`, buf);
 }
@@ -156,22 +146,12 @@ async function downloadVerified(url, name, expectedSha) {
 async function downloadPureWheelFromPypi(pkg, { hashes, version }) {
   const meta =
     /** @type {{ urls: { filename: string, url: string, digests: { sha256: string } }[] }} */
-    (
-      JSON.parse(
-        (
-          await download(`https://pypi.org/pypi/${pkg}/${version}/json`)
-        ).toString("utf8"),
-      )
-    );
+    (JSON.parse((await download(`https://pypi.org/pypi/${pkg}/${version}/json`)).toString("utf8")));
   const wheel = meta.urls.find(
-    (u) =>
-      u.filename.endsWith("-py3-none-any.whl") &&
-      hashes.includes(u.digests.sha256),
+    (u) => u.filename.endsWith("-py3-none-any.whl") && hashes.includes(u.digests.sha256),
   );
   if (!wheel) {
-    throw new Error(
-      `no pure-python wheel for ${pkg}==${version} on PyPI matches uv.lock`,
-    );
+    throw new Error(`no pure-python wheel for ${pkg}==${version} on PyPI matches uv.lock`);
   }
   await downloadVerified(wheel.url, wheel.filename, wheel.digests.sha256);
   return { filename: wheel.filename, sha: wheel.digests.sha256 };
@@ -209,9 +189,7 @@ function copyPyodideCore() {
   for (const file of PYODIDE_CORE_FILES) {
     copyFileSync(`${PYODIDE_DIR}/${file}`, `${OUT}/${file}`);
   }
-  return /** @type {Lock} */ (
-    JSON.parse(readFileSync(`${OUT}/pyodide-lock.json`, "utf8"))
-  );
+  return /** @type {Lock} */ (JSON.parse(readFileSync(`${OUT}/pyodide-lock.json`, "utf8")));
 }
 
 /**
@@ -228,15 +206,8 @@ function describePins(pairs) {
  * @param {string} djlintVersion
  * @param {string} python
  */
-function assertPyodideVersionsSatisfyDjlint(
-  closure,
-  shipped,
-  djlintVersion,
-  python,
-) {
-  const skewed = [...shipped].filter(
-    ([name, version]) => closure.get(name)?.version !== version,
-  );
+function assertPyodideVersionsSatisfyDjlint(closure, shipped, djlintVersion, python) {
+  const skewed = [...shipped].filter(([name, version]) => closure.get(name)?.version !== version);
   if (skewed.length === 0) {
     return;
   }
@@ -255,9 +226,7 @@ function assertPyodideVersionsSatisfyDjlint(
       { cause: e },
     );
   }
-  console.log(
-    `verified djLint ${djlintVersion} accepts Pyodide's ${describePins(skewed)}`,
-  );
+  console.log(`verified djLint ${djlintVersion} accepts Pyodide's ${describePins(skewed)}`);
 }
 
 /**
@@ -270,9 +239,7 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
   for (const name of dependencyNames) {
     const shippedVersion = shipped.get(name);
     if (shippedVersion == null) {
-      const pin = /** @type {{ version: string, hashes: string[] }} */ (
-        closure.get(name)
-      );
+      const pin = /** @type {{ version: string, hashes: string[] }} */ (closure.get(name));
       const { filename, sha } = await downloadPureWheelFromPypi(name, pin);
       lock.packages[name] = lockEntry(name, pin.version, filename, sha, []);
       console.log(`+ ${name} ${pin.version} (from PyPI)`);
@@ -323,9 +290,7 @@ const dependencyNames = closure
   .filter((name) => name !== "djlint")
   .toArray()
   .toSorted((a, b) => a.localeCompare(b));
-console.log(
-  `djlint ${djlintVersion}; runtime dependency closure: ${dependencyNames.join(", ")}`,
-);
+console.log(`djlint ${djlintVersion}; runtime dependency closure: ${dependencyNames.join(", ")}`);
 
 /** @type {Pins} */
 const shipped = new Map(
@@ -350,17 +315,11 @@ console.log(`+ djlint ${djlintVersion} (from PyPI)`);
 const packages = Object.fromEntries(
   ["djlint", ...dependencyNames].map((name) => [name, lock.packages[name]]),
 );
-writeFileSync(
-  `${OUT}/pyodide-lock.json`,
-  JSON.stringify({ ...lock, packages }),
-);
+writeFileSync(`${OUT}/pyodide-lock.json`, JSON.stringify({ ...lock, packages }));
 writePythonLicenses(
   Object.values(packages).map((entry) => entry.file_name),
   python,
 );
-writeFileSync(
-  "assets/pyodide-licenses.txt",
-  await pyodideLicenses(PYODIDE_VERSION),
-);
+writeFileSync("assets/pyodide-licenses.txt", await pyodideLicenses(PYODIDE_VERSION));
 
 console.log(`\nassembled offline Pyodide assets in ${OUT}`);

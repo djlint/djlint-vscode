@@ -8,15 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
 import { everySetting } from "../../../__tests__/every-setting.js";
 import {
@@ -47,8 +39,7 @@ import type { RunRequest, WorkerRequest, WorkerResponse } from "../protocol.js";
 const repoRoot = fileURLToPath(new URL("../../../../", import.meta.url));
 const workerPath = path.join(repoRoot, "dist", "pyodide-worker.cjs");
 const indexURL = path.join(repoRoot, "assets", "pyodide");
-const isBuilt =
-  existsSync(workerPath) && existsSync(path.join(indexURL, "pyodide.mjs"));
+const isBuilt = existsSync(workerPath) && existsSync(path.join(indexURL, "pyodide.mjs"));
 
 const TIMEOUT_MS = 120_000;
 
@@ -62,10 +53,7 @@ const ENDLESS = `<div>${"<p>x</p>".repeat(20_000)}</div>`;
 
 const DOCUMENT_PATH = "/w/t.html";
 
-function makeEngine(
-  canReadProjectFiles = true,
-  channel = makeChannel(),
-): PyodideEngine {
+function makeEngine(canReadProjectFiles = true, channel = makeChannel()): PyodideEngine {
   return new PyodideEngine(
     () => createNodeWorker(workerPath, indexURL),
     channel,
@@ -88,10 +76,7 @@ async function settle(pending: Promise<unknown>): Promise<string> {
 }
 
 /** The names `args` send for these settings. */
-function sentNames(
-  args: readonly CliArg[],
-  context: ArgContext,
-): readonly string[] {
+function sentNames(args: readonly CliArg[], context: ArgContext): readonly string[] {
   return args.flatMap((arg) => arg.buildKwarg(context)?.[0] ?? []);
 }
 
@@ -118,12 +103,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     values: Readonly<Record<string, unknown>> = {},
     document = makeDocument(DOCUMENT_PATH, text),
   ): Promise<string> {
-    return engine.format(
-      document,
-      makeConfig(values),
-      formattingOptions,
-      liveToken(),
-    );
+    return engine.format(document, makeConfig(values), formattingOptions, liveToken());
   }
 
   async function lintCodes(
@@ -131,18 +111,12 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     values: Readonly<Record<string, unknown>> = {},
     document = makeDocument(DOCUMENT_PATH, text),
   ): Promise<string[]> {
-    const diagnostics = await engine.lint(
-      document,
-      makeConfig(values),
-      liveToken(),
-    );
+    const diagnostics = await engine.lint(document, makeConfig(values), liveToken());
     return diagnostics.map(({ code }) => code);
   }
 
   it("formats", async () => {
-    await expect(format("<div><p>hi</p></div>")).resolves.toBe(
-      "<div>\n    <p>hi</p>\n</div>\n",
-    );
+    await expect(format("<div><p>hi</p></div>")).resolves.toBe("<div>\n    <p>hi</p>\n</div>\n");
   });
 
   it("lints, with usable positions", async () => {
@@ -221,23 +195,19 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
 
     it("handles a document with the pragma", async () => {
       const pragma = "{# djlint:on #}\n";
-      await expect(
-        format(`${pragma}<div><p>hi</p></div>`, settings),
-      ).resolves.toBe(`${pragma}<div>\n    <p>hi</p>\n</div>\n`);
-      await expect(lintCodes(`${pragma}${DIRTY}`, settings)).resolves.toContain(
-        "H013",
+      await expect(format(`${pragma}<div><p>hi</p></div>`, settings)).resolves.toBe(
+        `${pragma}<div>\n    <p>hi</p>\n</div>\n`,
       );
+      await expect(lintCodes(`${pragma}${DIRTY}`, settings)).resolves.toContain("H013");
     });
   });
 
   describe("settings", () => {
     it("take effect", async () => {
-      await expect(
-        format("<div><p>hi</p></div>", { useEditorIndentation: true }),
-      ).resolves.toBe("<div>\n  <p>hi</p>\n</div>\n");
-      await expect(
-        lintCodes(DIRTY, { ignore: ["H013"] }),
-      ).resolves.not.toContain("H013");
+      await expect(format("<div><p>hi</p></div>", { useEditorIndentation: true })).resolves.toBe(
+        "<div>\n  <p>hi</p>\n</div>\n",
+      );
+      await expect(lintCodes(DIRTY, { ignore: ["H013"] })).resolves.not.toContain("H013");
     });
   });
 
@@ -279,14 +249,11 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     }
 
     const NESTED = "<div><p>hi</p></div>";
-    const indented = (width: number): string =>
-      `<div>\n${" ".repeat(width)}<p>hi</p>\n</div>\n`;
+    const indented = (width: number): string => `<div>\n${" ".repeat(width)}<p>hi</p>\n</div>\n`;
 
     it("reads pyproject.toml beside the document", async () => {
       await write("pyproject.toml", "[tool.djlint]\nindent = 7\n");
-      await expect(
-        format(NESTED, {}, documentIn("t.html", NESTED)),
-      ).resolves.toBe(indented(7));
+      await expect(format(NESTED, {}, documentIn("t.html", NESTED))).resolves.toBe(indented(7));
     });
 
     it("reads pyproject.toml from a folder above the document", async () => {
@@ -300,16 +267,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     it("prefers the nearest project in a monorepo", async () => {
       await write("pyproject.toml", "[tool.djlint]\nindent = 7\n");
       await write("packages/a/pyproject.toml", "[tool.djlint]\nindent = 3\n");
-      await expect(
-        format(NESTED, {}, documentIn("packages/a/t.html", NESTED)),
-      ).resolves.toBe(indented(3));
+      await expect(format(NESTED, {}, documentIn("packages/a/t.html", NESTED))).resolves.toBe(
+        indented(3),
+      );
     });
 
     it("leaves a file the project excludes alone", async () => {
-      await write(
-        "pyproject.toml",
-        '[tool.djlint]\nextend_exclude = "vendor"\n',
-      );
+      await write("pyproject.toml", '[tool.djlint]\nextend_exclude = "vendor"\n');
       await write("vendor/lib/t.html", NESTED);
       const document = documentIn("vendor/lib/t.html", NESTED);
       await expect(format(NESTED, {}, document)).resolves.toBe(NESTED);
@@ -318,13 +282,10 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     });
 
     it("still formats a file beside what the project excludes", async () => {
-      await write(
-        "pyproject.toml",
-        '[tool.djlint]\nextend_exclude = "vendor"\n',
+      await write("pyproject.toml", '[tool.djlint]\nextend_exclude = "vendor"\n');
+      await expect(format(NESTED, {}, documentIn("templates/t.html", NESTED))).resolves.toBe(
+        indented(4),
       );
-      await expect(
-        format(NESTED, {}, documentIn("templates/t.html", NESTED)),
-      ).resolves.toBe(indented(4));
     });
 
     it("leaves a file that .gitignore excludes alone with djlint.useGitignore", async () => {
@@ -332,9 +293,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       await write(".gitignore", "generated/\n");
       await write("generated/t.html", NESTED);
       const document = documentIn("generated/t.html", NESTED);
-      await expect(
-        format(NESTED, { useGitignore: true }, document),
-      ).resolves.toBe(NESTED);
+      await expect(format(NESTED, { useGitignore: true }, document)).resolves.toBe(NESTED);
       await expect(format(NESTED, {}, document)).resolves.toBe(indented(4));
     });
 
@@ -375,11 +334,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       await write("conf/djlint.json", '{ "indent": 5 }\n');
       await write("sub/t.html", NESTED);
       await expect(
-        format(
-          NESTED,
-          { configuration: "conf/djlint.json" },
-          documentIn("sub/t.html", NESTED),
-        ),
+        format(NESTED, { configuration: "conf/djlint.json" }, documentIn("sub/t.html", NESTED)),
       ).resolves.toBe(indented(5));
     });
 
@@ -432,31 +387,18 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
 
     it("reads a virtual document's configuration through VS Code", async () => {
       const uri = vscode.Uri.parse("memfs://repo/app/templates/t.html");
-      control.workspaceFolders = [
-        { uri: vscode.Uri.parse("memfs://repo/app") as never },
-      ];
-      control.files = new Map([
-        ["memfs://repo/app/pyproject.toml", "[tool.djlint]\nindent = 5\n"],
-      ]);
-      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(
-        indented(5),
-      );
+      control.workspaceFolders = [{ uri: vscode.Uri.parse("memfs://repo/app") as never }];
+      control.files = new Map([["memfs://repo/app/pyproject.toml", "[tool.djlint]\nindent = 5\n"]]);
+      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(indented(5));
     });
 
     it("leaves a virtual document the project excludes alone", async () => {
       const uri = vscode.Uri.parse("memfs://repo/app/vendor/t.html");
-      control.workspaceFolders = [
-        { uri: vscode.Uri.parse("memfs://repo/app") as never },
-      ];
+      control.workspaceFolders = [{ uri: vscode.Uri.parse("memfs://repo/app") as never }];
       control.files = new Map([
-        [
-          "memfs://repo/app/pyproject.toml",
-          '[tool.djlint]\nextend_exclude = "vendor"\n',
-        ],
+        ["memfs://repo/app/pyproject.toml", '[tool.djlint]\nextend_exclude = "vendor"\n'],
       ]);
-      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(
-        NESTED,
-      );
+      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(NESTED);
     });
 
     it("imports a rule's python_module afresh on every run, leaving no cache behind", async () => {
@@ -472,23 +414,17 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         "- rule:\n    name: H990\n    message: custom\n    python_module: fresh_rules.rule\n",
       );
       const lint = async (): Promise<string[]> =>
-        lintCodes(
-          "<p>x</p>",
-          { rules: "conf/fresh-rules.yaml" },
-          documentIn("t.html", "<p>x</p>"),
-        );
+        lintCodes("<p>x</p>", { rules: "conf/fresh-rules.yaml" }, documentIn("t.html", "<p>x</p>"));
       await expect(lint()).resolves.toContain("H991");
       await write("fresh_rules/rule.py", rule("H992"));
       await expect(lint()).resolves.toContain("H992");
-      expect(existsSync(path.join(root, "fresh_rules/__pycache__"))).toBe(
-        false,
-      );
+      expect(existsSync(path.join(root, "fresh_rules/__pycache__"))).toBe(false);
     });
 
     it("still works when the document's folder is gone", async () => {
-      await expect(
-        format(NESTED, {}, documentIn("deleted/t.html", NESTED)),
-      ).resolves.toBe(indented(4));
+      await expect(format(NESTED, {}, documentIn("deleted/t.html", NESTED))).resolves.toBe(
+        indented(4),
+      );
     });
   });
 
@@ -504,22 +440,14 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       setTimeout(() => {
         doomed.dispose();
       }, 200);
-      await expect(settle(pending)).resolves.toBe(
-        "rejected: djLint engine disposed",
-      );
+      await expect(settle(pending)).resolves.toBe("rejected: djLint engine disposed");
     });
 
     it("refuses new work once disposed", async () => {
       const doomed = makeEngine();
       doomed.dispose();
       await expect(
-        settle(
-          doomed.lint(
-            makeDocument(DOCUMENT_PATH, "<p>x</p>"),
-            makeConfig(),
-            liveToken(),
-          ),
-        ),
+        settle(doomed.lint(makeDocument(DOCUMENT_PATH, "<p>x</p>"), makeConfig(), liveToken())),
       ).resolves.toMatch(/^rejected:/u);
     });
 
@@ -535,9 +463,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         source.cancel();
       }, 200);
       await expect(settle(pending)).resolves.toMatch(/^rejected:/u);
-      await expect(format("<div><p>hi</p></div>")).resolves.toContain(
-        "<p>hi</p>",
-      );
+      await expect(format("<div><p>hi</p></div>")).resolves.toContain("<p>hi</p>");
     });
 
     it("cancels a request still queued behind another", async () => {
@@ -662,9 +588,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       const linter = new Linter(repositoryContext(), uiChannel, engines);
       linter.activate();
       await expect
-        .poll(() => control.diagnostics.has(document.uri.toString()), {
-          timeout: TIMEOUT_MS,
-        })
+        .poll(() => control.diagnostics.has(document.uri.toString()), { timeout: TIMEOUT_MS })
         .toBe(true);
       await flush();
 

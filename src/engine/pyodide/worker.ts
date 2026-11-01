@@ -21,12 +21,8 @@ interface NodeFilesystems {
 const mountedRoots = new Map<string, string>();
 
 // The mount hands back a link's target as written on the host, which leads nowhere inside it.
-function translateLinks(
-  pyodide: PyodideAPI,
-  toGuest: (target: string) => string,
-): void {
-  const { NODEFS: nodeFilesystem } = pyodide.FS
-    .filesystems as unknown as NodeFilesystems;
+function translateLinks(pyodide: PyodideAPI, toGuest: (target: string) => string): void {
+  const { NODEFS: nodeFilesystem } = pyodide.FS.filesystems as unknown as NodeFilesystems;
   const { readlink } = nodeFilesystem.node_ops;
   nodeFilesystem.node_ops.readlink = (node): string => {
     const target = readlink(node);
@@ -52,10 +48,7 @@ function toGuestPath(pyodide: PyodideAPI, hostPath: string): string {
     }
     mountedRoots.set(root, guestRoot);
   }
-  return path.posix.join(
-    guestRoot,
-    ...path.relative(root, hostPath).split(path.sep),
-  );
+  return path.posix.join(guestRoot, ...path.relative(root, hostPath).split(path.sep));
 }
 
 serve({

@@ -4,9 +4,7 @@ import * as vscode from "vscode";
 const NO_FILENAME = "-";
 
 export function workspaceScopeKey(document: vscode.TextDocument): string {
-  return (
-    vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString() ?? ""
-  );
+  return vscode.workspace.getWorkspaceFolder(document.uri)?.uri.toString() ?? "";
 }
 
 export function directoryScopeKey(document: vscode.TextDocument): string {
@@ -34,35 +32,22 @@ export function deriveStdinFilename(document: vscode.TextDocument): string {
   return relativePath ? relativePath.replaceAll("\\", "/") : NO_FILENAME;
 }
 
-function resolveAgainstWorkspaceRoot(
-  value: string,
-  document: vscode.TextDocument,
-): string {
+function resolveAgainstWorkspaceRoot(value: string, document: vscode.TextDocument): string {
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
-  return folder?.uri.scheme === "file"
-    ? vscode.Uri.joinPath(folder.uri, value).fsPath
-    : value;
+  return folder?.uri.scheme === "file" ? vscode.Uri.joinPath(folder.uri, value).fsPath : value;
 }
 
 function isWrittenAsPath(value: string): boolean {
   return /[\\/]/u.test(value);
 }
 
-export function normalizeConfiguredExecutable(
-  raw: string,
-  document: vscode.TextDocument,
-): string {
+export function normalizeConfiguredExecutable(raw: string, document: vscode.TextDocument): string {
   const exec = raw.trim();
   return exec && isWrittenAsPath(exec) && !path.isAbsolute(exec)
     ? resolveAgainstWorkspaceRoot(exec, document)
     : exec;
 }
 
-export function resolveWorkspaceFilePath(
-  value: string,
-  document: vscode.TextDocument,
-): string {
-  return value && !path.isAbsolute(value)
-    ? resolveAgainstWorkspaceRoot(value, document)
-    : value;
+export function resolveWorkspaceFilePath(value: string, document: vscode.TextDocument): string {
+  return value && !path.isAbsolute(value) ? resolveAgainstWorkspaceRoot(value, document) : value;
 }

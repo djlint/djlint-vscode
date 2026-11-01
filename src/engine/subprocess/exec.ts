@@ -15,8 +15,7 @@ export function isCustomExecaError(e: unknown): e is CustomExecaError {
   return e instanceof ExecaError;
 }
 
-const NO_DJLINT_MODULE_REGEX =
-  /No\s+module\s+named\s+['"]?djlint['"]?(?![\w.])/u;
+const NO_DJLINT_MODULE_REGEX = /No\s+module\s+named\s+['"]?djlint['"]?(?![\w.])/u;
 
 const CANNOT_START: ReadonlySet<string | undefined> = new Set([
   "EACCES",
@@ -26,9 +25,7 @@ const CANNOT_START: ReadonlySet<string | undefined> = new Set([
 ]);
 
 // How a shell, a version manager's shim, or on Windows a venv whose base Python is gone says that a command is not there.
-const COMMAND_NOT_FOUND: ReadonlySet<number | undefined> = new Set([
-  103, 127, 9009,
-]);
+const COMMAND_NOT_FOUND: ReadonlySet<number | undefined> = new Set([103, 127, 9009]);
 
 export function isDjlintUnavailable(e: {
   code?: string | undefined;

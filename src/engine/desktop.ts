@@ -19,8 +19,7 @@ export function createDesktopEngine(
     return new PyodideEngine(
       () =>
         createNodeWorker(
-          vscode.Uri.joinPath(extensionUri, "dist", "pyodide-worker.cjs")
-            .fsPath,
+          vscode.Uri.joinPath(extensionUri, "dist", "pyodide-worker.cjs").fsPath,
           vscode.Uri.joinPath(extensionUri, "assets", "pyodide").fsPath,
         ),
       outputChannel,

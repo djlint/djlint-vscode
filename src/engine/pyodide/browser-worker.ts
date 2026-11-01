@@ -3,10 +3,7 @@ import type { WorkerData, WorkerRequest, WorkerResponse } from "./protocol.js";
 
 interface BrowserWorkerHandle {
   addEventListener: {
-    (
-      type: "message",
-      listener: (event: { data: WorkerResponse }) => void,
-    ): void;
+    (type: "message", listener: (event: { data: WorkerResponse }) => void): void;
     (type: "error", listener: (event: { message: string }) => void): void;
   };
   postMessage: (message: WorkerData | WorkerRequest) => void;
@@ -15,10 +12,7 @@ interface BrowserWorkerHandle {
 
 declare const Worker: new (url: string) => BrowserWorkerHandle;
 
-export function createBrowserWorker(
-  workerUrl: string,
-  indexURL: string,
-): RuntimeWorker {
+export function createBrowserWorker(workerUrl: string, indexURL: string): RuntimeWorker {
   const worker = new Worker(workerUrl);
   worker.postMessage({ indexURL });
   return {

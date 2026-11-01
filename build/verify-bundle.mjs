@@ -48,21 +48,14 @@ for (const required of RUNTIME_FILES) {
 }
 
 function assertBundledDjlintIsPinnedVersion() {
-  const pinned = /"djlint==(?<version>[^"]+)"/u.exec(
-    readFileSync("pyproject.toml", "utf8"),
-  )?.groups?.["version"];
+  const pinned = /"djlint==(?<version>[^"]+)"/u.exec(readFileSync("pyproject.toml", "utf8"))
+    ?.groups?.["version"];
   const lock =
     /** @type {{ packages: Record<string, { version: string }> }} */
-    (
-      JSON.parse(
-        readFileSync(path.join(INDEX_URL, "pyodide-lock.json"), "utf8"),
-      )
-    );
+    (JSON.parse(readFileSync(path.join(INDEX_URL, "pyodide-lock.json"), "utf8")));
   const bundled = lock.packages["djlint"].version;
   if (bundled !== pinned) {
-    throw new Error(
-      `bundled djLint is ${bundled}, but pyproject.toml pins ${pinned}`,
-    );
+    throw new Error(`bundled djLint is ${bundled}, but pyproject.toml pins ${pinned}`);
   }
   console.log(`ok   bundled djLint is the pinned ${pinned}`);
 }
@@ -176,10 +169,7 @@ const H013 = [
 // First, while the worker has yet to import the modules djLint imports late.
 const shadowing = mkdtempSync(path.join(tmpdir(), "djlint-shadowing-"));
 try {
-  writeFileSync(
-    path.join(shadowing, "html.py"),
-    'def unescape(text):\n    return "replaced"\n',
-  );
+  writeFileSync(path.join(shadowing, "html.py"), 'def unescape(text):\n    return "replaced"\n');
   expect(
     "a project's module does not replace the standard library's",
     await call("format", "<div>&copy;</div>", { cwd: shadowing }),
@@ -205,22 +195,18 @@ expect(
 
 expect(
   "format accepts the djLint 1.45 options and sorts attributes",
-  await call(
-    "format",
-    '<div><img src="x.png" class="a" id="b" alt="x"></div>',
-    {
-      options: {
-        indent: 2,
-        keep_br_inline: true,
-        name_endblocks: true,
-        no_entity_formatting: true,
-        no_indent_inner_html: true,
-        profile: "django",
-        quote_style: "double",
-        sort_attributes: true,
-      },
+  await call("format", '<div><img src="x.png" class="a" id="b" alt="x"></div>', {
+    options: {
+      indent: 2,
+      keep_br_inline: true,
+      name_endblocks: true,
+      no_entity_formatting: true,
+      no_indent_inner_html: true,
+      profile: "django",
+      quote_style: "double",
+      sort_attributes: true,
     },
-  ),
+  }),
   '<div>\n  <img id="b" class="a" alt="x" src="x.png">\n</div>\n',
 );
 
@@ -235,17 +221,11 @@ expect(
   "<div>\n   <p>hi</p>\n</div>\n",
 );
 
-expect(
-  "lint reports the expected violation",
-  JSON.parse(await call("lint", IMG)),
-  H013,
-);
+expect("lint reports the expected violation", JSON.parse(await call("lint", IMG)), H013);
 
 expect(
   "require_pragma leaves a file without the pragma alone",
-  await call("format", "<div><p>hi</p></div>", {
-    options: { require_pragma: true },
-  }),
+  await call("format", "<div><p>hi</p></div>", { options: { require_pragma: true } }),
   "<div><p>hi</p></div>",
 );
 
@@ -283,9 +263,7 @@ try {
   );
   expect(
     "the configuration option takes a path on the host",
-    JSON.parse(
-      await call("lint", IMG, { pathOptions: { configuration: global } }),
-    ),
+    JSON.parse(await call("lint", IMG, { pathOptions: { configuration: global } })),
     [],
   );
 
@@ -295,18 +273,12 @@ try {
   try {
     expect(
       "the configuration is found through a linked folder",
-      await call("format", "<div><p>hi</p>\n</div>", {
-        cwd: path.join(linkedFolder, "templates"),
-      }),
+      await call("format", "<div><p>hi</p>\n</div>", { cwd: path.join(linkedFolder, "templates") }),
       "<div>\n       <p>hi</p>\n</div>\n",
     );
     expect(
       "the configuration option takes a path through a linked folder",
-      JSON.parse(
-        await call("lint", IMG, {
-          pathOptions: { configuration: linkedConfiguration },
-        }),
-      ),
+      JSON.parse(await call("lint", IMG, { pathOptions: { configuration: linkedConfiguration } })),
       [],
     );
   } finally {
@@ -334,16 +306,7 @@ try {
   expect(
     "a custom rule's python_module runs, with its line 0 made line 1",
     JSON.parse(await call("lint", "<div>text</div>", { cwd: folder })),
-    [
-      {
-        code: "T9001",
-        column: 0,
-        endColumn: 0,
-        endLine: 1,
-        line: 1,
-        message: "From a module",
-      },
-    ],
+    [{ code: "T9001", column: 0, endColumn: 0, endLine: 1, line: 1, message: "From a module" }],
   );
   expect(
     "a python_module rule is skipped, not fatal, in a project handed over",
@@ -380,20 +343,14 @@ if (process.platform !== "win32") {
     mkdirSync(real);
     mkdirSync(path.join(linking, ".git"), { recursive: true });
     writeFileSync(path.join(real, "djlint.toml"), "indent = 7\n");
-    symlinkSync(
-      path.join(real, "djlint.toml"),
-      path.join(linking, "djlint.toml"),
-    );
+    symlinkSync(path.join(real, "djlint.toml"), path.join(linking, "djlint.toml"));
     expect(
       "a configuration file that is a link is read",
       await call("format", "<div><p>hi</p>\n</div>", { cwd: linking }),
       "<div>\n       <p>hi</p>\n</div>\n",
     );
     rmSync(path.join(linking, "djlint.toml"));
-    symlinkSync(
-      path.join("..", "real", "djlint.toml"),
-      path.join(linking, "djlint.toml"),
-    );
+    symlinkSync(path.join("..", "real", "djlint.toml"), path.join(linking, "djlint.toml"));
     expect(
       "a configuration file that is a relative link is read",
       await call("format", "<div><p>hi</p>\n</div>", { cwd: linking }),

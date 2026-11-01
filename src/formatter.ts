@@ -48,12 +48,7 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
 
     let stdout: string;
     try {
-      stdout = await this.#engines.engine.format(
-        document,
-        config,
-        options,
-        source.token,
-      );
+      stdout = await this.#engines.engine.format(document, config, options, source.token);
     } catch {
       return void 0;
     } finally {

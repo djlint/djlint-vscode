@@ -10,8 +10,7 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
 
 const installDocsUrl = "https://djlint.com/docs/getting-started/";
 
-const NO_SUCH_OPTION_REGEX =
-  /No\s+such\s+option[:\s]\s*['"]?(?<option>--[\w-]+)/u;
+const NO_SUCH_OPTION_REGEX = /No\s+such\s+option[:\s]\s*['"]?(?<option>--[\w-]+)/u;
 
 function summarize(e: CustomExecaError): string {
   const reason = lastLine(e.stderr);
@@ -29,26 +28,17 @@ function summarize(e: CustomExecaError): string {
     : `djLint was stopped by ${e.signal}.`;
 }
 
-export function isValidLintResult(
-  e: CustomExecaError,
-  isLint: boolean,
-): boolean {
+export function isValidLintResult(e: CustomExecaError, isLint: boolean): boolean {
   return (
     isLint &&
     e.exitCode === 1 &&
-    (e.stdout.trim() !== "" ||
-      /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr))
+    (e.stdout.trim() !== "" || /(?:^$|Linting\s+\d+\/\d+\s+files)/u.test(e.stderr))
   );
 }
 
-export function checkErrors(
-  e: CustomExecaError,
-  outputChannel: vscode.LogOutputChannel,
-): never {
+export function checkErrors(e: CustomExecaError, outputChannel: vscode.LogOutputChannel): never {
   const rejectedOption =
-    e.exitCode == null
-      ? void 0
-      : NO_SUCH_OPTION_REGEX.exec(e.stderr)?.groups?.["option"];
+    e.exitCode == null ? void 0 : NO_SUCH_OPTION_REGEX.exec(e.stderr)?.groups?.["option"];
   const arg = rejectedOption == null ? void 0 : argsMap.get(rejectedOption);
 
   outputChannel.error(e);

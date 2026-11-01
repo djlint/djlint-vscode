@@ -6,9 +6,7 @@ import { CommandResolver } from "../engine/subprocess/resolve.js";
 import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../engine/types.js";
 
-function makeDeps(
-  probe: ResolveDjlintCommandDeps["probe"],
-): ResolveDjlintCommandDeps {
+function makeDeps(probe: ResolveDjlintCommandDeps["probe"]): ResolveDjlintCommandDeps {
   return {
     activeEnvironment: null,
     executablePath: "/bin/djlint",
@@ -40,10 +38,7 @@ describe(CommandResolver, () => {
     const lint = resolver.resolve(deps, "ws", "dir");
     gate.resolve(void 0);
     const results = await Promise.all([format, lint]);
-    expect(results.map(({ exec }) => exec)).toStrictEqual([
-      "/bin/djlint",
-      "/bin/djlint",
-    ]);
+    expect(results.map(({ exec }) => exec)).toStrictEqual(["/bin/djlint", "/bin/djlint"]);
     expect(probes).toBe(1);
   });
 
@@ -102,10 +97,7 @@ describe(CommandResolver, () => {
 
   it("does not share a resolution across an invalidation", async () => {
     const resolver = new CommandResolver();
-    const gates = [
-      Promise.withResolvers<string>(),
-      Promise.withResolvers<string>(),
-    ];
+    const gates = [Promise.withResolvers<string>(), Promise.withResolvers<string>()];
     let calls = 0;
     const deps = makeDeps(async () => {
       calls += 1;
@@ -118,9 +110,7 @@ describe(CommandResolver, () => {
     await stale;
     gates[1]?.resolve("2.0");
     await expect(fresh).resolves.toMatchObject({ version: "2.0" });
-    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({
-      version: "2.0",
-    });
+    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({ version: "2.0" });
     expect(calls).toBe(2);
   });
 

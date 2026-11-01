@@ -1,9 +1,6 @@
 import { isDeepStrictEqual } from "node:util";
 import { EXTENSION_ID as pythonEnvironmentsExtensionId } from "@vscode/python-environments";
-import type {
-  PythonEnvironment,
-  PythonEnvironmentApi,
-} from "@vscode/python-environments";
+import type { PythonEnvironment, PythonEnvironmentApi } from "@vscode/python-environments";
 import {
   PythonExtension as PythonExtensionApi,
   PVSC_EXTENSION_ID as pythonExtensionId,
@@ -25,9 +22,7 @@ export interface PythonEnvironmentDetails {
 }
 
 interface EnvironmentProvider {
-  getActiveEnvironment: (
-    uri: vscode.Uri | undefined,
-  ) => Promise<PythonEnvironmentDetails | null>;
+  getActiveEnvironment: (uri: vscode.Uri | undefined) => Promise<PythonEnvironmentDetails | null>;
 }
 
 function environmentScopeKey(uri: vscode.Uri | undefined): string {
@@ -44,9 +39,7 @@ function toPythonEnvironmentsDetails(
   return { command: { args: run.args ?? [], executable: run.executable } };
 }
 
-function toClassicEnvironmentDetails(
-  environment: ResolvedEnvironment,
-): PythonEnvironmentDetails {
+function toClassicEnvironmentDetails(environment: ResolvedEnvironment): PythonEnvironmentDetails {
   const executable = environment.executable.uri?.fsPath;
   return { command: executable == null ? null : { args: [], executable } };
 }
@@ -78,15 +71,12 @@ export class PythonEnvironments implements vscode.Disposable {
     );
   }
 
-  async getActive(
-    uri: vscode.Uri | undefined,
-  ): Promise<PythonEnvironmentDetails | null> {
+  async getActive(uri: vscode.Uri | undefined): Promise<PythonEnvironmentDetails | null> {
     if (this.#isStalled) {
       return null;
     }
     const lookup = this.#lookUp(uri);
-    const { promise: timedOut, resolve } =
-      Promise.withResolvers<typeof STALLED>();
+    const { promise: timedOut, resolve } = Promise.withResolvers<typeof STALLED>();
     const timer = setTimeout(() => {
       resolve(STALLED);
     }, ENVIRONMENT_TIMEOUT_MS);
@@ -124,9 +114,7 @@ export class PythonEnvironments implements vscode.Disposable {
     this.#disposables.length = 0;
   }
 
-  async #lookUp(
-    uri: vscode.Uri | undefined,
-  ): Promise<PythonEnvironmentDetails | null> {
+  async #lookUp(uri: vscode.Uri | undefined): Promise<PythonEnvironmentDetails | null> {
     try {
       this.#provider ??= this.#activateProvider();
       const provider = await this.#provider;
@@ -151,9 +139,9 @@ export class PythonEnvironments implements vscode.Disposable {
   }
 
   async #activatePythonEnvironmentsExtension(): Promise<EnvironmentProvider | null> {
-    const extension = vscode.extensions.getExtension<
-      PythonEnvironmentApi | undefined
-    >(pythonEnvironmentsExtensionId);
+    const extension = vscode.extensions.getExtension<PythonEnvironmentApi | undefined>(
+      pythonEnvironmentsExtensionId,
+    );
     if (extension == null) {
       this.#outputChannel.info(
         "The Python Environments extension is not installed or is disabled.",
@@ -163,9 +151,7 @@ export class PythonEnvironments implements vscode.Disposable {
 
     this.#outputChannel.info("Initializing the Python Environments extension");
     try {
-      const api = extension.isActive
-        ? extension.exports
-        : await extension.activate();
+      const api = extension.isActive ? extension.exports : await extension.activate();
       if (api == null) {
         this.#outputChannel.info(
           "The Python Environments extension exports no API; it is disabled by python.useEnvironmentsExtension.",
@@ -178,16 +164,12 @@ export class PythonEnvironments implements vscode.Disposable {
       );
       return provider;
     } catch (e) {
-      this.#outputChannel.warn(
-        `The Python Environments extension is not available: ${String(e)}`,
-      );
+      this.#outputChannel.warn(`The Python Environments extension is not available: ${String(e)}`);
       return null;
     }
   }
 
-  #createPythonEnvironmentsProvider(
-    api: PythonEnvironmentApi,
-  ): EnvironmentProvider {
+  #createPythonEnvironmentsProvider(api: PythonEnvironmentApi): EnvironmentProvider {
     const lastSeen = new Map<string, PythonEnvironmentDetails | null>();
 
     this.#disposables.push(
@@ -196,8 +178,7 @@ export class PythonEnvironments implements vscode.Disposable {
         const previous = toPythonEnvironmentsDetails(event.old);
         const key = environmentScopeKey(event.uri);
         const isUnchanged =
-          isDeepStrictEqual(lastSeen.get(key), details) ||
-          isDeepStrictEqual(previous, details);
+          isDeepStrictEqual(lastSeen.get(key), details) || isDeepStrictEqual(previous, details);
         lastSeen.set(key, details);
         if (isUnchanged) {
           this.#outputChannel.debug(
@@ -228,25 +209,17 @@ export class PythonEnvironments implements vscode.Disposable {
 
   async #activateClassicPythonExtension(): Promise<EnvironmentProvider | null> {
     if (vscode.extensions.getExtension(pythonExtensionId) == null) {
-      this.#outputChannel.info(
-        "The Python extension is not installed or is disabled.",
-      );
+      this.#outputChannel.info("The Python extension is not installed or is disabled.");
       return null;
     }
 
     this.#outputChannel.info("Initializing the Python extension");
     try {
-      const provider = this.#createClassicPythonProvider(
-        await PythonExtensionApi.api(),
-      );
-      this.#outputChannel.info(
-        "Using the Python extension for Python environment detection",
-      );
+      const provider = this.#createClassicPythonProvider(await PythonExtensionApi.api());
+      this.#outputChannel.info("Using the Python extension for Python environment detection");
       return provider;
     } catch (e) {
-      this.#outputChannel.warn(
-        `The Python extension is not available: ${String(e)}`,
-      );
+      this.#outputChannel.warn(`The Python extension is not available: ${String(e)}`);
       return null;
     }
   }
@@ -264,9 +237,7 @@ export class PythonEnvironments implements vscode.Disposable {
       const environment = await api.environments.resolveEnvironment(
         api.environments.getActiveEnvironmentPath(uri),
       );
-      return environment == null
-        ? null
-        : toClassicEnvironmentDetails(environment);
+      return environment == null ? null : toClassicEnvironmentDetails(environment);
     }
 
     return { getActiveEnvironment };

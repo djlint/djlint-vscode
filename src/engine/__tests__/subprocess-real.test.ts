@@ -6,16 +6,7 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 import { execa } from "execa";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import { everySetting } from "../../__tests__/every-setting.js";
 import {
@@ -37,81 +28,70 @@ const installed = await execa("djlint", ["--version"], { reject: false });
 
 const DIRTY = `<div><img src="x.png"></div>`;
 
-describe.skipIf(installed.failed)(
-  "the installed djLint",
-  { timeout: 60_000 },
-  () => {
-    let root: string;
-    let document: vscode.TextDocument;
-    let engine: SubprocessEngine;
+describe.skipIf(installed.failed)("the installed djLint", { timeout: 60_000 }, () => {
+  let root: string;
+  let document: vscode.TextDocument;
+  let engine: SubprocessEngine;
 
-    beforeAll(async () => {
-      // Where this is set, djLint prints GitHub annotations whatever output format it is told.
-      vi.stubEnv("GITHUB_ACTIONS", "");
-      root = await mkdtemp(path.join(os.tmpdir(), "djlint-subprocess-"));
-      await writeFile(path.join(root, "t.html"), DIRTY);
-    });
+  beforeAll(async () => {
+    // Where this is set, djLint prints GitHub annotations whatever output format it is told.
+    vi.stubEnv("GITHUB_ACTIONS", "");
+    root = await mkdtemp(path.join(os.tmpdir(), "djlint-subprocess-"));
+    await writeFile(path.join(root, "t.html"), DIRTY);
+  });
 
-    beforeEach(() => {
-      resetVscode();
-      setWorkspaceFolders(root);
-      document = makeDocument(
-        vscode.Uri.file(path.join(root, "t.html")),
-        DIRTY,
-      );
-      engine = new SubprocessEngine(
-        makeChannel(),
-        makePythonEnvironments().environments,
-        makeStatus(),
-      );
-    });
+  beforeEach(() => {
+    resetVscode();
+    setWorkspaceFolders(root);
+    document = makeDocument(vscode.Uri.file(path.join(root, "t.html")), DIRTY);
+    engine = new SubprocessEngine(
+      makeChannel(),
+      makePythonEnvironments().environments,
+      makeStatus(),
+    );
+  });
 
-    afterEach(() => {
-      engine.dispose();
-    });
+  afterEach(() => {
+    engine.dispose();
+  });
 
-    afterAll(async () => {
-      vi.unstubAllEnvs();
-      await rm(root, { force: true, maxRetries: 5, recursive: true });
-    });
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, maxRetries: 5, recursive: true });
+  });
 
-    it("formats, with the document's final newline left to djLint", async () => {
-      await expect(
-        engine.format(document, makeConfig(), formattingOptions, liveToken()),
-      ).resolves.toBe(`<div>\n    <img src="x.png">\n</div>\n`);
-    });
+  it("formats, with the document's final newline left to djLint", async () => {
+    await expect(
+      engine.format(document, makeConfig(), formattingOptions, liveToken()),
+    ).resolves.toBe(`<div>\n    <img src="x.png">\n</div>\n`);
+  });
 
-    it("returns findings despite the exit code", async () => {
-      await expect(
-        engine.lint(document, makeConfig(), liveToken()),
-      ).resolves.toMatchObject([{ code: "H013", column: 5, line: 1 }]);
-      expect(control.shownErrors).toStrictEqual([]);
-    });
+  it("returns findings despite the exit code", async () => {
+    await expect(engine.lint(document, makeConfig(), liveToken())).resolves.toMatchObject([
+      { code: "H013", column: 5, line: 1 },
+    ]);
+    expect(control.shownErrors).toStrictEqual([]);
+  });
 
-    it("takes every format flag at once", async () => {
-      await expect(
-        engine.format(
-          document,
-          makeConfig(everySetting(formattingArgs)),
-          formattingOptions,
-          liveToken(),
-        ),
-      ).resolves.toContain("<img");
-      expect(control.shownErrors).toStrictEqual([]);
-    });
+  it("takes every format flag at once", async () => {
+    await expect(
+      engine.format(
+        document,
+        makeConfig(everySetting(formattingArgs)),
+        formattingOptions,
+        liveToken(),
+      ),
+    ).resolves.toContain("<img");
+    expect(control.shownErrors).toStrictEqual([]);
+  });
 
-    it("takes every lint flag at once", async () => {
-      await expect(
-        engine.lint(
-          document,
-          makeConfig(everySetting(lintingArgs)),
-          liveToken(),
-        ),
-      ).resolves.toBeInstanceOf(Array);
-      expect(control.shownErrors).toStrictEqual([]);
-    });
-  },
-);
+  it("takes every lint flag at once", async () => {
+    await expect(
+      engine.lint(document, makeConfig(everySetting(lintingArgs)), liveToken()),
+    ).resolves.toBeInstanceOf(Array);
+    expect(control.shownErrors).toStrictEqual([]);
+  });
+});
 
 describe("a command that is not there", () => {
   const absolute = path.join(os.tmpdir(), "djlint no such folder");
@@ -130,26 +110,23 @@ describe("a command that is not there", () => {
   it.each([
     ["no-such-djlint", "no-such-python"],
     [path.join(absolute, "djlint"), path.join(absolute, "python")],
-  ])(
-    "is passed over for what comes next: %s",
-    async (executablePath, pythonPath) => {
-      resetVscode();
-      setWorkspaceFolders(root);
-      const engine = new SubprocessEngine(
-        makeChannel(),
-        makePythonEnvironments().environments,
-        makeStatus(),
-      );
-      await expect(
-        engine.lint(
-          makeDocument(vscode.Uri.file(path.join(root, "t.html"))),
-          makeConfig({ executablePath, pythonPath }),
-          liveToken(),
-        ),
-      ).rejects.toBeInstanceOf(DjlintUnavailableError);
-      expect(control.shownErrors).toStrictEqual([]);
-    },
-  );
+  ])("is passed over for what comes next: %s", async (executablePath, pythonPath) => {
+    resetVscode();
+    setWorkspaceFolders(root);
+    const engine = new SubprocessEngine(
+      makeChannel(),
+      makePythonEnvironments().environments,
+      makeStatus(),
+    );
+    await expect(
+      engine.lint(
+        makeDocument(vscode.Uri.file(path.join(root, "t.html"))),
+        makeConfig({ executablePath, pythonPath }),
+        liveToken(),
+      ),
+    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    expect(control.shownErrors).toStrictEqual([]);
+  });
 });
 
 describe.runIf(process.platform === "win32")("a Windows wrapper", () => {
@@ -198,50 +175,42 @@ if [ "$1" = "--version" ]; then
 fi
 `;
 
-describe.skipIf(process.platform === "win32")(
-  "a version manager's shim",
-  () => {
-    let root: string;
+describe.skipIf(process.platform === "win32")("a version manager's shim", () => {
+  let root: string;
 
-    beforeAll(async () => {
-      root = await mkdtemp(path.join(os.tmpdir(), "djlint-shim-"));
-      await mkdir(path.join(root, "bin"));
-      await writeFile(path.join(root, "bin", "djlint"), SHIM);
-      await chmod(path.join(root, "bin", "djlint"), 0o755);
-      await Promise.all(
-        ["1.30.0", "1.48.0"].map(async (version) => {
-          await mkdir(path.join(root, version));
-          await writeFile(path.join(root, version, ".python-version"), version);
-        }),
-      );
-      vi.stubEnv(
-        "PATH",
-        `${path.join(root, "bin")}${path.delimiter}${process.env["PATH"] ?? ""}`,
-      );
-    });
+  beforeAll(async () => {
+    root = await mkdtemp(path.join(os.tmpdir(), "djlint-shim-"));
+    await mkdir(path.join(root, "bin"));
+    await writeFile(path.join(root, "bin", "djlint"), SHIM);
+    await chmod(path.join(root, "bin", "djlint"), 0o755);
+    await Promise.all(
+      ["1.30.0", "1.48.0"].map(async (version) => {
+        await mkdir(path.join(root, version));
+        await writeFile(path.join(root, version, ".python-version"), version);
+      }),
+    );
+    vi.stubEnv("PATH", `${path.join(root, "bin")}${path.delimiter}${process.env["PATH"] ?? ""}`);
+  });
 
-    afterAll(async () => {
-      vi.unstubAllEnvs();
-      await rm(root, { force: true, recursive: true });
-    });
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, recursive: true });
+  });
 
-    it("gets the version it picks in each folder", async () => {
-      resetVscode();
-      setWorkspaceFolders(root);
-      const status = makeStatus();
-      const engine = new SubprocessEngine(
-        makeChannel(),
-        makePythonEnvironments().environments,
-        status,
-      );
-      for (const version of ["1.30.0", "1.48.0"]) {
-        const document = makeDocument(
-          vscode.Uri.file(path.join(root, version, "t.html")),
-        );
-        // oxlint-disable-next-line no-await-in-loop -- the order is the point
-        await engine.lint(document, makeConfig(), liveToken());
-        expect(vi.mocked(status.update).mock.lastCall?.[1]).toBe(version);
-      }
-    });
-  },
-);
+  it("gets the version it picks in each folder", async () => {
+    resetVscode();
+    setWorkspaceFolders(root);
+    const status = makeStatus();
+    const engine = new SubprocessEngine(
+      makeChannel(),
+      makePythonEnvironments().environments,
+      status,
+    );
+    for (const version of ["1.30.0", "1.48.0"]) {
+      const document = makeDocument(vscode.Uri.file(path.join(root, version, "t.html")));
+      // oxlint-disable-next-line no-await-in-loop -- the order is the point
+      await engine.lint(document, makeConfig(), liveToken());
+      expect(vi.mocked(status.update).mock.lastCall?.[1]).toBe(version);
+    }
+  });
+});

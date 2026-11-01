@@ -25,9 +25,7 @@ vi.mock("node:worker_threads", async () => {
   return { Worker };
 });
 
-vi.mock("which-command", () => ({
-  whichCommand: async (command: string) => command,
-}));
+vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn<typeof import("execa").execa>(),
@@ -107,8 +105,7 @@ describe(EngineManager, () => {
     await flush();
     const worker = FakeWorker.latest;
     expect(worker.path).toBe(
-      Uri.file(path.posix.join(extensionPath, "dist/pyodide-worker.cjs"))
-        .fsPath,
+      Uri.file(path.posix.join(extensionPath, "dist/pyodide-worker.cjs")).fsPath,
     );
     expect(worker.options.workerData.indexURL).toBe(
       Uri.file(path.posix.join(extensionPath, "assets/pyodide")).fsPath,
