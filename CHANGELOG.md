@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.49.1.
 - Add `djlint.lintOnType`, on by default: with `djlint.enableLinting`, findings update after a short pause in typing, as well as on opening and saving. Findings no longer sit at the positions of the older text until the next save.
 - Move the link to the language server's docs, which are part of Integrations now.
 - Give the bundled djLint the absolute path of a file, as the command line and the language server have it, so `per-file-ignores` and rule modules see the same path.
