@@ -1,6 +1,6 @@
 import path from "node:path";
 import * as vscode from "vscode";
-import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
+import { buildOptions, type ArgContext } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";
 import { deriveStdinFilename } from "../../paths.js";
 import type { DjlintStatus } from "../../status.js";
@@ -32,28 +32,6 @@ interface Pending {
   stopListening: () => void;
   reject: (reason: Error) => void;
   resolve: (output: string) => void;
-}
-
-function buildOptions(
-  context: ArgContext,
-  mode: DjlintMode,
-): Pick<RunRequest, "options" | "pathOptions"> {
-  const options: RunRequest["options"] = {};
-  const pathOptions: RunRequest["pathOptions"] = {};
-  const args = mode === "format" ? formattingArgs : lintingArgs;
-  for (const arg of args) {
-    const kwarg = arg.buildKwarg(context);
-    if (kwarg == null) {
-      continue;
-    }
-    const [name, value] = kwarg;
-    if (!arg.isPath) {
-      options[name] = value;
-    } else if (typeof value === "string") {
-      pathOptions[name] = value;
-    }
-  }
-  return { options, pathOptions };
 }
 
 type ProjectLocation = Pick<RunRequest, "cwd" | "pathOptions" | "project">;

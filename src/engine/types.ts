@@ -11,6 +11,8 @@ export interface LintDiagnostic {
   column: number;
   endLine?: number;
   endColumn?: number;
+  /** The columns count UTF-16 code units, as the editor does, instead of characters. */
+  isUtf16?: boolean;
   code: string;
   message: string;
 }

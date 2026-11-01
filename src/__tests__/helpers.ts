@@ -58,6 +58,10 @@ export function makeDocument(
   const lines = text.split("\n");
   return {
     getText: () => text,
+    offsetAt: ({ character, line }: vscode.Position) =>
+      lines.slice(0, line).reduce((sum, item) => sum + item.length + 1, 0) +
+      character,
+    languageId: "html",
     lineAt: (line: number) => ({ text: lines[line] ?? "" }),
     lineCount: lines.length,
     uri: typeof location === "string" ? vscode.Uri.file(location) : location,

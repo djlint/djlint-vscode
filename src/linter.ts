@@ -40,13 +40,15 @@ function toRange(
   const line = d.line - 1;
   const { text } =
     line < document.lineCount ? document.lineAt(line) : { text: "" };
-  const start = toEditorColumn(text, d.column);
+  function toColumn(column: number): number {
+    return d.isUtf16 ? column : toEditorColumn(text, column);
+  }
+  const start = toColumn(d.column);
   if (d.endLine == null || d.endColumn == null) {
     return new vscode.Range(line, start, line, start);
   }
   // A finding over several lines is underlined on its first: a block in red says less than its tag.
-  const end =
-    d.endLine === d.line ? toEditorColumn(text, d.endColumn) : text.length;
+  const end = d.endLine === d.line ? toColumn(d.endColumn) : text.length;
   return new vscode.Range(line, start, line, Math.max(start, end));
 }
 

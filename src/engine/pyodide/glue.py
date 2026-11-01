@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from djlint.api import format_text, lint_text, load_config
+from djlint.api import format_text, is_excluded, lint_text, load_config
 
 # A project's rule module leaves no __pycache__ behind in the project.
 sys.dont_write_bytecode = True
@@ -75,6 +75,10 @@ def run(mode, src, options, path_options, filename, cwd, project):
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
     _report_skipped_rules(config)
+    # `filename` is relative to the workspace, and `folder` is the document's own.
+    name = filename if folder == _HOME else Path(filename).name
+    if is_excluded(config, Path(folder, name)):
+        return src if mode == "format" else "[]"
     if mode == "format":
         return format_text(config, src)
     # A rule module can count lines from zero.

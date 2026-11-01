@@ -8,6 +8,7 @@ import process from "node:process";
 import { execa } from "execa";
 import {
   afterAll,
+  afterEach,
   beforeAll,
   beforeEach,
   describe,
@@ -51,9 +52,13 @@ describe.skipIf(installed.failed)(
       await writeFile(path.join(root, "t.html"), DIRTY);
     });
 
+    afterEach(() => {
+      engine.dispose();
+    });
+
     afterAll(async () => {
       vi.unstubAllEnvs();
-      await rm(root, { force: true, recursive: true });
+      await rm(root, { force: true, maxRetries: 5, recursive: true });
     });
 
     beforeEach(() => {

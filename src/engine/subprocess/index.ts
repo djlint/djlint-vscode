@@ -4,7 +4,12 @@ import process from "node:process";
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { whichCommand } from "which-command";
-import { formattingArgs, lintingArgs, type ArgContext } from "../../args.js";
+import {
+  buildOptions,
+  formattingArgs,
+  lintingArgs,
+  type ArgContext,
+} from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import { showFailure } from "../../notify.js";
 import {
@@ -35,9 +40,19 @@ import {
   type ProbeResult,
   type RunnerCommand,
 } from "./resolve.js";
-import { parseDjlintVersion, selectSupportedArgs } from "./version.js";
+import {
+  DjlintServer,
+  ServerResponseError,
+  type ServerSettings,
+} from "./server.js";
+import {
+  isVersionAtLeast,
+  parseDjlintVersion,
+  selectSupportedArgs,
+} from "./version.js";
 
 const PROBE_TIMEOUT_MS = 10_000;
+const LANGUAGE_SERVER_MIN_VERSION = "1.49";
 
 // A custom rule's python_module used to be found because djLint ran from the workspace root whenever these two were set.
 function moduleSearchEnv({
@@ -160,6 +175,8 @@ async function probeExecutable(
 
 export class SubprocessEngine implements DjlintEngine {
   readonly #resolver = new CommandResolver();
+  readonly #servers = new Map<string, DjlintServer>();
+  readonly #brokenServers = new Set<string>();
   readonly #loggedCommands = new Set<string>();
   readonly #loggedWarnings = new Set<string>();
   readonly #warnedSkippedArgs = new Set<string>();
@@ -179,6 +196,7 @@ export class SubprocessEngine implements DjlintEngine {
     this.#status = status;
     this.#environmentChange = pythonEnvironments.onDidChange(() => {
       this.#resolver.invalidate();
+      this.#stopServers();
     });
   }
 
@@ -188,11 +206,19 @@ export class SubprocessEngine implements DjlintEngine {
     formattingOptions: vscode.FormattingOptions,
     token: vscode.CancellationToken,
   ): Promise<string> {
-    const output = await this.#run(
+    const context = { config, document, formattingOptions };
+    const command = await this.#getCommand(document, config);
+    const served = await this.#viaServer(
+      command,
+      context,
       "format",
-      { config, document, formattingOptions },
-      token,
+      async (server, settings) =>
+        server.format(document, settings, formattingOptions, token),
     );
+    if (served != null) {
+      return served;
+    }
+    const output = await this.#run("format", context, token, command);
     // Something else answering to the command, such as a djlint.py beside the template, must not empty the document.
     if (output.trim() === "" && document.getText().trim() !== "") {
       const message =
@@ -209,13 +235,91 @@ export class SubprocessEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
-    return parseLinterOutput(
-      await this.#run("lint", { config, document }, token),
+    const context = { config, document };
+    const command = await this.#getCommand(document, config);
+    const served = await this.#viaServer(
+      command,
+      context,
+      "lint",
+      async (server, settings) => server.lint(document, settings, token),
+    );
+    return (
+      served ??
+      parseLinterOutput(await this.#run("lint", context, token, command))
     );
   }
 
   dispose(): void {
     this.#environmentChange.dispose();
+    this.#stopServers();
+  }
+
+  #stopServers(): void {
+    for (const server of this.#servers.values()) {
+      server.dispose();
+    }
+    this.#servers.clear();
+  }
+
+  // Nothing here is required: on any failure the run goes through the command line, as for an older djLint.
+  async #viaServer<R>(
+    command: RunnerCommand,
+    context: ArgContext,
+    mode: DjlintMode,
+    call: (server: DjlintServer, settings: ServerSettings) => Promise<R>,
+  ): Promise<R | undefined> {
+    const { document } = context;
+    const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (
+      command.version == null ||
+      !isVersionAtLeast(command.version, LANGUAGE_SERVER_MIN_VERSION) ||
+      moduleSearchEnv(context) != null ||
+      // A file on its own would keep its folder in use, and Windows wouldn't let the user delete it.
+      folder?.uri.scheme !== "file"
+    ) {
+      return void 0;
+    }
+    const cwd = folder.uri.fsPath;
+    const key = [
+      cwd,
+      command.exec,
+      ...command.prefixArgs,
+      command.version,
+    ].join("\0");
+    if (this.#brokenServers.has(key)) {
+      return void 0;
+    }
+    const { options, pathOptions } = buildOptions(
+      { ...context, djlintVersion: command.version },
+      mode,
+    );
+    let server = this.#servers.get(key);
+    try {
+      if (server == null || server.isClosed) {
+        server = new DjlintServer(
+          command.exec,
+          command.prefixArgs,
+          cwd,
+          command.version,
+          this.#outputChannel,
+        );
+        this.#servers.set(key, server);
+      }
+      return await call(server, { ...options, ...pathOptions });
+    } catch (e) {
+      if (e instanceof vscode.CancellationError) {
+        throw e;
+      }
+      if (server?.isStopping || e instanceof ServerResponseError) {
+        return void 0;
+      }
+      this.#brokenServers.add(key);
+      server?.dispose();
+      this.#outputChannel.warn(
+        `djLint's language server failed, so djLint runs from the command line until a restart: ${String(e)}`,
+      );
+      return void 0;
+    }
   }
 
   async #getCommand(
@@ -342,10 +446,11 @@ export class SubprocessEngine implements DjlintEngine {
     mode: DjlintMode,
     context: ArgContext,
     token: vscode.CancellationToken,
+    known?: RunnerCommand,
     isRetry = false,
   ): Promise<string> {
     const { config, document } = context;
-    const command = await this.#getCommand(document, config);
+    const command = known ?? (await this.#getCommand(document, config));
     if (token.isCancellationRequested) {
       throw new vscode.CancellationError();
     }
@@ -378,7 +483,7 @@ export class SubprocessEngine implements DjlintEngine {
           `djLint is no longer available (${e.shortMessage}).`,
         );
         if (!isRetry) {
-          return await this.#run(mode, context, token, true);
+          return await this.#run(mode, context, token, void 0, true);
         }
         throw new DjlintUnavailableError("djLint is no longer available.", {
           cause: e,
