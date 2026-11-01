@@ -77,6 +77,7 @@ export class Linter {
   readonly #registry: CancellationRegistry;
   readonly #typingTimers = new Map<string, NodeJS.Timeout>();
   #disposed = false;
+  #lastLintMs = 0;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -145,10 +146,14 @@ export class Linter {
     this.#stopTypingTimer(key);
     this.#typingTimers.set(
       key,
-      setTimeout(() => {
-        this.#typingTimers.delete(key);
-        void this.#safeLint(document);
-      }, lintOnTypeDelayMs),
+      setTimeout(
+        () => {
+          this.#typingTimers.delete(key);
+          void this.#safeLint(document);
+          // A pause shorter than a run would start one after another while typing, as the command line takes half a second.
+        },
+        Math.max(lintOnTypeDelayMs, this.#lastLintMs),
+      ),
     );
   }
 
@@ -220,6 +225,7 @@ export class Linter {
     const key = document.uri.toString();
     const source = this.#registry.start(key);
     const versionAtStart = document.version;
+    const startedAt = performance.now();
 
     let diagnostics;
     try {
@@ -228,6 +234,7 @@ export class Linter {
         config,
         source.token,
       );
+      this.#lastLintMs = performance.now() - startedAt;
     } catch (e) {
       const wasSuperseded = source.token.isCancellationRequested;
       if (!wasSuperseded) {

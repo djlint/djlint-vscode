@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+- On macOS and Linux, djLint keeps running for ten minutes with nothing to do, instead of 30 seconds, so the first format after a pause in work is fast too. Windows keeps 30 seconds, as a running djLint stops `pip install` and `uv sync` in its environment.
+- While you type, linting waits at least as long as the last lint took, so a djLint started for every run, which takes about half a second, doesn't run back to back.
+
 ## [2026.11.3] - 2026-11-01
 
 - Bundle djLint 1.49.1.
