@@ -179,6 +179,29 @@ describe("the spawned command", () => {
     ]);
   });
 
+  it("gives djLint LF to lint, for the rules on blank lines", async () => {
+    installDjlint(async () => ({ stdout: "" }));
+    const { engine } = makeEngine();
+    await engine.lint(
+      makeDocument("/w/sub/t.html", "<p>x</p>\r\n\r\n"),
+      config,
+      liveToken(),
+    );
+    expect(runs()[0]?.[2]).toMatchObject({ input: "<p>x</p>\n\n" });
+  });
+
+  it("gives djLint the line endings of the document to format", async () => {
+    installDjlint();
+    const { engine } = makeEngine();
+    await engine.format(
+      makeDocument("/w/sub/t.html", "<p>x</p>\r\n"),
+      config,
+      formattingOptions,
+      liveToken(),
+    );
+    expect(runs()[0]?.[2]).toMatchObject({ input: "<p>x</p>\r\n" });
+  });
+
   it("uses the lint arguments for a lint", async () => {
     installDjlint();
     const { engine } = makeEngine();

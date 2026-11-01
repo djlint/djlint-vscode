@@ -58,7 +58,7 @@ The language status item in the status bar shows which one is in use, and opens 
 
 Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 
-djLint 1.49 and newer runs as a [language server](https://djlint.com/docs/language-server/), which keeps one process running while you work instead of starting one for every format and lint. If it fails, the extension goes back to the command line until a restart.
+djLint 1.49 and newer runs as a [language server](https://djlint.com/docs/integrations/#language-server), which keeps one process running while you work instead of starting one for every format and lint. Files outside a workspace folder, and runs with `djlint.configuration` or `djlint.rules`, use the command line. If the server fails, the extension goes back to the command line until a restart.
 
 With an installed djLint, the extension detects its version and passes only the command-line options that version supports. It logs each skipped option as a warning in the "djLint" output channel. The version is detected for each active environment, for each folder of any other djLint, because a version manager's shim can pick another one in each, and again after five minutes and whenever the settings above or the active Python environment change. After upgrading djLint in the same environment, run "djLint: Restart" from the Command Palette to pick up the new version right away.
 

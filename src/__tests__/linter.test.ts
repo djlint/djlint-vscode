@@ -2,7 +2,7 @@
 // panel, when diagnostics are cleared, which documents are skipped, and the
 // supersession guard that stops a slow run from wiping a newer run's results.
 // integration.test.ts drives the same path through the real bundled runtime.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 import type { DjlintEngine, LintDiagnostic } from "../engine/types.js";
 import { Linter } from "../linter.js";
@@ -66,6 +66,119 @@ const document = makeDocument("/w/a.html", "<img>");
 beforeEach(() => {
   resetVscode();
   control.configuration = { enableLinting: true };
+});
+
+describe("typing", () => {
+  function type(typedIn: vscode.TextDocument = document): void {
+    fireWorkspaceEvent("change", {
+      contentChanges: [{ text: "x" }],
+      document: typedIn,
+    });
+  }
+
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    control.configuration = { enableLinting: true, lintOnType: true };
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("lints once, after a pause", async () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([H013]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    vi.advanceTimersByTime(200);
+    type();
+    vi.advanceTimersByTime(200);
+    expect(lint).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(100);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(1);
+    expect(diagnosticsOf(document)).toHaveLength(1);
+  });
+
+  it("doesn't lint without lintOnType", () => {
+    control.configuration = { enableLinting: true, lintOnType: false };
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    vi.advanceTimersByTime(1000);
+    expect(lint).not.toHaveBeenCalled();
+  });
+
+  it("doesn't lint without enableLinting", () => {
+    control.configuration = { enableLinting: false, lintOnType: true };
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    vi.advanceTimersByTime(1000);
+    expect(lint).not.toHaveBeenCalled();
+  });
+
+  it("ignores a change with no edit, such as the dirty state", () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    fireWorkspaceEvent("change", { contentChanges: [], document });
+    vi.advanceTimersByTime(1000);
+    expect(lint).not.toHaveBeenCalled();
+  });
+
+  it("lints once when a save follows", async () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    fireWorkspaceEvent("save", document);
+    vi.advanceTimersByTime(1000);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(1);
+  });
+
+  it("doesn't lint a document closed during the pause", () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    fireWorkspaceEvent("close", document);
+    vi.advanceTimersByTime(1000);
+    expect(lint).not.toHaveBeenCalled();
+  });
+
+  it("doesn't lint after the extension stops", () => {
+    const lint = vi.fn<Lint>().mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    type();
+    linter.dispose();
+    vi.advanceTimersByTime(1000);
+    expect(lint).not.toHaveBeenCalled();
+  });
+
+  it("leaves the next lint to the pause when a run ends mid-typing", async () => {
+    const edited = makeDocument("/w/edited.html", "<img>");
+    const lint = vi
+      .fn<Lint>()
+      .mockImplementationOnce(async () => {
+        (edited as { version: number }).version += 1;
+        type(edited);
+        return [];
+      })
+      .mockResolvedValue([]);
+    const { linter } = makeLinter(lint);
+    linter.activate();
+    fireWorkspaceEvent("save", edited);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(300);
+    await flush();
+    expect(lint).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe("a document closed before its turn in a sweep", () => {

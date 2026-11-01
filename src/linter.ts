@@ -6,6 +6,8 @@ import type { EngineManager } from "./engine/select.js";
 import type { LintDiagnostic } from "./engine/types.js";
 import { isSupportedDocument } from "./paths.js";
 
+const lintOnTypeDelayMs = 300;
+
 const lintSettingKeys: readonly string[] = [
   "enableLinting",
   ...lintingArgs.map((arg) => arg.vscodeName).filter(Boolean),
@@ -73,6 +75,7 @@ export class Linter {
   readonly #engines: EngineManager;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #registry: CancellationRegistry;
+  readonly #typingTimers = new Map<string, NodeJS.Timeout>();
   #disposed = false;
 
   constructor(
@@ -93,10 +96,19 @@ export class Linter {
       vscode.workspace.onDidOpenTextDocument((document) => {
         void this.#safeLint(document);
       }),
+      vscode.workspace.onDidChangeTextDocument(
+        ({ contentChanges, document }) => {
+          if (contentChanges.length > 0) {
+            this.#lintAfterTyping(document);
+          }
+        },
+      ),
       vscode.workspace.onDidSaveTextDocument((document) => {
+        this.#stopTypingTimer(document.uri.toString());
         void this.#safeLint(document);
       }),
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
+        this.#stopTypingTimer(uri.toString());
         this.#collection.delete(uri);
         this.#registry.cancelAndDelete(uri.toString());
       }),
@@ -114,7 +126,35 @@ export class Linter {
 
   dispose(): void {
     this.#disposed = true;
+    for (const key of this.#typingTimers.keys()) {
+      this.#stopTypingTimer(key);
+    }
     this.#registry.disposeAll();
+  }
+
+  #lintAfterTyping(document: vscode.TextDocument): void {
+    const config = getConfig(document);
+    if (
+      !config.get<boolean>("enableLinting") ||
+      !config.get<boolean>("lintOnType") ||
+      !isSupportedDocument(document)
+    ) {
+      return;
+    }
+    const key = document.uri.toString();
+    this.#stopTypingTimer(key);
+    this.#typingTimers.set(
+      key,
+      setTimeout(() => {
+        this.#typingTimers.delete(key);
+        void this.#safeLint(document);
+      }, lintOnTypeDelayMs),
+    );
+  }
+
+  #stopTypingTimer(key: string): void {
+    clearTimeout(this.#typingTimers.get(key));
+    this.#typingTimers.delete(key);
   }
 
   async #lintSweep(
@@ -205,7 +245,9 @@ export class Linter {
     }
     // The positions are of a text the document no longer has.
     if (document.version !== versionAtStart) {
-      void this.#safeLint(document);
+      if (!this.#typingTimers.has(key)) {
+        void this.#safeLint(document);
+      }
       return;
     }
     this.#collection.set(

@@ -298,6 +298,12 @@
           "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27.",
           "scope": "resource"
         },
+        "djlint.lintOnType": {
+          "type": "boolean",
+          "default": true,
+          "scope": "language-overridable",
+          "markdownDescription": "Lint after a short pause in typing, as well as on opening and saving. Needs `#djlint.enableLinting#`."
+        },
         "djlint.maxAttributeLength": {
           "type": [
             "integer",

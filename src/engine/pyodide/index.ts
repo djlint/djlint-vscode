@@ -274,7 +274,11 @@ export class PyodideEngine implements DjlintEngine {
           pathOptions: absoluteOnly(pathOptions),
           project: void 0,
         }),
-      filename: deriveStdinFilename(document),
+      // The absolute path that per-file-ignores and rule modules get from the command line and the language server.
+      filename:
+        this.#canReadProjectFiles && document.uri.scheme === "file"
+          ? document.uri.fsPath.replaceAll("\\", "/")
+          : deriveStdinFilename(document),
       id,
       mode,
       options,

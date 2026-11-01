@@ -32,6 +32,42 @@ const { failed, stdout } = await execa("djlint", ["--version"], {
 const version = failed ? null : parseDjlintVersion(String(stdout));
 const hasServer = version != null && isVersionAtLeast(version, "1.49");
 
+describe("a language server that doesn't start", () => {
+  it("lets go of a cancelled run", async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), "djlint silent "));
+    const script = path.join(root, "silent.mjs");
+    await writeFile(script, "setInterval(() => {}, 1000);\n");
+    const server = new DjlintServer(
+      process.execPath,
+      [script],
+      root,
+      "1.49.0",
+      makeChannel(),
+    );
+    try {
+      const source = new vscode.CancellationTokenSource();
+      const run = server.lint(
+        makeDocument(vscode.Uri.file(path.join(root, "t.html")), "<p>x</p>"),
+        {},
+        source.token,
+      );
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+      source.cancel();
+      await expect(run).rejects.toBeInstanceOf(vscode.CancellationError);
+    } finally {
+      server.dispose();
+      await rm(root, {
+        force: true,
+        maxRetries: 30,
+        recursive: true,
+        retryDelay: 200,
+      });
+    }
+  });
+});
+
 describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
   let root: string;
   let server: DjlintServer;

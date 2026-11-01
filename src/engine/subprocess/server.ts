@@ -262,7 +262,7 @@ export class DjlintServer {
       if (this.#isStopping) {
         throw new Error("djLint's language server is stopping");
       }
-      await this.#started;
+      await this.#untilStarted(token);
       // Sent for each run, as it also has the server import custom rules anew, as a new process would.
       this.#notify("workspace/didChangeConfiguration", {
         settings: { djlint: settings },
@@ -290,6 +290,18 @@ export class DjlintServer {
           this.dispose();
         }, IDLE_STOP_MS).unref();
       }
+    }
+  }
+
+  async #untilStarted(token: vscode.CancellationToken): Promise<void> {
+    const { promise, reject } = Promise.withResolvers<never>();
+    const cancellation = token.onCancellationRequested(() => {
+      reject(new vscode.CancellationError());
+    });
+    try {
+      await Promise.race([this.#started, promise]);
+    } finally {
+      cancellation.dispose();
     }
   }
 
