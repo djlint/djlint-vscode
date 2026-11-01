@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2026.11.1] - 2026-11-01
+
+- Bundle djLint 1.48.1.
+
 ## [2026.11.0] - 2026-11-01
 
 - Pass `djlint.closeVoidTags`, `djlint.customBlocks`, `djlint.customHtml`, `djlint.ignoreBlocks`, `djlint.ignoreCase`, `djlint.maxBlankLines` and `djlint.preserveBlankLines` when linting too, because they change what djLint reports. The linter flagged what the formatter had just kept.
