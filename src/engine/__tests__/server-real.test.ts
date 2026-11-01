@@ -158,10 +158,13 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
       },
       { timeout: 30_000 },
     );
+    const queued = server.lint(documentOf(`<p>x</p>`), {}, liveToken());
     source.cancel();
     await expect(run).rejects.toBeInstanceOf(vscode.CancellationError);
     expect(server.isClosed).toBe(true);
-    expect(server.isStopping).toBe(false);
+    // The run behind it, which must not count against the server.
+    await expect(queued).rejects.toThrow("stopping");
+    expect(server.isStopping).toBe(true);
   });
 
   it("gives up an answer for a text that has changed since", async () => {

@@ -345,6 +345,22 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       await expect(format(NESTED, {}, document)).resolves.toBe(indented(4));
     });
 
+    it("honors djlint.extendExclude without permission to read the project", async () => {
+      const restricted = makeEngine(false);
+      try {
+        await expect(
+          restricted.format(
+            documentIn("vendor/t.html", NESTED),
+            makeConfig({ extendExclude: ["vendor"] }),
+            formattingOptions,
+            liveToken(),
+          ),
+        ).resolves.toBe(NESTED);
+      } finally {
+        restricted.dispose();
+      }
+    });
+
     it("does not read the project without permission", async () => {
       await write("pyproject.toml", "[tool.djlint]\nindent = 7\n");
       const restricted = makeEngine(false);

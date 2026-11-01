@@ -40,7 +40,11 @@ import {
   type ProbeResult,
   type RunnerCommand,
 } from "./resolve.js";
-import { DjlintServer, type ServerSettings } from "./server.js";
+import {
+  DjlintServer,
+  ServerResponseError,
+  type ServerSettings,
+} from "./server.js";
 import {
   isVersionAtLeast,
   parseDjlintVersion,
@@ -306,7 +310,7 @@ export class SubprocessEngine implements DjlintEngine {
       if (e instanceof vscode.CancellationError) {
         throw e;
       }
-      if (server?.isStopping) {
+      if (server?.isStopping || e instanceof ServerResponseError) {
         return void 0;
       }
       this.#brokenServers.add(key);

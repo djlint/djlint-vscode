@@ -75,8 +75,9 @@ def run(mode, src, options, path_options, filename, cwd, project):
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
     _report_skipped_rules(config)
-    # By the document's own folder: `filename` is relative to the workspace.
-    if is_excluded(config, Path(folder, Path(filename).name)):
+    # `filename` is relative to the workspace, and `folder` is the document's own.
+    name = filename if folder == _HOME else Path(filename).name
+    if is_excluded(config, Path(folder, name)):
         return src if mode == "format" else "[]"
     if mode == "format":
         return format_text(config, src)

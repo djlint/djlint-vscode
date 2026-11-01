@@ -103,6 +103,11 @@ function toLintDiagnostic({
   };
 }
 
+/** The server's answer to a run, which says nothing about the runs after it. */
+export class ServerResponseError extends Error {
+  override name = "ServerResponseError";
+}
+
 /** `djlint --lsp`, running once instead of a process for every format and lint. */
 export class DjlintServer {
   #nextId = 0;
@@ -132,8 +137,9 @@ export class DjlintServer {
     this.#process.stdout.on("data", (chunk: Buffer) => {
       this.#receive(chunk);
     });
-    this.#process.stderr.on("data", (chunk: Buffer) => {
-      this.#outputChannel.debug(chunk.toString().trimEnd());
+    this.#process.stderr.setEncoding("utf8");
+    this.#process.stderr.on("data", (chunk: string) => {
+      this.#outputChannel.debug(chunk.trimEnd());
     });
     this.#process.stdin.on("error", () => {
       this.#close(new Error("djLint's language server closed its input"));
@@ -142,6 +148,8 @@ export class DjlintServer {
       this.#close(new Error("djLint's language server ended"));
     });
     this.#started = this.#initialize();
+    // A run that ends before it needs the server never looks at this.
+    void Promise.allSettled([this.#started]);
   }
 
   /** Whether it takes no more work, for any reason. */
@@ -325,6 +333,7 @@ export class DjlintServer {
       this.#notify("$/cancelRequest", { id });
       // The server only cancels what it hasn't started, and a stuck run would hold up all that follows.
       cancelTimer = setTimeout(() => {
+        this.#isStopping = true;
         this.#close(new vscode.CancellationError());
       }, CANCEL_GRACE_MS);
     });
@@ -358,7 +367,14 @@ export class DjlintServer {
       }
       const body = this.#buffer.toString("utf8", bodyStart, bodyEnd);
       this.#buffer = this.#buffer.subarray(bodyEnd);
-      this.#handle(JSON.parse(body) as Message);
+      let message: Message;
+      try {
+        message = JSON.parse(body) as Message;
+      } catch {
+        this.#close(new Error("djLint's language server sent a bad message"));
+        return;
+      }
+      this.#handle(message);
     }
   }
 
@@ -377,7 +393,7 @@ export class DjlintServer {
     } else if (message.error.code === REQUEST_CANCELLED) {
       waiter.reject(new vscode.CancellationError());
     } else {
-      waiter.reject(new Error(message.error.message));
+      waiter.reject(new ServerResponseError(message.error.message));
     }
   }
 
