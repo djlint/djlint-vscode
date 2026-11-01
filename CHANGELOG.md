@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.4] - 2026-11-01
+
 - Bundle djLint 1.49.2. The bundled djLint formats and lints in about half the time, and an installed djLint 1.49.2 answers about three times as fast as 1.49.1.
 - On macOS and Linux, djLint keeps running for ten minutes with nothing to do, instead of 30 seconds, so the first format after a pause in work is fast too. Windows keeps 30 seconds, as a running djLint stops `pip install` and `uv sync` in its environment.
 - While you type, linting waits at least as long as the last lint took, so a djLint started for every run, which takes about half a second, doesn't run back to back.
