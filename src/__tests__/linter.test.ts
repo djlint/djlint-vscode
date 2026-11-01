@@ -4,16 +4,10 @@
 // integration.test.ts drives the same path through the real bundled runtime.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import type { DjlintEngine, LintDiagnostic } from "../engine/types.js";
 import { Linter } from "../linter.js";
-import {
-  changeOf,
-  flush,
-  makeChannel,
-  makeContext,
-  makeDocument,
-  makeEngines,
-} from "./helpers.js";
+import { changeOf, flush, makeChannel, makeContext, makeDocument, makeEngines } from "./helpers.js";
 import { control, fireWorkspaceEvent, resetVscode } from "./vscode-stub.js";
 
 const H013: LintDiagnostic = {
@@ -25,20 +19,12 @@ const H013: LintDiagnostic = {
 
 type Lint = DjlintEngine["lint"];
 
-function makeLinter(lint: Lint): {
-  channel: ReturnType<typeof makeChannel>;
-  linter: Linter;
-} {
+function makeLinter(lint: Lint): { channel: ReturnType<typeof makeChannel>; linter: Linter } {
   const channel = makeChannel();
-  return {
-    channel,
-    linter: new Linter(makeContext(), channel, makeEngines({ lint })),
-  };
+  return { channel, linter: new Linter(makeContext(), channel, makeEngines({ lint })) };
 }
 
-function diagnosticsOf(
-  document: vscode.TextDocument,
-): readonly unknown[] | undefined {
+function diagnosticsOf(document: vscode.TextDocument): readonly unknown[] | undefined {
   return control.diagnostics.get(document.uri.toString());
 }
 
@@ -70,10 +56,7 @@ beforeEach(() => {
 
 describe("typing", () => {
   function type(typedIn: vscode.TextDocument = document): void {
-    fireWorkspaceEvent("change", {
-      contentChanges: [{ text: "x" }],
-      document: typedIn,
-    });
+    fireWorkspaceEvent("change", { contentChanges: [{ text: "x" }], document: typedIn });
   }
 
   beforeEach(() => {
@@ -96,7 +79,7 @@ describe("typing", () => {
     expect(lint).not.toHaveBeenCalled();
     vi.advanceTimersByTime(100);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     expect(diagnosticsOf(document)).toHaveLength(1);
   });
 
@@ -105,17 +88,15 @@ describe("typing", () => {
       vi.advanceTimersByTime(800);
       return [];
     });
-    vi.spyOn(performance, "now")
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(800);
+    vi.spyOn(performance, "now").mockReturnValueOnce(0).mockReturnValueOnce(800);
     const { linter } = makeLinter(lint);
     linter.activate();
     fireWorkspaceEvent("save", document);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     type();
     vi.advanceTimersByTime(700);
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     vi.advanceTimersByTime(100);
     await flush();
     expect(lint).toHaveBeenCalledTimes(2);
@@ -123,9 +104,7 @@ describe("typing", () => {
 
   it("waits no more than a second, after a lint that took long", async () => {
     const lint = vi.fn<Lint>().mockResolvedValue([]);
-    vi.spyOn(performance, "now")
-      .mockReturnValueOnce(0)
-      .mockReturnValueOnce(30_000);
+    vi.spyOn(performance, "now").mockReturnValueOnce(0).mockReturnValueOnce(30_000);
     const { linter } = makeLinter(lint);
     linter.activate();
     fireWorkspaceEvent("save", document);
@@ -173,7 +152,7 @@ describe("typing", () => {
     fireWorkspaceEvent("save", document);
     vi.advanceTimersByTime(1000);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
   });
 
   it("doesn't lint a document closed during the pause", () => {
@@ -210,7 +189,7 @@ describe("typing", () => {
     linter.activate();
     fireWorkspaceEvent("save", edited);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     vi.advanceTimersByTime(300);
     await flush();
     expect(lint).toHaveBeenCalledTimes(2);
@@ -225,10 +204,8 @@ describe("a document closed before its turn in a sweep", () => {
     } as vscode.TextDocument;
     control.configuration = { enableLinting: true };
     control.documents = [closed];
-    const lint = vi.fn(async () => []);
-    const linter = new Linter(makeContext(), makeChannel(), {
-      engine: { lint },
-    } as never);
+    const lint = vi.fn<DjlintEngine["lint"]>(async () => []);
+    const linter = new Linter(makeContext(), makeChannel(), { engine: { lint } } as never);
     await linter.refreshAll();
     expect(lint).not.toHaveBeenCalled();
   });
@@ -262,11 +239,7 @@ describe("the startup sweep", () => {
       return [];
     }).linter.activate();
     await flush();
-    expect(order).toStrictEqual([
-      "/w/onscreen.html",
-      "/w/bg.html",
-      "/w/bg2.html",
-    ]);
+    expect(order).toStrictEqual(["/w/onscreen.html", "/w/bg.html", "/w/bg2.html"]);
   });
 
   it("lints one document at a time", async () => {
@@ -297,8 +270,7 @@ describe("the startup sweep", () => {
 describe("published diagnostics", () => {
   async function published(): Promise<vscode.Diagnostic> {
     await makeLinter(async () => [H013]).linter.refreshAll();
-    const [diagnostic] = (diagnosticsOf(document) ??
-      []) as readonly vscode.Diagnostic[];
+    const [diagnostic] = (diagnosticsOf(document) ?? []) as readonly vscode.Diagnostic[];
     if (!diagnostic) {
       throw new Error("nothing was published");
     }
@@ -329,9 +301,7 @@ describe("published diagnostics", () => {
     linter.activate();
     await flush();
     expect(runs).toBe(2);
-    expect(diagnosticsOf(document)).toMatchObject([
-      { range: { start: { character: 2 } } },
-    ]);
+    expect(diagnosticsOf(document)).toMatchObject([{ range: { start: { character: 2 } } }]);
   });
 
   it("carries the message", async () => {
@@ -361,12 +331,9 @@ describe("the range of a diagnostic", () => {
   ): Promise<unknown> {
     const document = makeDocument("/w/a.html", text);
     control.documents = [document];
-    const { linter } = makeLinter(async () => [
-      { ...found, code: "H013", message: "m" },
-    ]);
+    const { linter } = makeLinter(async () => [{ ...found, code: "H013", message: "m" }]);
     await linter.refreshAll();
-    const [diagnostic] = (diagnosticsOf(document) ??
-      []) as readonly vscode.Diagnostic[];
+    const [diagnostic] = (diagnosticsOf(document) ?? []) as readonly vscode.Diagnostic[];
     return diagnostic?.range;
   }
 
@@ -389,9 +356,9 @@ describe("the range of a diagnostic", () => {
   });
 
   it("is empty when djLint gives no end", async () => {
-    await expect(
-      rangeOf("<img>", { column: 1, line: 1 }),
-    ).resolves.toStrictEqual(new vscode.Range(0, 1, 0, 1));
+    await expect(rangeOf("<img>", { column: 1, line: 1 })).resolves.toStrictEqual(
+      new vscode.Range(0, 1, 0, 1),
+    );
   });
 });
 
@@ -471,9 +438,7 @@ describe("which documents get linted", () => {
   });
 
   it("lints a virtual workspace's documents", async () => {
-    const virtual = makeDocument(
-      vscode.Uri.parse("vscode-vfs://github/o/r/a.html"),
-    );
+    const virtual = makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/a.html"));
     control.documents = [virtual];
     await makeLinter(async () => [H013]).linter.refreshAll();
     expect(diagnosticsOf(virtual)).toHaveLength(1);
@@ -510,9 +475,7 @@ describe("which documents get linted", () => {
 describe("configuration changes", () => {
   const other = makeDocument("/v/b.html");
 
-  async function linted(
-    event: vscode.ConfigurationChangeEvent,
-  ): Promise<string[]> {
+  async function linted(event: vscode.ConfigurationChangeEvent): Promise<string[]> {
     control.documents = [document, other];
     const paths: string[] = [];
     control.diagnostics.set(document.uri.toString(), []);
@@ -534,15 +497,11 @@ describe("configuration changes", () => {
   });
 
   it("relints for enableLinting", async () => {
-    await expect(
-      linted(changeOf("djlint.enableLinting")),
-    ).resolves.toHaveLength(2);
+    await expect(linted(changeOf("djlint.enableLinting"))).resolves.toHaveLength(2);
   });
 
   it("ignores a setting that only affects formatting", async () => {
-    await expect(
-      linted(changeOf("djlint.maxLineLength")),
-    ).resolves.toHaveLength(0);
+    await expect(linted(changeOf("djlint.maxLineLength"))).resolves.toHaveLength(0);
   });
 
   it("ignores other extensions' settings", async () => {

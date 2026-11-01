@@ -1,7 +1,9 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parentPort, workerData } from "node:worker_threads";
+
 import type { loadPyodide, PyodideAPI } from "pyodide";
+
 import type { WorkerData, WorkerRequest } from "./protocol.js";
 import { serve } from "./runtime.js";
 
@@ -12,9 +14,7 @@ const port = parentPort;
 const { indexURL } = workerData as WorkerData;
 
 interface NodeFilesystems {
-  // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
   NODEFS: {
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
     node_ops: { readlink: (node: unknown) => string };
     realPath: (node: unknown) => string;
   };
@@ -23,12 +23,8 @@ interface NodeFilesystems {
 const mountedRoots = new Map<string, string>();
 
 // The mount hands back a link's target as written on the host, which leads nowhere inside it.
-function translateLinks(
-  pyodide: PyodideAPI,
-  toGuest: (target: string) => string,
-): void {
-  const { NODEFS: nodeFilesystem } = pyodide.FS
-    .filesystems as unknown as NodeFilesystems;
+function translateLinks(pyodide: PyodideAPI, toGuest: (target: string) => string): void {
+  const { NODEFS: nodeFilesystem } = pyodide.FS.filesystems as unknown as NodeFilesystems;
   const { readlink } = nodeFilesystem.node_ops;
   nodeFilesystem.node_ops.readlink = (node): string => {
     const target = readlink(node);
@@ -54,10 +50,7 @@ function toGuestPath(pyodide: PyodideAPI, hostPath: string): string {
     }
     mountedRoots.set(root, guestRoot);
   }
-  return path.posix.join(
-    guestRoot,
-    ...path.relative(root, hostPath).split(path.sep),
-  );
+  return path.posix.join(guestRoot, ...path.relative(root, hostPath).split(path.sep));
 }
 
 serve({

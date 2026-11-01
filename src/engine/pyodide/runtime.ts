@@ -1,11 +1,7 @@
 import type { loadPyodide, PyodideAPI } from "pyodide";
+
 import GLUE from "./glue.py";
-import type {
-  RunRequest,
-  RunResponse,
-  WorkerRequest,
-  WorkerResponse,
-} from "./protocol.js";
+import type { RunRequest, RunResponse, WorkerRequest, WorkerResponse } from "./protocol.js";
 
 type Run = (
   mode: string,
@@ -47,15 +43,8 @@ export function serve(host: WorkerHost): void {
   async function boot(): Promise<Runtime> {
     const { indexURL } = host;
     const module = await host.importPyodide();
-    const pyodide = await module.loadPyodide({
-      indexURL,
-      stderr: logWarning,
-      stdout: logDebug,
-    });
-    await pyodide.loadPackage("djlint", {
-      errorCallback: logWarning,
-      messageCallback: logDebug,
-    });
+    const pyodide = await module.loadPyodide({ indexURL, stderr: logWarning, stdout: logDebug });
+    await pyodide.loadPackage("djlint", { errorCallback: logWarning, messageCallback: logDebug });
     pyodide.runPython(GLUE);
     const version = pyodide.runPython(
       'import importlib.metadata; importlib.metadata.version("djlint")',
@@ -66,22 +55,17 @@ export function serve(host: WorkerHost): void {
 
   const ready = boot();
   // An unhandled boot rejection would kill the worker outright. The host starts another one instead, which also gets over a failed download in a browser.
-  // eslint-disable-next-line unicorn/prefer-await
+  // oxlint-disable-next-line promise/prefer-await-to-then -- the worker never waits on this, it only reports the failure
   ready.catch((e: unknown) => {
-    host.send({
-      error: e instanceof Error ? e.message : String(e),
-      type: "boot-failed",
-    });
+    host.send({ error: e instanceof Error ? e.message : String(e), type: "boot-failed" });
   });
 
   function execute({ pyodide, run }: Runtime, request: RunRequest): string {
     const { cwd, filename, mode, options, pathOptions, project, src } = request;
-    const guestPathOptions = Object.entries(pathOptions).map(
-      ([name, value]) => [
-        name,
-        project == null ? host.toGuestPath(pyodide, value) : value,
-      ],
-    );
+    const guestPathOptions = Object.entries(pathOptions).map(([name, value]) => [
+      name,
+      project == null ? host.toGuestPath(pyodide, value) : value,
+    ]);
     return run(
       mode,
       src,
@@ -101,18 +85,13 @@ export function serve(host: WorkerHost): void {
       const runtime = await ready;
       // Python blocks this thread, so a cancellation sent while an earlier request ran is still in line behind its request. Let it arrive first.
       await new Promise((resolve) => {
-        setTimeout(resolve);
+        setTimeout(resolve, 0);
       });
       const request = queue.get(id);
       if (request == null) {
         return;
       }
-      response = {
-        id,
-        ok: true,
-        output: execute(runtime, request),
-        type: "result",
-      };
+      response = { id, ok: true, output: execute(runtime, request), type: "result" };
     } catch (e) {
       const error = e instanceof Error ? e.message : String(e);
       if (isFatal(e)) {
@@ -128,12 +107,7 @@ export function serve(host: WorkerHost): void {
   host.listen((request) => {
     if (request.type === "cancel") {
       if (queue.delete(request.id)) {
-        host.send({
-          error: "cancelled",
-          id: request.id,
-          ok: false,
-          type: "result",
-        });
+        host.send({ error: "cancelled", id: request.id, ok: false, type: "result" });
       }
       return;
     }

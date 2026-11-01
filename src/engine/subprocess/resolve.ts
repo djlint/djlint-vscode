@@ -23,9 +23,7 @@ export interface ResolveDjlintCommandDeps {
   onConfiguredPathRejected: (setting: string, exec: string) => void;
 }
 
-export async function resolveDjlintCommand(
-  deps: ResolveDjlintCommandDeps,
-): Promise<RunnerCommand> {
+export async function resolveDjlintCommand(deps: ResolveDjlintCommandDeps): Promise<RunnerCommand> {
   async function tryCommand(
     exec: string,
     prefixArgs: readonly string[],
@@ -70,7 +68,7 @@ export async function resolveDjlintCommand(
 
   for (const python of PYTHONS_ON_PATH) {
     // A python that cannot tell is no sign of a djLint: this is only a last look around.
-    // eslint-disable-next-line no-await-in-loop -- the first one that works wins
+    // oxlint-disable-next-line no-await-in-loop -- the first one that works wins
     const version = await deps.probe(python, MODULE_ARGS);
     if (version != null) {
       return { exec: python, prefixArgs: MODULE_ARGS, version };
@@ -117,8 +115,7 @@ export class CommandResolver {
     }
 
     const pending =
-      this.#inFlight.get(perDirectoryKey) ??
-      this.#resolveAndCache(deps, scopeKey, perDirectoryKey);
+      this.#inFlight.get(perDirectoryKey) ?? this.#resolveAndCache(deps, scopeKey, perDirectoryKey);
     this.#inFlight.set(perDirectoryKey, pending);
     try {
       return await pending;
@@ -131,9 +128,7 @@ export class CommandResolver {
 
   #fresh(key: string): CommandCacheEntry | undefined {
     const entry = this.#cache.get(key);
-    return entry != null && Date.now() - entry.resolvedAt < RESOLUTION_TTL_MS
-      ? entry
-      : void 0;
+    return entry != null && Date.now() - entry.resolvedAt < RESOLUTION_TTL_MS ? entry : void 0;
   }
 
   async #resolveAndCache(

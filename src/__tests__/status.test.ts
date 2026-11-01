@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { DjlintStatus } from "../status.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, setActiveDocument } from "./vscode-stub.js";
@@ -10,7 +11,7 @@ beforeEach(() => {
   control.configuration = { formatLanguages: ["django-html"] };
 });
 
-describe("DjlintStatus", () => {
+describe(DjlintStatus, () => {
   it("appears for the languages djLint formats and opens the logs", () => {
     const status = new DjlintStatus();
     const [item] = control.statusItems;

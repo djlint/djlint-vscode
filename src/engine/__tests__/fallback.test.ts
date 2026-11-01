@@ -2,6 +2,7 @@
 // runtime. How long a missing djLint is remembered is up to CommandResolver.
 import { beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,
@@ -12,18 +13,10 @@ import {
 } from "../../__tests__/helpers.js";
 import { resetVscode } from "../../__tests__/vscode-stub.js";
 import { FallbackEngine } from "../select.js";
-import {
-  DjlintUnavailableError,
-  type DjlintEngine,
-  type LintDiagnostic,
-} from "../types.js";
+import { DjlintUnavailableError } from "../types.js";
+import type { DjlintEngine, LintDiagnostic } from "../types.js";
 
-const finding: LintDiagnostic = {
-  code: "H1",
-  column: 0,
-  line: 1,
-  message: "m",
-};
+const finding: LintDiagnostic = { code: "H1", column: 0, line: 1, message: "m" };
 
 function unavailable(): never {
   throw new DjlintUnavailableError("nope");
@@ -92,7 +85,7 @@ beforeEach(() => {
   setWorkspaceFolders("/w", "/bad", "/good");
 });
 
-describe("FallbackEngine", () => {
+describe(FallbackEngine, () => {
   it("keeps to a healthy primary and never builds the secondary", async () => {
     const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
     await expect(format(engine)).resolves.toBe("PRIMARY");
@@ -105,19 +98,12 @@ describe("FallbackEngine", () => {
     const { calls, engine } = makeFallback(unavailable);
     await expect(format(engine)).resolves.toBe("SECONDARY");
     await format(engine);
-    expect(calls).toStrictEqual([
-      "primary",
-      "secondary",
-      "primary",
-      "secondary",
-    ]);
+    expect(calls).toStrictEqual(["primary", "secondary", "primary", "secondary"]);
   });
 
   it("goes back to a primary that recovered", async () => {
     let isMissing = true;
-    const { engine } = makeFallback(() =>
-      isMissing ? unavailable() : "PRIMARY",
-    );
+    const { engine } = makeFallback(() => (isMissing ? unavailable() : "PRIMARY"));
     await format(engine);
     isMissing = false;
     await expect(format(engine)).resolves.toBe("PRIMARY");
@@ -156,9 +142,7 @@ describe("FallbackEngine", () => {
       makeChannel(),
     );
     await format(engine, makeDocument("/bad/x.html"));
-    await expect(format(engine, makeDocument("/good/y.html"))).resolves.toBe(
-      "PRIMARY",
-    );
+    await expect(format(engine, makeDocument("/good/y.html"))).resolves.toBe("PRIMARY");
     expect(seen).toStrictEqual([
       "primary:/bad/x.html",
       "secondary:/bad/x.html",
@@ -169,9 +153,7 @@ describe("FallbackEngine", () => {
   it("refuses work once disposed", async () => {
     const { engine, secondaryBuilds } = makeFallback(unavailable);
     engine.dispose();
-    await expect(format(engine)).rejects.toBeInstanceOf(
-      vscode.CancellationError,
-    );
+    await expect(format(engine)).rejects.toBeInstanceOf(vscode.CancellationError);
     expect(secondaryBuilds()).toBe(0);
   });
 
@@ -238,12 +220,8 @@ describe("FallbackEngine", () => {
 
     it("goes straight to the secondary", async () => {
       const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
-      await expect(format(engine, document, bundled)).resolves.toBe(
-        "SECONDARY",
-      );
-      await expect(
-        engine.lint(document, bundled, liveToken()),
-      ).resolves.toStrictEqual([finding]);
+      await expect(format(engine, document, bundled)).resolves.toBe("SECONDARY");
+      await expect(engine.lint(document, bundled, liveToken())).resolves.toStrictEqual([finding]);
       expect(calls).toStrictEqual(["secondary", "secondary"]);
       expect(secondaryBuilds()).toBe(1);
     });
@@ -279,11 +257,7 @@ describe("FallbackEngine", () => {
     it("leaves other strategies on the primary", async () => {
       const { engine } = makeFallback(() => "PRIMARY");
       await expect(
-        format(
-          engine,
-          document,
-          makeConfig({ importStrategy: "fromEnvironment" }),
-        ),
+        format(engine, document, makeConfig({ importStrategy: "fromEnvironment" })),
       ).resolves.toBe("PRIMARY");
     });
   });

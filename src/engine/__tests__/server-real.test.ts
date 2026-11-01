@@ -3,18 +3,11 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
 import { execa } from "execa";
-import {
-  afterAll,
-  afterEach,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,
@@ -26,9 +19,7 @@ import { resetVscode } from "../../__tests__/vscode-stub.js";
 import { DjlintServer, IDLE_STOP_MS } from "../subprocess/server.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../subprocess/version.js";
 
-const { failed, stdout } = await execa("djlint", ["--version"], {
-  reject: false,
-});
+const { failed, stdout } = await execa("djlint", ["--version"], { reject: false });
 const version = failed ? null : parseDjlintVersion(String(stdout));
 const hasServer = version != null && isVersionAtLeast(version, "1.49");
 
@@ -37,13 +28,7 @@ describe("a language server that doesn't start", () => {
     const root = await mkdtemp(path.join(os.tmpdir(), "djlint silent "));
     const script = path.join(root, "silent.mjs");
     await writeFile(script, "setInterval(() => {}, 1000);\n");
-    const server = new DjlintServer(
-      process.execPath,
-      [script],
-      root,
-      "1.49.0",
-      makeChannel(),
-    );
+    const server = new DjlintServer(process.execPath, [script], root, "1.49.0", makeChannel());
     try {
       const source = new vscode.CancellationTokenSource();
       const run = server.lint(
@@ -58,12 +43,7 @@ describe("a language server that doesn't start", () => {
       await expect(run).rejects.toBeInstanceOf(vscode.CancellationError);
     } finally {
       server.dispose();
-      await rm(root, {
-        force: true,
-        maxRetries: 30,
-        recursive: true,
-        retryDelay: 200,
-      });
+      await rm(root, { force: true, maxRetries: 30, recursive: true, retryDelay: 200 });
     }
   });
 });
@@ -82,11 +62,6 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     await writeFile(path.join(root, "pyproject.toml"), "");
   });
 
-  afterAll(async () => {
-    vi.unstubAllEnvs();
-    await rm(root, { force: true, maxRetries: 20, recursive: true });
-  });
-
   beforeEach(() => {
     resetVscode();
     setWorkspaceFolders(root);
@@ -97,22 +72,22 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     server.dispose();
   });
 
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, maxRetries: 20, recursive: true });
+  });
+
   it("formats", async () => {
     await expect(
-      server.format(
-        documentOf(`<div><img src="x.png"></div>`),
-        {},
-        formattingOptions,
-        liveToken(),
-      ),
+      server.format(documentOf(`<div><img src="x.png"></div>`), {}, formattingOptions, liveToken()),
     ).resolves.toBe(`<div>\n    <img src="x.png">\n</div>\n`);
   });
 
   it("leaves formatted text as it is", async () => {
     const text = `<div>\n    <p>x</p>\n</div>\n`;
-    await expect(
-      server.format(documentOf(text), {}, formattingOptions, liveToken()),
-    ).resolves.toBe(text);
+    await expect(server.format(documentOf(text), {}, formattingOptions, liveToken())).resolves.toBe(
+      text,
+    );
   });
 
   it("honors the settings of a run", async () => {
@@ -148,19 +123,14 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     const module = path.join(project, "my_rule.py");
     const rule = (code: string): string =>
       `def run(rule, config, html, filepath, line_ends, *args, **kwargs):\n    return [{"code": "${code}", "line": "1:0", "match": "x", "message": "x"}]\n`;
-    const document = makeDocument(
-      vscode.Uri.file(path.join(project, "t.html")),
-      "<p>x</p>",
-    );
+    const document = makeDocument(vscode.Uri.file(path.join(project, "t.html")), "<p>x</p>");
 
     await writeFile(module, rule("C901"));
-    await expect(server.lint(document, {}, liveToken())).resolves.toMatchObject(
-      [{ code: "C901" }],
-    );
+    await expect(server.lint(document, {}, liveToken())).resolves.toMatchObject([{ code: "C901" }]);
     await writeFile(module, rule("C9020"));
-    await expect(server.lint(document, {}, liveToken())).resolves.toMatchObject(
-      [{ code: "C9020" }],
-    );
+    await expect(server.lint(document, {}, liveToken())).resolves.toMatchObject([
+      { code: "C9020" },
+    ]);
   });
 
   it("ends a run that a cancellation can't reach", async () => {
@@ -214,14 +184,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     await expect(
       server.lint(documentOf(`<p>😀</p><img src="x">`), {}, liveToken()),
     ).resolves.toMatchObject([
-      {
-        code: "H013",
-        column: 9,
-        endColumn: 22,
-        endLine: 1,
-        isUtf16: true,
-        line: 1,
-      },
+      { code: "H013", column: 9, endColumn: 22, endLine: 1, isUtf16: true, line: 1 },
     ]);
   });
 
@@ -237,9 +200,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
 
   it("refuses to be another version than was detected", async () => {
     const other = new DjlintServer("djlint", [], root, "0.1", makeChannel());
-    await expect(
-      other.lint(documentOf(`<p>x</p>`), {}, liveToken()),
-    ).rejects.toThrow("not 0.1");
+    await expect(other.lint(documentOf(`<p>x</p>`), {}, liveToken())).rejects.toThrow("not 0.1");
     other.dispose();
   });
 
@@ -258,9 +219,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
   it("refuses work once it is stopping", async () => {
     await server.lint(documentOf(`<p>x</p>`), {}, liveToken());
     server.dispose();
-    await expect(
-      server.lint(documentOf(`<p>x</p>`), {}, liveToken()),
-    ).rejects.toThrow("stopping");
+    await expect(server.lint(documentOf(`<p>x</p>`), {}, liveToken())).rejects.toThrow("stopping");
   });
 
   it("ends when disposed", async () => {

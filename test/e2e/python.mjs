@@ -1,17 +1,11 @@
 // Runs test/e2e/python-suite.cjs in a downloaded VS Code with the real Python extensions and real
 // environments, with python.useEnvironmentsExtension off and on.
 import { spawnSync } from "node:child_process";
-import {
-  globSync,
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { globSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+
 import {
   downloadAndUnzipVSCode,
   resolveCliArgsFromVSCodeExecutablePath,
@@ -38,10 +32,7 @@ const isWindows = process.platform === "win32";
  * @param {boolean} [shell]
  */
 function run(command, args, shell = false) {
-  const { status, stderr } = spawnSync(command, args, {
-    encoding: "utf8",
-    shell,
-  });
+  const { status, stderr } = spawnSync(command, args, { encoding: "utf8", shell });
   if (status !== 0) {
     throw new Error(`${command} failed: ${stderr}`);
   }
@@ -49,10 +40,7 @@ function run(command, args, shell = false) {
 
 /** @param {string} environment */
 function pythonOf(environment) {
-  return path.join(
-    environment,
-    ...(isWindows ? ["Scripts", "python.exe"] : ["bin", "python"]),
-  );
+  return path.join(environment, ...(isWindows ? ["Scripts", "python.exe"] : ["bin", "python"]));
 }
 
 /**
@@ -60,14 +48,7 @@ function pythonOf(environment) {
  * @param {string} version
  */
 function installDjlint(python, version) {
-  run("uv", [
-    "pip",
-    "install",
-    "--compile-bytecode",
-    "--python",
-    python,
-    `djlint==${version}`,
-  ]);
+  run("uv", ["pip", "install", "--compile-bytecode", "--python", python, `djlint==${version}`]);
 }
 
 /**
@@ -92,24 +73,16 @@ function makeCondaEnvironment(workspace) {
     return void 0;
   }
   const environment = path.join(workspace, "conda");
-  run(
-    path.join(
-      conda,
-      ...(isWindows ? ["Scripts", "conda.exe"] : ["bin", "conda"]),
-    ),
-    [
-      "create",
-      "--yes",
-      "--quiet",
-      "--prefix",
-      environment,
-      "python=3.12",
-      "pip",
-    ],
-  );
-  const python = isWindows
-    ? path.join(environment, "python.exe")
-    : pythonOf(environment);
+  run(path.join(conda, ...(isWindows ? ["Scripts", "conda.exe"] : ["bin", "conda"])), [
+    "create",
+    "--yes",
+    "--quiet",
+    "--prefix",
+    environment,
+    "python=3.12",
+    "pip",
+  ]);
+  const python = isWindows ? path.join(environment, "python.exe") : pythonOf(environment);
   installDjlint(python, WITHOUT_END);
   return python;
 }
@@ -118,23 +91,18 @@ const logs = mkdtempSync(path.join(os.tmpdir(), "djlint-logs-"));
 const workspace = mkdtempSync(path.join(os.tmpdir(), "djlint python "));
 try {
   mkdirSync(path.join(workspace, ".vscode"));
-  writeFileSync(
-    path.join(workspace, "page.html"),
-    `<div><img src="x"></div>\n`,
-  );
+  writeFileSync(path.join(workspace, "page.html"), `<div><img src="x"></div>\n`);
   const environments = {
     conda: makeCondaEnvironment(workspace),
     empty: makeVenv(workspace, "empty"),
     installed: makeVenv(workspace, "installed", INSTALLED),
     withoutEnd: makeVenv(workspace, "without-end", WITHOUT_END),
   };
-  const hasDjlintOnPath =
-    spawnSync("djlint", ["--version"], { shell: isWindows }).status === 0;
+  const hasDjlintOnPath = spawnSync("djlint", ["--version"], { shell: isWindows }).status === 0;
 
   const version = "stable";
   const executable = await downloadAndUnzipVSCode(version);
-  const [cli = "", ...cliArgs] =
-    resolveCliArgsFromVSCodeExecutablePath(executable);
+  const [cli = "", ...cliArgs] = resolveCliArgsFromVSCodeExecutablePath(executable);
   const extensionsDir = path.join(workspace, ".extensions");
   // A .cmd needs a shell on Windows, which needs the quotes.
   const quote = isWindows
@@ -152,9 +120,7 @@ try {
   );
 
   for (const useEnvironmentsExtension of [false, true]) {
-    console.log(
-      `\npython.useEnvironmentsExtension: ${useEnvironmentsExtension}`,
-    );
+    console.log(`\npython.useEnvironmentsExtension: ${useEnvironmentsExtension}`);
     writeFileSync(
       path.join(workspace, ".vscode", "settings.json"),
       JSON.stringify({
@@ -163,18 +129,12 @@ try {
         "python.useEnvironmentsExtension": useEnvironmentsExtension,
       }),
     );
-    rmSync(path.join(workspace, "without-end-later"), {
-      force: true,
-      recursive: true,
-    });
+    rmSync(path.join(workspace, "without-end-later"), { force: true, recursive: true });
     await runTests({
       extensionDevelopmentPath: root,
       extensionTestsEnv: {
         DJLINT_E2E: JSON.stringify({
-          environments: {
-            ...environments,
-            later: makeVenv(workspace, "without-end-later"),
-          },
+          environments: { ...environments, later: makeVenv(workspace, "without-end-later") },
           hasDjlintOnPath,
           version: WITHOUT_END,
         }),

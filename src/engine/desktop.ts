@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import type { PythonEnvironments } from "../python/environment.js";
 import type { DjlintStatus } from "../status.js";
 import { getDocumentFolder } from "./document-folder.js";
@@ -19,8 +20,7 @@ export function createDesktopEngine(
     return new PyodideEngine(
       () =>
         createNodeWorker(
-          vscode.Uri.joinPath(extensionUri, "dist", "pyodide-worker.cjs")
-            .fsPath,
+          vscode.Uri.joinPath(extensionUri, "dist", "pyodide-worker.cjs").fsPath,
           vscode.Uri.joinPath(extensionUri, "assets", "pyodide").fsPath,
         ),
       outputChannel,

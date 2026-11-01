@@ -1,8 +1,10 @@
 // What EngineManager builds decides whether workspace code can run at all: an
 // untrusted workspace must never reach a subprocess or its own project files.
 import path from "node:path";
+
 import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { FakeWorker } from "../../__tests__/fake-worker.js";
 import {
   flush,
@@ -25,12 +27,10 @@ vi.mock("node:worker_threads", async () => {
   return { Worker };
 });
 
-vi.mock("which-command", () => ({
-  whichCommand: async (command: string) => command,
-}));
+vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn(),
+  execa: vi.fn<typeof import("execa").execa>(),
 }));
 
 const extensionPath = "/ext";
@@ -55,7 +55,7 @@ beforeEach(() => {
   setWorkspaceFolders("/w");
 });
 
-describe("EngineManager", () => {
+describe(EngineManager, () => {
   it("builds the fallback chain in a trusted workspace", () => {
     expect(makeManager().engine).toBeInstanceOf(FallbackEngine);
   });
@@ -107,8 +107,7 @@ describe("EngineManager", () => {
     await flush();
     const worker = FakeWorker.latest;
     expect(worker.path).toBe(
-      Uri.file(path.posix.join(extensionPath, "dist/pyodide-worker.cjs"))
-        .fsPath,
+      Uri.file(path.posix.join(extensionPath, "dist/pyodide-worker.cjs")).fsPath,
     );
     expect(worker.options.workerData.indexURL).toBe(
       Uri.file(path.posix.join(extensionPath, "assets/pyodide")).fsPath,

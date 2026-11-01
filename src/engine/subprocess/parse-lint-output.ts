@@ -28,12 +28,7 @@ const LEGACY_OUTPUT_REGEX =
 
 // A rule module can report line 0, which the bundled djLint moves to line 1 too.
 function isValidPosition(line: number, column: number): boolean {
-  return (
-    Number.isSafeInteger(line) &&
-    line >= 0 &&
-    Number.isSafeInteger(column) &&
-    column >= 0
-  );
+  return Number.isSafeInteger(line) && line >= 0 && Number.isSafeInteger(column) && column >= 0;
 }
 
 function endOf(
@@ -47,8 +42,7 @@ function endOf(
   }
   const endLine = Math.max(Number(groups["line"]), 1);
   const endColumn = Number(groups["column"]);
-  const isAfterStart =
-    endLine > line || (endLine === line && endColumn >= column);
+  const isAfterStart = endLine > line || (endLine === line && endColumn >= column);
   return isAfterStart ? { endColumn, endLine } : {};
 }
 
@@ -104,7 +98,5 @@ function parseLegacyFormat(stdout: string): LintDiagnostic[] {
 }
 
 export function parseLinterOutput(stdout: string): LintDiagnostic[] {
-  return stdout.includes(RECORD_SEPARATOR)
-    ? parsePinnedFormat(stdout)
-    : parseLegacyFormat(stdout);
+  return stdout.includes(RECORD_SEPARATOR) ? parsePinnedFormat(stdout) : parseLegacyFormat(stdout);
 }

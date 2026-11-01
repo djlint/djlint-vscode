@@ -1,8 +1,5 @@
 {
-  "extends": [
-    "@tsconfig/strictest/tsconfig.json",
-    "@tsconfig/node22/tsconfig.json"
-  ],
+  "extends": ["@tsconfig/strictest/tsconfig.json", "@tsconfig/node22/tsconfig.json"],
   "exclude": ["dist", "assets", "test"],
   "compilerOptions": {
     "noUncheckedIndexedAccess": false,

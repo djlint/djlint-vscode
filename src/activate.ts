@@ -1,6 +1,8 @@
 import * as vscode from "vscode";
+
 import { configSection } from "./config.js";
-import { engineSettingKeys, type EngineManager } from "./engine/select.js";
+import { engineSettingKeys } from "./engine/select.js";
+import type { EngineManager } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
 import type { DjlintStatus } from "./status.js";
@@ -35,11 +37,7 @@ export function startExtension(
       if (e.affectsConfiguration(`${configSection}.formatLanguages`)) {
         status.refreshLanguages();
       }
-      if (
-        engineSettingKeys.some((key) =>
-          e.affectsConfiguration(`${configSection}.${key}`),
-        )
-      ) {
+      if (engineSettingKeys.some((key) => e.affectsConfiguration(`${configSection}.${key}`))) {
         restart();
       }
     }),

@@ -1,11 +1,9 @@
 import * as vscode from "vscode";
+
 import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
-import {
-  DjlintUnavailableError,
-  type DjlintEngine,
-  type LintDiagnostic,
-} from "./types.js";
+import { DjlintUnavailableError } from "./types.js";
+import type { DjlintEngine, LintDiagnostic } from "./types.js";
 
 export const engineSettingKeys: readonly string[] = [
   "executablePath",
@@ -48,9 +46,7 @@ export class FallbackEngine implements DjlintEngine {
     config: vscode.WorkspaceConfiguration,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
-    return this.#dispatch(document, config, async (engine) =>
-      engine.lint(document, config, token),
-    );
+    return this.#dispatch(document, config, async (engine) => engine.lint(document, config, token));
   }
 
   dispose(): void {
@@ -69,10 +65,7 @@ export class FallbackEngine implements DjlintEngine {
       isVirtualDocument(document) &&
       !getConfiguredPath(config, "executablePath") &&
       !getConfiguredPath(config, "pythonPath");
-    if (
-      shouldPreferBundled ||
-      config.get<string>("importStrategy") === "useBundled"
-    ) {
+    if (shouldPreferBundled || config.get<string>("importStrategy") === "useBundled") {
       return call(this.#secondaryEngine());
     }
     try {
@@ -99,9 +92,7 @@ export class FallbackEngine implements DjlintEngine {
       return;
     }
     this.#fallbackLogged.add(scope);
-    this.#outputChannel.info(
-      "djLint not found in the environment; using the bundled runtime.",
-    );
+    this.#outputChannel.info("djLint not found in the environment; using the bundled runtime.");
   }
 }
 

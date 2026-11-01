@@ -3,6 +3,7 @@
 // would hang the editor's "Formatting..." state with nothing to retry against.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import { everySetting } from "../../../__tests__/every-setting.js";
 import { FakeWorker } from "../../../__tests__/fake-worker.js";
 import {
@@ -18,14 +19,14 @@ import {
 import { control, resetVscode, Uri } from "../../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../../args.js";
 import { getDocumentFolder } from "../../document-folder.js";
-import { RUN_TIMEOUT_MS, type LintDiagnostic } from "../../types.js";
+import { RUN_TIMEOUT_MS } from "../../types.js";
+import type { LintDiagnostic } from "../../types.js";
 import { PyodideEngine } from "../index.js";
 import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
 
 vi.mock("node:worker_threads", async () => {
-  const { FakeWorker: Worker } =
-    await import("../../../__tests__/fake-worker.js");
+  const { FakeWorker: Worker } = await import("../../../__tests__/fake-worker.js");
   return { Worker };
 });
 
@@ -116,11 +117,7 @@ describe("the run request", () => {
   it("has no cwd for a document that is not a local file", async () => {
     const { engine } = makeEngine();
     engine
-      .lint(
-        makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")),
-        config,
-        liveToken(),
-      )
+      .lint(makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")), config, liveToken())
       .catch(() => void 0);
     await vi.waitFor(() => {
       expect(FakeWorker.latest.lastRun.cwd).toBeUndefined();
@@ -161,33 +158,18 @@ describe("the run request", () => {
 
   it("uses the lint argument set for a lint, which has no indent", () => {
     const { options } = sentFor(
-      {
-        formatCss: true,
-        ignore: ["H013"],
-        profile: "django",
-        useEditorIndentation: true,
-      },
+      { formatCss: true, ignore: ["H013"], profile: "django", useEditorIndentation: true },
       "lint",
     );
     expect(options).toStrictEqual({ ignore: "H013", profile: "django" });
   });
 
   it("separates host paths from plain settings", () => {
-    const request = sentFor(
-      { configuration: "/ws/.djlintrc", rules: "conf/rules.yaml" },
-      "lint",
-    );
+    const request = sentFor({ configuration: "/ws/.djlintrc", rules: "conf/rules.yaml" }, "lint");
     expect(request.options).toStrictEqual({});
-    expect(Object.keys(request.pathOptions).toSorted()).toStrictEqual([
-      "configuration",
-      "rules",
-    ]);
-    expect(portable(request.pathOptions["configuration"] ?? "")).toBe(
-      "/ws/.djlintrc",
-    );
-    expect(portable(request.pathOptions["rules"] ?? "")).toMatch(
-      /\/w\/conf\/rules\.yaml$/u,
-    );
+    expect(Object.keys(request.pathOptions).toSorted()).toStrictEqual(["configuration", "rules"]);
+    expect(portable(request.pathOptions["configuration"] ?? "")).toBe("/ws/.djlintrc");
+    expect(portable(request.pathOptions["rules"] ?? "")).toMatch(/\/w\/conf\/rules\.yaml$/u);
   });
 
   it("drops a relative path it has no workspace folder to resolve against", () => {
@@ -218,9 +200,7 @@ describe("responses", () => {
   });
 
   it("parses a lint's JSON", async () => {
-    const diagnostics: LintDiagnostic[] = [
-      { code: "H013", column: 5, line: 1, message: "m" },
-    ];
+    const diagnostics: LintDiagnostic[] = [{ code: "H013", column: 5, line: 1, message: "m" }];
     const { engine } = makeEngine();
     const pending = engine.lint(document, config, liveToken());
     FakeWorker.latest.succeed(1, JSON.stringify(diagnostics));
@@ -292,9 +272,7 @@ describe("a runtime that crashes", () => {
     const first = format(engine);
     const crashed = FakeWorker.latest;
     crashed.respond({ error: "fatal", type: "crashed" });
-    await expect(first).rejects.toThrow(
-      "Bundled djLint runtime crashed: fatal",
-    );
+    await expect(first).rejects.toThrow("Bundled djLint runtime crashed: fatal");
     expect(crashed.terminated).toBe(true);
 
     const second = format(engine);
@@ -330,9 +308,7 @@ describe("djLint failures", () => {
     const pending = format(engine);
     FakeWorker.latest.failRun(1, TRACEBACK);
     await expect(pending).rejects.toThrow(TRACEBACK);
-    expect(control.shownErrors).toStrictEqual([
-      "Bundled djLint failed: ValueError: bad value",
-    ]);
+    expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: ValueError: bad value"]);
     expect(channel.of("error")).toStrictEqual([TRACEBACK]);
   });
 
@@ -340,7 +316,7 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow(/^$/u);
     expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: "]);
   });
 
@@ -348,10 +324,10 @@ describe("djLint failures", () => {
     const { channel, engine } = makeEngine();
     const first = format(engine);
     FakeWorker.latest.failRun(1, TRACEBACK);
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow(TRACEBACK);
     const second = format(engine);
     FakeWorker.latest.failRun(2, TRACEBACK);
-    await expect(second).rejects.toThrow();
+    await expect(second).rejects.toThrow(TRACEBACK);
     expect(control.shownErrors).toHaveLength(1);
     expect(channel.of("error")).toHaveLength(2);
   });
@@ -360,10 +336,10 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const first = format(engine);
     FakeWorker.latest.failRun(1, "first");
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow("first");
     const second = format(engine);
     FakeWorker.latest.failRun(2, "second");
-    await expect(second).rejects.toThrow();
+    await expect(second).rejects.toThrow("second");
     expect(control.shownErrors).toHaveLength(2);
   });
 
@@ -372,7 +348,7 @@ describe("djLint failures", () => {
     const { channel, engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "broken");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow("broken");
     await vi.waitFor(() => {
       expect(channel.shownCount).toBe(1);
     });
@@ -382,7 +358,7 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "broken");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow("broken");
     expect(FakeWorker.latest.terminated).toBe(false);
   });
 });
@@ -398,9 +374,7 @@ describe("the worker dying", () => {
     await expect(first).rejects.toBe(error);
     await expect(second).rejects.toBe(error);
     expect(dead.terminated).toBe(true);
-    expect(control.shownErrors).toStrictEqual([
-      "Bundled djLint runtime failed: out of memory",
-    ]);
+    expect(control.shownErrors).toStrictEqual(["Bundled djLint runtime failed: out of memory"]);
 
     const third = format(engine);
     expect(FakeWorker.instances).toHaveLength(2);
@@ -423,7 +397,7 @@ describe("the worker dying", () => {
     const first = format(engine);
     const old = FakeWorker.latest;
     old.emit("error", new Error("died"));
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow("died");
 
     const second = format(engine);
     old.emit("exit", 1);
@@ -455,7 +429,9 @@ describe("timeouts", () => {
     const second = format(engine);
     const wedged = FakeWorker.latest;
 
+    // oxlint-disable-next-line vitest/valid-expect -- awaited below, once the clock has run out
     const rejection = expect(first).rejects.toThrow("timed out");
+    // oxlint-disable-next-line vitest/valid-expect -- awaited below, once the clock has run out
     const otherRejection = expect(second).rejects.toThrow("timed out");
     vi.advanceTimersByTime(RUN_TIMEOUT_MS);
     await rejection;
@@ -557,7 +533,7 @@ describe("timeouts", () => {
   it("does not leave a clock running for a worker that never started", async () => {
     FakeWorker.constructionError = new Error("no such file");
     const { engine } = makeEngine();
-    await expect(format(engine)).rejects.toThrow();
+    await expect(format(engine)).rejects.toThrow("no such file");
     expect(vi.getTimerCount()).toBe(0);
   });
 });
@@ -601,9 +577,7 @@ describe("cancellation", () => {
     const { engine } = makeEngine();
     const source = new vscode.CancellationTokenSource();
     source.cancel();
-    await expect(format(engine, source.token)).rejects.toBeInstanceOf(
-      vscode.CancellationError,
-    );
+    await expect(format(engine, source.token)).rejects.toBeInstanceOf(vscode.CancellationError);
     expect(FakeWorker.instances).toHaveLength(0);
   });
 
@@ -643,9 +617,7 @@ describe("dispose", () => {
   it("refuses new work rather than resurrect a worker", async () => {
     const { engine } = makeEngine();
     engine.dispose();
-    await expect(format(engine)).rejects.toBeInstanceOf(
-      vscode.CancellationError,
-    );
+    await expect(format(engine)).rejects.toBeInstanceOf(vscode.CancellationError);
     expect(FakeWorker.instances).toHaveLength(0);
   });
 });

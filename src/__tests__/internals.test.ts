@@ -4,28 +4,22 @@
 // classified.
 import { execa } from "execa";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+
 import { formattingArgs } from "../args.js";
 import { CancellationRegistry } from "../cancellation-registry.js";
 import { isValidLintResult } from "../engine/subprocess/errors.js";
-import {
-  isDjlintUnavailable,
-  type CustomExecaError,
-} from "../engine/subprocess/exec.js";
+import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
+import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import { classifyRunFailure } from "../engine/subprocess/index.js";
 import { selectSupportedArgs } from "../engine/subprocess/version.js";
-import {
-  makeChannel,
-  makeConfig,
-  makeDocument,
-  makeExecaError,
-} from "./helpers.js";
+import { makeChannel, makeConfig, makeDocument, makeExecaError } from "./helpers.js";
 import { resetVscode } from "./vscode-stub.js";
 
 beforeEach(() => {
   resetVscode();
 });
 
-describe("CancellationRegistry", () => {
+describe(CancellationRegistry, () => {
   it("registers a fresh run uncancelled", () => {
     const registry = new CancellationRegistry();
     const run = registry.start("doc");
@@ -78,7 +72,7 @@ describe("CancellationRegistry", () => {
   });
 });
 
-describe("selectSupportedArgs", () => {
+describe(selectSupportedArgs, () => {
   // --max-blank-lines needs 1.31; --format-css needs 1.9.
   const args = formattingArgs.filter((arg) =>
     ["--format-css", "--max-blank-lines"].includes(arg.cliName),
@@ -89,13 +83,7 @@ describe("selectSupportedArgs", () => {
   };
 
   it("filters out flags too new for the version", () => {
-    const supported = selectSupportedArgs(
-      args,
-      "1.25",
-      context,
-      new Set(),
-      makeChannel(),
-    );
+    const supported = selectSupportedArgs(args, "1.25", context, new Set(), makeChannel());
     expect(supported.map((arg) => arg.cliName)).toStrictEqual(["--format-css"]);
   });
 
@@ -123,13 +111,7 @@ describe("selectSupportedArgs", () => {
   it("skips a flag that is not set without a warning", () => {
     const channel = makeChannel();
     const unset = { ...context, config: makeConfig({ formatCss: true }) };
-    const supported = selectSupportedArgs(
-      args,
-      "1.25",
-      unset,
-      new Set(),
-      channel,
-    );
+    const supported = selectSupportedArgs(args, "1.25", unset, new Set(), channel);
     expect(supported.map((arg) => arg.cliName)).toStrictEqual(["--format-css"]);
     expect(channel.of("warn")).toHaveLength(0);
   });
@@ -143,9 +125,7 @@ describe("selectSupportedArgs", () => {
     ["all", "1.44", true],
     ["django", "1.41", true],
   ])("gates profile %s on djLint %s", (profile, version, isKept) => {
-    const profileArgs = formattingArgs.filter(
-      (arg) => arg.cliName === "--profile",
-    );
+    const profileArgs = formattingArgs.filter((arg) => arg.cliName === "--profile");
     const supported = selectSupportedArgs(
       profileArgs,
       version,
@@ -158,9 +138,7 @@ describe("selectSupportedArgs", () => {
 
   it("keeps everything for a new enough version", () => {
     const channel = makeChannel();
-    expect(
-      selectSupportedArgs(args, "1.44.2", context, new Set(), channel),
-    ).toHaveLength(2);
+    expect(selectSupportedArgs(args, "1.44.2", context, new Set(), channel)).toHaveLength(2);
     expect(channel.of("warn")).toHaveLength(0);
   });
 });
@@ -215,7 +193,7 @@ describe("a wedged djLint run", () => {
   });
 });
 
-describe("classifyRunFailure", () => {
+describe(classifyRunFailure, () => {
   it("does not reprobe when the error alone decides", async () => {
     let reprobes = 0;
     const reprobe = async (): Promise<string> => {

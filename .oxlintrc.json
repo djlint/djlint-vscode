@@ -1,0 +1,189 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["eslint", "typescript", "unicorn", "oxc", "import", "jsdoc", "promise", "node"],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "error",
+    "pedantic": "error",
+    "perf": "error",
+    "style": "error",
+    "restriction": "error"
+  },
+  "options": { "typeAware": true, "reportUnusedDisableDirectives": "error" },
+  "env": { "node": true },
+  "ignorePatterns": [".vscode-test*", "assets/", "dist/", "test/"],
+  "rules": {
+    "eqeqeq": ["error", "always", { "null": "ignore" }],
+    "func-style": ["error", "declaration"],
+    "id-length": "off",
+    "init-declarations": "off",
+    "max-classes-per-file": "off",
+    "max-depth": "off",
+    "max-lines": "off",
+    "max-lines-per-function": "off",
+    "max-nested-callbacks": "off",
+    "max-params": "off",
+    "max-statements": "off",
+    "no-continue": "off",
+    "no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
+    "no-empty": ["error", { "allowEmptyCatch": true }],
+    "no-eq-null": "off",
+    "no-ex-assign": "off",
+    "no-magic-numbers": "off",
+    "no-new": "off",
+    "no-ternary": "off",
+    "no-void": "off",
+    "one-var": ["error", "never"],
+    "radix": "off",
+    "require-await": "off",
+    "sort-imports": "off",
+    "import/exports-last": "off",
+    "import/group-exports": "off",
+    "import/max-dependencies": "off",
+    "import/no-named-export": "off",
+    "import/no-namespace": "off",
+    "import/no-nodejs-modules": "off",
+    "import/no-relative-parent-imports": "off",
+    "import/prefer-default-export": "off",
+    "jsdoc/require-param": "off",
+    "jsdoc/require-returns": "off",
+    "node/no-top-level-await": "off",
+    "oxc/no-async-await": "off",
+    "oxc/no-optional-chaining": "off",
+    "oxc/no-rest-spread-properties": "off",
+    "promise/avoid-new": "off",
+    "typescript/ban-ts-comment": ["error", { "ts-expect-error": false }],
+    "typescript/explicit-member-accessibility": ["error", { "accessibility": "no-public" }],
+    "typescript/no-confusing-void-expression": ["error", { "ignoreArrowShorthand": true }],
+    "typescript/parameter-properties": ["error", { "prefer": "parameter-property" }],
+    "typescript/prefer-readonly-parameter-types": "off",
+    "typescript/strict-boolean-expressions": [
+      "error",
+      { "allowNullableBoolean": true, "allowNullableNumber": true, "allowNullableString": true }
+    ],
+    "typescript/use-unknown-in-catch-callback-variable": "off",
+    "unicorn/catch-error-name": ["error", { "name": "e" }],
+    "unicorn/explicit-length-check": "off",
+    "unicorn/no-null": "off",
+    "unicorn/number-literal-case": "off",
+    "unicorn/prefer-top-level-await": "off"
+  },
+  "overrides": [
+    {
+      "files": ["build/**/*.mjs"],
+      "rules": {
+        "capitalized-comments": "off",
+        "no-await-in-loop": "off",
+        "no-console": "off",
+        "no-inline-comments": "off",
+        "prefer-named-capture-group": "off",
+        "sort-keys": "off",
+        "jsdoc/require-param-description": "off",
+        "jsdoc/require-returns-description": "off",
+        "node/no-sync": "off",
+        "typescript/dot-notation": "off",
+        "typescript/explicit-function-return-type": "off",
+        "typescript/explicit-module-boundary-types": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/strict-boolean-expressions": "off",
+        "unicorn/no-await-expression-member": "off"
+      }
+    },
+    {
+      "files": [
+        "src/engine/pyodide/runtime.ts",
+        "src/engine/pyodide/worker.ts",
+        "src/engine/pyodide/worker.web.ts"
+      ],
+      "rules": {
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "unicorn/require-post-message-target-origin": "off"
+      }
+    },
+    {
+      "files": [
+        "src/engine/pyodide/browser-worker.ts",
+        "src/engine/pyodide/index.ts",
+        "src/engine/pyodide/node-worker.ts"
+      ],
+      "rules": {
+        "typescript/promise-function-async": "off",
+        "unicorn/require-post-message-target-origin": "off"
+      }
+    },
+    {
+      "files": ["src/extension.web.ts", "src/engine/pyodide/browser-worker.ts"],
+      "env": { "browser": true, "node": false },
+      "rules": { "import/no-nodejs-modules": "error" }
+    },
+    {
+      "files": ["src/engine/pyodide/worker.web.ts"],
+      "env": { "node": false, "worker": true },
+      "rules": { "import/no-nodejs-modules": "error" }
+    },
+    {
+      "files": ["src/**/__tests__/**/*.ts"],
+      "rules": {
+        "capitalized-comments": "off",
+        "func-style": "off",
+        "no-duplicate-imports": "off",
+        "no-inline-comments": "off",
+        "no-shadow": "off",
+        "no-unused-vars": "off",
+        "sort-keys": "off",
+        "node/no-sync": "off",
+        "promise/prefer-await-to-then": "off",
+        "typescript/consistent-type-imports": "off",
+        "typescript/explicit-function-return-type": "off",
+        "typescript/no-unnecessary-type-assertion": "off",
+        "typescript/no-unnecessary-type-conversion": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "typescript/only-throw-error": "off",
+        "typescript/prefer-promise-reject-errors": "off",
+        "typescript/require-await": "off",
+        "typescript/strict-boolean-expressions": "off",
+        "typescript/unbound-method": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "unicorn/custom-error-definition": "off",
+        "unicorn/filename-case": "off",
+        "unicorn/max-nested-calls": "off",
+        "unicorn/no-await-expression-member": "off",
+        "unicorn/no-unreadable-array-destructuring": "off",
+        "unicorn/prefer-event-target": "off",
+        "unicorn/require-array-join-separator": "off",
+        "unicorn/require-post-message-target-origin": "off"
+      }
+    },
+    {
+      "files": ["**/*.test.ts"],
+      "plugins": ["vitest"],
+      "rules": {
+        "vitest/max-expects": "off",
+        "vitest/no-conditional-in-test": "off",
+        "vitest/no-hooks": "off",
+        "vitest/no-importing-vitest-globals": "off",
+        "vitest/prefer-called-times": "off",
+        "vitest/prefer-expect-assertions": "off",
+        "vitest/prefer-import-in-mock": "off",
+        "vitest/prefer-to-be-falsy": "off",
+        "vitest/prefer-to-be-truthy": "off",
+        "vitest/require-test-timeout": "off",
+        "vitest/require-top-level-describe": "off",
+        "vitest/valid-title": ["error", { "ignoreTypeOfDescribeName": true }]
+      }
+    },
+    { "files": ["*.config.ts"], "rules": { "import/no-default-export": "off" } },
+    {
+      "files": ["*.d.ts"],
+      "rules": { "import/no-unassigned-import": "off", "import/unambiguous": "off" }
+    }
+  ]
+}

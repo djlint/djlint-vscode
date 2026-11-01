@@ -1,6 +1,7 @@
 // When SubprocessEngine starts and stops its language servers, with DjlintServer
 // replaced: a server left running keeps its environment and folder locked on Windows.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
   liveToken,
   makeChannel,
@@ -10,11 +11,7 @@ import {
   makeStatus,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
-import {
-  fireWorkspaceEvent,
-  resetVscode,
-  Uri,
-} from "../../__tests__/vscode-stub.js";
+import { fireWorkspaceEvent, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
 import { SubprocessEngine } from "../subprocess/index.js";
 
 const { servers, spawn } = vi.hoisted(() => ({
@@ -24,12 +21,10 @@ const { servers, spawn } = vi.hoisted(() => ({
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
-vi.mock("which-command", () => ({
-  whichCommand: async (command: string) => command,
-}));
+vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
@@ -59,10 +54,7 @@ const VERSION = { exitCode: 0, stdout: "djlint, version 1.49.0" };
 const document = makeDocument("/w/t.html", "<p>x</p>");
 const config = makeConfig({ executablePath: "/bin/djlint" });
 
-function makeEngine(): {
-  engine: SubprocessEngine;
-  fireEnvironmentChange: () => void;
-} {
+function makeEngine(): { engine: SubprocessEngine; fireEnvironmentChange: () => void } {
   const { environments, fireChange } = makePythonEnvironments();
   return {
     engine: new SubprocessEngine(makeChannel(), environments, makeStatus()),
@@ -117,15 +109,9 @@ describe("a language server", () => {
   it("stops with its workspace folder", async () => {
     const { engine } = makeEngine();
     await engine.lint(document, config, liveToken());
-    fireWorkspaceEvent("folders", {
-      added: [],
-      removed: [{ uri: Uri.file("/other") }],
-    });
+    fireWorkspaceEvent("folders", { added: [], removed: [{ uri: Uri.file("/other") }] });
     expect(servers[0]?.isStopped).toBe(false);
-    fireWorkspaceEvent("folders", {
-      added: [],
-      removed: [{ uri: Uri.file("/w") }],
-    });
+    fireWorkspaceEvent("folders", { added: [], removed: [{ uri: Uri.file("/w") }] });
     expect(servers[0]?.isStopped).toBe(true);
   });
 });

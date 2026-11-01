@@ -1,15 +1,13 @@
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { whichCommand } from "which-command";
-import {
-  buildOptions,
-  formattingArgs,
-  lintingArgs,
-  type ArgContext,
-} from "../../args.js";
+
+import { buildOptions, formattingArgs, lintingArgs } from "../../args.js";
+import type { ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import { showFailure } from "../../notify.js";
 import {
@@ -20,77 +18,45 @@ import {
 import type { PythonEnvironments } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
 import { getExistingDocumentFolder } from "../document-folder.js";
-import {
-  DjlintUnavailableError,
-  RUN_TIMEOUT_MS,
-  type DjlintEngine,
-  type DjlintMode,
-  type LintDiagnostic,
-} from "../types.js";
+import { DjlintUnavailableError, RUN_TIMEOUT_MS } from "../types.js";
+import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { checkErrors, isValidLintResult } from "./errors.js";
-import {
-  isCustomExecaError,
-  isDjlintUnavailable,
-  type ChildOptions,
-  type CustomExecaError,
-} from "./exec.js";
+import { isCustomExecaError, isDjlintUnavailable } from "./exec.js";
+import type { ChildOptions, CustomExecaError } from "./exec.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
-import {
-  CommandResolver,
-  type ProbeResult,
-  type RunnerCommand,
-} from "./resolve.js";
-import {
-  DjlintServer,
-  ServerResponseError,
-  type ServerSettings,
-} from "./server.js";
-import {
-  isVersionAtLeast,
-  parseDjlintVersion,
-  selectSupportedArgs,
-} from "./version.js";
+import { CommandResolver } from "./resolve.js";
+import type { ProbeResult, RunnerCommand } from "./resolve.js";
+import { DjlintServer, ServerResponseError } from "./server.js";
+import type { ServerSettings } from "./server.js";
+import { isVersionAtLeast, parseDjlintVersion, selectSupportedArgs } from "./version.js";
 
 const PROBE_TIMEOUT_MS = 10_000;
 const LANGUAGE_SERVER_MIN_VERSION = "1.49";
 
 // A custom rule's python_module used to be found because djLint ran from the workspace root whenever these two were set.
-function moduleSearchEnv({
-  config,
-  document,
-}: ArgContext): { env: NodeJS.ProcessEnv } | undefined {
+function moduleSearchEnv({ config, document }: ArgContext): { env: NodeJS.ProcessEnv } | undefined {
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
   if (
     folder?.uri.scheme !== "file" ||
-    [config.get<string>("configuration"), config.get<string>("rules")].every(
-      (value) => !value,
-    )
+    [config.get<string>("configuration"), config.get<string>("rules")].every((value) => !value)
   ) {
     return void 0;
   }
   const { PYTHONPATH: inherited } = process.env;
   return {
     env: {
-      // eslint-disable-next-line @typescript-eslint/naming-convention -- environment variable name
-      PYTHONPATH: [folder.uri.fsPath, ...(inherited ? [inherited] : [])].join(
-        path.delimiter,
-      ),
+      PYTHONPATH: [folder.uri.fsPath, ...(inherited ? [inherited] : [])].join(path.delimiter),
     },
   };
 }
 
 /** The variables `ruff.path` accepts, except `${cwd}`, which means nothing to an extension. */
-export function expandVariables(
-  value: string,
-  document: vscode.TextDocument,
-): string {
+export function expandVariables(value: string, document: vscode.TextDocument): string {
   function workspaceFolderPath(name?: string): string | undefined {
     const folder =
       name == null
         ? vscode.workspace.getWorkspaceFolder(document.uri)
-        : vscode.workspace.workspaceFolders?.find(
-            (candidate) => candidate.name === name,
-          );
+        : vscode.workspace.workspaceFolders?.find((candidate) => candidate.name === name);
     return folder?.uri.scheme === "file" ? folder.uri.fsPath : void 0;
   }
 
@@ -133,16 +99,11 @@ export async function classifyRunFailure(
 
 // On Windows, execa leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
 // Like execa, this tries the extension a command is written with, even one PATHEXT lacks: execa runs such a script by its shebang.
-async function isCommandFound(
-  exec: string,
-  cwd: string | undefined,
-): Promise<boolean> {
+async function isCommandFound(exec: string, cwd: string | undefined): Promise<boolean> {
   const extension = path.extname(exec);
   const found = await whichCommand(exec, {
     ...(cwd != null && { cwd }),
-    ...(extension && {
-      pathExt: [extension, process.env["PATHEXT"] ?? ""].join(path.delimiter),
-    }),
+    ...(extension && { pathExt: [extension, process.env["PATHEXT"] ?? ""].join(path.delimiter) }),
   });
   return found !== void 0;
 }
@@ -200,17 +161,15 @@ export class SubprocessEngine implements DjlintEngine {
       this.#resolver.invalidate();
       this.#stopServers();
     });
-    this.#folderChange = vscode.workspace.onDidChangeWorkspaceFolders(
-      ({ removed }) => {
-        const gone = [...this.#servers].filter(([key]) =>
-          removed.some(({ uri }) => key.startsWith(`${uri.fsPath}\0`)),
-        );
-        for (const [key, server] of gone) {
-          server.dispose();
-          this.#servers.delete(key);
-        }
-      },
-    );
+    this.#folderChange = vscode.workspace.onDidChangeWorkspaceFolders(({ removed }) => {
+      const gone = [...this.#servers].filter(([key]) =>
+        removed.some(({ uri }) => key.startsWith(`${uri.fsPath}\0`)),
+      );
+      for (const [key, server] of gone) {
+        server.dispose();
+        this.#servers.delete(key);
+      }
+    });
   }
 
   async format(
@@ -226,8 +185,7 @@ export class SubprocessEngine implements DjlintEngine {
       command,
       context,
       "format",
-      async (server, settings) =>
-        server.format(document, settings, formattingOptions, token),
+      async (server, settings) => server.format(document, settings, formattingOptions, token),
       epoch,
     );
     if (served != null) {
@@ -260,10 +218,7 @@ export class SubprocessEngine implements DjlintEngine {
       async (server, settings) => server.lint(document, settings, token),
       epoch,
     );
-    return (
-      served ??
-      parseLinterOutput(await this.#run("lint", context, token, command))
-    );
+    return served ?? parseLinterOutput(await this.#run("lint", context, token, command));
   }
 
   dispose(): void {
@@ -303,12 +258,7 @@ export class SubprocessEngine implements DjlintEngine {
       return void 0;
     }
     const cwd = folder.uri.fsPath;
-    const key = [
-      cwd,
-      command.exec,
-      ...command.prefixArgs,
-      command.version,
-    ].join("\0");
+    const key = [cwd, command.exec, ...command.prefixArgs, command.version].join("\0");
     if (this.#brokenServers.has(key)) {
       return void 0;
     }
@@ -353,9 +303,7 @@ export class SubprocessEngine implements DjlintEngine {
     const activeEnvironment = config.get<boolean>("useVenv")
       ? await this.#pythonEnvironments.getActive(document.uri)
       : null;
-    function configuredExecutable(
-      key: Parameters<typeof getConfiguredPath>[1],
-    ): string {
+    function configuredExecutable(key: Parameters<typeof getConfiguredPath>[1]): string {
       return normalizeConfiguredExecutable(
         expandVariables(getConfiguredPath(config, key), document),
         document,
@@ -370,10 +318,7 @@ export class SubprocessEngine implements DjlintEngine {
       pythonPath,
       ...(activeEnvironment?.command == null
         ? []
-        : [
-            activeEnvironment.command.executable,
-            ...activeEnvironment.command.args,
-          ]),
+        : [activeEnvironment.command.executable, ...activeEnvironment.command.args]),
     ].join("\0");
     const command = await this.#resolver.resolve(
       {
@@ -450,11 +395,7 @@ export class SubprocessEngine implements DjlintEngine {
       stripFinalNewline: false,
       timeout: RUN_TIMEOUT_MS,
     };
-    const { stderr, stdout } = await execa(
-      command.exec,
-      childArgs,
-      childOptions,
-    );
+    const { stderr, stdout } = await execa(command.exec, childArgs, childOptions);
     this.#logWarnings(stderr);
     return stdout;
   }
@@ -506,15 +447,11 @@ export class SubprocessEngine implements DjlintEngine {
 
       if (classification === "unavailable") {
         this.#resolver.invalidate();
-        this.#outputChannel.debug(
-          `djLint is no longer available (${e.shortMessage}).`,
-        );
+        this.#outputChannel.debug(`djLint is no longer available (${e.shortMessage}).`);
         if (!isRetry) {
           return await this.#run(mode, context, token, void 0, true);
         }
-        throw new DjlintUnavailableError("djLint is no longer available.", {
-          cause: e,
-        });
+        throw new DjlintUnavailableError("djLint is no longer available.", { cause: e });
       }
 
       return checkErrors(e, this.#outputChannel);

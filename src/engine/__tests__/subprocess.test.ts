@@ -1,11 +1,13 @@
-/* eslint-disable no-template-curly-in-string -- the variables of a setting, as written */
+/* oxlint-disable no-template-curly-in-string -- the variables of a setting, as written */
 // SubprocessEngine with execa replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
 import { stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,
@@ -24,28 +26,19 @@ import {
   LINTER_OUTPUT_FORMAT,
   LINTER_OUTPUT_FORMAT_WITH_END,
 } from "../subprocess/parse-lint-output.js";
-import {
-  DjlintUnavailableError,
-  RESOLUTION_TTL_MS,
-  RUN_TIMEOUT_MS,
-} from "../types.js";
+import { DjlintUnavailableError, RESOLUTION_TTL_MS, RUN_TIMEOUT_MS } from "../types.js";
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
-vi.mock("which-command", () => ({
-  whichCommand: async (command: string) => command,
-}));
+vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 const { spawn } = vi.hoisted(() => ({ spawn: vi.fn<Spawn>() }));
 
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: async (...args: Parameters<Spawn>) => ({
-    stderr: "",
-    ...(await spawn(...args)),
-  }),
+  execa: async (...args: Parameters<Spawn>) => ({ stderr: "", ...(await spawn(...args)) }),
 }));
 
 type Spawn = (
@@ -113,9 +106,9 @@ describe("the spawned command", () => {
   it("feeds the document to `djlint -` beside the document", async () => {
     installDjlint(async () => ({ stdout: "FORMATTED" }));
     const { engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).resolves.toBe("FORMATTED");
+    await expect(engine.format(document, config, formattingOptions, liveToken())).resolves.toBe(
+      "FORMATTED",
+    );
 
     const [[exec, args, options]] = runs() as [Parameters<Spawn>];
     expect(exec).toBe("/bin/djlint");
@@ -141,9 +134,7 @@ describe("the spawned command", () => {
     );
     const [[, , options]] = runs() as [Parameters<Spawn>];
     const { env } = options as { env: NodeJS.ProcessEnv };
-    expect(env["PYTHONPATH"]?.split(path.delimiter)[0]).toBe(
-      Uri.file("/w").fsPath,
-    );
+    expect(env["PYTHONPATH"]?.split(path.delimiter)[0]).toBe(Uri.file("/w").fsPath);
   });
 
   it("leaves PYTHONPATH alone otherwise", async () => {
@@ -182,11 +173,7 @@ describe("the spawned command", () => {
   it("gives djLint LF to lint, for the rules on blank lines", async () => {
     installDjlint(async () => ({ stdout: "" }));
     const { engine } = makeEngine();
-    await engine.lint(
-      makeDocument("/w/sub/t.html", "<p>x</p>\r\n\r\n"),
-      config,
-      liveToken(),
-    );
+    await engine.lint(makeDocument("/w/sub/t.html", "<p>x</p>\r\n\r\n"), config, liveToken());
     expect(runs()[0]?.[2]).toMatchObject({ input: "<p>x</p>\n\n" });
   });
 
@@ -218,10 +205,7 @@ describe("the spawned command", () => {
     ["1.47.1", LINTER_OUTPUT_FORMAT],
     ["1.48.0", LINTER_OUTPUT_FORMAT_WITH_END],
   ])("asks djLint %s for what it can give", async (version, format) => {
-    installDjlint(void 0, {
-      exitCode: 0,
-      stdout: `djlint, version ${version}`,
-    });
+    installDjlint(void 0, { exitCode: 0, stdout: `djlint, version ${version}` });
     const { engine } = makeEngine();
     await engine.lint(document, config, liveToken());
     const [[, args]] = runs() as [Parameters<Spawn>];
@@ -231,11 +215,7 @@ describe("the spawned command", () => {
   it("leaves out flags the resolved djLint is too old for, warning once", async () => {
     installDjlint(void 0, { exitCode: 0, stdout: "djlint, version 1.25" });
     const { channel, engine } = makeEngine();
-    const old = makeConfig({
-      executablePath: "/bin/djlint",
-      formatCss: true,
-      maxBlankLines: 2,
-    });
+    const old = makeConfig({ executablePath: "/bin/djlint", formatCss: true, maxBlankLines: 2 });
     await engine.format(document, old, formattingOptions, liveToken());
     await engine.format(document, old, formattingOptions, liveToken());
 
@@ -243,9 +223,7 @@ describe("the spawned command", () => {
       expect(args).toContain("--format-css");
       expect(args).not.toContain("--max-blank-lines");
     }
-    expect(
-      channel.of("warn").filter((line) => line.includes("maxBlankLines")),
-    ).toHaveLength(1);
+    expect(channel.of("warn").filter((line) => line.includes("maxBlankLines"))).toHaveLength(1);
   });
 
   it("runs from no folder when the document's folder is gone, instead of taking the ENOENT for a missing djLint", async () => {
@@ -256,7 +234,7 @@ describe("the spawned command", () => {
     const { engine } = makeEngine();
     await engine.format(document, config, formattingOptions, liveToken());
 
-    expect(runs().map(([, , childOptions]) => childOptions)).toEqual([
+    expect(runs().map(([, , childOptions]) => childOptions)).toStrictEqual([
       expect.not.objectContaining({ cwd: expect.anything() }),
     ]);
   });
@@ -264,17 +242,13 @@ describe("the spawned command", () => {
   it("has no folder to run from for a virtual document, warning once per scheme", async () => {
     installDjlint();
     const { channel, engine } = makeEngine();
-    const virtual = makeDocument(
-      vscode.Uri.parse("vscode-vfs://github/o/r/t.html"),
-    );
+    const virtual = makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html"));
     await engine.format(virtual, config, formattingOptions, liveToken());
     await engine.format(virtual, config, formattingOptions, liveToken());
 
     const options = runs().map(([, , childOptions]) => childOptions);
     expect(options.every((option) => !("cwd" in option))).toBe(true);
-    expect(
-      channel.of("warn").filter((line) => line.includes("vscode-vfs:")),
-    ).toHaveLength(1);
+    expect(channel.of("warn").filter((line) => line.includes("vscode-vfs:"))).toHaveLength(1);
   });
 });
 
@@ -284,18 +258,12 @@ describe("resolution through the engine", () => {
     const { channel, engine } = makeEngine();
     await engine.format(document, config, formattingOptions, liveToken());
     await engine.lint(document, config, liveToken());
-    expect(channel.of("info")).toStrictEqual([
-      "Using djLint 1.44.2: /bin/djlint",
-    ]);
+    expect(channel.of("info")).toStrictEqual(["Using djLint 1.44.2: /bin/djlint"]);
 
     vi.useFakeTimers({ toFake: ["Date"] });
     try {
       vi.advanceTimersByTime(RESOLUTION_TTL_MS + 1);
-      await engine.lint(
-        document,
-        makeConfig({ pythonPath: "/py" }),
-        liveToken(),
-      );
+      await engine.lint(document, makeConfig({ pythonPath: "/py" }), liveToken());
     } finally {
       vi.useRealTimers();
     }
@@ -323,28 +291,21 @@ describe("resolution through the engine", () => {
   });
 
   it("warns about a configured path with no working djLint", async () => {
-    spawn.mockImplementation(async (exec, args) =>
-      exec === "djlint" && isProbe(args)
-        ? VERSION_OUTPUT
-        : isProbe(args)
-          ? { exitCode: 1, stderr: NO_MODULE, stdout: "" }
-          : { stdout: "" },
-    );
+    spawn.mockImplementation(async (exec, args) => {
+      if (!isProbe(args)) {
+        return { stdout: "" };
+      }
+      return exec === "djlint" ? VERSION_OUTPUT : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+    });
     const { channel, engine } = makeEngine();
     await engine.lint(document, config, liveToken());
-    expect(channel.of("warn")[0]).toContain(
-      'djlint.executablePath is set to "/bin/djlint"',
-    );
+    expect(channel.of("warn")[0]).toContain('djlint.executablePath is set to "/bin/djlint"');
   });
 
   it("resolves a relative configured path from the workspace root", async () => {
     installDjlint();
     const { engine } = makeEngine();
-    await engine.lint(
-      document,
-      makeConfig({ executablePath: "./bin/djlint" }),
-      liveToken(),
-    );
+    await engine.lint(document, makeConfig({ executablePath: "./bin/djlint" }), liveToken());
     const [exec] = spawn.mock.calls[0] ?? [];
     expect(String(exec).replaceAll("\\", "/")).toMatch(/\/w\/bin\/djlint$/u);
   });
@@ -352,38 +313,33 @@ describe("resolution through the engine", () => {
   it("treats a probe that cannot spawn as no djLint", async () => {
     spawn.mockRejectedValue(new Error("spawn failed"));
     const { engine } = makeEngine();
-    await expect(
-      engine.lint(document, config, liveToken()),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(engine.lint(document, config, liveToken())).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
   });
 
   it("treats a probe that answers garbage as no djLint", async () => {
     installDjlint(void 0, { exitCode: 0, stdout: "not djlint" });
     const { engine } = makeEngine();
-    await expect(
-      engine.lint(document, config, liveToken()),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(engine.lint(document, config, liveToken())).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
   });
 
   it("logs what djLint warns about, once", async () => {
-    installDjlint(async () => ({
-      stderr: "Invalid pyproject.toml",
-      stdout: "<p>x</p>\n",
-    }));
+    installDjlint(async () => ({ stderr: "Invalid pyproject.toml", stdout: "<p>x</p>\n" }));
     const { channel, engine } = makeEngine();
     await engine.format(document, config, formattingOptions, liveToken());
     await engine.format(document, config, formattingOptions, liveToken());
-    expect(
-      channel.of("warn").filter((line) => line.includes("pyproject")),
-    ).toHaveLength(1);
+    expect(channel.of("warn").filter((line) => line.includes("pyproject"))).toHaveLength(1);
   });
 
   it("does not wipe a document when nothing comes back", async () => {
     installDjlint(async () => ({ stdout: "" }));
     const { engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).rejects.toThrow("printed nothing");
+    await expect(engine.format(document, config, formattingOptions, liveToken())).rejects.toThrow(
+      "printed nothing",
+    );
     expect(control.shownErrors).toHaveLength(1);
   });
 
@@ -401,33 +357,21 @@ describe("resolution through the engine", () => {
   });
 
   it.each([
-    [
-      "a shim whose command is not there",
-      { exitCode: 127, stderr: "x: not found", stdout: "" },
-    ],
-    [
-      "a cmd.exe that finds no command",
-      { exitCode: 9009, stderr: "", stdout: "" },
-    ],
-    [
-      "a file that cannot run",
-      { code: "ENOEXEC", exitCode: void 0, stderr: "", stdout: "" },
-    ],
-    [
-      "a corrupt executable",
-      { code: "UNKNOWN", exitCode: void 0, stderr: "", stdout: "" },
-    ],
+    ["a shim whose command is not there", { exitCode: 127, stderr: "x: not found", stdout: "" }],
+    ["a cmd.exe that finds no command", { exitCode: 9009, stderr: "", stdout: "" }],
+    ["a file that cannot run", { code: "ENOEXEC", exitCode: void 0, stderr: "", stdout: "" }],
+    ["a corrupt executable", { code: "UNKNOWN", exitCode: void 0, stderr: "", stdout: "" }],
   ])("treats %s as no djLint", async (_label, version) => {
     installDjlint(void 0, version);
     const { engine } = makeEngine();
-    await expect(
-      engine.lint(document, config, liveToken()),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(engine.lint(document, config, liveToken())).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
   });
 
   it("asks for the active environment of the document with useVenv on", async () => {
     installDjlint();
-    const getActive = vi.fn(async () => ({
+    const getActive = vi.fn<PythonEnvironments["getActive"]>(async () => ({
       command: { args: [], executable: "/venv/python" },
     }));
     const { engine } = makeEngine(getActive);
@@ -459,20 +403,9 @@ describe("resolution through the engine", () => {
   it("runs the executablePath a language overrides", async () => {
     installDjlint();
     const { engine } = makeEngine();
-    await engine.lint(
-      document,
-      makeConfig({ executablePath: "/bin/django-djlint" }),
-      liveToken(),
-    );
-    await engine.lint(
-      document,
-      makeConfig({ executablePath: "/bin/jinja-djlint" }),
-      liveToken(),
-    );
-    expect(runs().map(([exec]) => exec)).toStrictEqual([
-      "/bin/django-djlint",
-      "/bin/jinja-djlint",
-    ]);
+    await engine.lint(document, makeConfig({ executablePath: "/bin/django-djlint" }), liveToken());
+    await engine.lint(document, makeConfig({ executablePath: "/bin/jinja-djlint" }), liveToken());
+    expect(runs().map(([exec]) => exec)).toStrictEqual(["/bin/django-djlint", "/bin/jinja-djlint"]);
   });
 
   it("detects a djLint installed in an environment selected again", async () => {
@@ -488,9 +421,9 @@ describe("resolution through the engine", () => {
       command: { args: [], executable: active },
     }));
     const lint = makeConfig({ useVenv: true });
-    await expect(
-      engine.lint(document, lint, liveToken()),
-    ).rejects.toBeInstanceOf(DjlintUnavailableError);
+    await expect(engine.lint(document, lint, liveToken())).rejects.toBeInstanceOf(
+      DjlintUnavailableError,
+    );
 
     isInstalled = true;
     active = "/b/python";
@@ -498,9 +431,7 @@ describe("resolution through the engine", () => {
     await engine.lint(document, lint, liveToken());
     active = "/a/python";
     fireEnvironmentChange();
-    await expect(
-      engine.lint(document, lint, liveToken()),
-    ).resolves.toStrictEqual([]);
+    await expect(engine.lint(document, lint, liveToken())).resolves.toStrictEqual([]);
   });
 
   it("stops listening to environments once disposed", async () => {
@@ -536,13 +467,11 @@ describe("resolution through the engine", () => {
       stdout: "djlint, version 1.49.0",
     });
     const { channel, engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).resolves.toBe("<p>x</p>\n");
+    await expect(engine.format(document, config, formattingOptions, liveToken())).resolves.toBe(
+      "<p>x</p>\n",
+    );
     await engine.format(document, config, formattingOptions, liveToken());
-    expect(
-      channel.of("warn").filter((line) => line.includes("language server")),
-    ).toHaveLength(1);
+    expect(channel.of("warn").filter((line) => line.includes("language server"))).toHaveLength(1);
   });
 
   it("keeps a file outside the workspace on the command line", async () => {
@@ -551,15 +480,8 @@ describe("resolution through the engine", () => {
       stdout: "djlint, version 1.49.0",
     });
     const { engine } = makeEngine();
-    await engine.format(
-      makeDocument("/elsewhere/t.html"),
-      config,
-      formattingOptions,
-      liveToken(),
-    );
-    expect(
-      spawn.mock.calls.filter(([, args]) => args.includes("--lsp")),
-    ).toHaveLength(0);
+    await engine.format(makeDocument("/elsewhere/t.html"), config, formattingOptions, liveToken());
+    expect(spawn.mock.calls.filter(([, args]) => args.includes("--lsp"))).toHaveLength(0);
   });
 
   it("starts a language server for each workspace folder", async () => {
@@ -577,10 +499,7 @@ describe("resolution through the engine", () => {
       spawn.mock.calls
         .filter(([, args]) => args.includes("--lsp"))
         .map(([, , options]) => options["cwd"]),
-    ).toStrictEqual([
-      vscode.Uri.file("/a").fsPath,
-      vscode.Uri.file("/b").fsPath,
-    ]);
+    ).toStrictEqual([vscode.Uri.file("/a").fsPath, vscode.Uri.file("/b").fsPath]);
   });
 
   it("detects per folder when an environment falls through to PATH", async () => {
@@ -629,9 +548,7 @@ describe("resolution through the engine", () => {
     await engine.lint(document, lint, liveToken());
     gate.resolve(void 0);
     await stale;
-    expect(vi.mocked(status.update).mock.lastCall?.[2]).toBe(
-      "/new/python -m djlint",
-    );
+    expect(vi.mocked(status.update).mock.lastCall?.[2]).toBe("/new/python -m djlint");
   });
 
   it("detects per folder for a configured path, which can be a shim", async () => {
@@ -659,9 +576,7 @@ describe("resolution through the engine", () => {
     const lint = makeConfig();
     await engine.lint(makeDocument("/w/one/t.html"), lint, liveToken());
     await engine.lint(makeDocument("/w/two/t.html"), lint, liveToken());
-    expect(
-      channel.of("info").filter((line) => line.startsWith("Using")),
-    ).toHaveLength(1);
+    expect(channel.of("info").filter((line) => line.startsWith("Using"))).toHaveLength(1);
   });
 
   it("tells apart environments that only differ in their arguments", async () => {
@@ -688,9 +603,7 @@ describe("resolution through the engine", () => {
     const { engine } = makeEngine(async (uri) => ({
       command: {
         args: [],
-        executable: uri?.path.startsWith("/w/two/")
-          ? "/w/two/.venv/python"
-          : "/w/one/.venv/python",
+        executable: uri?.path.startsWith("/w/two/") ? "/w/two/.venv/python" : "/w/one/.venv/python",
       },
     }));
     const lint = makeConfig({ useVenv: true });
@@ -716,7 +629,7 @@ describe("resolution through the engine", () => {
 
   it("never asks for an environment with useVenv off", async () => {
     installDjlint();
-    const getActive = vi.fn(async () => null);
+    const getActive = vi.fn<PythonEnvironments["getActive"]>(async () => null);
     const { engine } = makeEngine(getActive);
     await engine.lint(document, makeConfig({ useVenv: false }), liveToken());
     expect(getActive).not.toHaveBeenCalled();
@@ -725,7 +638,7 @@ describe("resolution through the engine", () => {
   });
 });
 
-describe("expandVariables", () => {
+describe(expandVariables, () => {
   beforeEach(() => {
     setWorkspaceFolders("/w", "/other");
   });
@@ -740,9 +653,7 @@ describe("expandVariables", () => {
 
   it("expands an environment variable, and an unset one to nothing", () => {
     vi.stubEnv("DJLINT_TEST_ROOT", "/root");
-    expect(expandVariables("${env:DJLINT_TEST_ROOT}/x", document)).toBe(
-      "/root/x",
-    );
+    expect(expandVariables("${env:DJLINT_TEST_ROOT}/x", document)).toBe("/root/x");
     vi.unstubAllEnvs();
     expect(expandVariables("${env:DJLINT_TEST_ROOT}/x", document)).toBe("/x");
   });
@@ -756,9 +667,7 @@ describe("expandVariables", () => {
 
   it("leaves ${workspaceFolder} outside a workspace as written", () => {
     const value = "${workspaceFolder}/x";
-    expect(expandVariables(value, makeDocument("/elsewhere/t.html"))).toBe(
-      value,
-    );
+    expect(expandVariables(value, makeDocument("/elsewhere/t.html"))).toBe(value);
   });
 });
 
@@ -769,43 +678,31 @@ describe("how a run ends", () => {
   it("parses findings from a clean exit", async () => {
     installDjlint(async () => ({ stdout: `H013${FS}1:5${FS}msg${RS}\n` }));
     const { engine } = makeEngine();
-    await expect(
-      engine.lint(document, config, liveToken()),
-    ).resolves.toStrictEqual([
+    await expect(engine.lint(document, config, liveToken())).resolves.toStrictEqual([
       { code: "H013", column: 5, line: 1, message: "msg" },
     ]);
   });
 
   it("reads exit 1 from a lint as its findings, not a failure", async () => {
     installDjlint(async () => {
-      throw makeExecaError({
-        exitCode: 1,
-        stdout: `H013${FS}1:5${FS}msg${RS}\n`,
-      });
+      throw makeExecaError({ exitCode: 1, stdout: `H013${FS}1:5${FS}msg${RS}\n` });
     });
     const { engine } = makeEngine();
-    await expect(
-      engine.lint(document, config, liveToken()),
-    ).resolves.toHaveLength(1);
+    await expect(engine.lint(document, config, liveToken())).resolves.toHaveLength(1);
     expect(control.shownErrors).toStrictEqual([]);
     expect(probes()).toBe(1);
   });
 
   it("reports a genuine failure and rethrows it", async () => {
-    const error = makeExecaError({
-      exitCode: 2,
-      stderr: "Traceback\nValueError: bad\n",
-    });
+    const error = makeExecaError({ exitCode: 2, stderr: "Traceback\nValueError: bad\n" });
     installDjlint(async () => {
       throw error;
     });
     const { channel, engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).rejects.toBe(error);
-    expect(control.shownErrors).toStrictEqual([
-      "djLint failed: ValueError: bad",
-    ]);
+    await expect(engine.format(document, config, formattingOptions, liveToken())).rejects.toBe(
+      error,
+    );
+    expect(control.shownErrors).toStrictEqual(["djLint failed: ValueError: bad"]);
     expect(channel.of("error")).toHaveLength(1);
   });
 
@@ -815,12 +712,7 @@ describe("how a run ends", () => {
       throw vanished;
     });
     const { engine } = makeEngine();
-    const failure = engine.format(
-      document,
-      config,
-      formattingOptions,
-      liveToken(),
-    );
+    const failure = engine.format(document, config, formattingOptions, liveToken());
     await expect(failure).rejects.toBeInstanceOf(DjlintUnavailableError);
     await expect(failure).rejects.toMatchObject({ cause: vanished });
     expect(control.shownErrors).toStrictEqual([]);
@@ -835,13 +727,7 @@ describe("how a run ends", () => {
   it("runs a djLint that timed out on --version, with every option, and does not cache it", async () => {
     spawn.mockImplementation(async (_exec, args) =>
       isProbe(args)
-        ? {
-            exitCode: void 0,
-            failed: true,
-            stderr: "",
-            stdout: "",
-            timedOut: true,
-          }
+        ? { exitCode: void 0, failed: true, stderr: "", stdout: "", timedOut: true }
         : { stdout: "FORMATTED" },
     );
     const { engine } = makeEngine();
@@ -867,12 +753,7 @@ describe("how a run ends", () => {
   it("does not fall back from a djLint that crashes on start", async () => {
     spawn.mockImplementation(async (_exec, args) => {
       if (isProbe(args)) {
-        return {
-          exitCode: 1,
-          failed: true,
-          stderr: "ImportError: boom",
-          stdout: "",
-        };
+        return { exitCode: 1, failed: true, stderr: "ImportError: boom", stdout: "" };
       }
       throw makeExecaError({ exitCode: 1, stderr: "ImportError: boom" });
     });
@@ -888,12 +769,7 @@ describe("how a run ends", () => {
       if (exec === "djlint") {
         throw makeExecaError({ code: "ENOENT" });
       }
-      return {
-        exitCode: 9009,
-        failed: true,
-        stderr: "Python was not found",
-        stdout: "",
-      };
+      return { exitCode: 9009, failed: true, stderr: "Python was not found", stdout: "" };
     });
     const { engine } = makeEngine();
     await expect(
@@ -908,11 +784,7 @@ describe("how a run ends", () => {
     }));
     await engine.format(
       document,
-      makeConfig({
-        executablePath: "djlint",
-        pythonPath: "python",
-        useVenv: true,
-      }),
+      makeConfig({ executablePath: "djlint", pythonPath: "python", useVenv: true }),
       formattingOptions,
       liveToken(),
     );
@@ -929,9 +801,9 @@ describe("how a run ends", () => {
       return { stdout: "FORMATTED" };
     });
     const { engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).resolves.toBe("FORMATTED");
+    await expect(engine.format(document, config, formattingOptions, liveToken())).resolves.toBe(
+      "FORMATTED",
+    );
     expect(probes()).toBe(2);
   });
 
@@ -941,9 +813,7 @@ describe("how a run ends", () => {
       if (!isProbe(args)) {
         throw makeExecaError({ exitCode: 3, stderr: "gone" });
       }
-      const output = firstProbe
-        ? VERSION_OUTPUT
-        : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+      const output = firstProbe ? VERSION_OUTPUT : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
       firstProbe = false;
       return output;
     });
@@ -960,9 +830,9 @@ describe("how a run ends", () => {
       throw cancelled;
     });
     const { engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).rejects.toBe(cancelled);
+    await expect(engine.format(document, config, formattingOptions, liveToken())).rejects.toBe(
+      cancelled,
+    );
     expect(control.shownErrors).toStrictEqual([]);
     expect(probes()).toBe(1);
   });
@@ -973,9 +843,9 @@ describe("how a run ends", () => {
       throw error;
     });
     const { engine } = makeEngine();
-    await expect(
-      engine.format(document, config, formattingOptions, liveToken()),
-    ).rejects.toBe(error);
+    await expect(engine.format(document, config, formattingOptions, liveToken())).rejects.toBe(
+      error,
+    );
   });
 });
 
@@ -995,12 +865,7 @@ describe("cancellation", () => {
     installDjlint(abortable());
     const { engine } = makeEngine();
     const source = new vscode.CancellationTokenSource();
-    const pending = engine.format(
-      document,
-      config,
-      formattingOptions,
-      source.token,
-    );
+    const pending = engine.format(document, config, formattingOptions, source.token);
     await vi.waitFor(() => {
       expect(runs()).toHaveLength(1);
     });

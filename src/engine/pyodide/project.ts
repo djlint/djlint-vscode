@@ -1,5 +1,7 @@
 import path from "node:path";
+
 import * as vscode from "vscode";
+
 import type { ProjectSnapshot, RunRequest } from "./protocol.js";
 
 const CONFIG_FILES: ReadonlySet<string> = new Set([
@@ -28,10 +30,7 @@ async function readText(uri: vscode.Uri): Promise<string | undefined> {
 }
 
 // One request per folder, where asking for each file by name would be seven. Each can be a network round trip, and this runs on every format and lint.
-async function listConfigFiles(
-  folder: vscode.Uri,
-  directory: string,
-): Promise<string[]> {
+async function listConfigFiles(folder: vscode.Uri, directory: string): Promise<string[]> {
   const uri = vscode.Uri.joinPath(folder, ...directory.split("/"));
   try {
     const entries = await vscode.workspace.fs.readDirectory(uri);
@@ -39,7 +38,7 @@ async function listConfigFiles(
       .filter(
         ([name, type]) =>
           CONFIG_FILES.has(name) &&
-          // eslint-disable-next-line no-bitwise -- a bit field, as a symbolic link to a file sets two bits
+          // oxlint-disable-next-line no-bitwise -- a bit field, as a symbolic link to a file sets two bits
           (type & vscode.FileType.File) !== 0,
       )
       .map(([name]) => (directory === "" ? name : `${directory}/${name}`));
@@ -64,11 +63,7 @@ function insideFolder(value: string, folder: vscode.Uri): string | undefined {
   return relative === ".." || relative.startsWith("../") ? void 0 : relative;
 }
 
-function locateNamedFile(
-  option: string,
-  value: string,
-  folder: vscode.Uri,
-): NamedFile {
+function locateNamedFile(option: string, value: string, folder: vscode.Uri): NamedFile {
   const slashed = value.replaceAll("\\", "/");
   const inside = insideFolder(slashed, folder);
   if (inside != null) {
@@ -88,39 +83,26 @@ export async function readProject(
   pathOptions: RunRequest["pathOptions"],
   outputChannel: vscode.LogOutputChannel,
 ): Promise<
-  | {
-      cwd: undefined;
-      pathOptions: RunRequest["pathOptions"];
-      project: ProjectSnapshot;
-    }
-  | undefined
+  { cwd: undefined; pathOptions: RunRequest["pathOptions"]; project: ProjectSnapshot } | undefined
 > {
   const folder = vscode.workspace.getWorkspaceFolder(document.uri);
   if (folder == null) {
     return void 0;
   }
-  const cwd = path.posix.dirname(
-    path.posix.relative(folder.uri.path, document.uri.path),
-  );
+  const cwd = path.posix.dirname(path.posix.relative(folder.uri.path, document.uri.path));
   const parts = cwd === "." ? [] : cwd.split("/");
   const parents = parts.map((_, depth) => parts.slice(0, depth + 1).join("/"));
   const listed = await Promise.all(
-    ["", ...parents].map(async (directory) =>
-      listConfigFiles(folder.uri, directory),
-    ),
+    ["", ...parents].map(async (directory) => listConfigFiles(folder.uri, directory)),
   );
   const candidates = listed.flat();
   const texts = await Promise.all(
-    candidates.map(async (file) =>
-      readText(vscode.Uri.joinPath(folder.uri, ...file.split("/"))),
-    ),
+    candidates.map(async (file) => readText(vscode.Uri.joinPath(folder.uri, ...file.split("/")))),
   );
   const named = Object.entries(pathOptions).map(([option, value]) =>
     locateNamedFile(option, value, folder.uri),
   );
-  const namedTexts = await Promise.all(
-    named.map(async ({ uri }) => readText(uri)),
-  );
+  const namedTexts = await Promise.all(named.map(async ({ uri }) => readText(uri)));
 
   const files: ProjectSnapshot["files"] = {};
   for (const [index, file] of candidates.entries()) {
@@ -139,9 +121,5 @@ export async function readProject(
       guestPathOptions[option] = `/project/${file}`;
     }
   }
-  return {
-    cwd: void 0,
-    pathOptions: guestPathOptions,
-    project: { cwd, files },
-  };
+  return { cwd: void 0, pathOptions: guestPathOptions, project: { cwd, files } };
 }

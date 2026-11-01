@@ -1,11 +1,10 @@
 import type * as vscode from "vscode";
+
 import type { ArgContext, CliArg } from "../../args.js";
 
 export function parseDjlintVersion(stdout: string): string | null {
   // The last one: a version manager's wrapper can print its own first.
-  const matches = stdout
-    .matchAll(/version\s+(?<version>\d+\.\d+(?:\.\d+)?)/gu)
-    .toArray();
+  const matches = stdout.matchAll(/version\s+(?<version>\d+\.\d+(?:\.\d+)?)/gu).toArray();
   return matches.at(-1)?.groups?.["version"] ?? null;
 }
 

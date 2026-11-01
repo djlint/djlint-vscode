@@ -3,23 +3,16 @@ import type { WorkerData, WorkerRequest, WorkerResponse } from "./protocol.js";
 
 interface BrowserWorkerHandle {
   addEventListener: {
-    (
-      type: "message",
-      listener: (event: { data: WorkerResponse }) => void,
-    ): void;
+    (type: "message", listener: (event: { data: WorkerResponse }) => void): void;
     (type: "error", listener: (event: { message: string }) => void): void;
   };
   postMessage: (message: WorkerData | WorkerRequest) => void;
   terminate: () => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention -- the browser's global
 declare const Worker: new (url: string) => BrowserWorkerHandle;
 
-export function createBrowserWorker(
-  workerUrl: string,
-  indexURL: string,
-): RuntimeWorker {
+export function createBrowserWorker(workerUrl: string, indexURL: string): RuntimeWorker {
   const worker = new Worker(workerUrl);
   worker.postMessage({ indexURL });
   return {
@@ -29,7 +22,7 @@ export function createBrowserWorker(
       });
     },
     // A browser worker only ends when it is told to.
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    // oxlint-disable-next-line no-empty-function
     onExit: (): void => {},
     onMessage: (listener): void => {
       worker.addEventListener("message", ({ data }) => {

@@ -3,11 +3,10 @@
 // used for that rejection.
 import { execa } from "execa";
 import { beforeEach, describe, expect, it } from "vitest";
+
 import { checkErrors, isValidLintResult } from "../engine/subprocess/errors.js";
-import {
-  isDjlintUnavailable,
-  type CustomExecaError,
-} from "../engine/subprocess/exec.js";
+import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
+import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import { makeChannel, makeExecaError } from "./helpers.js";
 import { control, resetVscode } from "./vscode-stub.js";
 
@@ -15,10 +14,7 @@ beforeEach(() => {
   resetVscode();
 });
 
-function report(error: CustomExecaError): {
-  message: string | undefined;
-  rethrown: unknown;
-} {
+function report(error: CustomExecaError): { message: string | undefined; rethrown: unknown } {
   let rethrown: unknown;
   try {
     checkErrors(error, makeChannel());
@@ -31,7 +27,7 @@ function report(error: CustomExecaError): {
 const MODERN =
   "Usage: djlint [OPTIONS] SRC ...\nTry 'djlint --help' for help.\n\nError: No such option '--max-blank-lines-XYZ'. (Did you mean one of: '--blank-line-after-tag', '--max-blank-lines', '--preserve-blank-lines'?)";
 
-describe("checkErrors", () => {
+describe(checkErrors, () => {
   it("names the setting and the version for the modern click wording", () => {
     const { message } = report(
       makeExecaError({
@@ -39,19 +35,14 @@ describe("checkErrors", () => {
         stderr: MODERN.replace("--max-blank-lines-XYZ", "--max-blank-lines"),
       }),
     );
-    expect(message).toContain(
-      "does not support the `djlint.maxBlankLines` option",
-    );
+    expect(message).toContain("does not support the `djlint.maxBlankLines` option");
     expect(message).toContain("version 1.31 or newer");
     expect(message).toContain("https://djlint.com/docs/getting-started/");
   });
 
   it("names the setting for the older click wording", () => {
     const { message } = report(
-      makeExecaError({
-        exitCode: 2,
-        stderr: "Error: No such option: --max-blank-lines",
-      }),
+      makeExecaError({ exitCode: 2, stderr: "Error: No such option: --max-blank-lines" }),
     );
     expect(message).toContain("does not support the");
   });
@@ -76,10 +67,7 @@ describe("checkErrors", () => {
 
   it("summarizes stderr by its last non-empty line", () => {
     const { message } = report(
-      makeExecaError({
-        exitCode: 1,
-        stderr: "Traceback\n  File x\nValueError: bad value\n\n",
-      }),
+      makeExecaError({ exitCode: 1, stderr: "Traceback\n  File x\nValueError: bad value\n\n" }),
     );
     expect(message).toBe("djLint failed: ValueError: bad value");
   });
@@ -108,10 +96,7 @@ const installed = await execa("djlint", ["--version"], { reject: false });
 
 describe.skipIf(installed.failed)("checkErrors with a real djLint", () => {
   async function realFailure(option: string): Promise<CustomExecaError> {
-    const result = await execa("djlint", ["-", option], {
-      input: "<div></div>",
-      reject: false,
-    });
+    const result = await execa("djlint", ["-", option], { input: "<div></div>", reject: false });
     expect(result.failed).toBe(true);
     return result as unknown as CustomExecaError;
   }
@@ -128,17 +113,14 @@ describe.skipIf(installed.failed)("checkErrors with a real djLint", () => {
     const { message } = report(
       makeExecaError({
         exitCode: failure.exitCode,
-        stderr: failure.stderr.replace(
-          "--max-blank-lines-XYZ",
-          "--max-blank-lines",
-        ),
+        stderr: failure.stderr.replace("--max-blank-lines-XYZ", "--max-blank-lines"),
       }),
     );
     expect(message).toContain("does not support the");
   });
 });
 
-describe("isValidLintResult", () => {
+describe(isValidLintResult, () => {
   it.each([
     ["findings with empty stderr", 1, "", true, true],
     ["findings with progress on stderr", 1, "Linting 1/1 files", true, true],
@@ -147,9 +129,7 @@ describe("isValidLintResult", () => {
     ["a usage error", 2, "", true, false],
     ["exit 1 with a real complaint", 1, "Traceback", true, false],
   ])("%s", (_label, exitCode, stderr, isLint, expected) => {
-    expect(
-      isValidLintResult(makeExecaError({ exitCode, stderr }), isLint),
-    ).toBe(expected);
+    expect(isValidLintResult(makeExecaError({ exitCode, stderr }), isLint)).toBe(expected);
   });
 });
 
@@ -157,18 +137,14 @@ describe("findings with a warning on stderr", () => {
   it("are findings", () => {
     expect(
       isValidLintResult(
-        makeExecaError({
-          exitCode: 1,
-          stderr: "Invalid pyproject.toml",
-          stdout: "H013",
-        }),
+        makeExecaError({ exitCode: 1, stderr: "Invalid pyproject.toml", stdout: "H013" }),
         true,
       ),
     ).toBe(true);
   });
 });
 
-describe("isDjlintUnavailable", () => {
+describe(isDjlintUnavailable, () => {
   it.each(["EACCES", "ENOENT", "ENOEXEC", "UNKNOWN"])(
     "recognizes a command that cannot start, %s",
     (code) => {
@@ -176,25 +152,20 @@ describe("isDjlintUnavailable", () => {
     },
   );
 
-  it.each([103, 127, 9009])(
-    "recognizes the exit code %d of a launcher",
-    (exitCode) => {
-      expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
+  it.each([103, 127, 9009])("recognizes the exit code %d of a launcher", (exitCode) => {
+    expect(isDjlintUnavailable(makeExecaError({ exitCode }))).toBe(true);
+  });
+
+  it.each(["No module named djlint", "/usr/bin/python: No module named 'djlint'"])(
+    "recognizes %j",
+    (stderr) => {
+      expect(isDjlintUnavailable(makeExecaError({ stderr }))).toBe(true);
     },
   );
 
-  it.each([
-    "No module named djlint",
-    "/usr/bin/python: No module named 'djlint'",
-  ])("recognizes %j", (stderr) => {
-    expect(isDjlintUnavailable(makeExecaError({ stderr }))).toBe(true);
-  });
-
   it("does not mistake a broken djLint install for a missing one", () => {
     expect(
-      isDjlintUnavailable(
-        makeExecaError({ stderr: "No module named 'djlint.settings'" }),
-      ),
+      isDjlintUnavailable(makeExecaError({ stderr: "No module named 'djlint.settings'" })),
     ).toBe(false);
   });
 });

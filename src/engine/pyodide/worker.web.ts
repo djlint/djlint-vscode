@@ -1,4 +1,5 @@
 import type { loadPyodide } from "pyodide";
+
 import type { WorkerData, WorkerRequest } from "./protocol.js";
 import { serve } from "./runtime.js";
 
@@ -20,9 +21,7 @@ self.addEventListener<WorkerData>(
   ({ data: { indexURL } }) => {
     serve({
       importPyodide: async () =>
-        (await import(`${indexURL}pyodide.mjs`)) as {
-          loadPyodide: typeof loadPyodide;
-        },
+        (await import(`${indexURL}pyodide.mjs`)) as { loadPyodide: typeof loadPyodide },
       indexURL,
       listen: (listener) => {
         self.addEventListener<WorkerRequest>("message", ({ data }) => {

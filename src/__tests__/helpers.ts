@@ -1,6 +1,7 @@
 import { ExecaError } from "execa";
 import { vi } from "vitest";
 import * as vscode from "vscode";
+
 import type { EngineManager } from "../engine/select.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import type { DjlintEngine } from "../engine/types.js";
@@ -46,21 +47,15 @@ export function makeChannel(): TestChannel {
 export function makeConfig(
   values: Readonly<Record<string, unknown>> = {},
 ): vscode.WorkspaceConfiguration {
-  return {
-    get: (key: string) => values[key],
-  } as unknown as vscode.WorkspaceConfiguration;
+  return { get: (key: string) => values[key] } as unknown as vscode.WorkspaceConfiguration;
 }
 
-export function makeDocument(
-  location: string | vscode.Uri,
-  text = "",
-): vscode.TextDocument {
+export function makeDocument(location: string | vscode.Uri, text = ""): vscode.TextDocument {
   const lines = text.split("\n");
   return {
     getText: () => text,
     offsetAt: ({ character, line }: vscode.Position) =>
-      lines.slice(0, line).reduce((sum, item) => sum + item.length + 1, 0) +
-      character,
+      lines.slice(0, line).reduce((sum, item) => sum + item.length + 1, 0) + character,
     languageId: "html",
     lineAt: (line: number) => ({ text: lines[line] ?? "" }),
     lineCount: lines.length,
@@ -76,10 +71,7 @@ export function setWorkspaceFolders(...folders: readonly string[]): void {
   }));
 }
 
-export const formattingOptions: vscode.FormattingOptions = {
-  insertSpaces: true,
-  tabSize: 2,
-};
+export const formattingOptions: vscode.FormattingOptions = { insertSpaces: true, tabSize: 2 };
 
 export function liveToken(): vscode.CancellationToken {
   return new vscode.CancellationTokenSource().token;
@@ -120,8 +112,7 @@ export function changeOf(
 ): vscode.ConfigurationChangeEvent {
   return {
     affectsConfiguration: (query: string, scope?: unknown) =>
-      (changed === query || changed.startsWith(`${query}.`)) &&
-      (scope == null || affects(scope)),
+      (changed === query || changed.startsWith(`${query}.`)) && (scope == null || affects(scope)),
   } as unknown as vscode.ConfigurationChangeEvent;
 }
 
