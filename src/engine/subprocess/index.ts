@@ -185,6 +185,8 @@ export class SubprocessEngine implements DjlintEngine {
   readonly #pythonEnvironments: PythonEnvironments;
   readonly #status: DjlintStatus;
   readonly #environmentChange: vscode.Disposable;
+  readonly #folderChange: vscode.Disposable;
+  #disposed = false;
 
   constructor(
     outputChannel: vscode.LogOutputChannel,
@@ -198,6 +200,17 @@ export class SubprocessEngine implements DjlintEngine {
       this.#resolver.invalidate();
       this.#stopServers();
     });
+    this.#folderChange = vscode.workspace.onDidChangeWorkspaceFolders(
+      ({ removed }) => {
+        const gone = [...this.#servers].filter(([key]) =>
+          removed.some(({ uri }) => key.startsWith(`${uri.fsPath}\0`)),
+        );
+        for (const [key, server] of gone) {
+          server.dispose();
+          this.#servers.delete(key);
+        }
+      },
+    );
   }
 
   async format(
@@ -207,6 +220,7 @@ export class SubprocessEngine implements DjlintEngine {
     token: vscode.CancellationToken,
   ): Promise<string> {
     const context = { config, document, formattingOptions };
+    const { epoch } = this.#resolver;
     const command = await this.#getCommand(document, config);
     const served = await this.#viaServer(
       command,
@@ -214,6 +228,7 @@ export class SubprocessEngine implements DjlintEngine {
       "format",
       async (server, settings) =>
         server.format(document, settings, formattingOptions, token),
+      epoch,
     );
     if (served != null) {
       return served;
@@ -236,12 +251,14 @@ export class SubprocessEngine implements DjlintEngine {
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
     const context = { config, document };
+    const { epoch } = this.#resolver;
     const command = await this.#getCommand(document, config);
     const served = await this.#viaServer(
       command,
       context,
       "lint",
       async (server, settings) => server.lint(document, settings, token),
+      epoch,
     );
     return (
       served ??
@@ -250,7 +267,9 @@ export class SubprocessEngine implements DjlintEngine {
   }
 
   dispose(): void {
+    this.#disposed = true;
     this.#environmentChange.dispose();
+    this.#folderChange.dispose();
     this.#stopServers();
   }
 
@@ -267,10 +286,14 @@ export class SubprocessEngine implements DjlintEngine {
     context: ArgContext,
     mode: DjlintMode,
     call: (server: DjlintServer, settings: ServerSettings) => Promise<R>,
+    epoch: number,
   ): Promise<R | undefined> {
     const { document } = context;
     const folder = vscode.workspace.getWorkspaceFolder(document.uri);
     if (
+      // Stopped while the command was looked up: nothing would stop a server started now.
+      this.#disposed ||
+      epoch !== this.#resolver.epoch ||
       command.version == null ||
       !isVersionAtLeast(command.version, LANGUAGE_SERVER_MIN_VERSION) ||
       moduleSearchEnv(context) != null ||
@@ -419,7 +442,11 @@ export class SubprocessEngine implements DjlintEngine {
       ...(await this.#getCwd(context.document)),
       ...moduleSearchEnv(context),
       cancelSignal,
-      input: context.document.getText(),
+      // As reading a file does, or a rule on blank lines misses `\r\n`, before djLint 1.49.1.
+      input:
+        mode === "lint"
+          ? context.document.getText().replaceAll("\r\n", "\n")
+          : context.document.getText(),
       stripFinalNewline: false,
       timeout: RUN_TIMEOUT_MS,
     };

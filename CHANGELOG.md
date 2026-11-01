@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- Add `djlint.lintOnType`, on by default: with `djlint.enableLinting`, findings update after a short pause in typing, as well as on opening and saving. Findings no longer sit at the positions of the older text until the next save.
+- Move the link to the language server's docs, which are part of Integrations now.
+- Give the bundled djLint the absolute path of a file, as the command line and the language server have it, so `per-file-ignores` and rule modules see the same path.
+- Find what rules on blank lines report in a CRLF file through the command line too.
+- Let go of a run that is cancelled while the language server starts, instead of holding the runs behind it.
+- Don't start a language server for an environment that was left during the lookup of its command, and stop the one of a workspace folder that is removed, so Windows lets the folder be deleted.
+
 ## [2026.11.2] - 2026-11-01
 
 - Bundle djLint 1.49.0.

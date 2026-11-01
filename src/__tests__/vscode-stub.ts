@@ -11,7 +11,14 @@ interface Disposable {
 }
 
 export type WorkspaceEventKind =
-  "close" | "config" | "extensions" | "open" | "save" | "trust";
+  | "change"
+  | "close"
+  | "config"
+  | "extensions"
+  | "folders"
+  | "open"
+  | "save"
+  | "trust";
 
 const URI_REGEX =
   /^(?<scheme>[a-z][a-z\d+.-]*):(?:\/\/(?<authority>[^/?#]*))?(?<path>[^?#]*)(?:\?(?<query>[^#]*))?(?:#(?<fragment>.*))?$/iu;
@@ -389,8 +396,12 @@ export const workspace = {
     return control.isTrusted;
   },
   onDidChangeConfiguration: onWorkspaceEvent<unknown>("config"),
+  onDidChangeWorkspaceFolders: onWorkspaceEvent<{
+    removed: readonly { uri: { fsPath: string } }[];
+  }>("folders"),
   onDidCloseTextDocument: onWorkspaceEvent<unknown>("close"),
   onDidGrantWorkspaceTrust: onWorkspaceEvent<unknown>("trust"),
+  onDidChangeTextDocument: onWorkspaceEvent<unknown>("change"),
   onDidOpenTextDocument: onWorkspaceEvent<unknown>("open"),
   onDidSaveTextDocument: onWorkspaceEvent<unknown>("save"),
   get textDocuments(): readonly unknown[] {

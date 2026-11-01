@@ -85,7 +85,7 @@ describe("the run request", () => {
     const request = sentFor({});
     expect(request).toMatchObject({
       cwd: Uri.file("/w/sub").fsPath,
-      filename: "sub/t.html",
+      filename: "/w/sub/t.html",
       id: 1,
       mode: "format",
       src: "<p>x</p>",
