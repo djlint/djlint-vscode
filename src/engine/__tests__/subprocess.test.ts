@@ -1,4 +1,4 @@
-/* eslint-disable no-template-curly-in-string -- the variables of a setting, as written */
+/* oxlint-disable no-template-curly-in-string -- the variables of a setting, as written */
 // SubprocessEngine with execa replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
 import { stat } from "node:fs/promises";
@@ -32,7 +32,7 @@ import {
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
 vi.mock("which-command", () => ({
@@ -256,7 +256,7 @@ describe("the spawned command", () => {
     const { engine } = makeEngine();
     await engine.format(document, config, formattingOptions, liveToken());
 
-    expect(runs().map(([, , childOptions]) => childOptions)).toEqual([
+    expect(runs().map(([, , childOptions]) => childOptions)).toStrictEqual([
       expect.not.objectContaining({ cwd: expect.anything() }),
     ]);
   });
@@ -323,13 +323,14 @@ describe("resolution through the engine", () => {
   });
 
   it("warns about a configured path with no working djLint", async () => {
-    spawn.mockImplementation(async (exec, args) =>
-      exec === "djlint" && isProbe(args)
+    spawn.mockImplementation(async (exec, args) => {
+      if (!isProbe(args)) {
+        return { stdout: "" };
+      }
+      return exec === "djlint"
         ? VERSION_OUTPUT
-        : isProbe(args)
-          ? { exitCode: 1, stderr: NO_MODULE, stdout: "" }
-          : { stdout: "" },
-    );
+        : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
+    });
     const { channel, engine } = makeEngine();
     await engine.lint(document, config, liveToken());
     expect(channel.of("warn")[0]).toContain(
@@ -427,7 +428,7 @@ describe("resolution through the engine", () => {
 
   it("asks for the active environment of the document with useVenv on", async () => {
     installDjlint();
-    const getActive = vi.fn(async () => ({
+    const getActive = vi.fn<PythonEnvironments["getActive"]>(async () => ({
       command: { args: [], executable: "/venv/python" },
     }));
     const { engine } = makeEngine(getActive);
@@ -716,7 +717,7 @@ describe("resolution through the engine", () => {
 
   it("never asks for an environment with useVenv off", async () => {
     installDjlint();
-    const getActive = vi.fn(async () => null);
+    const getActive = vi.fn<PythonEnvironments["getActive"]>(async () => null);
     const { engine } = makeEngine(getActive);
     await engine.lint(document, makeConfig({ useVenv: false }), liveToken());
     expect(getActive).not.toHaveBeenCalled();
@@ -725,7 +726,7 @@ describe("resolution through the engine", () => {
   });
 });
 
-describe("expandVariables", () => {
+describe(expandVariables, () => {
   beforeEach(() => {
     setWorkspaceFolders("/w", "/other");
   });

@@ -2,10 +2,8 @@
 // they race on CommandResolver. This exercises the interleavings that actually
 // happen on every save.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CommandResolver,
-  type ResolveDjlintCommandDeps,
-} from "../engine/subprocess/resolve.js";
+import { CommandResolver } from "../engine/subprocess/resolve.js";
+import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../engine/types.js";
 
 function makeDeps(
@@ -28,7 +26,7 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("CommandResolver", () => {
+describe(CommandResolver, () => {
   it("shares one resolution between concurrent callers", async () => {
     const resolver = new CommandResolver();
     let probes = 0;

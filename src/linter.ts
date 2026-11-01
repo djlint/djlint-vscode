@@ -173,7 +173,7 @@ export class Linter {
         return;
       }
       if (shouldLint(document)) {
-        // eslint-disable-next-line no-await-in-loop -- sequential, so a window full of templates never fans out into one djLint run per editor
+        // oxlint-disable-next-line no-await-in-loop -- sequential, so a window full of templates never fans out into one djLint run per editor
         await this.#safeLint(document);
       }
     }

@@ -82,11 +82,6 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     await writeFile(path.join(root, "pyproject.toml"), "");
   });
 
-  afterAll(async () => {
-    vi.unstubAllEnvs();
-    await rm(root, { force: true, maxRetries: 20, recursive: true });
-  });
-
   beforeEach(() => {
     resetVscode();
     setWorkspaceFolders(root);
@@ -95,6 +90,11 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
 
   afterEach(() => {
     server.dispose();
+  });
+
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, maxRetries: 20, recursive: true });
   });
 
   it("formats", async () => {

@@ -18,7 +18,8 @@ import {
 import { control, resetVscode, Uri } from "../../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../../args.js";
 import { getDocumentFolder } from "../../document-folder.js";
-import { RUN_TIMEOUT_MS, type LintDiagnostic } from "../../types.js";
+import { RUN_TIMEOUT_MS } from "../../types.js";
+import type { LintDiagnostic } from "../../types.js";
 import { PyodideEngine } from "../index.js";
 import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
@@ -340,7 +341,7 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow(/^$/u);
     expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: "]);
   });
 
@@ -348,10 +349,10 @@ describe("djLint failures", () => {
     const { channel, engine } = makeEngine();
     const first = format(engine);
     FakeWorker.latest.failRun(1, TRACEBACK);
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow(TRACEBACK);
     const second = format(engine);
     FakeWorker.latest.failRun(2, TRACEBACK);
-    await expect(second).rejects.toThrow();
+    await expect(second).rejects.toThrow(TRACEBACK);
     expect(control.shownErrors).toHaveLength(1);
     expect(channel.of("error")).toHaveLength(2);
   });
@@ -360,10 +361,10 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const first = format(engine);
     FakeWorker.latest.failRun(1, "first");
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow("first");
     const second = format(engine);
     FakeWorker.latest.failRun(2, "second");
-    await expect(second).rejects.toThrow();
+    await expect(second).rejects.toThrow("second");
     expect(control.shownErrors).toHaveLength(2);
   });
 
@@ -372,7 +373,7 @@ describe("djLint failures", () => {
     const { channel, engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "broken");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow("broken");
     await vi.waitFor(() => {
       expect(channel.shownCount).toBe(1);
     });
@@ -382,7 +383,7 @@ describe("djLint failures", () => {
     const { engine } = makeEngine();
     const pending = format(engine);
     FakeWorker.latest.failRun(1, "broken");
-    await expect(pending).rejects.toThrow();
+    await expect(pending).rejects.toThrow("broken");
     expect(FakeWorker.latest.terminated).toBe(false);
   });
 });
@@ -423,7 +424,7 @@ describe("the worker dying", () => {
     const first = format(engine);
     const old = FakeWorker.latest;
     old.emit("error", new Error("died"));
-    await expect(first).rejects.toThrow();
+    await expect(first).rejects.toThrow("died");
 
     const second = format(engine);
     old.emit("exit", 1);
@@ -455,7 +456,9 @@ describe("timeouts", () => {
     const second = format(engine);
     const wedged = FakeWorker.latest;
 
+    // oxlint-disable-next-line vitest/valid-expect -- awaited below, once the clock has run out
     const rejection = expect(first).rejects.toThrow("timed out");
+    // oxlint-disable-next-line vitest/valid-expect -- awaited below, once the clock has run out
     const otherRejection = expect(second).rejects.toThrow("timed out");
     vi.advanceTimersByTime(RUN_TIMEOUT_MS);
     await rejection;
@@ -557,7 +560,7 @@ describe("timeouts", () => {
   it("does not leave a clock running for a worker that never started", async () => {
     FakeWorker.constructionError = new Error("no such file");
     const { engine } = makeEngine();
-    await expect(format(engine)).rejects.toThrow();
+    await expect(format(engine)).rejects.toThrow("no such file");
     expect(vi.getTimerCount()).toBe(0);
   });
 });

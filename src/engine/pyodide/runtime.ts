@@ -66,7 +66,7 @@ export function serve(host: WorkerHost): void {
 
   const ready = boot();
   // An unhandled boot rejection would kill the worker outright. The host starts another one instead, which also gets over a failed download in a browser.
-  // eslint-disable-next-line unicorn/prefer-await
+  // oxlint-disable-next-line promise/prefer-await-to-then -- the worker never waits on this, it only reports the failure
   ready.catch((e: unknown) => {
     host.send({
       error: e instanceof Error ? e.message : String(e),
@@ -101,7 +101,7 @@ export function serve(host: WorkerHost): void {
       const runtime = await ready;
       // Python blocks this thread, so a cancellation sent while an earlier request ran is still in line behind its request. Let it arrive first.
       await new Promise((resolve) => {
-        setTimeout(resolve);
+        setTimeout(resolve, 0);
       });
       const request = queue.get(id);
       if (request == null) {

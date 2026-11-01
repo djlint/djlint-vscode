@@ -12,9 +12,7 @@ const port = parentPort;
 const { indexURL } = workerData as WorkerData;
 
 interface NodeFilesystems {
-  // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
   NODEFS: {
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
     node_ops: { readlink: (node: unknown) => string };
     realPath: (node: unknown) => string;
   };

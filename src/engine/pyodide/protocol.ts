@@ -54,4 +54,8 @@ interface CrashedMessage {
 }
 
 export type WorkerResponse =
-  BootFailedMessage | CrashedMessage | LogMessage | ReadyMessage | RunResponse;
+  | BootFailedMessage
+  | CrashedMessage
+  | LogMessage
+  | ReadyMessage
+  | RunResponse;

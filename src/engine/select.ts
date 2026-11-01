@@ -1,11 +1,8 @@
 import * as vscode from "vscode";
 import { getConfiguredPath } from "../config.js";
 import { isVirtualDocument, workspaceScopeKey } from "../paths.js";
-import {
-  DjlintUnavailableError,
-  type DjlintEngine,
-  type LintDiagnostic,
-} from "./types.js";
+import { DjlintUnavailableError } from "./types.js";
+import type { DjlintEngine, LintDiagnostic } from "./types.js";
 
 export const engineSettingKeys: readonly string[] = [
   "executablePath",

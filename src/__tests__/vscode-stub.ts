@@ -242,7 +242,7 @@ export class RecordingChannel {
     this.shownCount += 1;
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  // oxlint-disable-next-line class-methods-use-this, no-empty-function
   dispose(): void {}
 }
 

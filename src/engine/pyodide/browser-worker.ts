@@ -13,7 +13,6 @@ interface BrowserWorkerHandle {
   terminate: () => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention -- the browser's global
 declare const Worker: new (url: string) => BrowserWorkerHandle;
 
 export function createBrowserWorker(
@@ -29,7 +28,7 @@ export function createBrowserWorker(
       });
     },
     // A browser worker only ends when it is told to.
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    // oxlint-disable-next-line no-empty-function
     onExit: (): void => {},
     onMessage: (listener): void => {
       worker.addEventListener("message", ({ data }) => {

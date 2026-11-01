@@ -10,7 +10,7 @@ beforeEach(() => {
   control.configuration = { formatLanguages: ["django-html"] };
 });
 
-describe("DjlintStatus", () => {
+describe(DjlintStatus, () => {
   it("appears for the languages djLint formats and opens the logs", () => {
     const status = new DjlintStatus();
     const [item] = control.statusItems;

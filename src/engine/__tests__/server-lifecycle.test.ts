@@ -24,7 +24,7 @@ const { servers, spawn } = vi.hoisted(() => ({
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
 vi.mock("which-command", () => ({

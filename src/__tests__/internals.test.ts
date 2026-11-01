@@ -7,10 +7,8 @@ import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { formattingArgs } from "../args.js";
 import { CancellationRegistry } from "../cancellation-registry.js";
 import { isValidLintResult } from "../engine/subprocess/errors.js";
-import {
-  isDjlintUnavailable,
-  type CustomExecaError,
-} from "../engine/subprocess/exec.js";
+import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
+import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import { classifyRunFailure } from "../engine/subprocess/index.js";
 import { selectSupportedArgs } from "../engine/subprocess/version.js";
 import {
@@ -25,7 +23,7 @@ beforeEach(() => {
   resetVscode();
 });
 
-describe("CancellationRegistry", () => {
+describe(CancellationRegistry, () => {
   it("registers a fresh run uncancelled", () => {
     const registry = new CancellationRegistry();
     const run = registry.start("doc");
@@ -78,7 +76,7 @@ describe("CancellationRegistry", () => {
   });
 });
 
-describe("selectSupportedArgs", () => {
+describe(selectSupportedArgs, () => {
   // --max-blank-lines needs 1.31; --format-css needs 1.9.
   const args = formattingArgs.filter((arg) =>
     ["--format-css", "--max-blank-lines"].includes(arg.cliName),
@@ -215,7 +213,7 @@ describe("a wedged djLint run", () => {
   });
 });
 
-describe("classifyRunFailure", () => {
+describe(classifyRunFailure, () => {
   it("does not reprobe when the error alone decides", async () => {
     let reprobes = 0;
     const reprobe = async (): Promise<string> => {

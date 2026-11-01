@@ -14,7 +14,8 @@ interface ExtensionLike {
 export const PythonExtension = {
   api: async (): Promise<unknown> => {
     const extension = extensions.getExtension(PVSC_EXTENSION_ID) as
-      ExtensionLike | undefined;
+      | ExtensionLike
+      | undefined;
     if (extension === void 0) {
       throw new Error("Python extension is not installed or is disabled");
     }

@@ -20,7 +20,7 @@ import { Worker } from "node:worker_threads";
  */
 
 // An unpacked VSIX, to check what is shipped rather than the working tree.
-const packaged = /** @type {string | undefined} */ (process.argv.at(2));
+const packaged = process.argv.at(2);
 const ROOT = path.resolve(packaged ?? ".");
 const WORKER = path.join(ROOT, "dist/pyodide-worker.cjs");
 const INDEX_URL = path.join(ROOT, "assets/pyodide");
@@ -75,7 +75,7 @@ const pending = new Map();
 const seq = { value: 0 };
 
 worker.on("message", (/** @type {WorkerResponse} */ response) => {
-  // eslint-disable-next-line default-case -- every type has a case
+  // oxlint-disable-next-line default-case -- every type has a case
   switch (response.type) {
     case "boot-failed": {
       throw new Error(`bundled worker failed to start: ${response.error}`);
@@ -137,6 +137,7 @@ async function call(mode, src, request = {}) {
       type: "run",
       ...request,
     };
+    // oxlint-disable-next-line unicorn/require-post-message-target-origin -- a worker thread, not a window
     worker.postMessage(message);
   });
 }

@@ -31,17 +31,10 @@ import {
   makeStatus,
   setWorkspaceFolders,
 } from "../../../__tests__/helpers.js";
-import {
-  control,
-  resetVscode,
-  type TextEditRecord,
-} from "../../../__tests__/vscode-stub.js";
-import {
-  formattingArgs,
-  lintingArgs,
-  type ArgContext,
-  type CliArg,
-} from "../../../args.js";
+import { control, resetVscode } from "../../../__tests__/vscode-stub.js";
+import type { TextEditRecord } from "../../../__tests__/vscode-stub.js";
+import { formattingArgs, lintingArgs } from "../../../args.js";
+import type { ArgContext, CliArg } from "../../../args.js";
 import { Formatter } from "../../../formatter.js";
 import { Linter } from "../../../linter.js";
 import { createDesktopEngine } from "../../desktop.js";
@@ -111,13 +104,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     engine = makeEngine(true, channel);
   });
 
-  afterAll(() => {
-    engine.dispose();
-  });
-
   beforeEach(() => {
     resetVscode();
     channel.lines.length = 0;
+  });
+
+  afterAll(() => {
+    engine.dispose();
   });
 
   async function format(
@@ -321,7 +314,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       const document = documentIn("vendor/lib/t.html", NESTED);
       await expect(format(NESTED, {}, document)).resolves.toBe(NESTED);
       const dirty = documentIn("vendor/lib/t.html", DIRTY);
-      await expect(lintCodes(DIRTY, {}, dirty)).resolves.toEqual([]);
+      await expect(lintCodes(DIRTY, {}, dirty)).resolves.toStrictEqual([]);
     });
 
     it("still formats a file beside what the project excludes", async () => {

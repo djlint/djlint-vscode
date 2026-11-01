@@ -25,7 +25,7 @@ beforeEach(() => {
   setWorkspaceFolders("/ws");
 });
 
-describe("resolveWorkspaceFilePath", () => {
+describe(resolveWorkspaceFilePath, () => {
   it("resolves a bare filename to the workspace root, not the document", () => {
     expect(portable(resolveWorkspaceFilePath(".djlintrc", nested))).toBe(
       "/ws/.djlintrc",
@@ -93,7 +93,7 @@ describe("path arguments", () => {
 // Configured EXECUTABLES follow a deliberately different rule, and the two
 // policies live side by side, so pin what separates them: a bare name is a PATH
 // lookup, where a bare config filename means the workspace's.
-describe("normalizeConfiguredExecutable", () => {
+describe(normalizeConfiguredExecutable, () => {
   it.each(["djlint", "python3"])("keeps %s a PATH lookup", (name) => {
     expect(normalizeConfiguredExecutable(name, nested)).toBe(name);
   });

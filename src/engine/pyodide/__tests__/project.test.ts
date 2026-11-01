@@ -25,7 +25,7 @@ beforeEach(() => {
   control.workspaceFolders = [{ uri: FOLDER }];
 });
 
-describe("readProject", () => {
+describe(readProject, () => {
   it("reads a path setting that leaves the folder, keeping it under the project", async () => {
     control.files = new Map([["memfs://repo/shared/rules.yaml", "rules"]]);
     const read = await readProject(
@@ -54,7 +54,7 @@ describe("readProject", () => {
   it("treats a Windows path as absolute without a path module to help", async () => {
     const read = await readProject(
       document("a.html"),
-      { rules: "D:\\shared\\rules.yaml" },
+      { rules: String.raw`D:\shared\rules.yaml` },
       channel,
     );
     expect(read?.pathOptions).toStrictEqual({});

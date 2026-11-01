@@ -1,15 +1,12 @@
 import path from "node:path";
 import * as vscode from "vscode";
-import { buildOptions, type ArgContext } from "../../args.js";
+import { buildOptions } from "../../args.js";
+import type { ArgContext } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";
 import { deriveStdinFilename } from "../../paths.js";
 import type { DjlintStatus } from "../../status.js";
-import {
-  RUN_TIMEOUT_MS,
-  type DjlintEngine,
-  type DjlintMode,
-  type LintDiagnostic,
-} from "../types.js";
+import { RUN_TIMEOUT_MS } from "../types.js";
+import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { readProject } from "./project.js";
 import type {
   RunRequest,
@@ -89,7 +86,7 @@ export class PyodideEngine implements DjlintEngine {
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
     const output = await this.#call("lint", { config, document }, token);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- written by glue.py
+    // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- written by glue.py
     return JSON.parse(output) as LintDiagnostic[];
   }
 
@@ -176,7 +173,7 @@ export class PyodideEngine implements DjlintEngine {
   }
 
   #handle(response: WorkerResponse): void {
-    // eslint-disable-next-line default-case -- every type has a case
+    // oxlint-disable-next-line default-case -- every type has a case
     switch (response.type) {
       case "boot-failed": {
         this.#outputChannel.error(response.error);

@@ -32,7 +32,6 @@ export abstract class CliArg {
     this.displayName = vscodeName ? `djlint.${vscodeName}` : cliName;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- what ProfileArg goes by
   requiredVersion(_context: ArgContext): string {
     return this.minVersion;
   }
@@ -54,7 +53,7 @@ export abstract class CliArg {
 }
 
 abstract class CliOnlyArg extends CliArg {
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  // oxlint-disable-next-line class-methods-use-this, no-empty-function
   override buildKwarg(): undefined {}
 }
 
@@ -63,7 +62,7 @@ class SimpleArg extends CliOnlyArg {
     super("", cliName, minVersion);
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  // oxlint-disable-next-line class-methods-use-this
   protected read(): true {
     return true;
   }
@@ -119,7 +118,7 @@ class LinterOutputFormatArg extends CliOnlyArg {
     super("", "--linter-output-format", "1.25");
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  // oxlint-disable-next-line class-methods-use-this
   protected read({ djlintVersion }: ArgContext): string {
     return djlintVersion != null &&
       isVersionAtLeast(djlintVersion, LINTER_END_MIN_VERSION)
@@ -134,7 +133,7 @@ class StdinFilenameArg extends CliOnlyArg {
   }
 
   // A relative path counts from the folder djLint runs in, which is the document's, and not from the workspace.
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this
+  // oxlint-disable-next-line class-methods-use-this
   protected read({ djlintVersion, document }: ArgContext): string {
     return djlintVersion != null &&
       document.uri.scheme === "file" &&

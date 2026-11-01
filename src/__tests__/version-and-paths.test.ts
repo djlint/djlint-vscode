@@ -163,14 +163,16 @@ describe("parseLinterOutput, legacy format", () => {
   });
 });
 
-describe("deriveStdinFilename", () => {
+describe(deriveStdinFilename, () => {
   it("is the path relative to the workspace", () => {
     setWorkspaceFolders("/w");
     expect(deriveStdinFilename(makeDocument("/w/a/b.html"))).toBe("a/b.html");
   });
 
   it("normalizes backslashes", () => {
-    vi.spyOn(vscode.workspace, "asRelativePath").mockReturnValue("a\\b.html");
+    vi.spyOn(vscode.workspace, "asRelativePath").mockReturnValue(
+      String.raw`a\b.html`,
+    );
     expect(deriveStdinFilename(makeDocument("/w/a/b.html"))).toBe("a/b.html");
   });
 
@@ -202,7 +204,7 @@ describe("deriveStdinFilename", () => {
   });
 });
 
-describe("parseDjlintVersion", () => {
+describe(parseDjlintVersion, () => {
   it("takes the last version, past what a wrapper printed", () => {
     expect(
       parseDjlintVersion(
@@ -242,7 +244,7 @@ describe("document location helpers", () => {
   });
 });
 
-describe("parseDjlintVersion", () => {
+describe(parseDjlintVersion, () => {
   it.each([
     ["djlint, version 1.44.2", "1.44.2"],
     ["djlint, version 1.44", "1.44"],
@@ -253,7 +255,7 @@ describe("parseDjlintVersion", () => {
   });
 });
 
-describe("isVersionAtLeast", () => {
+describe(isVersionAtLeast, () => {
   it.each([
     ["1.5", "1.25", false],
     ["1.25", "1.25", true],

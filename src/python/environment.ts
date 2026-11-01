@@ -1,14 +1,14 @@
 import { isDeepStrictEqual } from "node:util";
-import {
-  EXTENSION_ID as pythonEnvironmentsExtensionId,
-  type PythonEnvironment,
-  type PythonEnvironmentApi,
+import { EXTENSION_ID as pythonEnvironmentsExtensionId } from "@vscode/python-environments";
+import type {
+  PythonEnvironment,
+  PythonEnvironmentApi,
 } from "@vscode/python-environments";
 import {
   PythonExtension as PythonExtensionApi,
   PVSC_EXTENSION_ID as pythonExtensionId,
-  type ResolvedEnvironment,
 } from "@vscode/python-extension";
+import type { ResolvedEnvironment } from "@vscode/python-extension";
 import * as vscode from "vscode";
 
 export const ENVIRONMENT_TIMEOUT_MS = 30_000;
@@ -99,6 +99,7 @@ export class PythonEnvironments implements vscode.Disposable {
       "The Python extension is not answering; going on without the active environment until it does.",
     );
     this.#isStalled = true;
+    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- the caller goes on without it
     void lookup.then(() => {
       if (this.#isStalled) {
         this.#changeEmitter.fire();

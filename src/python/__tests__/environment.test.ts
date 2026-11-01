@@ -44,7 +44,7 @@ function envsExtension(
   getEnvironment: ReturnType<typeof vi.fn>;
 } {
   const listeners: ((event: unknown) => void)[] = [];
-  const getEnvironment = vi.fn(async () => active);
+  const getEnvironment = vi.fn<() => Promise<unknown>>(async () => active);
   const api = {
     getEnvironment,
     onDidChangeEnvironment: (listener: (event: unknown) => void) => {
@@ -152,7 +152,7 @@ describe("provider selection", () => {
 
   it("picks up a Python extension installed while running", async () => {
     const { environments } = makeEnvironments();
-    const onChange = vi.fn();
+    const onChange = vi.fn<() => void>();
     environments.onDidChange(onChange);
     await environments.getActive(void 0);
 
@@ -173,7 +173,7 @@ describe("provider selection", () => {
       classicExtension("/usr/bin/python").extension,
     );
     const { environments } = makeEnvironments();
-    const onChange = vi.fn();
+    const onChange = vi.fn<() => void>();
     environments.onDidChange(onChange);
     await environments.getActive(void 0);
 
@@ -231,7 +231,7 @@ describe("provider selection", () => {
       const { extension } = envsExtension(void 0);
       const listeners: ((event: unknown) => void)[] = [];
       const api = {
-        getEnvironment: vi.fn(async () => promise),
+        getEnvironment: vi.fn<() => Promise<unknown>>(async () => promise),
         onDidChangeEnvironment: (listener: (event: unknown) => void) => {
           listeners.push(listener);
           return { dispose: () => void 0 };
@@ -265,7 +265,7 @@ describe("provider selection", () => {
       const { answer, extension } = hangingExtension();
       control.extensions.set(ENVS_ID, extension);
       const { environments } = makeEnvironments();
-      const onChange = vi.fn();
+      const onChange = vi.fn<() => void>();
       environments.onDidChange(onChange);
       const first = environments.getActive(void 0);
       await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
@@ -295,7 +295,7 @@ describe("provider selection", () => {
       const { extension, fireChange, lookups } = hangingExtension();
       control.extensions.set(ENVS_ID, extension);
       const { environments } = makeEnvironments();
-      const onChange = vi.fn();
+      const onChange = vi.fn<() => void>();
       environments.onDidChange(onChange);
       const first = environments.getActive(void 0);
       await vi.advanceTimersByTimeAsync(ENVIRONMENT_TIMEOUT_MS);
@@ -397,7 +397,7 @@ describe("provider selection", () => {
   });
 
   it("activates an extension that is not active yet", async () => {
-    const activate = vi.fn(async () => void 0);
+    const activate = vi.fn<() => Promise<void>>(async () => void 0);
     const { extension } = classicExtension("/usr/bin/python");
     control.extensions.set(PY_ID, { ...extension, activate, isActive: false });
     const { environments } = makeEnvironments();
@@ -542,7 +542,7 @@ describe("change events", () => {
     const classic = classicExtension("/usr/bin/python");
     control.extensions.set(PY_ID, classic.extension);
     const { environments } = makeEnvironments();
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     environments.onDidChange(listener);
     await environments.getActive(void 0);
     classic.fireChange();
@@ -553,7 +553,7 @@ describe("change events", () => {
     const classic = classicExtension("/usr/bin/python");
     control.extensions.set(PY_ID, classic.extension);
     const { environments } = makeEnvironments();
-    const listener = vi.fn();
+    const listener = vi.fn<() => void>();
     environments.onDidChange(listener);
     await environments.getActive(void 0);
     environments.dispose();

@@ -4,12 +4,8 @@ import process from "node:process";
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { whichCommand } from "which-command";
-import {
-  buildOptions,
-  formattingArgs,
-  lintingArgs,
-  type ArgContext,
-} from "../../args.js";
+import { buildOptions, formattingArgs, lintingArgs } from "../../args.js";
+import type { ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
 import { showFailure } from "../../notify.js";
 import {
@@ -20,31 +16,16 @@ import {
 import type { PythonEnvironments } from "../../python/environment.js";
 import type { DjlintStatus } from "../../status.js";
 import { getExistingDocumentFolder } from "../document-folder.js";
-import {
-  DjlintUnavailableError,
-  RUN_TIMEOUT_MS,
-  type DjlintEngine,
-  type DjlintMode,
-  type LintDiagnostic,
-} from "../types.js";
+import { DjlintUnavailableError, RUN_TIMEOUT_MS } from "../types.js";
+import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { checkErrors, isValidLintResult } from "./errors.js";
-import {
-  isCustomExecaError,
-  isDjlintUnavailable,
-  type ChildOptions,
-  type CustomExecaError,
-} from "./exec.js";
+import { isCustomExecaError, isDjlintUnavailable } from "./exec.js";
+import type { ChildOptions, CustomExecaError } from "./exec.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
-import {
-  CommandResolver,
-  type ProbeResult,
-  type RunnerCommand,
-} from "./resolve.js";
-import {
-  DjlintServer,
-  ServerResponseError,
-  type ServerSettings,
-} from "./server.js";
+import { CommandResolver } from "./resolve.js";
+import type { ProbeResult, RunnerCommand } from "./resolve.js";
+import { DjlintServer, ServerResponseError } from "./server.js";
+import type { ServerSettings } from "./server.js";
 import {
   isVersionAtLeast,
   parseDjlintVersion,
@@ -71,7 +52,6 @@ function moduleSearchEnv({
   const { PYTHONPATH: inherited } = process.env;
   return {
     env: {
-      // eslint-disable-next-line @typescript-eslint/naming-convention -- environment variable name
       PYTHONPATH: [folder.uri.fsPath, ...(inherited ? [inherited] : [])].join(
         path.delimiter,
       ),

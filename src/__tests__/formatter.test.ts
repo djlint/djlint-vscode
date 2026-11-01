@@ -15,12 +15,8 @@ import {
   makeDocument,
   makeEngines,
 } from "./helpers.js";
-import {
-  control,
-  fireWorkspaceEvent,
-  resetVscode,
-  type TextEditRecord,
-} from "./vscode-stub.js";
+import { control, fireWorkspaceEvent, resetVscode } from "./vscode-stub.js";
+import type { TextEditRecord } from "./vscode-stub.js";
 
 const UGLY = `<div><p>hi</p>\n<img src="x.png">\n</div>`;
 

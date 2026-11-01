@@ -1,10 +1,8 @@
 // Which djLint actually runs: executablePath > pythonPath > active environment
 // > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
 import { describe, expect, it } from "vitest";
-import {
-  resolveDjlintCommand,
-  type ResolveDjlintCommandDeps,
-} from "../engine/subprocess/resolve.js";
+import { resolveDjlintCommand } from "../engine/subprocess/resolve.js";
+import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError } from "../engine/types.js";
 
 /** `works` lists the exec names with a real djLint; everything else fails. */
@@ -34,7 +32,7 @@ const condaEnvironment = {
   command: { args: ["run", "-p", "/env"], executable: "conda" },
 };
 
-describe("resolveDjlintCommand", () => {
+describe(resolveDjlintCommand, () => {
   it("takes executablePath outright, probing nothing else", async () => {
     const { deps, probed } = makeDeps({ executablePath: "/bin/djlint" }, [
       "/bin/djlint",

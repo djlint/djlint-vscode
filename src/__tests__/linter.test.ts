@@ -96,7 +96,7 @@ describe("typing", () => {
     expect(lint).not.toHaveBeenCalled();
     vi.advanceTimersByTime(100);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     expect(diagnosticsOf(document)).toHaveLength(1);
   });
 
@@ -112,10 +112,10 @@ describe("typing", () => {
     linter.activate();
     fireWorkspaceEvent("save", document);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     type();
     vi.advanceTimersByTime(700);
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     vi.advanceTimersByTime(100);
     await flush();
     expect(lint).toHaveBeenCalledTimes(2);
@@ -173,7 +173,7 @@ describe("typing", () => {
     fireWorkspaceEvent("save", document);
     vi.advanceTimersByTime(1000);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
   });
 
   it("doesn't lint a document closed during the pause", () => {
@@ -210,7 +210,7 @@ describe("typing", () => {
     linter.activate();
     fireWorkspaceEvent("save", edited);
     await flush();
-    expect(lint).toHaveBeenCalledTimes(1);
+    expect(lint).toHaveBeenCalledOnce();
     vi.advanceTimersByTime(300);
     await flush();
     expect(lint).toHaveBeenCalledTimes(2);
@@ -225,7 +225,7 @@ describe("a document closed before its turn in a sweep", () => {
     } as vscode.TextDocument;
     control.configuration = { enableLinting: true };
     control.documents = [closed];
-    const lint = vi.fn(async () => []);
+    const lint = vi.fn<DjlintEngine["lint"]>(async () => []);
     const linter = new Linter(makeContext(), makeChannel(), {
       engine: { lint },
     } as never);

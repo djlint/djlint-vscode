@@ -12,11 +12,8 @@ import {
 } from "../../__tests__/helpers.js";
 import { resetVscode } from "../../__tests__/vscode-stub.js";
 import { FallbackEngine } from "../select.js";
-import {
-  DjlintUnavailableError,
-  type DjlintEngine,
-  type LintDiagnostic,
-} from "../types.js";
+import { DjlintUnavailableError } from "../types.js";
+import type { DjlintEngine, LintDiagnostic } from "../types.js";
 
 const finding: LintDiagnostic = {
   code: "H1",
@@ -92,7 +89,7 @@ beforeEach(() => {
   setWorkspaceFolders("/w", "/bad", "/good");
 });
 
-describe("FallbackEngine", () => {
+describe(FallbackEngine, () => {
   it("keeps to a healthy primary and never builds the secondary", async () => {
     const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
     await expect(format(engine)).resolves.toBe("PRIMARY");

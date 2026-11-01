@@ -30,7 +30,7 @@ vi.mock("which-command", () => ({
 }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn(),
+  execa: vi.fn<typeof import("execa").execa>(),
 }));
 
 const extensionPath = "/ext";
@@ -55,7 +55,7 @@ beforeEach(() => {
   setWorkspaceFolders("/w");
 });
 
-describe("EngineManager", () => {
+describe(EngineManager, () => {
   it("builds the fallback chain in a trusted workspace", () => {
     expect(makeManager().engine).toBeInstanceOf(FallbackEngine);
   });

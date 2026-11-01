@@ -19,14 +19,14 @@ import {
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 vi.mock("which-command", () => ({
   whichCommand: async (command: string) => command,
 }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn(),
+  execa: vi.fn<typeof import("execa").execa>(),
 }));
 vi.mock("@vscode/python-environments", () => ({
   EXTENSION_ID: "ms-python.vscode-python-envs",
@@ -89,11 +89,11 @@ afterEach(() => {
   }
 });
 
-describe("activate", () => {
+describe(activate, () => {
   it("registers its listeners and the restart command", () => {
     expect(workspaceListenerCount("config")).toBeGreaterThan(0);
     expect(workspaceListenerCount("trust")).toBeGreaterThan(0);
-    expect(typeof control.commands.get("djlint.restart")).toBe("function");
+    expect(control.commands.get("djlint.restart")).toBeTypeOf("function");
   });
 
   it("opens one output channel", () => {
@@ -144,10 +144,11 @@ describe("activate", () => {
   });
 
   describe("when the active Python environment changes", () => {
-    let fireEnvironmentChange = (): void => void 0;
-    let activePath = "/py";
+    let fireEnvironmentChange: () => void;
+    let activePath: string;
 
     beforeEach(() => {
+      fireEnvironmentChange = (): void => void 0;
       activePath = "/py";
       const environments = {
         getActiveEnvironmentPath: () => ({ path: activePath }),

@@ -52,15 +52,6 @@ describe.skipIf(installed.failed)(
       await writeFile(path.join(root, "t.html"), DIRTY);
     });
 
-    afterEach(() => {
-      engine.dispose();
-    });
-
-    afterAll(async () => {
-      vi.unstubAllEnvs();
-      await rm(root, { force: true, maxRetries: 5, recursive: true });
-    });
-
     beforeEach(() => {
       resetVscode();
       setWorkspaceFolders(root);
@@ -73,6 +64,15 @@ describe.skipIf(installed.failed)(
         makePythonEnvironments().environments,
         makeStatus(),
       );
+    });
+
+    afterEach(() => {
+      engine.dispose();
+    });
+
+    afterAll(async () => {
+      vi.unstubAllEnvs();
+      await rm(root, { force: true, maxRetries: 5, recursive: true });
     });
 
     it("formats, with the document's final newline left to djLint", async () => {
@@ -238,7 +238,7 @@ describe.skipIf(process.platform === "win32")(
         const document = makeDocument(
           vscode.Uri.file(path.join(root, version, "t.html")),
         );
-        // eslint-disable-next-line no-await-in-loop -- the order is the point
+        // oxlint-disable-next-line no-await-in-loop -- the order is the point
         await engine.lint(document, makeConfig(), liveToken());
         expect(vi.mocked(status.update).mock.lastCall?.[1]).toBe(version);
       }

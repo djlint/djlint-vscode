@@ -1,5 +1,6 @@
 import type * as vscode from "vscode";
-import { formattingArgs, lintingArgs, type CliArg } from "../../args.js";
+import { formattingArgs, lintingArgs } from "../../args.js";
+import type { CliArg } from "../../args.js";
 import { lastLine, showFailure } from "../../notify.js";
 import type { CustomExecaError } from "./exec.js";
 
@@ -58,6 +59,6 @@ export function checkErrors(
     outputChannel,
   );
 
-  // eslint-disable-next-line @typescript-eslint/only-throw-error
+  // oxlint-disable-next-line typescript/only-throw-error
   throw e;
 }

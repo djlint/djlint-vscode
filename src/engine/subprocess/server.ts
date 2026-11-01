@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unsafe-type-assertion -- what the server sends is the protocol's */
+/* oxlint-disable typescript/no-unsafe-type-assertion -- what the server sends is the protocol's */
 import { execa } from "execa";
 import * as vscode from "vscode";
 import { showFailure } from "../../notify.js";
-import { RUN_TIMEOUT_MS, type LintDiagnostic } from "../types.js";
+import { RUN_TIMEOUT_MS } from "../types.js";
+import type { LintDiagnostic } from "../types.js";
 
 const HEADER_END = Buffer.from("\r\n\r\n");
 const CONTENT_LENGTH_REGEX = /^content-length:\s*(?<length>\d+)/imu;
@@ -52,7 +53,7 @@ interface Waiter {
 export type ServerSettings = Record<string, unknown>;
 
 // The type of what execa returns depends on these options.
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, @typescript-eslint/promise-function-async
+// oxlint-disable-next-line typescript/explicit-function-return-type, typescript/promise-function-async
 function spawnServer(
   exec: string,
   prefixArgs: readonly string[],
@@ -145,6 +146,7 @@ export class DjlintServer {
     this.#process.stdin.on("error", () => {
       this.#close(new Error("djLint's language server closed its input"));
     });
+    // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- nothing waits for the server to end
     void this.#process.then(() => {
       this.#close(new Error("djLint's language server ended"));
     });

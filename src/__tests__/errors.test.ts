@@ -4,10 +4,8 @@
 import { execa } from "execa";
 import { beforeEach, describe, expect, it } from "vitest";
 import { checkErrors, isValidLintResult } from "../engine/subprocess/errors.js";
-import {
-  isDjlintUnavailable,
-  type CustomExecaError,
-} from "../engine/subprocess/exec.js";
+import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
+import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import { makeChannel, makeExecaError } from "./helpers.js";
 import { control, resetVscode } from "./vscode-stub.js";
 
@@ -31,7 +29,7 @@ function report(error: CustomExecaError): {
 const MODERN =
   "Usage: djlint [OPTIONS] SRC ...\nTry 'djlint --help' for help.\n\nError: No such option '--max-blank-lines-XYZ'. (Did you mean one of: '--blank-line-after-tag', '--max-blank-lines', '--preserve-blank-lines'?)";
 
-describe("checkErrors", () => {
+describe(checkErrors, () => {
   it("names the setting and the version for the modern click wording", () => {
     const { message } = report(
       makeExecaError({
@@ -138,7 +136,7 @@ describe.skipIf(installed.failed)("checkErrors with a real djLint", () => {
   });
 });
 
-describe("isValidLintResult", () => {
+describe(isValidLintResult, () => {
   it.each([
     ["findings with empty stderr", 1, "", true, true],
     ["findings with progress on stderr", 1, "Linting 1/1 files", true, true],
@@ -168,7 +166,7 @@ describe("findings with a warning on stderr", () => {
   });
 });
 
-describe("isDjlintUnavailable", () => {
+describe(isDjlintUnavailable, () => {
   it.each(["EACCES", "ENOENT", "ENOEXEC", "UNKNOWN"])(
     "recognizes a command that cannot start, %s",
     (code) => {
