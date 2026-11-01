@@ -132,7 +132,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Override the default exclude paths. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 1.25.",
+          "description": "Override the default exclude paths. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
         "djlint.extendExclude": {
@@ -141,7 +141,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add additional paths to the default exclude. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 1.25.",
+          "description": "Add additional paths to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",
           "scope": "resource"
         },
         "djlint.formatAttributeJsJson": {
@@ -474,7 +474,7 @@
         "djlint.useGitignore": {
           "type": "boolean",
           "default": false,
-          "description": "Add .gitignore excludes to the default exclude. Applies to djLint run on paths, so not to the file in the editor. Requires djLint ≥ 0.5.9.",
+          "description": "Add .gitignore excludes to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 0.5.9.",
           "scope": "resource"
         },
         "djlint.useVenv": {

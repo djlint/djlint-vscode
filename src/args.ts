@@ -14,6 +14,7 @@ export interface ArgContext {
 }
 
 const LINTER_END_MIN_VERSION = "1.48";
+const ABSOLUTE_STDIN_FILENAME_MIN_VERSION = "1.49";
 
 type ArgValue = boolean | number | string;
 
@@ -132,9 +133,14 @@ class StdinFilenameArg extends CliOnlyArg {
     super("", "--stdin-filename", "1.43.0");
   }
 
+  // A relative path counts from the folder djLint runs in, which is the document's, and not from the workspace.
   // eslint-disable-next-line @typescript-eslint/class-methods-use-this
-  protected read({ document }: ArgContext): string {
-    return deriveStdinFilename(document);
+  protected read({ djlintVersion, document }: ArgContext): string {
+    return djlintVersion != null &&
+      document.uri.scheme === "file" &&
+      isVersionAtLeast(djlintVersion, ABSOLUTE_STDIN_FILENAME_MIN_VERSION)
+      ? document.uri.fsPath
+      : deriveStdinFilename(document);
   }
 }
 
@@ -179,6 +185,7 @@ const commonArgs = [
   new StringArg("quoteStyle", "--quote-style", "1.45"),
   new StringArrayArg("exclude", "--exclude", "1.25"),
   new StringArrayArg("extendExclude", "--extend-exclude", "1.25"),
+  new StdinFilenameArg(),
   // These change what the linter reports, not only how the formatter writes.
   new BoolArg("closeVoidTags", "--close-void-tags", "1.26"),
   new BoolArg("ignoreCase", "--ignore-case", "1.23"),
@@ -193,7 +200,6 @@ export const lintingArgs = [
   ...commonArgs,
   new LinterOutputFormatArg(),
   rulesArg,
-  new StdinFilenameArg(),
   new StringArrayArg("ignore", "--ignore", "0.1.5"),
   new StringArrayArg("include", "--include", "1.20"),
 ] as const;
@@ -244,3 +250,25 @@ export const formattingArgs = [
   new StringArrayArg("blankLineBeforeTag", "--blank-line-before-tag", "1.25"),
   new UseEditorIndentationArg(),
 ] as const;
+
+export function buildOptions(
+  context: ArgContext,
+  mode: "format" | "lint",
+): { options: Record<string, ArgValue>; pathOptions: Record<string, string> } {
+  const options: Record<string, ArgValue> = {};
+  const pathOptions: Record<string, string> = {};
+  const args = mode === "format" ? formattingArgs : lintingArgs;
+  for (const arg of args) {
+    const kwarg = arg.buildKwarg(context);
+    if (kwarg == null) {
+      continue;
+    }
+    const [name, value] = kwarg;
+    if (!arg.isPath) {
+      options[name] = value;
+    } else if (typeof value === "string") {
+      pathOptions[name] = value;
+    }
+  }
+  return { options, pathOptions };
+}

@@ -507,6 +507,59 @@ describe("resolution through the engine", () => {
     expect(probes()).toBe(2);
   });
 
+  it("goes back to the command line when the language server fails", async () => {
+    installDjlint(async () => ({ stdout: "<p>x</p>\n" }), {
+      exitCode: 0,
+      stdout: "djlint, version 1.49.0",
+    });
+    const { channel, engine } = makeEngine();
+    await expect(
+      engine.format(document, config, formattingOptions, liveToken()),
+    ).resolves.toBe("<p>x</p>\n");
+    await engine.format(document, config, formattingOptions, liveToken());
+    expect(
+      channel.of("warn").filter((line) => line.includes("language server")),
+    ).toHaveLength(1);
+  });
+
+  it("keeps a file outside the workspace on the command line", async () => {
+    installDjlint(async () => ({ stdout: "<p>x</p>\n" }), {
+      exitCode: 0,
+      stdout: "djlint, version 1.49.0",
+    });
+    const { engine } = makeEngine();
+    await engine.format(
+      makeDocument("/elsewhere/t.html"),
+      config,
+      formattingOptions,
+      liveToken(),
+    );
+    expect(
+      spawn.mock.calls.filter(([, args]) => args.includes("--lsp")),
+    ).toHaveLength(0);
+  });
+
+  it("starts a language server for each workspace folder", async () => {
+    installDjlint(async () => ({ stdout: "<p>x</p>\n" }), {
+      exitCode: 0,
+      stdout: "djlint, version 1.49.0",
+    });
+    setWorkspaceFolders("/a", "/b");
+    const { engine } = makeEngine();
+    const format = async (file: string): Promise<string> =>
+      engine.format(makeDocument(file), config, formattingOptions, liveToken());
+    await format("/a/t.html");
+    await format("/b/t.html");
+    expect(
+      spawn.mock.calls
+        .filter(([, args]) => args.includes("--lsp"))
+        .map(([, , options]) => options["cwd"]),
+    ).toStrictEqual([
+      vscode.Uri.file("/a").fsPath,
+      vscode.Uri.file("/b").fsPath,
+    ]);
+  });
+
   it("detects per folder when an environment falls through to PATH", async () => {
     spawn.mockImplementation(async (exec, args, options) => {
       const isMissing =

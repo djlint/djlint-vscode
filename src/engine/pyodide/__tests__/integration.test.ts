@@ -312,6 +312,39 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       ).resolves.toBe(indented(3));
     });
 
+    it("leaves a file the project excludes alone", async () => {
+      await write(
+        "pyproject.toml",
+        '[tool.djlint]\nextend_exclude = "vendor"\n',
+      );
+      await write("vendor/lib/t.html", NESTED);
+      const document = documentIn("vendor/lib/t.html", NESTED);
+      await expect(format(NESTED, {}, document)).resolves.toBe(NESTED);
+      const dirty = documentIn("vendor/lib/t.html", DIRTY);
+      await expect(lintCodes(DIRTY, {}, dirty)).resolves.toEqual([]);
+    });
+
+    it("still formats a file beside what the project excludes", async () => {
+      await write(
+        "pyproject.toml",
+        '[tool.djlint]\nextend_exclude = "vendor"\n',
+      );
+      await expect(
+        format(NESTED, {}, documentIn("templates/t.html", NESTED)),
+      ).resolves.toBe(indented(4));
+    });
+
+    it("leaves a file that .gitignore excludes alone with djlint.useGitignore", async () => {
+      await write(".git/HEAD", "");
+      await write(".gitignore", "generated/\n");
+      await write("generated/t.html", NESTED);
+      const document = documentIn("generated/t.html", NESTED);
+      await expect(
+        format(NESTED, { useGitignore: true }, document),
+      ).resolves.toBe(NESTED);
+      await expect(format(NESTED, {}, document)).resolves.toBe(indented(4));
+    });
+
     it("does not read the project without permission", async () => {
       await write("pyproject.toml", "[tool.djlint]\nindent = 7\n");
       const restricted = makeEngine(false);
@@ -398,6 +431,22 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       ]);
       await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(
         indented(5),
+      );
+    });
+
+    it("leaves a virtual document the project excludes alone", async () => {
+      const uri = vscode.Uri.parse("memfs://repo/app/vendor/t.html");
+      control.workspaceFolders = [
+        { uri: vscode.Uri.parse("memfs://repo/app") as never },
+      ];
+      control.files = new Map([
+        [
+          "memfs://repo/app/pyproject.toml",
+          '[tool.djlint]\nextend_exclude = "vendor"\n',
+        ],
+      ]);
+      await expect(format(NESTED, {}, makeDocument(uri, NESTED))).resolves.toBe(
+        NESTED,
       );
     });
 
