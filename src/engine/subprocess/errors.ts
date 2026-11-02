@@ -2,14 +2,13 @@ import * as vscode from "vscode";
 
 import { formattingArgs, lintingArgs } from "../../args.js";
 import type { CliArg } from "../../args.js";
+import { docsUrl } from "../../docs.js";
 import { lastLine, showFailure } from "../../notify.js";
 import type { CustomExecaError } from "./exec.js";
 
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
 );
-
-const installDocsUrl = "https://djlint.com/docs/getting-started/";
 
 const NO_SUCH_OPTION_REGEX = /No\s+such\s+option[:\s]\s*['"]?(?<option>--[\w-]+)/u;
 
@@ -49,7 +48,7 @@ export function checkErrors(e: CustomExecaError, outputChannel: vscode.LogOutput
           "Your version of djLint does not support the `{0}` option. Disable it in the settings or update djLint to version {1} or newer. See update instructions at {2}.",
           arg.displayName,
           arg.minVersion,
-          installDocsUrl,
+          docsUrl("getting-started/"),
         )
       : summarize(e),
     outputChannel,

@@ -253,6 +253,7 @@ function initialState(): {
   extensions: Map<string, unknown>;
   formattingProviders: FormattingProviderRecord[];
   isTrusted: boolean;
+  language: string;
   outputChannels: RecordingChannel[];
   shownErrors: string[];
   visibleDocuments: readonly unknown[];
@@ -278,6 +279,7 @@ function initialState(): {
     outputChannels: [],
     shownErrors: [],
     visibleDocuments: [],
+    language: "en",
     workspaceFolders: [],
   };
 }
@@ -571,6 +573,12 @@ export const commands = {
         control.commands.delete(id);
       },
     };
+  },
+};
+
+export const env = {
+  get language(): string {
+    return control.language;
   },
 };
 
