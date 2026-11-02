@@ -8,7 +8,7 @@
   "config.configuration": "Pfad zur Konfigurationsdatei. Relative Pfade, auch ein bloßer Dateiname, werden vom Stammverzeichnis des Arbeitsbereichs aus aufgelöst. Erfordert djLint ≥ 1.13 für das Format .djlintrc und ≥ 1.34 für TOML.",
   "config.customBlocks": "Rückt eigene Codeblöcke ein, zum Beispiel `{% toc %}...{% endtoc %}`. Erfordert djLint ≥ 1.25.",
   "config.customHtml": "Rückt eigene HTML-Tags ein, zum Beispiel `<mjml>`, `<simple-greeting>` oder `<mj-\\w+>`. Erfordert djLint ≥ 1.25.",
-  "config.enableLinting": "Prüft per Linting auf häufige Probleme. Nicht global aktivieren, sondern für jede Sprache einzeln.",
+  "config.enableLinting": "Prüft per Linting auf häufige Probleme. Legen Sie die Einstellung pro Sprache fest: Ist sie für alle Sprachen aktiviert, wird jede geöffnete Datei gelintet, auch Python und JavaScript.",
   "config.executablePath": "Pfad zur ausführbaren Datei `djlint` oder ein bloßer Befehlsname, der im PATH gesucht wird. Ein relativer Wert, der ein Pfadtrennzeichen enthält, wird vom Stammverzeichnis des Arbeitsbereichs aus aufgelöst. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` und `${env:NAME}` werden ersetzt. Ist der Wert leer oder liefert er kein funktionierendes djLint, wird djLint über `#djlint.pythonPath#`, die aktive Python-Umgebung und den PATH gesucht; wird keines gefunden, kommt das mitgelieferte djLint zum Einsatz.",
   "config.exclude": "Überschreibt die standardmäßig ausgeschlossenen Pfade. Gilt ab djLint 1.49 für die Datei im Editor. Erfordert djLint ≥ 1.25.",
   "config.extendExclude": "Fügt den standardmäßig ausgeschlossenen Pfaden weitere hinzu. Gilt ab djLint 1.49 für die Datei im Editor. Erfordert djLint ≥ 1.25.",

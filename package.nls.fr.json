@@ -8,7 +8,7 @@
   "config.configuration": "Chemin du fichier de configuration. Les chemins relatifs, y compris un simple nom de fichier, sont résolus à partir de la racine de l'espace de travail. Nécessite djLint ≥ 1.13 pour le format .djlintrc et ≥ 1.34 pour TOML.",
   "config.customBlocks": "Indenter des blocs de code personnalisés, par exemple `{% toc %}...{% endtoc %}`. Nécessite djLint ≥ 1.25.",
   "config.customHtml": "Indenter des balises HTML personnalisées, par exemple `<mjml>`, `<simple-greeting>` ou `<mj-\\w+>`. Nécessite djLint ≥ 1.25.",
-  "config.enableLinting": "Linter pour repérer les problèmes courants. Ne l'activez pas globalement, activez-le plutôt pour chaque langage séparément.",
+  "config.enableLinting": "Linter pour repérer les problèmes courants. Réglez-le par langage : activé pour tous les langages, il linte chaque fichier que vous ouvrez, y compris Python et JavaScript.",
   "config.executablePath": "Chemin de l'exécutable `djlint`, ou simple nom de commande à rechercher dans le PATH. Une valeur relative contenant un séparateur de chemin est résolue à partir de la racine de l'espace de travail. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` et `${env:NAME}` sont développés. Si la valeur est vide ou ne donne pas de djLint fonctionnel, djLint est recherché via `#djlint.pythonPath#`, l'environnement Python actif et le PATH, et le djLint embarqué est utilisé si aucun n'est trouvé.",
   "config.exclude": "Remplacer les chemins exclus par défaut. S'applique au fichier ouvert dans l'éditeur à partir de djLint 1.49. Nécessite djLint ≥ 1.25.",
   "config.extendExclude": "Ajouter des chemins supplémentaires aux exclusions par défaut. S'applique au fichier ouvert dans l'éditeur à partir de djLint 1.49. Nécessite djLint ≥ 1.25.",

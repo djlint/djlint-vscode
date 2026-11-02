@@ -8,7 +8,7 @@
   "config.configuration": "設定ファイルへのパス。ファイル名だけの場合も含め、相対パスはワークスペースのルートを基準に解決されます。.djlintrc 形式には djLint ≥ 1.13、TOML には ≥ 1.34 が必要です。",
   "config.customBlocks": "カスタムのコードブロックをインデントします (例: `{% toc %}...{% endtoc %}`)。djLint ≥ 1.25 が必要です。",
   "config.customHtml": "カスタムの HTML タグをインデントします (例: `<mjml>`、`<simple-greeting>`、`<mj-\\w+>`)。djLint ≥ 1.25 が必要です。",
-  "config.enableLinting": "よくある問題をリントします。グローバルには有効にせず、言語ごとに個別に有効にしてください。",
+  "config.enableLinting": "よくある問題をリントします。言語ごとに設定してください。すべての言語でオンにすると、Python や JavaScript も含め、開いたファイルをすべてリントします。",
   "config.executablePath": "`djlint` 実行可能ファイルへのパス、または PATH から検索するコマンド名。パス区切り文字を含む相対値は、ワークスペースのルートを基準に解決されます。`${workspaceFolder}`、`${workspaceFolder:name}`、`${userHome}`、`${env:NAME}` は展開されます。空の場合や動作する djLint が得られない場合は、`#djlint.pythonPath#`、アクティブな Python 環境、PATH から djLint を探し、見つからなければ同梱の djLint を使用します。",
   "config.exclude": "デフォルトの除外パスを上書きします。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 1.25 が必要です。",
   "config.extendExclude": "デフォルトの除外パスにパスを追加します。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 1.25 が必要です。",

@@ -25,7 +25,7 @@
   "djLint did not finish in time.": "djLint가 제한 시간 안에 끝나지 않았습니다.",
   "djLint failed with exit code {0}.": "djLint가 실패했습니다(종료 코드 {0}).",
   "djLint failed: {0}": "djLint가 실패했습니다: {0}",
-  "djLint printed nothing for a document with content, so the document was left as it is.": "내용이 있는 문서에 대해 djLint가 아무것도 출력하지 않아서 문서를 그대로 두었습니다.",
-  "djLint was stopped by {0}.": "djLint가 {0}에 의해 중지되었습니다.",
+  "djLint printed nothing for a document with content, so the document was left as it is.": "djLint가 내용이 있는 문서를 받고도 아무것도 출력하지 않아서 문서를 그대로 두었습니다.",
+  "djLint was stopped by {0}.": "{0} 신호를 받아 djLint가 중지되었습니다.",
   "unknown error": "알 수 없는 오류"
 }

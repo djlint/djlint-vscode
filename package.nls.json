@@ -8,7 +8,7 @@
   "config.configuration": "Path to the configuration file. Relative paths, including a bare filename, are resolved from the workspace root. Requires djLint ≥ 1.13 for .djlintrc format and ≥ 1.34 for TOML.",
   "config.customBlocks": "Indent custom code blocks, for example `{% toc %}...{% endtoc %}`. Requires djLint ≥ 1.25.",
   "config.customHtml": "Indent custom HTML tags, for example `<mjml>`, `<simple-greeting>` or `<mj-\\w+>`. Requires djLint ≥ 1.25.",
-  "config.enableLinting": "Lint for common issues. Don't enable globally, instead enable for each language individually.",
+  "config.enableLinting": "Lint for common issues. Set it per language: turned on for all languages, it lints every file you open, Python and JavaScript included.",
   "config.executablePath": "Path to the `djlint` executable, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded. When empty or without a working djLint, djLint is looked for through `#djlint.pythonPath#`, the active Python environment and PATH, and the bundled djLint is used if none is found.",
   "config.exclude": "Override the default exclude paths. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",
   "config.extendExclude": "Add additional paths to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",

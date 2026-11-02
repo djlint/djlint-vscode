@@ -26,6 +26,6 @@
   "djLint failed with exit code {0}.": "djLint 執行失敗，結束代碼為 {0}。",
   "djLint failed: {0}": "djLint 執行失敗：{0}",
   "djLint printed nothing for a document with content, so the document was left as it is.": "djLint 對有內容的文件沒有輸出任何東西，因此文件保持原樣。",
-  "djLint was stopped by {0}.": "djLint 被 {0} 停止。",
+  "djLint was stopped by {0}.": "djLint 因 {0} 而停止。",
   "unknown error": "未知的錯誤"
 }

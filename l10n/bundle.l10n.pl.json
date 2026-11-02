@@ -1,6 +1,6 @@
 {
   "Bundled djLint crashed: {0}": "Dołączony djLint uległ awarii: {0}",
-  "Bundled djLint did not respond within {0} seconds; restarting it.": "Dołączony djLint nie odpowiedział w ciągu {0} s; trwa jego ponowne uruchamianie.",
+  "Bundled djLint did not respond within {0} seconds; restarting it.": "Dołączony djLint nie odpowiedział w ciągu {0} s, więc zostanie uruchomiony ponownie.",
   "Bundled djLint failed to start: {0}": "Nie udało się uruchomić dołączonego djLint: {0}",
   "Bundled djLint failed: {0}": "Błąd dołączonego djLint: {0}",
   "Bundled djLint stopped unexpectedly ({0}).": "Dołączony djLint nieoczekiwanie zakończył działanie ({0}).",

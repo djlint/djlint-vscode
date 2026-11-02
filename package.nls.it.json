@@ -8,7 +8,7 @@
   "config.configuration": "Percorso del file di configurazione. I percorsi relativi, compreso un semplice nome di file, vengono risolti a partire dalla radice dell'area di lavoro. Richiede djLint ≥ 1.13 per il formato .djlintrc e ≥ 1.34 per TOML.",
   "config.customBlocks": "Indenta blocchi di codice personalizzati, ad esempio `{% toc %}...{% endtoc %}`. Richiede djLint ≥ 1.25.",
   "config.customHtml": "Indenta tag HTML personalizzati, ad esempio `<mjml>`, `<simple-greeting>` o `<mj-\\w+>`. Richiede djLint ≥ 1.25.",
-  "config.enableLinting": "Esegue il lint per individuare i problemi più comuni. Non abilitarlo a livello globale, ma per ogni linguaggio singolarmente.",
+  "config.enableLinting": "Esegue il lint per individuare i problemi più comuni. Impostalo per singolo linguaggio: se è attivo per tutti i linguaggi, analizza ogni file che apri, compresi Python e JavaScript.",
   "config.executablePath": "Percorso dell'eseguibile `djlint`, oppure un semplice nome di comando da cercare nel PATH. Un valore relativo che contiene un separatore di percorso viene risolto a partire dalla radice dell'area di lavoro. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` e `${env:NAME}` vengono espansi. Se è vuoto o non porta a un djLint funzionante, djLint viene cercato tramite `#djlint.pythonPath#`, l'ambiente Python attivo e il PATH; se non viene trovato, si usa il djLint incluso.",
   "config.exclude": "Sovrascrive i percorsi esclusi predefiniti. Si applica al file nell'editor a partire da djLint 1.49. Richiede djLint ≥ 1.25.",
   "config.extendExclude": "Aggiunge altri percorsi a quelli esclusi per impostazione predefinita. Si applica al file nell'editor a partire da djLint 1.49. Richiede djLint ≥ 1.25.",
