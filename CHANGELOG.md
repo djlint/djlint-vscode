@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 - The djLint item in the status bar shows on templates of the languages djLint formats, and opens a menu: turn linting and linting while typing on or off for the language, make djLint its formatter, show the logs, restart, or open the settings. Hovering over it offers the same. It also warns while the last format or lint of the file failed.
+- The extension follows the display language of VS Code: its settings, commands, status bar menu and messages are translated into Chinese (Simplified and Traditional), Czech, French, German, Italian, Japanese, Korean, Polish, Portuguese (Brazil), Russian, Spanish and Turkish. What djLint itself reports, such as the lint findings, stays in English.
 
 ## [2026.11.4] - 2026-11-01
 
