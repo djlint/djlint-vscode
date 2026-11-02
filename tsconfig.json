@@ -5,6 +5,7 @@
     "noUncheckedIndexedAccess": false,
     "types": ["node"],
     "noEmit": true,
-    "checkJs": true
+    "checkJs": true,
+    "verbatimModuleSyntax": true
   }
 }
