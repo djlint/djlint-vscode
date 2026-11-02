@@ -65,6 +65,7 @@
     "@tsconfig/strictest": "2.0.8",
     "@types/node": "22.20.5",
     "@types/vscode": "1.106.1",
+    "@vitest/coverage-v8": "5.0.5",
     "@vscode/test-electron": "3.1.0",
     "@vscode/test-web": "0.0.81",
     "@vscode/vsce": "4.1.0",

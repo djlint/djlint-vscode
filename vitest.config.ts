@@ -10,5 +10,13 @@ export default defineConfig({
       ),
     },
   },
-  test: { include: ["src/**/__tests__/*.test.ts"] },
+  test: {
+    // Only printed: the HTML and JSON reports would be files for tsc to check.
+    coverage: {
+      exclude: ["src/**/__tests__/**"],
+      include: ["src/**/*.ts"],
+      reporter: ["text"],
+    },
+    include: ["src/**/__tests__/*.test.ts"],
+  },
 });
