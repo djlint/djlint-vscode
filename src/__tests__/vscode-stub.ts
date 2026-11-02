@@ -278,7 +278,11 @@ export function resetVscode(): void {
   workspaceListeners.clear();
 }
 
-/** Delivers a workspace event to the listeners the extension registered. */
+/**
+ * Delivers a workspace event to the listeners the extension registered.
+ * @param kind - Which workspace event fires.
+ * @param value - What the listeners receive, such as the document opened.
+ */
 export function fireWorkspaceEvent(kind: WorkspaceEventKind, value?: unknown): void {
   for (const listener of workspaceListeners.get(kind) ?? []) {
     listener(value);

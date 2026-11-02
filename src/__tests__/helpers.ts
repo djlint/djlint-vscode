@@ -84,7 +84,11 @@ export function makeContext(extensionPath = "/x"): vscode.ExtensionContext {
   } as unknown as vscode.ExtensionContext;
 }
 
-/** An EngineManager whose engine is the given double. */
+/**
+ * An EngineManager whose engine is the given double.
+ * @param engine - The methods of DjlintEngine the test calls.
+ * @returns A stand-in for EngineManager with nothing but `engine`.
+ */
 export function makeEngines(engine: Partial<DjlintEngine>): EngineManager {
   return { engine } as unknown as EngineManager;
 }
@@ -96,7 +100,11 @@ export async function flush(): Promise<void> {
   });
 }
 
-/** Forward slashes and no drive letter, for paths `path.resolve()` anchored. */
+/**
+ * Forward slashes and no drive letter, for paths `path.resolve()` anchored.
+ * @param value - A path, which on Windows has backslashes and a drive letter.
+ * @returns The path as it reads on POSIX, so one expectation holds on every OS.
+ */
 export function portable(value: string): string {
   return value.replaceAll("\\", "/").replace(/^[a-z]:/iu, "");
 }
@@ -105,6 +113,9 @@ export function portable(value: string): string {
  * A ConfigurationChangeEvent for one changed setting, answering the way VS
  * Code does: true for the setting itself AND for any parent section of it, so
  * a query for `djlint` matches a change to `djlint.executablePath`.
+ * @param changed - The full name of the setting that changed, such as `djlint.executablePath`.
+ * @param affects - Whether the change applies to a scope a query names; every scope by default.
+ * @returns The event, as `onDidChangeConfiguration` hands it to a listener.
  */
 export function changeOf(
   changed: string,

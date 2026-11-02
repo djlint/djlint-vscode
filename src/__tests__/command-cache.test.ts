@@ -17,15 +17,15 @@ function makeDeps(probe: ResolveDjlintCommandDeps["probe"]): ResolveDjlintComman
   };
 }
 
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ["Date"] });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
-
 describe(CommandResolver, () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shares one resolution between concurrent callers", async () => {
     const resolver = new CommandResolver();
     let probes = 0;
@@ -102,6 +102,7 @@ describe(CommandResolver, () => {
     let calls = 0;
     const deps = makeDeps(async () => {
       calls += 1;
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
       return gates[calls - 1]?.promise ?? null;
     });
     const stale = resolver.resolve(deps, "ws", "dir");
@@ -121,6 +122,7 @@ describe(CommandResolver, () => {
     let probes = 0;
     const deps = makeDeps(async () => {
       probes += 1;
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
       return installed ? "1.44.2" : null;
     });
     await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
@@ -143,6 +145,7 @@ describe(CommandResolver, () => {
   it("forgets a missing djLint on invalidation", async () => {
     const resolver = new CommandResolver();
     let installed = false;
+    // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
     const deps = makeDeps(async () => (installed ? "1.44.2" : null));
     await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
       DjlintUnavailableError,

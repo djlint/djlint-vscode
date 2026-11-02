@@ -6,12 +6,12 @@ import { control, resetVscode, setActiveDocument } from "./vscode-stub.js";
 
 const document = makeDocument("/a/t.html");
 
-beforeEach(() => {
-  resetVscode();
-  control.configuration = { formatLanguages: ["django-html"] };
-});
-
 describe(DjlintStatus, () => {
+  beforeEach(() => {
+    resetVscode();
+    control.configuration = { formatLanguages: ["django-html"] };
+  });
+
   it("appears for the languages djLint formats and opens the logs", () => {
     const status = new DjlintStatus();
     const [item] = control.statusItems;

@@ -13,13 +13,13 @@ function document(relativePath: string): ReturnType<typeof makeDocument> {
 
 let channel: ReturnType<typeof makeChannel>;
 
-beforeEach(() => {
-  resetVscode();
-  channel = makeChannel();
-  control.workspaceFolders = [{ uri: FOLDER }];
-});
-
 describe(readProject, () => {
+  beforeEach(() => {
+    resetVscode();
+    channel = makeChannel();
+    control.workspaceFolders = [{ uri: FOLDER }];
+  });
+
   it("reads a path setting that leaves the folder, keeping it under the project", async () => {
     control.files = new Map([["memfs://repo/shared/rules.yaml", "rules"]]);
     const read = await readProject(

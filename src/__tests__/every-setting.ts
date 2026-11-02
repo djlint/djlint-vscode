@@ -1,6 +1,10 @@
 import type { CliArg } from "../args.js";
 
-/** Every setting of `args` switched on, as the arg's own kind reads it. */
+/**
+ * Every setting of `args` switched on, as the arg's own kind reads it.
+ * @param args - The args to switch on; ones without a VS Code setting are left out.
+ * @returns The settings by their VS Code name, each holding a value that turns its arg on.
+ */
 export function everySetting(args: readonly CliArg[]): Record<string, unknown> {
   const values: Record<string, unknown> = {};
   for (const arg of args) {

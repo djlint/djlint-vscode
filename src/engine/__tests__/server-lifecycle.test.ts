@@ -62,7 +62,10 @@ function makeEngine(): { engine: SubprocessEngine; fireEnvironmentChange: () => 
   };
 }
 
-/** Holds the `--version` probe until `finish` runs. */
+/**
+ * Holds the `--version` probe until `finish` runs.
+ * @returns `finish`, which lets the held probe answer with the djLint version.
+ */
 function holdProbe(): () => void {
   const { promise, resolve } = Promise.withResolvers<typeof VERSION>();
   spawn.mockImplementation(async () => promise);
@@ -71,15 +74,15 @@ function holdProbe(): () => void {
   };
 }
 
-beforeEach(() => {
-  resetVscode();
-  servers.length = 0;
-  spawn.mockReset();
-  spawn.mockResolvedValue(VERSION);
-  setWorkspaceFolders("/w");
-});
-
 describe("a language server", () => {
+  beforeEach(() => {
+    resetVscode();
+    servers.length = 0;
+    spawn.mockReset();
+    spawn.mockResolvedValue(VERSION);
+    setWorkspaceFolders("/w");
+  });
+
   it("starts for a run", async () => {
     const { engine } = makeEngine();
     await engine.lint(document, config, liveToken());

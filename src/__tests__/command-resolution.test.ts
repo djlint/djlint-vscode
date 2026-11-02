@@ -6,7 +6,12 @@ import { resolveDjlintCommand } from "../engine/subprocess/resolve.js";
 import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError } from "../engine/types.js";
 
-/** `works` lists the exec names with a real djLint; everything else fails. */
+/**
+ * Resolution deps whose probe finds a real djLint only behind the exec names in `works`.
+ * @param overrides - Deps to use in place of the defaults, which have no configured path and no active environment.
+ * @param works - The exec names whose probe succeeds; every other probe fails.
+ * @returns The deps, with the exec names probed and the `setting:exec` pairs rejected, in order.
+ */
 function makeDeps(
   overrides: Partial<ResolveDjlintCommandDeps>,
   works: readonly string[],

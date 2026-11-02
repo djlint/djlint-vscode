@@ -200,6 +200,7 @@ describe.skipIf(process.platform === "win32")("a version manager's shim", () => 
   });
 
   it("gets the version it picks in each folder", async () => {
+    expect.assertions(2);
     resetVscode();
     setWorkspaceFolders(root);
     const status = makeStatus();

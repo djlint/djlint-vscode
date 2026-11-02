@@ -133,6 +133,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     ]);
   });
 
+  // oxlint-disable-next-line vitest/prefer-expect-assertions -- the expect in a callback is vi.waitFor's, which is awaited
   it("ends a run that a cancellation can't reach", async () => {
     const project = path.join(root, "stuck");
     await mkdir(project);
@@ -222,6 +223,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     await expect(server.lint(documentOf(`<p>x</p>`), {}, liveToken())).rejects.toThrow("stopping");
   });
 
+  // oxlint-disable-next-line vitest/prefer-expect-assertions -- the expect in a callback is vi.waitFor's, which is awaited
   it("ends when disposed", async () => {
     await server.lint(documentOf(`<p>x</p>`), {}, liveToken());
     server.dispose();

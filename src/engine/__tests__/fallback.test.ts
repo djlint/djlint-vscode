@@ -80,12 +80,12 @@ async function format(
   return engine.format(target, workspaceConfig, formattingOptions, liveToken());
 }
 
-beforeEach(() => {
-  resetVscode();
-  setWorkspaceFolders("/w", "/bad", "/good");
-});
-
 describe(FallbackEngine, () => {
+  beforeEach(() => {
+    resetVscode();
+    setWorkspaceFolders("/w", "/bad", "/good");
+  });
+
   it("keeps to a healthy primary and never builds the secondary", async () => {
     const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
     await expect(format(engine)).resolves.toBe("PRIMARY");
@@ -103,6 +103,7 @@ describe(FallbackEngine, () => {
 
   it("goes back to a primary that recovered", async () => {
     let isMissing = true;
+    // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
     const { engine } = makeFallback(() => (isMissing ? unavailable() : "PRIMARY"));
     await format(engine);
     isMissing = false;
@@ -127,6 +128,7 @@ describe(FallbackEngine, () => {
         dispose: () => void 0,
         format: async (target) => {
           record("primary", target);
+          // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
           return target.uri.path.startsWith("/bad") ? unavailable() : "PRIMARY";
         },
         lint: async () => [],

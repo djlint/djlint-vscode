@@ -48,14 +48,14 @@ function makeManager(): EngineManager {
 
 const document = makeDocument("/w/sub/t.html", "<p>x</p>");
 
-beforeEach(() => {
-  resetVscode();
-  FakeWorker.reset();
-  vi.mocked(execa).mockReset();
-  setWorkspaceFolders("/w");
-});
-
 describe(EngineManager, () => {
+  beforeEach(() => {
+    resetVscode();
+    FakeWorker.reset();
+    vi.mocked(execa).mockReset();
+    setWorkspaceFolders("/w");
+  });
+
   it("builds the fallback chain in a trusted workspace", () => {
     expect(makeManager().engine).toBeInstanceOf(FallbackEngine);
   });

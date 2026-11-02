@@ -77,7 +77,12 @@ async function settle(pending: Promise<unknown>): Promise<string> {
   ]);
 }
 
-/** The names `args` send for these settings. */
+/**
+ * The names `args` send for these settings.
+ * @param args - The args to build.
+ * @param context - The settings and document the args read.
+ * @returns The keyword names of the args that send anything.
+ */
 function sentNames(args: readonly CliArg[], context: ArgContext): readonly string[] {
   return args.flatMap((arg) => arg.buildKwarg(context)?.[0] ?? []);
 }
@@ -488,10 +493,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         const answered: number[] = [];
         const done = Promise.withResolvers<undefined>();
         worker.on("message", (response: WorkerResponse) => {
+          // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
           if (response.type === "result") {
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
             if (response.ok) {
               answered.push(response.id);
             }
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
             if (response.id === 3) {
               done.resolve(void 0);
             }

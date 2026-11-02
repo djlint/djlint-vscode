@@ -50,7 +50,12 @@ function moduleSearchEnv({ config, document }: ArgContext): { env: NodeJS.Proces
   };
 }
 
-/** The variables `ruff.path` accepts, except `${cwd}`, which means nothing to an extension. */
+/**
+ * The variables `ruff.path` accepts, except `${cwd}`, which means nothing to an extension.
+ * @param value - A configured path, which may hold variables such as `${workspaceFolder}`.
+ * @param document - The document whose workspace folder the folder variables name.
+ * @returns `value` with each variable it can resolve replaced; the others are left as written.
+ */
 export function expandVariables(value: string, document: vscode.TextDocument): string {
   function workspaceFolderPath(name?: string): string | undefined {
     const folder =

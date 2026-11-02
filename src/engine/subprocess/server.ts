@@ -140,12 +140,18 @@ export class DjlintServer {
     void Promise.allSettled([this.#started]);
   }
 
-  /** Whether it takes no more work, for any reason. */
+  /**
+   * Whether it takes no more work, for any reason.
+   * @returns `true` once the server has closed or was told to stop.
+   */
   get isClosed(): boolean {
     return this.#isClosed || this.#isStopping;
   }
 
-  /** Whether it was told to stop, which says nothing against the server. */
+  /**
+   * Whether it was told to stop, which says nothing against the server.
+   * @returns `true` once `dispose` is called, or once a cancelled run outlasts its grace period.
+   */
   get isStopping(): boolean {
     return this.#isStopping;
   }

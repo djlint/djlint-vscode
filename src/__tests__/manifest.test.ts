@@ -22,9 +22,9 @@ describe("the language IDs", () => {
   it("all have defaults that turn linting on", () => {
     const defaults = manifest.contributes.configurationDefaults;
     expect(Object.keys(defaults)).toStrictEqual(languages.map((language) => `[${language}]`));
-    for (const settings of Object.values(defaults)) {
-      expect(settings["djlint.enableLinting"]).toBe(true);
-    }
+    expect(
+      Object.values(defaults).map((settings) => settings["djlint.enableLinting"]),
+    ).toStrictEqual(languages.map(() => true));
   });
 
   it("are all in the README's example", () => {
