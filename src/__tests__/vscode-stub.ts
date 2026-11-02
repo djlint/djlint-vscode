@@ -527,6 +527,17 @@ export class MarkdownString {
     this.value += value;
     return this;
   }
+
+  // Escapes as VS Code does: theme icons first when they are supported, then Markdown.
+  appendText(value: string): this {
+    const text = this.supportThemeIcons
+      ? value.replaceAll(/(?<escaped>\\)?\$\([\w-]+\)/gu, (icon, escaped) =>
+          escaped ? icon : `\\${icon}`,
+        )
+      : value;
+    this.value += text.replaceAll(/[\\`*_{}[\]()#+\-!~]/gu, String.raw`\$&`);
+    return this;
+  }
 }
 
 export const languages = {

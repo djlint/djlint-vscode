@@ -11,6 +11,7 @@
   "Linting this file failed.": "Lintování tohoto souboru se nezdařilo.",
   "Linting while typing": "Lintuje se při psaní",
   "Linting {0}": "Lintuje se {0}",
+  "No default formatter for {0}": "Pro {0} není nastaven výchozí formátovač",
   "Not formatting {0}": "Neformátuje se {0}",
   "Not linting while typing": "Nelintuje se při psaní",
   "Not linting {0}": "Nelintuje se {0}",

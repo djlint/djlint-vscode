@@ -11,6 +11,7 @@
   "Linting this file failed.": "このファイルのリントに失敗しました。",
   "Linting while typing": "入力中にリント",
   "Linting {0}": "{0} をリント",
+  "No default formatter for {0}": "{0} の既定のフォーマッターは未設定",
   "Not formatting {0}": "{0} はフォーマットしない",
   "Not linting while typing": "入力中はリントしない",
   "Not linting {0}": "{0} はリントしない",

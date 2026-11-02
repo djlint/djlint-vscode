@@ -119,7 +119,7 @@ describe(DjlintStatus, () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
     status.update(document, "1.0", "/$(gear)/[x](command:y)");
-    expect(tooltip()).toContain(String.raw`/\$\(gear\)/\[x\]\(command:y\)`);
+    expect(tooltip()).toContain(String.raw`/\\$\(gear\)/\[x\]\(command:y\)`);
     status.dispose();
   });
 
@@ -158,7 +158,9 @@ describe(DjlintStatus, () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
     expect(tooltip()).toContain("Not linting `html` · [Turn on](command:djlint.toggleLinting)");
-    expect(tooltip()).toContain("[Use djLint](command:djlint.useAsFormatter)");
+    expect(tooltip()).toContain(
+      "$(circle-outline) No default formatter for `html` · [Use djLint](command:djlint.useAsFormatter)",
+    );
     expect(tooltip()).not.toContain("djlint.toggleLintOnType");
 
     control.configuration = {
@@ -175,6 +177,24 @@ describe(DjlintStatus, () => {
     expect(item().tooltip?.isTrusted).toMatchObject({
       enabledCommands: expect.arrayContaining(["djlint.toggleLinting", "djlint.showLogs"]),
     });
+    status.dispose();
+  });
+
+  it("tells another default formatter from none, and reads the extension ID in any case", () => {
+    const status = new DjlintStatus();
+    setActiveDocument(document);
+    control.configuration = {
+      "editor.defaultFormatter": "vscode.html-language-features",
+      formatLanguages: ["html"],
+    };
+    fireWorkspaceEvent("config", { affectsConfiguration: () => true });
+    expect(tooltip()).toContain("$(circle-slash) Not formatting `html` · [Use djLint]");
+    control.configuration = {
+      "editor.defaultFormatter": "Monosans.djLint",
+      formatLanguages: ["html"],
+    };
+    fireWorkspaceEvent("config", { affectsConfiguration: () => true });
+    expect(tooltip()).toContain("$(check) Formatting `html`");
     status.dispose();
   });
 

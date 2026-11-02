@@ -11,6 +11,7 @@
   "Linting this file failed.": "Bu dosyanın lint denetimi yapılamadı.",
   "Linting while typing": "Yazarken lint denetimi yapılıyor",
   "Linting {0}": "{0} için lint denetimi yapılıyor",
+  "No default formatter for {0}": "{0} için varsayılan biçimlendirici yok",
   "Not formatting {0}": "{0} biçimlendirilmiyor",
   "Not linting while typing": "Yazarken lint denetimi yapılmıyor",
   "Not linting {0}": "{0} için lint denetimi yapılmıyor",

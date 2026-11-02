@@ -36,11 +36,22 @@ function activeDocument(): vscode.TextDocument | undefined {
   return document && languages().includes(document.languageId) ? document : void 0;
 }
 
-function formatsWithDjlint(document: vscode.TextDocument): boolean {
-  return (
-    vscode.workspace.getConfiguration("editor", document).get<string>("defaultFormatter") ===
-    EXTENSION_ID
-  );
+// With no default formatter set, VS Code uses djLint if nothing else formats the language
+// (and asks otherwise), so that state is shown as its own.
+function formatterEntry(document: vscode.TextDocument, language: string): MenuEntry {
+  const formatter = vscode.workspace
+    .getConfiguration("editor", document)
+    .get<string>("defaultFormatter");
+  if (formatter?.toLowerCase() === EXTENSION_ID) {
+    return { label: `$(check) ${vscode.l10n.t("Formatting {0}", language)}` };
+  }
+  return {
+    action: vscode.l10n.t("Use djLint"),
+    command: "djlint.useAsFormatter",
+    label: formatter
+      ? `$(circle-slash) ${vscode.l10n.t("Not formatting {0}", language)}`
+      : `$(circle-outline) ${vscode.l10n.t("No default formatter for {0}", language)}`,
+  };
 }
 
 function lintingEntries(config: vscode.WorkspaceConfiguration, language: string): MenuEntry[] {
@@ -75,16 +86,7 @@ function lintingEntries(config: vscode.WorkspaceConfiguration, language: string)
 
 function settingEntries(document: vscode.TextDocument): MenuEntry[] {
   const language = `\`${document.languageId}\``;
-  return [
-    ...lintingEntries(getConfig(document), language),
-    formatsWithDjlint(document)
-      ? { label: `$(check) ${vscode.l10n.t("Formatting {0}", language)}` }
-      : {
-          action: vscode.l10n.t("Use djLint"),
-          command: "djlint.useAsFormatter",
-          label: `$(circle-slash) ${vscode.l10n.t("Not formatting {0}", language)}`,
-        },
-  ];
+  return [...lintingEntries(getConfig(document), language), formatterEntry(document, language)];
 }
 
 function toolEntries(): MenuEntry[] {
@@ -93,10 +95,6 @@ function toolEntries(): MenuEntry[] {
     { command: "djlint.restart", label: `$(debug-restart) ${vscode.l10n.t("Restart")}` },
     { command: "djlint.openSettings", label: `$(gear) ${vscode.l10n.t("Settings")}` },
   ];
-}
-
-function escape(text: string): string {
-  return text.replaceAll(/[\\`*_{}[\]()#+\-.!|<>~$]/gu, String.raw`\$&`);
 }
 
 export class DjlintStatus implements vscode.Disposable {
@@ -218,9 +216,10 @@ export class DjlintStatus implements vscode.Disposable {
 
     const tooltip = new vscode.MarkdownString(void 0, true);
     tooltip.isTrusted = { enabledCommands: menuCommands };
-    tooltip.appendMarkdown(`**${escape(name)}**`);
+    // Text appended as text has its Markdown and theme icons escaped, so a path shows as written.
+    tooltip.appendMarkdown("**").appendText(name).appendMarkdown("**");
     if (inUse?.source) {
-      tooltip.appendMarkdown(`  \n${escape(inUse.source)}`);
+      tooltip.appendMarkdown("  \n").appendText(inUse.source);
     }
     if (failures) {
       tooltip.appendMarkdown(

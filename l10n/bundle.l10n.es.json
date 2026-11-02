@@ -11,6 +11,7 @@
   "Linting this file failed.": "No se pudo analizar este archivo.",
   "Linting while typing": "Análisis al escribir activado",
   "Linting {0}": "Análisis de {0} activado",
+  "No default formatter for {0}": "Sin formateador predeterminado para {0}",
   "Not formatting {0}": "Formato de {0} desactivado",
   "Not linting while typing": "Análisis al escribir desactivado",
   "Not linting {0}": "Análisis de {0} desactivado",
