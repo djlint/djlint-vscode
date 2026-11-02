@@ -2,10 +2,9 @@
 // they race on CommandResolver. This exercises the interleavings that actually
 // happen on every save.
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  CommandResolver,
-  type ResolveDjlintCommandDeps,
-} from "../engine/subprocess/resolve.js";
+
+import { CommandResolver } from "../engine/subprocess/resolve.js";
+import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../engine/types.js";
 
 function makeDeps(
@@ -20,15 +19,15 @@ function makeDeps(
   };
 }
 
-beforeEach(() => {
-  vi.useFakeTimers({ toFake: ["Date"] });
-});
+describe(CommandResolver, () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+  });
 
-afterEach(() => {
-  vi.useRealTimers();
-});
+  afterEach(() => {
+    vi.useRealTimers();
+  });
 
-describe("CommandResolver", () => {
   it("shares one resolution between concurrent callers", async () => {
     const resolver = new CommandResolver();
     let probes = 0;
@@ -111,6 +110,7 @@ describe("CommandResolver", () => {
     let calls = 0;
     const deps = makeDeps(async () => {
       calls += 1;
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
       return gates[calls - 1]?.promise ?? null;
     });
     const stale = resolver.resolve(deps, "ws", "dir");
@@ -132,6 +132,7 @@ describe("CommandResolver", () => {
     let probes = 0;
     const deps = makeDeps(async () => {
       probes += 1;
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
       return installed ? "1.44.2" : null;
     });
     await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
@@ -154,6 +155,7 @@ describe("CommandResolver", () => {
   it("forgets a missing djLint on invalidation", async () => {
     const resolver = new CommandResolver();
     let installed = false;
+    // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
     const deps = makeDeps(async () => (installed ? "1.44.2" : null));
     await expect(resolver.resolve(deps, "ws", "dir")).rejects.toBeInstanceOf(
       DjlintUnavailableError,

@@ -70,7 +70,7 @@ export async function resolveDjlintCommand(
 
   for (const python of PYTHONS_ON_PATH) {
     // A python that cannot tell is no sign of a djLint: this is only a last look around.
-    // eslint-disable-next-line no-await-in-loop -- the first one that works wins
+    // oxlint-disable-next-line no-await-in-loop -- the first one that works wins
     const version = await deps.probe(python, MODULE_ARGS);
     if (version != null) {
       return { exec: python, prefixArgs: MODULE_ARGS, version };

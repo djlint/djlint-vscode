@@ -1,5 +1,6 @@
 // How a document with no folder to mount gets its configuration to the worker.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { makeChannel, makeDocument } from "../../../__tests__/helpers.js";
 import {
   control,
@@ -19,13 +20,13 @@ function document(relativePath: string): ReturnType<typeof makeDocument> {
 
 let channel: ReturnType<typeof makeChannel>;
 
-beforeEach(() => {
-  resetVscode();
-  channel = makeChannel();
-  control.workspaceFolders = [{ uri: FOLDER }];
-});
+describe(readProject, () => {
+  beforeEach(() => {
+    resetVscode();
+    channel = makeChannel();
+    control.workspaceFolders = [{ uri: FOLDER }];
+  });
 
-describe("readProject", () => {
   it("reads a path setting that leaves the folder, keeping it under the project", async () => {
     control.files = new Map([["memfs://repo/shared/rules.yaml", "rules"]]);
     const read = await readProject(
@@ -54,7 +55,7 @@ describe("readProject", () => {
   it("treats a Windows path as absolute without a path module to help", async () => {
     const read = await readProject(
       document("a.html"),
-      { rules: "D:\\shared\\rules.yaml" },
+      { rules: String.raw`D:\shared\rules.yaml` },
       channel,
     );
     expect(read?.pathOptions).toStrictEqual({});

@@ -1,7 +1,9 @@
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { parentPort, workerData } from "node:worker_threads";
+
 import type { loadPyodide, PyodideAPI } from "pyodide";
+
 import type { WorkerData, WorkerRequest } from "./protocol.js";
 import { serve } from "./runtime.js";
 
@@ -12,9 +14,7 @@ const port = parentPort;
 const { indexURL } = workerData as WorkerData;
 
 interface NodeFilesystems {
-  // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
   NODEFS: {
-    // eslint-disable-next-line @typescript-eslint/naming-convention -- Emscripten's
     node_ops: { readlink: (node: unknown) => string };
     realPath: (node: unknown) => string;
   };

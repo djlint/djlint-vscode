@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import type { PythonEnvironments } from "../python/environment.js";
 import type { DjlintStatus } from "../status.js";
 import { getDocumentFolder } from "./document-folder.js";

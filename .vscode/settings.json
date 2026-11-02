@@ -1,1 +1,8 @@
-{ "search.exclude": { "dist": true }, "typescript.tsc.autoDetect": "off" }
+{
+  "[toml]": { "editor.defaultFormatter": "tombi-toml.tombi" },
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.tsc.autoDetect": "off",
+  "js/ts.tsdk.path": "./node_modules/typescript",
+  "search.exclude": { "dist": true }
+}

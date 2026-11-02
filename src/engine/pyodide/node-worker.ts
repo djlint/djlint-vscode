@@ -1,4 +1,5 @@
 import { Worker } from "node:worker_threads";
+
 import type { RuntimeWorker } from "./index.js";
 import type { WorkerData, WorkerResponse } from "./protocol.js";
 

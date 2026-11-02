@@ -1,5 +1,6 @@
 // The language IDs are written out in three places that have to agree.
 import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 interface Manifest {
@@ -24,9 +25,11 @@ describe("the language IDs", () => {
     expect(Object.keys(defaults)).toStrictEqual(
       languages.map((language) => `[${language}]`),
     );
-    for (const settings of Object.values(defaults)) {
-      expect(settings["djlint.enableLinting"]).toBe(true);
-    }
+    expect(
+      Object.values(defaults).map(
+        (settings) => settings["djlint.enableLinting"],
+      ),
+    ).toStrictEqual(languages.map(() => true));
   });
 
   it("are all in the README's example", () => {

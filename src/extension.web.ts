@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+
 import { startExtension } from "./activate.js";
 import { createBrowserWorker } from "./engine/pyodide/browser-worker.js";
 import { PyodideEngine } from "./engine/pyodide/index.js";

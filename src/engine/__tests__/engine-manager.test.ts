@@ -1,8 +1,10 @@
 // What EngineManager builds decides whether workspace code can run at all: an
 // untrusted workspace must never reach a subprocess or its own project files.
 import path from "node:path";
+
 import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { FakeWorker } from "../../__tests__/fake-worker.js";
 import {
   flush,
@@ -30,7 +32,7 @@ vi.mock("which-command", () => ({
 }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn(),
+  execa: vi.fn<typeof import("execa").execa>(),
 }));
 
 const extensionPath = "/ext";
@@ -48,14 +50,14 @@ function makeManager(): EngineManager {
 
 const document = makeDocument("/w/sub/t.html", "<p>x</p>");
 
-beforeEach(() => {
-  resetVscode();
-  FakeWorker.reset();
-  vi.mocked(execa).mockReset();
-  setWorkspaceFolders("/w");
-});
+describe(EngineManager, () => {
+  beforeEach(() => {
+    resetVscode();
+    FakeWorker.reset();
+    vi.mocked(execa).mockReset();
+    setWorkspaceFolders("/w");
+  });
 
-describe("EngineManager", () => {
   it("builds the fallback chain in a trusted workspace", () => {
     expect(makeManager().engine).toBeInstanceOf(FallbackEngine);
   });
