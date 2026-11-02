@@ -6,6 +6,7 @@ import { configSection, getConfig } from "./config.js";
 import type { EngineManager } from "./engine/select.js";
 import type { LintDiagnostic } from "./engine/types.js";
 import { isSupportedDocument } from "./paths.js";
+import type { DjlintStatus } from "./status.js";
 
 const lintOnTypeDelayMs = 300;
 const lintOnTypeMaxDelayMs = 1000;
@@ -62,6 +63,7 @@ export class Linter {
   readonly #engines: EngineManager;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #registry: CancellationRegistry;
+  readonly #status: DjlintStatus | undefined;
   readonly #typingTimers = new Map<string, NodeJS.Timeout>();
   #disposed = false;
   #lastLintMs = 0;
@@ -70,6 +72,7 @@ export class Linter {
     context: vscode.ExtensionContext,
     outputChannel: vscode.LogOutputChannel,
     engines: EngineManager,
+    status?: DjlintStatus,
   ) {
     this.#collection = vscode.languages.createDiagnosticCollection("djLint");
     context.subscriptions.push(this.#collection);
@@ -77,6 +80,7 @@ export class Linter {
     this.#engines = engines;
     this.#outputChannel = outputChannel;
     this.#registry = new CancellationRegistry();
+    this.#status = status;
   }
 
   activate(): void {
@@ -207,10 +211,14 @@ export class Linter {
     try {
       diagnostics = await this.#engines.engine.lint(document, config, source.token);
       this.#lastLintMs = performance.now() - startedAt;
+      this.#status?.ran(document, true);
     } catch (e) {
       const wasSuperseded = source.token.isCancellationRequested;
       if (!wasSuperseded) {
         this.#collection.delete(document.uri);
+        if (!(e instanceof vscode.CancellationError)) {
+          this.#status?.ran(document, false);
+        }
       }
       throw e;
     } finally {

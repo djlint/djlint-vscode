@@ -7,6 +7,7 @@ import * as vscode from "vscode";
 
 import type { DjlintEngine } from "../engine/types.js";
 import { Formatter } from "../formatter.js";
+import { DjlintStatus } from "../status.js";
 import {
   changeOf,
   flush,
@@ -16,7 +17,7 @@ import {
   makeDocument,
   makeEngines,
 } from "./helpers.js";
-import { control, fireWorkspaceEvent, resetVscode } from "./vscode-stub.js";
+import { control, fireWorkspaceEvent, resetVscode, setActiveDocument } from "./vscode-stub.js";
 import type { TextEditRecord } from "./vscode-stub.js";
 
 const UGLY = `<div><p>hi</p>\n<img src="x.png">\n</div>`;
@@ -113,6 +114,29 @@ describe(Formatter, () => {
           liveToken(),
         ),
       ).resolves.toBeUndefined();
+    });
+
+    it("marks the status while the last format failed, but not for a cancel", async () => {
+      control.configuration = { formatLanguages: ["html"] };
+      const document = makeDocument("/w/t.html", UGLY);
+      setActiveDocument(document);
+      const status = new DjlintStatus();
+      let failure: Error = new vscode.CancellationError();
+      const formatter = new Formatter(
+        makeContext(),
+        makeEngines({
+          format: async () => {
+            throw failure;
+          },
+        }),
+        status,
+      );
+      await formatter.provideDocumentFormattingEdits(document, formattingOptions, liveToken());
+      expect(control.statusItems[0]?.text).toBe("djLint");
+      failure = new Error("djLint failed");
+      await formatter.provideDocumentFormattingEdits(document, formattingOptions, liveToken());
+      expect(control.statusItems[0]?.text).toBe("$(warning) djLint");
+      status.dispose();
     });
 
     it("lets a second format of the same document supersede the first", async () => {

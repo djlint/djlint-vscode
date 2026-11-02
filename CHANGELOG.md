@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The djLint item in the status bar shows on templates of the languages djLint formats, and opens a menu: turn linting and linting while typing on or off for the language, make djLint its formatter, show the logs, restart, or open the settings. Hovering over it offers the same. It also warns while the last format or lint of the file failed.
+
 ## [2026.11.4] - 2026-11-01
 
 - Bundle djLint 1.49.2. The bundled djLint formats and lints in about half the time, and an installed djLint 1.49.2 answers about three times as fast as 1.49.1.

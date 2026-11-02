@@ -50,6 +50,14 @@ exports.run = async () => {
     true,
   );
 
+  const scope = { languageId: "html", uri };
+  const linting = () => vscode.workspace.getConfiguration("djlint", scope).get("enableLinting");
+  const wasLinting = linting();
+  await vscode.commands.executeCommand("djlint.toggleLinting");
+  check("the menu turns linting off and on for the language", linting(), !wasLinting);
+  await vscode.commands.executeCommand("djlint.toggleLinting");
+  check("the menu turns linting off and on for the language", linting(), wasLinting);
+
   await vscode.commands.executeCommand("djlint.restart");
   check("format works after a restart", (await format(uri)).includes(WIDE_INDENT), true);
 };

@@ -3,16 +3,19 @@ import * as vscode from "vscode";
 import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
 import type { EngineManager } from "./engine/select.js";
+import type { DjlintStatus } from "./status.js";
 
 export class Formatter implements vscode.DocumentFormattingEditProvider {
   readonly #context: vscode.ExtensionContext;
   readonly #engines: EngineManager;
   readonly #registry: CancellationRegistry;
+  readonly #status: DjlintStatus | undefined;
   #providerDisposable: vscode.Disposable | undefined;
 
-  constructor(context: vscode.ExtensionContext, engines: EngineManager) {
+  constructor(context: vscode.ExtensionContext, engines: EngineManager, status?: DjlintStatus) {
     this.#context = context;
     this.#engines = engines;
+    this.#status = status;
     this.#registry = new CancellationRegistry();
   }
 
@@ -50,7 +53,11 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     let stdout: string;
     try {
       stdout = await this.#engines.engine.format(document, config, options, source.token);
-    } catch {
+      this.#status?.ran(document, true);
+    } catch (e) {
+      if (!(e instanceof vscode.CancellationError) && !source.token.isCancellationRequested) {
+        this.#status?.ran(document, false);
+      }
       return void 0;
     } finally {
       cancellation.dispose();

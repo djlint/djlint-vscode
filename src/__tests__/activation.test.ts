@@ -11,7 +11,13 @@ import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
 import { DjlintStatus } from "../status.js";
 import { changeOf, flush, makeContext, makeDocument } from "./helpers.js";
-import { control, fireWorkspaceEvent, resetVscode, workspaceListenerCount } from "./vscode-stub.js";
+import {
+  control,
+  fireWorkspaceEvent,
+  resetVscode,
+  setActiveDocument,
+  workspaceListenerCount,
+} from "./vscode-stub.js";
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
@@ -82,6 +88,31 @@ describe("the extension", () => {
       expect(workspaceListenerCount("config")).toBeGreaterThan(0);
       expect(workspaceListenerCount("trust")).toBeGreaterThan(0);
       expect(control.commands.get("djlint.restart")).toBeTypeOf("function");
+    });
+
+    it("turns linting and linting while typing on and off for the active language", async () => {
+      setActiveDocument(document);
+      await control.commands.get("djlint.toggleLinting")?.();
+      await control.commands.get("djlint.toggleLintOnType")?.();
+      expect(control.configurationUpdates).toMatchObject([
+        { key: "enableLinting", overrideInLanguage: true, value: false },
+        { key: "lintOnType", overrideInLanguage: true, value: true },
+      ]);
+    });
+
+    it("makes djLint the formatter of the active language", async () => {
+      setActiveDocument(document);
+      await control.commands.get("djlint.useAsFormatter")?.();
+      expect(control.configurationUpdates).toMatchObject([
+        { key: "editor.defaultFormatter", overrideInLanguage: true, value: "monosans.djlint" },
+      ]);
+    });
+
+    it("opens the settings of the extension", async () => {
+      await control.commands.get("djlint.openSettings")?.();
+      expect(control.executedCommands).toStrictEqual([
+        { args: ["@ext:monosans.djlint"], id: "workbench.action.openSettings" },
+      ]);
     });
 
     it("opens one output channel", () => {
@@ -221,7 +252,10 @@ describe("the extension", () => {
       const withNoDocuments = queriesFor(() => false, []);
       const withEight = queriesFor(() => false, documents);
       expect(withEight).toHaveLength(withNoDocuments.length);
-      expect(withEight.every((query) => query.startsWith("djlint"))).toBe(true);
+      // The status item also follows which formatter a language uses.
+      expect(new Set(withEight.map((query) => query.split(".")[0]))).toStrictEqual(
+        new Set(["djlint", "editor"]),
+      );
     });
 
     it("is constant for a setting that only picks which djLint runs", () => {
