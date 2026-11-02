@@ -1,6 +1,1 @@
-{
-  "recommendations": [
-    "dbaeumer.vscode-eslint",
-    "connor4312.esbuild-problem-matchers"
-  ]
-}
+{ "recommendations": ["oxc.oxc-vscode", "connor4312.esbuild-problem-matchers"] }

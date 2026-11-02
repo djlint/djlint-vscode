@@ -1,6 +1,7 @@
 // When SubprocessEngine starts and stops its language servers, with DjlintServer
 // replaced: a server left running keeps its environment and folder locked on Windows.
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
   liveToken,
   makeChannel,
@@ -24,7 +25,7 @@ const { servers, spawn } = vi.hoisted(() => ({
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
-  stat: vi.fn(async () => ({})),
+  stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
 vi.mock("which-command", () => ({
@@ -70,7 +71,10 @@ function makeEngine(): {
   };
 }
 
-/** Holds the `--version` probe until `finish` runs. */
+/**
+ * Holds the `--version` probe until `finish` runs.
+ * @returns `finish`, which lets the held probe answer with the djLint version.
+ */
 function holdProbe(): () => void {
   const { promise, resolve } = Promise.withResolvers<typeof VERSION>();
   spawn.mockImplementation(async () => promise);
@@ -79,15 +83,15 @@ function holdProbe(): () => void {
   };
 }
 
-beforeEach(() => {
-  resetVscode();
-  servers.length = 0;
-  spawn.mockReset();
-  spawn.mockResolvedValue(VERSION);
-  setWorkspaceFolders("/w");
-});
-
 describe("a language server", () => {
+  beforeEach(() => {
+    resetVscode();
+    servers.length = 0;
+    spawn.mockReset();
+    spawn.mockResolvedValue(VERSION);
+    setWorkspaceFolders("/w");
+  });
+
   it("starts for a run", async () => {
     const { engine } = makeEngine();
     await engine.lint(document, config, liveToken());

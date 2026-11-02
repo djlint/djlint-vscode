@@ -1,5 +1,6 @@
 // Runs test/e2e/suite.cjs in VS Code for the Web, in a headless Chromium.
 import path from "node:path";
+
 import { runTests } from "@vscode/test-web";
 
 const root = path.resolve(import.meta.dirname, "../..");

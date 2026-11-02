@@ -13,8 +13,12 @@
   "minimumReleaseAge": "3 days",
   "packageRules": [
     {
-      "matchPackageNames": ["prettier", "rbubley/mirrors-prettier"],
-      "groupName": "prettier"
+      "matchPackageNames": ["oxfmt", "oxc-project/mirrors-oxfmt"],
+      "groupName": "oxfmt"
+    },
+    {
+      "matchPackageNames": ["oxlint", "oxlint-tsgolint"],
+      "groupName": "oxlint"
     },
     {
       "matchCurrentVersion": "!/^0/",

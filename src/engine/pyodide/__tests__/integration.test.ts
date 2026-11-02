@@ -8,6 +8,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
+
 import {
   afterAll,
   afterEach,
@@ -18,6 +19,7 @@ import {
   it,
 } from "vitest";
 import * as vscode from "vscode";
+
 import { everySetting } from "../../../__tests__/every-setting.js";
 import {
   flush,
@@ -31,17 +33,10 @@ import {
   makeStatus,
   setWorkspaceFolders,
 } from "../../../__tests__/helpers.js";
-import {
-  control,
-  resetVscode,
-  type TextEditRecord,
-} from "../../../__tests__/vscode-stub.js";
-import {
-  formattingArgs,
-  lintingArgs,
-  type ArgContext,
-  type CliArg,
-} from "../../../args.js";
+import { control, resetVscode } from "../../../__tests__/vscode-stub.js";
+import type { TextEditRecord } from "../../../__tests__/vscode-stub.js";
+import { formattingArgs, lintingArgs } from "../../../args.js";
+import type { ArgContext, CliArg } from "../../../args.js";
 import { Formatter } from "../../../formatter.js";
 import { Linter } from "../../../linter.js";
 import { createDesktopEngine } from "../../desktop.js";
@@ -94,7 +89,12 @@ async function settle(pending: Promise<unknown>): Promise<string> {
   ]);
 }
 
-/** The names `args` send for these settings. */
+/**
+ * The names `args` send for these settings.
+ * @param args - The args to build.
+ * @param context - The settings and document the args read.
+ * @returns The keyword names of the args that send anything.
+ */
 function sentNames(
   args: readonly CliArg[],
   context: ArgContext,
@@ -111,13 +111,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
     engine = makeEngine(true, channel);
   });
 
-  afterAll(() => {
-    engine.dispose();
-  });
-
   beforeEach(() => {
     resetVscode();
     channel.lines.length = 0;
+  });
+
+  afterAll(() => {
+    engine.dispose();
   });
 
   async function format(
@@ -321,7 +321,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       const document = documentIn("vendor/lib/t.html", NESTED);
       await expect(format(NESTED, {}, document)).resolves.toBe(NESTED);
       const dirty = documentIn("vendor/lib/t.html", DIRTY);
-      await expect(lintCodes(DIRTY, {}, dirty)).resolves.toEqual([]);
+      await expect(lintCodes(DIRTY, {}, dirty)).resolves.toStrictEqual([]);
     });
 
     it("still formats a file beside what the project excludes", async () => {
@@ -567,10 +567,13 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
         const answered: number[] = [];
         const done = Promise.withResolvers<undefined>();
         worker.on("message", (response: WorkerResponse) => {
+          // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
           if (response.type === "result") {
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
             if (response.ok) {
               answered.push(response.id);
             }
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- a listener that collects the worker's answers
             if (response.id === 3) {
               done.resolve(void 0);
             }

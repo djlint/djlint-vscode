@@ -3,6 +3,7 @@ import { existsSync } from "node:fs";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+
 import { execa } from "execa";
 import {
   afterAll,
@@ -15,6 +16,7 @@ import {
   vi,
 } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,
@@ -82,11 +84,6 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     await writeFile(path.join(root, "pyproject.toml"), "");
   });
 
-  afterAll(async () => {
-    vi.unstubAllEnvs();
-    await rm(root, { force: true, maxRetries: 20, recursive: true });
-  });
-
   beforeEach(() => {
     resetVscode();
     setWorkspaceFolders(root);
@@ -95,6 +92,11 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
 
   afterEach(() => {
     server.dispose();
+  });
+
+  afterAll(async () => {
+    vi.unstubAllEnvs();
+    await rm(root, { force: true, maxRetries: 20, recursive: true });
   });
 
   it("formats", async () => {
@@ -163,6 +165,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     );
   });
 
+  // oxlint-disable-next-line vitest/prefer-expect-assertions -- the expect in a callback is vi.waitFor's, which is awaited
   it("ends a run that a cancellation can't reach", async () => {
     const project = path.join(root, "stuck");
     await mkdir(project);
@@ -263,6 +266,7 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
     ).rejects.toThrow("stopping");
   });
 
+  // oxlint-disable-next-line vitest/prefer-expect-assertions -- the expect in a callback is vi.waitFor's, which is awaited
   it("ends when disposed", async () => {
     await server.lint(documentOf(`<p>x</p>`), {}, liveToken());
     server.dispose();

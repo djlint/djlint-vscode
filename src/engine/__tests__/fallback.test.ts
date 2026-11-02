@@ -2,6 +2,7 @@
 // runtime. How long a missing djLint is remembered is up to CommandResolver.
 import { beforeEach, describe, expect, it } from "vitest";
 import * as vscode from "vscode";
+
 import {
   formattingOptions,
   liveToken,
@@ -12,11 +13,8 @@ import {
 } from "../../__tests__/helpers.js";
 import { resetVscode } from "../../__tests__/vscode-stub.js";
 import { FallbackEngine } from "../select.js";
-import {
-  DjlintUnavailableError,
-  type DjlintEngine,
-  type LintDiagnostic,
-} from "../types.js";
+import { DjlintUnavailableError } from "../types.js";
+import type { DjlintEngine, LintDiagnostic } from "../types.js";
 
 const finding: LintDiagnostic = {
   code: "H1",
@@ -87,12 +85,12 @@ async function format(
   return engine.format(target, workspaceConfig, formattingOptions, liveToken());
 }
 
-beforeEach(() => {
-  resetVscode();
-  setWorkspaceFolders("/w", "/bad", "/good");
-});
+describe(FallbackEngine, () => {
+  beforeEach(() => {
+    resetVscode();
+    setWorkspaceFolders("/w", "/bad", "/good");
+  });
 
-describe("FallbackEngine", () => {
   it("keeps to a healthy primary and never builds the secondary", async () => {
     const { calls, engine, secondaryBuilds } = makeFallback(() => "PRIMARY");
     await expect(format(engine)).resolves.toBe("PRIMARY");
@@ -116,6 +114,7 @@ describe("FallbackEngine", () => {
   it("goes back to a primary that recovered", async () => {
     let isMissing = true;
     const { engine } = makeFallback(() =>
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
       isMissing ? unavailable() : "PRIMARY",
     );
     await format(engine);
@@ -141,6 +140,7 @@ describe("FallbackEngine", () => {
         dispose: () => void 0,
         format: async (target) => {
           record("primary", target);
+          // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
           return target.uri.path.startsWith("/bad") ? unavailable() : "PRIMARY";
         },
         lint: async () => [],

@@ -5,9 +5,9 @@
   ],
   "exclude": ["dist", "assets", "test"],
   "compilerOptions": {
-    "noUncheckedIndexedAccess": false,
     "types": ["node"],
     "noEmit": true,
-    "checkJs": true
+    "checkJs": true,
+    "verbatimModuleSyntax": true
   }
 }

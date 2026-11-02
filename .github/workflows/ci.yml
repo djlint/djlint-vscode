@@ -13,7 +13,7 @@ jobs:
   check:
     if: ${{ always() && github.event_name == 'pull_request' }}
     needs:
-      - eslint
+      - oxlint
       - package
       - e2e
       - e2e-web
@@ -24,7 +24,7 @@ jobs:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
         with:
           jobs: ${{ toJSON(needs) }}
-  eslint:
+  oxlint:
     runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -36,7 +36,7 @@ jobs:
           package-manager-cache: false
           check-latest: true
       - run: npm ci
-      - run: npx eslint --max-warnings 0 .
+      - run: npx oxlint
   package:
     runs-on: ubuntu-26.04
     steps:

@@ -1,5 +1,7 @@
 import path from "node:path";
+
 import * as vscode from "vscode";
+
 import type { ProjectSnapshot, RunRequest } from "./protocol.js";
 
 const CONFIG_FILES: ReadonlySet<string> = new Set([
@@ -39,7 +41,7 @@ async function listConfigFiles(
       .filter(
         ([name, type]) =>
           CONFIG_FILES.has(name) &&
-          // eslint-disable-next-line no-bitwise -- a bit field, as a symbolic link to a file sets two bits
+          // oxlint-disable-next-line no-bitwise -- a bit field, as a symbolic link to a file sets two bits
           (type & vscode.FileType.File) !== 0,
       )
       .map(([name]) => (directory === "" ? name : `${directory}/${name}`));

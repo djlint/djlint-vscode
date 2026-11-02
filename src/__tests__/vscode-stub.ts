@@ -242,7 +242,7 @@ export class RecordingChannel {
     this.shownCount += 1;
   }
 
-  // eslint-disable-next-line @typescript-eslint/class-methods-use-this, @typescript-eslint/no-empty-function
+  // oxlint-disable-next-line class-methods-use-this, no-empty-function
   dispose(): void {}
 }
 
@@ -302,7 +302,11 @@ export function resetVscode(): void {
   workspaceListeners.clear();
 }
 
-/** Delivers a workspace event to the listeners the extension registered. */
+/**
+ * Delivers a workspace event to the listeners the extension registered.
+ * @param kind - Which workspace event fires.
+ * @param value - What the listeners receive, such as the document opened.
+ */
 export function fireWorkspaceEvent(
   kind: WorkspaceEventKind,
   value?: unknown,
