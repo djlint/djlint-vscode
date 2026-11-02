@@ -11,7 +11,8 @@ export async function showFailure(
   message: string,
   outputChannel: vscode.LogOutputChannel,
 ): Promise<void> {
-  const item = await vscode.window.showErrorMessage(message, "Details");
+  const details = vscode.l10n.t("Details");
+  const item = await vscode.window.showErrorMessage(message, details);
   if (item != null) {
     outputChannel.show();
   }

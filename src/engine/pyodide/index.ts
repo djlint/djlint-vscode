@@ -104,7 +104,10 @@ export class PyodideEngine implements DjlintEngine {
         ? void 0
         : setTimeout(() => {
             this.#fail(
-              `Bundled djLint did not respond within ${RUN_TIMEOUT_MS / 1000} seconds; restarting it.`,
+              vscode.l10n.t(
+                "Bundled djLint did not respond within {0} seconds; restarting it.",
+                RUN_TIMEOUT_MS / 1000,
+              ),
               new Error("Bundled djLint timed out"),
             );
           }, RUN_TIMEOUT_MS);
@@ -143,11 +146,17 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     if (response.ok) {
-      this.#status.update(pending.document, this.#version, "bundled");
+      this.#status.update(
+        pending.document,
+        this.#version,
+        vscode.l10n.t("Bundled with the extension"),
+      );
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
       this.#outputChannel.error(response.error);
-      this.#report(`Bundled djLint failed: ${lastLine(response.error) ?? response.error}`);
+      this.#report(
+        vscode.l10n.t("Bundled djLint failed: {0}", lastLine(response.error) ?? response.error),
+      );
       pending.reject(new Error(response.error));
     }
   }
@@ -169,14 +178,14 @@ export class PyodideEngine implements DjlintEngine {
       case "boot-failed": {
         this.#outputChannel.error(response.error);
         const reason = lastLine(response.error) ?? response.error;
-        const message = `Bundled djLint runtime failed to start: ${reason}`;
+        const message = vscode.l10n.t("Bundled djLint failed to start: {0}", reason);
         this.#fail(message, new Error(message));
         break;
       }
       case "crashed": {
         this.#outputChannel.error(response.error);
         const reason = lastLine(response.error) ?? response.error;
-        const message = `Bundled djLint runtime crashed: ${reason}`;
+        const message = vscode.l10n.t("Bundled djLint crashed: {0}", reason);
         this.#fail(message, new Error(message));
         break;
       }
@@ -212,14 +221,14 @@ export class PyodideEngine implements DjlintEngine {
     });
     worker.onError((e) => {
       if (isCurrent()) {
-        this.#fail(`Bundled djLint runtime failed: ${e.message}`, e);
+        this.#fail(vscode.l10n.t("Bundled djLint failed: {0}", e.message), e);
       }
     });
     worker.onExit((code) => {
       if (!isCurrent()) {
         return;
       }
-      const message = `Bundled djLint runtime exited unexpectedly (${code})`;
+      const message = vscode.l10n.t("Bundled djLint stopped unexpectedly ({0}).", code);
       this.#fail(message, new Error(message));
     });
     this.#worker = worker;

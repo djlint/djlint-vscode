@@ -47,24 +47,28 @@ function lintingEntries(config: vscode.WorkspaceConfiguration, language: string)
   if (!config.get<boolean>("enableLinting")) {
     return [
       {
-        action: "Turn on",
+        action: vscode.l10n.t("Turn on"),
         command: "djlint.toggleLinting",
-        label: `$(circle-slash) Not linting ${language}`,
+        label: `$(circle-slash) ${vscode.l10n.t("Not linting {0}", language)}`,
       },
     ];
   }
   return [
-    { action: "Turn off", command: "djlint.toggleLinting", label: `$(check) Linting ${language}` },
+    {
+      action: vscode.l10n.t("Turn off"),
+      command: "djlint.toggleLinting",
+      label: `$(check) ${vscode.l10n.t("Linting {0}", language)}`,
+    },
     config.get<boolean>("lintOnType")
       ? {
-          action: "Turn off",
+          action: vscode.l10n.t("Turn off"),
           command: "djlint.toggleLintOnType",
-          label: "$(check) Linting while typing",
+          label: `$(check) ${vscode.l10n.t("Linting while typing")}`,
         }
       : {
-          action: "Turn on",
+          action: vscode.l10n.t("Turn on"),
           command: "djlint.toggleLintOnType",
-          label: "$(circle-slash) Linting on open and save only",
+          label: `$(circle-slash) ${vscode.l10n.t("Not linting while typing")}`,
         },
   ];
 }
@@ -74,20 +78,22 @@ function settingEntries(document: vscode.TextDocument): MenuEntry[] {
   return [
     ...lintingEntries(getConfig(document), language),
     formatsWithDjlint(document)
-      ? { label: `$(check) Formatting ${language}` }
+      ? { label: `$(check) ${vscode.l10n.t("Formatting {0}", language)}` }
       : {
-          action: "Use djLint",
+          action: vscode.l10n.t("Use djLint"),
           command: "djlint.useAsFormatter",
-          label: `$(circle-slash) Not the formatter of ${language}`,
+          label: `$(circle-slash) ${vscode.l10n.t("Not formatting {0}", language)}`,
         },
   ];
 }
 
-const toolEntries: readonly MenuEntry[] = [
-  { command: "djlint.showLogs", label: "$(output) Show Logs" },
-  { command: "djlint.restart", label: "$(debug-restart) Restart" },
-  { command: "djlint.openSettings", label: "$(gear) Settings" },
-];
+function toolEntries(): MenuEntry[] {
+  return [
+    { command: "djlint.showLogs", label: `$(output) ${vscode.l10n.t("Show Logs")}` },
+    { command: "djlint.restart", label: `$(debug-restart) ${vscode.l10n.t("Restart")}` },
+    { command: "djlint.openSettings", label: `$(gear) ${vscode.l10n.t("Settings")}` },
+  ];
+}
 
 function escape(text: string): string {
   return text.replaceAll(/[\\`*_{}[\]()#+\-.!|<>~$]/gu, String.raw`\$&`);
@@ -168,7 +174,7 @@ export class DjlintStatus implements vscode.Disposable {
     const items: (vscode.QuickPickItem & { command: string })[] = [];
     for (const { action, command, label } of [
       ...(document ? settingEntries(document) : []),
-      ...toolEntries,
+      ...toolEntries(),
     ]) {
       if (command != null) {
         items.push({ command, description: action ?? "", label: label.replaceAll("`", "") });
@@ -200,8 +206,8 @@ export class DjlintStatus implements vscode.Disposable {
     const name = inUse?.version ? `djLint ${inUse.version}` : "djLint";
     const failed = this.#failed.get(document.uri.toString());
     const failures = [
-      ...(failed?.has("format") ? ["Formatting this file failed."] : []),
-      ...(failed?.has("lint") ? ["Linting this file failed."] : []),
+      ...(failed?.has("format") ? [vscode.l10n.t("Formatting this file failed.")] : []),
+      ...(failed?.has("lint") ? [vscode.l10n.t("Linting this file failed.")] : []),
     ].join(" ");
     this.#item.text = failures ? `$(warning) ${name}` : name;
     // Screen readers would read the tooltip's markdown out.
@@ -217,7 +223,9 @@ export class DjlintStatus implements vscode.Disposable {
       tooltip.appendMarkdown(`  \n${escape(inUse.source)}`);
     }
     if (failures) {
-      tooltip.appendMarkdown(`\n\n$(warning) ${failures} [Show Logs](command:djlint.showLogs)`);
+      tooltip.appendMarkdown(
+        `\n\n$(warning) ${failures} [${vscode.l10n.t("Show Logs")}](command:djlint.showLogs)`,
+      );
     }
     tooltip.appendMarkdown(
       `\n\n${settingEntries(document)
@@ -227,7 +235,7 @@ export class DjlintStatus implements vscode.Disposable {
         .join("  \n")}`,
     );
     tooltip.appendMarkdown(
-      `\n\n${toolEntries
+      `\n\n${toolEntries()
         .map(({ command, label }) => `[${label}](command:${command})`)
         .join(" · ")}`,
     );

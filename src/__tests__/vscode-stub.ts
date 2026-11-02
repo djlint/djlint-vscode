@@ -253,6 +253,7 @@ function initialState(): {
   extensions: Map<string, unknown>;
   formattingProviders: FormattingProviderRecord[];
   isTrusted: boolean;
+  language: string;
   outputChannels: RecordingChannel[];
   shownErrors: string[];
   visibleDocuments: readonly unknown[];
@@ -278,6 +279,7 @@ function initialState(): {
     outputChannels: [],
     shownErrors: [],
     visibleDocuments: [],
+    language: "en",
     workspaceFolders: [],
   };
 }
@@ -572,4 +574,18 @@ export const commands = {
       },
     };
   },
+};
+
+export const env = {
+  get language(): string {
+    return control.language;
+  },
+};
+
+// Formats as vscode.l10n does with no translation loaded, so tests see the English source.
+export const l10n = {
+  t: (message: string, ...args: unknown[]): string =>
+    message.replaceAll(/\{(?<index>\d+)\}/gu, (match, index: string) =>
+      index in args ? String(args[Number(index)]) : match,
+    ),
 };

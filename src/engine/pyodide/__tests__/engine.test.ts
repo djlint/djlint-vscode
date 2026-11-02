@@ -282,7 +282,7 @@ describe(PyodideEngine, () => {
       const first = format(engine);
       const crashed = FakeWorker.latest;
       crashed.respond({ error: "fatal", type: "crashed" });
-      await expect(first).rejects.toThrow("Bundled djLint runtime crashed: fatal");
+      await expect(first).rejects.toThrow("Bundled djLint crashed: fatal");
       expect(crashed.terminated).toBe(true);
 
       const second = format(engine);
@@ -298,7 +298,7 @@ describe(PyodideEngine, () => {
       const first = format(engine);
       const old = FakeWorker.latest;
       old.emit("exit", 1);
-      await expect(first).rejects.toThrow("exited unexpectedly");
+      await expect(first).rejects.toThrow("stopped unexpectedly");
 
       const second = format(engine);
       const current = FakeWorker.latest;
@@ -385,7 +385,7 @@ describe(PyodideEngine, () => {
       await expect(first).rejects.toBe(error);
       await expect(second).rejects.toBe(error);
       expect(dead.terminated).toBe(true);
-      expect(control.shownErrors).toStrictEqual(["Bundled djLint runtime failed: out of memory"]);
+      expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: out of memory"]);
 
       const third = format(engine);
       expect(FakeWorker.instances).toHaveLength(2);
@@ -397,7 +397,7 @@ describe(PyodideEngine, () => {
       const { channel, engine } = makeEngine();
       const pending = format(engine);
       FakeWorker.latest.emit("exit", 7);
-      const message = "Bundled djLint runtime exited unexpectedly (7)";
+      const message = "Bundled djLint stopped unexpectedly (7).";
       await expect(pending).rejects.toThrow(message);
       expect(control.shownErrors).toStrictEqual([message]);
       expect(channel.of("error")).toStrictEqual([message]);

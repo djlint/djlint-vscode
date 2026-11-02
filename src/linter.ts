@@ -3,6 +3,7 @@ import * as vscode from "vscode";
 import { lintingArgs } from "./args.js";
 import { CancellationRegistry } from "./cancellation-registry.js";
 import { configSection, getConfig } from "./config.js";
+import { docsUrl } from "./docs.js";
 import type { EngineManager } from "./engine/select.js";
 import type { LintDiagnostic } from "./engine/types.js";
 import { isSupportedDocument } from "./paths.js";
@@ -51,7 +52,7 @@ function toDiagnostic(d: LintDiagnostic, document: vscode.TextDocument): vscode.
   const diagnostic = new vscode.Diagnostic(toRange(d, document), d.message);
   diagnostic.source = "djLint";
   diagnostic.code = {
-    target: vscode.Uri.parse(`https://djlint.com/docs/linter/#${d.code.toLowerCase()}`),
+    target: vscode.Uri.parse(docsUrl(`linter/#${d.code.toLowerCase()}`)),
     value: d.code,
   };
   return diagnostic;

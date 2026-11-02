@@ -10,3 +10,5 @@
 !LICENSE
 !package.json
 !README.md
+!l10n/**
+!package.nls*.json
