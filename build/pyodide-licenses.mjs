@@ -75,7 +75,7 @@ export async function pyodideLicenses(version) {
   assertSame(
     envs
       .matchAll(/-s\s*(USE_[A-Z0-9_]+)/gu)
-      .map((m) => m[1])
+      .flatMap(([, flag]) => (flag == null ? [] : [flag]))
       .toArray(),
     KNOWN_PORTS,
     "the Emscripten ports",
@@ -83,7 +83,7 @@ export async function pyodideLicenses(version) {
   assertSame(
     setup
       .matchAll(/\s-l(\w+)/gu)
-      .map((m) => m[1])
+      .flatMap(([, library]) => (library == null ? [] : [library]))
       .toArray(),
     KNOWN_LINKED,
     "the linked libraries",

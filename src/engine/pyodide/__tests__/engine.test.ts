@@ -1,7 +1,7 @@
 // PyodideEngine's side of the worker protocol, with the worker replaced. Every
 // way a request can end must settle its caller: a format promise left pending
 // would hang the editor's "Formatting..." state with nothing to retry against.
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import { everySetting } from "../../../__tests__/every-setting.js";
@@ -175,8 +175,11 @@ describe(PyodideEngine, () => {
       const request = sentFor({ configuration: "/ws/.djlintrc", rules: "conf/rules.yaml" }, "lint");
       expect(request.options).toStrictEqual({});
       expect(Object.keys(request.pathOptions).toSorted()).toStrictEqual(["configuration", "rules"]);
-      expect(portable(request.pathOptions["configuration"])).toBe("/ws/.djlintrc");
-      expect(portable(request.pathOptions["rules"])).toMatch(/\/w\/conf\/rules\.yaml$/u);
+      const { configuration, rules } = request.pathOptions;
+      assert.isDefined(configuration);
+      assert.isDefined(rules);
+      expect(portable(configuration)).toBe("/ws/.djlintrc");
+      expect(portable(rules)).toMatch(/\/w\/conf\/rules\.yaml$/u);
     });
 
     it("drops a relative path it has no workspace folder to resolve against", () => {

@@ -5,7 +5,7 @@ import { stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import {
@@ -316,7 +316,9 @@ describe(SubprocessEngine, () => {
       installDjlint();
       const { engine } = makeEngine();
       await engine.lint(document, makeConfig({ executablePath: "./bin/djlint" }), liveToken());
-      const [[exec]] = spawn.mock.calls;
+      const [call] = spawn.mock.calls;
+      assert.isDefined(call, "nothing was spawned");
+      const [exec] = call;
       expect(String(exec).replaceAll("\\", "/")).toMatch(/\/w\/bin\/djlint$/u);
     });
 

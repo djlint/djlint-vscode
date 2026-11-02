@@ -2,7 +2,7 @@
 // swallow-on-error contract, and supersession when a second format starts for
 // the same document. integration.test.ts drives the same paths through the
 // real bundled runtime.
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { assert, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import type { DjlintEngine } from "../engine/types.js";
@@ -84,7 +84,9 @@ describe(Formatter, () => {
         formattingOptions,
         liveToken(),
       );
-      const [[seenDocument, config, options]] = format.mock.calls;
+      const [call] = format.mock.calls;
+      assert.isDefined(call, "the engine was never asked to format");
+      const [seenDocument, config, options] = call;
       expect(seenDocument).toBe(document);
       expect(config.get("maxLineLength")).toBe(80);
       expect(options).toBe(formattingOptions);

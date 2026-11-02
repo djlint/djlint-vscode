@@ -52,13 +52,13 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
     if (!record.trim()) {
       continue;
     }
-    const parts = record.replace(/^\s+/u, "").split(FIELD_SEPARATOR);
-    if (parts.length < 3) {
+    // A record without a message field is not one djLint wrote, so it is skipped.
+    const [code, lineColumn, ...rest] = record.replace(/^\s+/u, "").split(FIELD_SEPARATOR);
+    if (code == null || lineColumn == null || rest.length === 0) {
       continue;
     }
-    const [code, lineColumn] = parts;
-    const hasEnd = parts.length > 3 && END_REGEX.test(parts.at(-1) ?? "");
-    const message = parts.slice(2, hasEnd ? -1 : void 0).join(FIELD_SEPARATOR);
+    const hasEnd = rest.length > 1 && END_REGEX.test(rest.at(-1) ?? "");
+    const message = rest.slice(0, hasEnd ? -1 : void 0).join(FIELD_SEPARATOR);
     const lineColumnParts = lineColumn.split(":");
     if (lineColumnParts.length !== 2) {
       continue;
@@ -70,7 +70,7 @@ function parsePinnedFormat(stdout: string): LintDiagnostic[] {
       continue;
     }
     const firstLine = Math.max(line, 1);
-    const end = hasEnd ? endOf(parts.at(-1), firstLine, column) : {};
+    const end = hasEnd ? endOf(rest.at(-1), firstLine, column) : {};
     diags.push({ code, column, line: firstLine, message, ...end });
   }
   return diags;
@@ -82,17 +82,13 @@ function parseLegacyFormat(stdout: string): LintDiagnostic[] {
     if (!groups) {
       continue;
     }
+    const { code, message } = groups;
     const line = Number(groups["line"]);
     const column = Number(groups["column"]);
-    if (!isValidPosition(line, column)) {
+    if (code == null || message == null || !isValidPosition(line, column)) {
       continue;
     }
-    diags.push({
-      code: groups["code"],
-      column,
-      line: Math.max(line, 1),
-      message: groups["message"],
-    });
+    diags.push({ code, column, line: Math.max(line, 1), message });
   }
   return diags;
 }

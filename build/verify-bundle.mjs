@@ -53,7 +53,10 @@ function assertBundledDjlintIsPinnedVersion() {
   const lock =
     /** @type {{ packages: Record<string, { version: string }> }} */
     (JSON.parse(readFileSync(path.join(INDEX_URL, "pyodide-lock.json"), "utf8")));
-  const bundled = lock.packages["djlint"].version;
+  const bundled = lock.packages["djlint"]?.version;
+  if (bundled == null) {
+    throw new Error(`${INDEX_URL}/pyodide-lock.json has no djlint`);
+  }
   if (bundled !== pinned) {
     throw new Error(`bundled djLint is ${bundled}, but pyproject.toml pins ${pinned}`);
   }

@@ -82,7 +82,7 @@ function readClosure() {
     const pin = /^([\w.-]+)==([^\s;]+)/u.exec(trimmed);
     const hashes = trimmed
       .matchAll(/--hash=sha256:([\da-f]+)/gu)
-      .map((match) => match[1])
+      .flatMap(([, hash]) => (hash == null ? [] : [hash]))
       .toArray();
     if (!pin || hashes.length === 0) {
       throw new Error(`unrecognized line from uv export: ${trimmed}`);
@@ -182,6 +182,19 @@ function lockEntry(name, version, fileName, sha, depends) {
 }
 
 /**
+ * @param {Lock} lock
+ * @param {string} name
+ * @returns {LockEntry}
+ */
+function lockedPackage(lock, name) {
+  const entry = Object.hasOwn(lock.packages, name) ? lock.packages[name] : null;
+  if (entry == null) {
+    throw new Error(`pyodide-lock.json has no ${name}`);
+  }
+  return entry;
+}
+
+/**
  * @returns {Lock}
  */
 function copyPyodideCore() {
@@ -245,7 +258,7 @@ async function fetchDependencies(lock, closure, shipped, dependencyNames) {
       lock.packages[name] = lockEntry(name, pin.version, filename, sha, []);
       console.log(`+ ${name} ${pin.version} (from PyPI)`);
     } else {
-      const { file_name: fileName, sha256: sha } = lock.packages[name];
+      const { file_name: fileName, sha256: sha } = lockedPackage(lock, name);
       await downloadVerified(`${CDN}/${fileName}`, fileName, sha);
       console.log(`= ${name} ${shippedVersion} (from Pyodide)`);
     }
@@ -297,7 +310,7 @@ console.log(`djlint ${djlintVersion}; runtime dependency closure: ${dependencyNa
 const shipped = new Map(
   dependencyNames
     .filter((name) => Object.hasOwn(lock.packages, name))
-    .map((name) => [name, lock.packages[name].version]),
+    .map((name) => [name, lockedPackage(lock, name).version]),
 );
 assertPyodideVersionsSatisfyDjlint(closure, shipped, djlintVersion, python);
 await fetchDependencies(lock, closure, shipped, dependencyNames);
@@ -314,7 +327,7 @@ console.log(`+ djlint ${djlintVersion} (from PyPI)`);
 
 // The rest of Pyodide's package index points at files this bundle leaves out.
 const packages = Object.fromEntries(
-  ["djlint", ...dependencyNames].map((name) => [name, lock.packages[name]]),
+  ["djlint", ...dependencyNames].map((name) => [name, lockedPackage(lock, name)]),
 );
 writeFileSync(`${OUT}/pyodide-lock.json`, JSON.stringify({ ...lock, packages }));
 writePythonLicenses(
