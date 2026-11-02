@@ -39,6 +39,8 @@ Or for every language djLint supports:
 
 Linting is on by default for those languages and needs no setup.
 
+The djLint item in the status bar does the same for the language of the open file, and turns linting and linting while typing on or off for it: click it, or hover over it.
+
 The extension also works in [vscode.dev](https://vscode.dev) and [github.dev](https://github.dev), with the bundled djLint.
 
 Everything else is configured through the `djlint.*` settings in VS Code. djLint also reads most options from a [djLint configuration file](https://djlint.com/docs/configuration/).
@@ -53,7 +55,7 @@ The extension looks for a djLint to run, in this order:
 4. `djlint` on PATH, then `python -m djlint` and `python3 -m djlint`.
 5. The djLint bundled with the extension.
 
-The language status item in the status bar shows which one is in use, and opens the logs. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. The exceptions are `python` and `python3` from PATH, which count only if `-m djlint --version` answers, because a stub such as the Windows Store one fails the same way. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded in both. The old defaults, `"djlint"` for `djlint.executablePath` and `"python"` for `djlint.pythonPath`, count as unset, so use a path if one of them has to win over the active environment.
+The djLint item in the status bar shows which one is in use. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. The exceptions are `python` and `python3` from PATH, which count only if `-m djlint --version` answers, because a stub such as the Windows Store one fails the same way. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded in both. The old defaults, `"djlint"` for `djlint.executablePath` and `"python"` for `djlint.pythonPath`, count as unset, so use a path if one of them has to win over the active environment.
 
 Set `djlint.importStrategy` to `useBundled` to always use the bundled djLint, whatever is installed. An untrusted workspace always uses it too.
 

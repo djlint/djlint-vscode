@@ -120,7 +120,13 @@ export class Diagnostic {
   ) {}
 }
 
-export class CancellationError extends Error {}
+// As VS Code has it.
+export class CancellationError extends Error {
+  constructor() {
+    super("Canceled");
+    this.name = "Canceled";
+  }
+}
 
 export class CancellationTokenSource {
   readonly #listeners = new Set<() => void>();
@@ -235,6 +241,10 @@ function initialState(): {
   activeEditorListeners: Set<() => void>;
   files: Map<string, string>;
   statusItems: StatusItem[];
+  configurationUpdates: ConfigurationUpdate[];
+  executedCommands: { args: unknown[]; id: string }[];
+  inspected: Record<string, Record<string, unknown>>;
+  quickPick: ((items: readonly QuickPickItem[]) => QuickPickItem | undefined) | undefined;
   commands: Map<string, () => unknown>;
   configuration: Record<string, unknown>;
   diagnostics: Map<string, readonly Diagnostic[]>;
@@ -253,6 +263,10 @@ function initialState(): {
     activeEditorListeners: new Set(),
     files: new Map(),
     statusItems: [],
+    configurationUpdates: [],
+    executedCommands: [],
+    inspected: {},
+    quickPick: void 0,
     commands: new Map(),
     configuration: {},
     diagnostics: new Map(),
@@ -357,9 +371,36 @@ export const workspace = {
     const folder = findWorkspaceFolder(uri);
     return folder ? path.posix.relative(folder.uri.path, uri.path) : uri.fsPath;
   },
-  getConfiguration: (_section?: string, _scope?: unknown): { get: (key: string) => unknown } => ({
-    get: (key) => control.configuration[key],
-  }),
+  // The djlint section, and any other but editor, reads `configuration` by bare key.
+  getConfiguration: (
+    section?: string,
+    scope?: unknown,
+  ): {
+    get: (key: string) => unknown;
+    inspect: (key: string) => Record<string, unknown> | undefined;
+    update: (
+      key: string,
+      value: unknown,
+      target: number,
+      overrideInLanguage?: boolean,
+    ) => Promise<void>;
+  } => {
+    const name = (key: string): string => (section === "editor" ? `editor.${key}` : key);
+    return {
+      get: (key) => control.configuration[name(key)],
+      inspect: (key) => control.inspected[name(key)],
+      update: async (key, value, target, overrideInLanguage) => {
+        control.configurationUpdates.push({
+          key: name(key),
+          overrideInLanguage: overrideInLanguage ?? false,
+          scope,
+          target,
+          value,
+        });
+        control.configuration[name(key)] = value;
+      },
+    };
+  },
   getWorkspaceFolder: findWorkspaceFolder,
   get workspaceFolders(): readonly WorkspaceFolder[] {
     return control.workspaceFolders;
@@ -382,6 +423,28 @@ export const workspace = {
 };
 
 export const window = {
+  createStatusBarItem: (id: string, alignment: number, priority: number): StatusItem => {
+    const item: StatusItem = {
+      alignment,
+      dispose: () => void 0,
+      hide: () => {
+        item.visible = false;
+      },
+      id,
+      priority,
+      show: () => {
+        item.visible = true;
+      },
+      text: "",
+      visible: false,
+    };
+    control.statusItems.push(item);
+    return item;
+  },
+  showQuickPick: async <T extends QuickPickItem>(
+    items: readonly T[],
+    _options?: unknown,
+  ): Promise<T | undefined> => control.quickPick?.(items) as T | undefined,
   get activeTextEditor(): { document: unknown } | undefined {
     return control.activeDocument == null ? void 0 : { document: control.activeDocument };
   },
@@ -413,21 +476,58 @@ export const extensions = {
 };
 
 interface StatusItem {
+  accessibilityInformation?: { label: string };
+  alignment: number;
+  backgroundColor?: ThemeColor | undefined;
   command?: unknown;
-  detail?: string;
   dispose: () => void;
+  hide: () => void;
   id: string;
   name?: string;
-  selector: unknown;
+  priority: number;
+  show: () => void;
   text: string;
+  tooltip?: MarkdownString;
+  visible: boolean;
+}
+
+interface QuickPickItem {
+  description?: string;
+  label: string;
+}
+
+interface ConfigurationUpdate {
+  key: string;
+  overrideInLanguage: boolean;
+  scope: unknown;
+  target: number;
+  value: unknown;
+}
+
+export const StatusBarAlignment = { Left: 1, Right: 2 };
+export const ConfigurationTarget = { Global: 1, Workspace: 2, WorkspaceFolder: 3 };
+
+export class ThemeColor {
+  constructor(readonly id: string) {}
+}
+
+export class MarkdownString {
+  value: string;
+  readonly supportThemeIcons: boolean;
+  isTrusted: unknown;
+
+  constructor(value = "", supportThemeIcons = false) {
+    this.value = value;
+    this.supportThemeIcons = supportThemeIcons;
+  }
+
+  appendMarkdown(value: string): this {
+    this.value += value;
+    return this;
+  }
 }
 
 export const languages = {
-  createLanguageStatusItem: (id: string, selector: unknown): StatusItem => {
-    const item: StatusItem = { dispose: () => void 0, id, selector, text: "" };
-    control.statusItems.push(item);
-    return item;
-  },
   createDiagnosticCollection: (
     _name?: string,
   ): Disposable & {
@@ -460,6 +560,10 @@ export const languages = {
 };
 
 export const commands = {
+  executeCommand: async (id: string, ...args: unknown[]): Promise<unknown> => {
+    control.executedCommands.push({ args, id });
+    return control.commands.get(id)?.();
+  },
   registerCommand: (id: string, handler: () => unknown): Disposable => {
     control.commands.set(id, handler);
     return {

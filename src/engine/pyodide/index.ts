@@ -85,7 +85,7 @@ export class PyodideEngine implements DjlintEngine {
 
   dispose(): void {
     this.#disposed = true;
-    this.#discardWorker(new Error("djLint engine disposed"));
+    this.#discardWorker(new vscode.CancellationError());
   }
 
   #report(message: string): void {

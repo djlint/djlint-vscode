@@ -447,7 +447,7 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       setTimeout(() => {
         doomed.dispose();
       }, 200);
-      await expect(settle(pending)).resolves.toBe("rejected: djLint engine disposed");
+      await expect(settle(pending)).resolves.toBe("rejected: Canceled");
     });
 
     it("refuses new work once disposed", async () => {
