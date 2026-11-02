@@ -1,1 +1,12 @@
-{ "recommendations": ["oxc.oxc-vscode", "connor4312.esbuild-problem-matchers"] }
+{
+  "recommendations": [
+    "connor4312.esbuild-problem-matchers",
+    "oxc.oxc-vscode",
+    "tombi-toml.tombi",
+    "TypeScriptTeam.native-preview"
+  ],
+  "unwantedRecommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode"
+  ]
+}
