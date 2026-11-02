@@ -39,9 +39,11 @@ Or for every language djLint supports:
 
 Linting is on by default for those languages and needs no setup.
 
-The djLint item in the status bar does the same for the language of the open file, and turns linting and linting while typing on or off for it: click it, or hover over it.
+Click the djLint item in the status bar, or hover over it, to make djLint the formatter of the open file's language, or to turn linting or linting while typing on or off for it.
 
 The extension also works in [vscode.dev](https://vscode.dev) and [github.dev](https://github.dev), with the bundled djLint.
+
+Its settings, commands, menu and messages follow the display language of VS Code, in the 13 languages VS Code has language packs for. Links to the djLint docs open them in that language too. What djLint itself reports, such as lint findings, is in English.
 
 Everything else is configured through the `djlint.*` settings in VS Code. djLint also reads most options from a [djLint configuration file](https://djlint.com/docs/configuration/).
 
