@@ -7,9 +7,11 @@ export default defineConfig({
     alias: { vscode: fileURLToPath(new URL("src/__tests__/vscode-stub.ts", import.meta.url)) },
   },
   test: {
-    // The test helpers count, so that unused ones show; Vitest always leaves
-    // the test files out. Only printed: the HTML and JSON reports would be
-    // files for tsc to check.
+    /*
+     * The test helpers count, so that unused ones show; Vitest always leaves
+     * the test files out. Only printed: the HTML and JSON reports would be
+     * files for tsc to check.
+     */
     coverage: { include: ["src/**/*.ts"], reporter: ["text"] },
     include: ["src/**/__tests__/*.test.ts"],
   },
