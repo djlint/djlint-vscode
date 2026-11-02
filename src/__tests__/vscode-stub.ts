@@ -573,3 +573,11 @@ export const commands = {
     };
   },
 };
+
+// Formats as vscode.l10n does with no translation loaded, so tests see the English source.
+export const l10n = {
+  t: (message: string, ...args: unknown[]): string =>
+    message.replaceAll(/\{(\d+)\}/gu, (match, index: string) =>
+      index in args ? String(args[Number(index)]) : match,
+    ),
+};

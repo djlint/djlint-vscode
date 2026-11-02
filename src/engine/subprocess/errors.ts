@@ -1,4 +1,4 @@
-import type * as vscode from "vscode";
+import * as vscode from "vscode";
 
 import { formattingArgs, lintingArgs } from "../../args.js";
 import type { CliArg } from "../../args.js";
@@ -16,17 +16,17 @@ const NO_SUCH_OPTION_REGEX = /No\s+such\s+option[:\s]\s*['"]?(?<option>--[\w-]+)
 function summarize(e: CustomExecaError): string {
   const reason = lastLine(e.stderr);
   if (reason) {
-    return `djLint failed: ${reason}`;
+    return vscode.l10n.t("djLint failed: {0}", reason);
   }
   if (e.timedOut) {
-    return "djLint did not finish in time.";
+    return vscode.l10n.t("djLint did not finish in time.");
   }
   if (e.exitCode != null) {
-    return `djLint failed with exit code ${e.exitCode}.`;
+    return vscode.l10n.t("djLint failed with exit code {0}.", e.exitCode);
   }
   return e.signal == null
-    ? `djLint could not start: ${e.code ?? "unknown error"}.`
-    : `djLint was stopped by ${e.signal}.`;
+    ? vscode.l10n.t("djLint could not start: {0}.", e.code ?? vscode.l10n.t("unknown error"))
+    : vscode.l10n.t("djLint was stopped by {0}.", e.signal);
 }
 
 export function isValidLintResult(e: CustomExecaError, isLint: boolean): boolean {
@@ -45,7 +45,12 @@ export function checkErrors(e: CustomExecaError, outputChannel: vscode.LogOutput
   outputChannel.error(e);
   void showFailure(
     arg
-      ? `Your version of djLint does not support the \`${arg.displayName}\` option. Disable it in the settings or update djLint to version ${arg.minVersion} or newer. See update instructions at ${installDocsUrl}.`
+      ? vscode.l10n.t(
+          "Your version of djLint does not support the `{0}` option. Disable it in the settings or update djLint to version {1} or newer. See update instructions at {2}.",
+          arg.displayName,
+          arg.minVersion,
+          installDocsUrl,
+        )
       : summarize(e),
     outputChannel,
   );

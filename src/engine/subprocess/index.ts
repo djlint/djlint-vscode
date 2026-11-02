@@ -199,8 +199,9 @@ export class SubprocessEngine implements DjlintEngine {
     const output = await this.#run("format", context, token, command);
     // Something else answering to the command, such as a djlint.py beside the template, must not empty the document.
     if (output.trim() === "" && document.getText().trim() !== "") {
-      const message =
-        "djLint printed nothing for a document with content, so the document was left as it is.";
+      const message = vscode.l10n.t(
+        "djLint printed nothing for a document with content, so the document was left as it is.",
+      );
       this.#outputChannel.error(message);
       void showFailure(message, this.#outputChannel);
       throw new Error(message);

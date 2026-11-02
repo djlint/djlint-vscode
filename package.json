@@ -2,7 +2,7 @@
   "name": "djlint",
   "displayName": "djLint",
   "version": "2026.11.4",
-  "description": "HTML template formatter and linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go templates, Mustache, Tera, Askama)",
+  "description": "%description%",
   "categories": [
     "Formatters",
     "Linters"
@@ -79,15 +79,18 @@
     "typescript": "7.0.2",
     "vitest": "5.0.5"
   },
+  "l10n": "./l10n",
   "contributes": {
     "commands": [
       {
         "command": "djlint.restart",
-        "title": "djLint: Restart"
+        "title": "%command.restart%",
+        "category": "djLint"
       },
       {
         "command": "djlint.showLogs",
-        "title": "djLint: Show Logs"
+        "title": "%command.showLogs%",
+        "category": "djLint"
       }
     ],
     "configuration": {
@@ -98,7 +101,7 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Add an additional blank line after `{% <tag> ... %}` tag groups. Blank lines are never added to the end of a block. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.blankLineAfterTag%",
           "scope": "resource"
         },
         "djlint.blankLineBeforeTag": {
@@ -107,19 +110,19 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Add an additional blank line before `{% <tag> ... %}` tag groups. Blank lines are never added to the start of a file or block, or between similar tags. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.blankLineBeforeTag%",
           "scope": "resource"
         },
         "djlint.closeVoidTags": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Add a closing mark to known void tags, so that `<img>` becomes `<img />`. Requires djLint ≥ 1.26.",
+          "markdownDescription": "%config.closeVoidTags%",
           "scope": "resource"
         },
         "djlint.configuration": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the configuration file. Relative paths, including a bare filename, are resolved from the workspace root. Requires djLint ≥ 1.13 for .djlintrc format and ≥ 1.34 for TOML.",
+          "markdownDescription": "%config.configuration%",
           "scope": "resource"
         },
         "djlint.customBlocks": {
@@ -128,7 +131,7 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Indent custom code blocks, for example `{% toc %}...{% endtoc %}`. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.customBlocks%",
           "scope": "resource"
         },
         "djlint.customHtml": {
@@ -137,19 +140,19 @@
             "type": "string"
           },
           "default": [],
-          "markdownDescription": "Indent custom HTML tags, for example `<mjml>`, `<simple-greeting>` or `<mj-\\w+>`. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.customHtml%",
           "scope": "resource"
         },
         "djlint.enableLinting": {
           "type": "boolean",
           "default": false,
           "scope": "language-overridable",
-          "description": "Lint for common issues. Don't enable globally, instead enable for each language individually."
+          "description": "%config.enableLinting%"
         },
         "djlint.executablePath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to the `djlint` executable, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded. When empty or without a working djLint, djLint is looked for through `#djlint.pythonPath#`, the active Python environment and PATH, and the bundled djLint is used if none is found.",
+          "markdownDescription": "%config.executablePath%",
           "scope": "language-overridable"
         },
         "djlint.exclude": {
@@ -158,7 +161,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Override the default exclude paths. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",
+          "description": "%config.exclude%",
           "scope": "resource"
         },
         "djlint.extendExclude": {
@@ -167,13 +170,13 @@
             "type": "string"
           },
           "default": [],
-          "description": "Add additional paths to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 1.25.",
+          "description": "%config.extendExclude%",
           "scope": "resource"
         },
         "djlint.formatAttributeJsJson": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Format JavaScript and JSON code inside HTML attributes, such as `onclick`, `x-*` and other JavaScript-related attributes. Objects with fewer properties than `#djlint.formatAttributeJsJsonMinProps#` are left on a single line. Requires djLint ≥ 1.37.",
+          "markdownDescription": "%config.formatAttributeJsJson%",
           "scope": "resource"
         },
         "djlint.formatAttributeJsJsonMinProps": {
@@ -182,25 +185,25 @@
             "null"
           ],
           "default": null,
-          "description": "Minimum number of properties a JavaScript/JSON object must have to be formatted. Objects with fewer properties stay on a single line. Leave unset for djLint's default of 2. Requires djLint ≥ 1.37.",
+          "description": "%config.formatAttributeJsJsonMinProps%",
           "scope": "resource"
         },
         "djlint.formatAttributeJsJsonPattern": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Regex matching the attributes to format as JavaScript. Leave empty for djLint's default, which matches common JavaScript attributes such as `onclick` and `x-*`, along with Vue.js, Alpine.js and Angular directives. Requires djLint ≥ 1.37.",
+          "markdownDescription": "%config.formatAttributeJsJsonPattern%",
           "scope": "resource"
         },
         "djlint.formatAttributeTemplateTags": {
           "type": "boolean",
           "default": false,
-          "description": "Attempt to format template syntax inside of tag attributes. Requires djLint ≥ 1.25.",
+          "description": "%config.formatAttributeTemplateTags%",
           "scope": "resource"
         },
         "djlint.formatCss": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Also format the contents of `<style>` tags, using css-beautify. Template syntax inside them is not fully supported. Requires djLint ≥ 1.9.",
+          "markdownDescription": "%config.formatCss%",
           "scope": "resource"
         },
         "djlint.formatLanguages": {
@@ -239,12 +242,12 @@
             "askama-html",
             "html"
           ],
-          "description": "Language IDs for which djLint should be registered as a formatter."
+          "description": "%config.formatLanguages%"
         },
         "djlint.formatJs": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Also format the contents of `<script>` tags, using js-beautify. Template syntax inside them is not fully supported. Requires djLint ≥ 1.9.",
+          "markdownDescription": "%config.formatJs%",
           "scope": "resource"
         },
         "djlint.ignore": {
@@ -253,7 +256,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Linter codes to ignore. Requires djLint ≥ 0.1.5.",
+          "description": "%config.ignore%",
           "scope": "resource"
         },
         "djlint.ignoreBlocks": {
@@ -262,13 +265,13 @@
             "type": "string"
           },
           "default": [],
-          "description": "Template blocks whose children are not indented. The children are treated as siblings of the block and indented accordingly. Requires djLint ≥ 1.24.",
+          "description": "%config.ignoreBlocks%",
           "scope": "resource"
         },
         "djlint.ignoreCase": {
           "type": "boolean",
           "default": false,
-          "description": "Do not attempt to fix the case of known html tags. Requires djLint ≥ 1.23.",
+          "description": "%config.ignoreCase%",
           "scope": "resource"
         },
         "djlint.importStrategy": {
@@ -279,10 +282,10 @@
           ],
           "default": "fromEnvironment",
           "markdownEnumDescriptions": [
-            "Use an installed djLint if one is found, otherwise the bundled one.",
-            "Always use the bundled djLint, whatever is installed. `#djlint.executablePath#`, `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored."
+            "%config.importStrategy.fromEnvironment%",
+            "%config.importStrategy.useBundled%"
           ],
-          "markdownDescription": "Which djLint to run. See [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
+          "markdownDescription": "%config.importStrategy%",
           "scope": "language-overridable"
         },
         "djlint.include": {
@@ -291,7 +294,7 @@
             "type": "string"
           },
           "default": [],
-          "description": "Linter codes to include. Requires djLint ≥ 1.20.",
+          "description": "%config.include%",
           "scope": "resource"
         },
         "djlint.indentCss": {
@@ -300,7 +303,7 @@
             "null"
           ],
           "default": null,
-          "markdownDescription": "Indent width for the contents of `<style>` tags, used when `#djlint.formatCss#` is enabled. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.indentCss%",
           "scope": "resource"
         },
         "djlint.indentJs": {
@@ -309,26 +312,26 @@
             "null"
           ],
           "default": null,
-          "markdownDescription": "Indent width for the contents of `<script>` tags, used when `#djlint.formatJs#` is enabled. Requires djLint ≥ 1.25.",
+          "markdownDescription": "%config.indentJs%",
           "scope": "resource"
         },
         "djlint.keepBrInline": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Keep `<br>` on the line of the text it breaks, rather than giving it a line of its own. `<hr>` is unaffected. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.keepBrInline%",
           "scope": "resource"
         },
         "djlint.lineBreakAfterMultilineTag": {
           "type": "boolean",
           "default": false,
-          "description": "Do not condense the content of multi-line tags into the line of the last attribute. Requires djLint ≥ 1.27.",
+          "description": "%config.lineBreakAfterMultilineTag%",
           "scope": "resource"
         },
         "djlint.lintOnType": {
           "type": "boolean",
           "default": true,
           "scope": "language-overridable",
-          "markdownDescription": "Lint after a short pause in typing, as well as on opening and saving. Needs `#djlint.enableLinting#`."
+          "markdownDescription": "%config.lintOnType%"
         },
         "djlint.maxAttributeLength": {
           "type": [
@@ -336,7 +339,7 @@
             "null"
           ],
           "default": null,
-          "description": "Attempt to wrap tag attributes once the attribute length exceeds this value. Requires djLint ≥ 1.25.",
+          "description": "%config.maxAttributeLength%",
           "scope": "resource"
         },
         "djlint.maxBlankLines": {
@@ -345,7 +348,7 @@
             "null"
           ],
           "default": null,
-          "description": "Consolidate blank lines down to this many lines. Leave unset for djLint's default of 0, which removes blank lines. Requires djLint ≥ 1.31.",
+          "description": "%config.maxBlankLines%",
           "scope": "resource"
         },
         "djlint.maxLineLength": {
@@ -354,61 +357,61 @@
             "null"
           ],
           "default": null,
-          "description": "Attempt to put some html and template tags on a single line instead of wrapping them, as long as the line does not exceed this length. Requires djLint ≥ 1.25.",
+          "description": "%config.maxLineLength%",
           "scope": "resource"
         },
         "djlint.nameEndblocks": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Write the block's name into the `{% endblock %}` that closes it, where the block is written across lines. This is what `T003` asks for. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.nameEndblocks%",
           "scope": "resource"
         },
         "djlint.noEntityFormatting": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Do not rewrite an entity reference as the character it names, so `&copy;` is left as written rather than becoming ©. The entities that carry syntax, and the invisible ones, are never rewritten either way. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.noEntityFormatting%",
           "scope": "resource"
         },
         "djlint.noFunctionFormatting": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Do not attempt to format the arguments of function calls inside `{{ }}` expressions. Requires djLint ≥ 1.30.2.",
+          "markdownDescription": "%config.noFunctionFormatting%",
           "scope": "resource"
         },
         "djlint.noIndentInnerHtml": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Do not indent `<head>` and `<body>` below `<html>`, which is how the built-in VS Code HTML formatter lays a document out. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.noIndentInnerHtml%",
           "scope": "resource"
         },
         "djlint.noLineAfterYaml": {
           "type": "boolean",
           "default": false,
-          "description": "Do not add a blank line after yaml front matter. Requires djLint ≥ 1.29.",
+          "description": "%config.noLineAfterYaml%",
           "scope": "resource"
         },
         "djlint.noSetFormatting": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Do not attempt to format the contents of `{% set %}` tags. Requires djLint ≥ 1.30.2.",
+          "markdownDescription": "%config.noSetFormatting%",
           "scope": "resource"
         },
         "djlint.preserveBlankLines": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve blank lines where possible. Ideal for non-html template files where blank lines are intentional. Requires djLint ≥ 1.3.",
+          "description": "%config.preserveBlankLines%",
           "scope": "resource"
         },
         "djlint.preserveClassNewlines": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve line breaks inside multiline class attributes. Requires djLint ≥ 1.39.",
+          "description": "%config.preserveClassNewlines%",
           "scope": "resource"
         },
         "djlint.preserveLeadingSpace": {
           "type": "boolean",
           "default": false,
-          "description": "Preserve leading space on text where possible. Ideal for non-html template files where text indent is intentional. Requires djLint ≥ 1.2.",
+          "description": "%config.preserveLeadingSpace%",
           "scope": "resource"
         },
         "djlint.profile": {
@@ -428,27 +431,27 @@
             "html"
           ],
           "enumDescriptions": [
-            "Do not pass a profile, so djLint uses the one from your configuration file, or its own default.",
-            "Every template language at once. A rule that does not hold for one of them is skipped.",
-            "Django templates.",
-            "Jinja templates. Use this one for MiniJinja too.",
-            "Nunjucks and Twig templates.",
-            "Handlebars and Mustache templates.",
-            "Liquid templates (Shopify, Jekyll, Eleventy).",
-            "Go templates (Hugo, Helm).",
-            "Angular templates.",
-            "Tera templates. Use this one for Zola too.",
-            "Askama templates, Jinja-style templates in Rust. Rust expressions are never reformatted.",
-            "Plain HTML, with no template syntax."
+            "%config.profile.unset%",
+            "%config.profile.all%",
+            "%config.profile.django%",
+            "%config.profile.jinja%",
+            "%config.profile.nunjucks%",
+            "%config.profile.handlebars%",
+            "%config.profile.liquid%",
+            "%config.profile.golang%",
+            "%config.profile.angular%",
+            "%config.profile.tera%",
+            "%config.profile.askama%",
+            "%config.profile.html%"
           ],
           "default": "",
           "scope": "language-overridable",
-          "markdownDescription": "Set a profile for the template language. The profile enables the linter rules that apply to that language, and may also change reformatting. Requires djLint ≥ 0.4.5; the `askama`, `tera` and `liquid` profiles require djLint ≥ 1.42, and `all` requires djLint ≥ 1.44."
+          "markdownDescription": "%config.profile%"
         },
         "djlint.pythonPath": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to a Python interpreter used to run `python -m djlint`, or a bare command name to look up on PATH. A relative value containing a path separator is resolved from the workspace root. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded. When empty or without a working djLint, the active Python environment is tried next (see `#djlint.useVenv#`).",
+          "markdownDescription": "%config.pythonPath%",
           "scope": "language-overridable"
         },
         "djlint.quoteStyle": {
@@ -459,60 +462,60 @@
             "single"
           ],
           "enumDescriptions": [
-            "Do not pass a quote style, so djLint uses the one from your configuration file, or its own default of double quotes.",
-            "Double quotes.",
-            "Single quotes."
+            "%config.quoteStyle.unset%",
+            "%config.quoteStyle.double%",
+            "%config.quoteStyle.single%"
           ],
           "default": "",
-          "markdownDescription": "Quotes to use for strings inside template tags. `T002` asks for the same quotes, and the formatter uses them in conditions such as `{% if x == \"a\" %}`, so one file does not spell the same string both ways. Quoting of HTML attributes is left to `H008`. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.quoteStyle%",
           "scope": "resource"
         },
         "djlint.requirePragma": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Only format or lint files that start with a comment with the text `djlint:on`. The comment can be an HTML comment or a comment in the template language given by `#djlint.profile#`. Requires djLint ≥ 0.5.8.",
+          "markdownDescription": "%config.requirePragma%",
           "scope": "resource"
         },
         "djlint.rules": {
           "type": "string",
           "default": "",
-          "markdownDescription": "Path to a custom rules file in .djlint_rules.yaml format. Relative paths, including a bare filename, are resolved from the workspace root. Requires djLint ≥ 1.41.",
+          "markdownDescription": "%config.rules%",
           "scope": "resource"
         },
         "djlint.singleAttributePerLine": {
           "type": "boolean",
           "default": false,
-          "description": "When an opening tag wraps, put the tag name, each attribute and the closing bracket on separate lines. Requires djLint ≥ 1.40.",
+          "description": "%config.singleAttributePerLine%",
           "scope": "resource"
         },
         "djlint.sortAttributes": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Sort attributes by name, with `id` first and `class` second. A tag whose attributes are guarded by a template tag keeps the order it was written in, since moving one out of its branch would change the page. Requires djLint ≥ 1.45.",
+          "markdownDescription": "%config.sortAttributes%",
           "scope": "resource"
         },
         "djlint.sortLoadTags": {
           "type": "boolean",
           "default": false,
-          "markdownDescription": "Sort the libraries in `{% load %}` tags and drop the ones written twice, so `{% load static i18n %}` becomes `{% load i18n static %}`. In `{% load a b from library %}`, the names before `from` are sorted. Where two libraries define a tag or filter of the same name, the one loaded last wins, so sorting can change which one a template uses. Requires djLint ≥ 1.47.",
+          "markdownDescription": "%config.sortLoadTags%",
           "scope": "resource"
         },
         "djlint.useEditorIndentation": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "Get the number of indent spaces from VS Code (see the `#editor.tabSize#` setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3.",
+          "markdownDescription": "%config.useEditorIndentation%",
           "scope": "resource"
         },
         "djlint.useGitignore": {
           "type": "boolean",
           "default": false,
-          "description": "Add .gitignore excludes to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 0.5.9.",
+          "description": "%config.useGitignore%",
           "scope": "resource"
         },
         "djlint.useVenv": {
           "type": "boolean",
           "default": true,
-          "markdownDescription": "When enabled, run djLint with the Python interpreter of the active environment if neither `#djlint.executablePath#` nor `#djlint.pythonPath#` gives a working djLint. The environment is read from the Python Environments extension (`ms-python.vscode-python-envs`) when `python.useEnvironmentsExtension` is on, otherwise from the Python extension (`ms-python.python`).",
+          "markdownDescription": "%config.useVenv%",
           "scope": "language-overridable"
         }
       }
@@ -656,7 +659,7 @@
         "djlint.configuration",
         "djlint.rules"
       ],
-      "description": "In an untrusted workspace, only the bundled djLint runs, and it reads no files."
+      "description": "%untrustedWorkspaces%"
     },
     "virtualWorkspaces": true
   }
