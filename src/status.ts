@@ -109,6 +109,12 @@ export class DjlintStatus implements vscode.Disposable {
       vscode.window.onDidChangeActiveTextEditor(() => {
         this.#render();
       }),
+      // A change of language mode reopens the document in the same editor.
+      vscode.workspace.onDidOpenTextDocument(({ uri }) => {
+        if (uri.toString() === vscode.window.activeTextEditor?.document.uri.toString()) {
+          this.#render();
+        }
+      }),
       vscode.workspace.onDidCloseTextDocument(({ uri }) => {
         this.#inUse.delete(uri.toString());
         this.#failed.delete(uri.toString());

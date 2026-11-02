@@ -36,6 +36,16 @@ describe(DjlintStatus, () => {
     status.dispose();
   });
 
+  it("follows a change of the file's language", () => {
+    const status = new DjlintStatus();
+    setActiveDocument(document);
+    const python = { ...document, languageId: "python" };
+    control.activeDocument = python;
+    fireWorkspaceEvent("open", python);
+    expect(item().visible).toBe(false);
+    status.dispose();
+  });
+
   it("names the djLint in use, and where it comes from", () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
