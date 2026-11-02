@@ -7,8 +7,9 @@ import * as vscode from "vscode";
 
 import type { DjlintEngine, LintDiagnostic } from "../engine/types.js";
 import { Linter } from "../linter.js";
+import { DjlintStatus } from "../status.js";
 import { changeOf, flush, makeChannel, makeContext, makeDocument, makeEngines } from "./helpers.js";
-import { control, fireWorkspaceEvent, resetVscode } from "./vscode-stub.js";
+import { control, fireWorkspaceEvent, resetVscode, setActiveDocument } from "./vscode-stub.js";
 
 const H013: LintDiagnostic = {
   code: "H013",
@@ -428,6 +429,28 @@ describe(Linter, () => {
       healthy = false;
       await expect(linter.refreshAll()).resolves.toBeUndefined();
       expect(diagnosticsOf(document)).toBeUndefined();
+    });
+
+    it("takes back its warning once linting is turned off", async () => {
+      control.configuration = { enableLinting: true, formatLanguages: ["html"] };
+      setActiveDocument(document);
+      const status = new DjlintStatus();
+      const linter = new Linter(
+        makeContext(),
+        makeChannel(),
+        makeEngines({
+          lint: async () => {
+            throw new Error("djLint failed");
+          },
+        }),
+        status,
+      );
+      await linter.refreshAll();
+      expect(control.statusItems[0]?.text).toBe("$(warning) djLint");
+      control.configuration = { enableLinting: false, formatLanguages: ["html"] };
+      await linter.refreshAll();
+      expect(control.statusItems[0]?.text).toBe("djLint");
+      status.dispose();
     });
   });
 

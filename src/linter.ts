@@ -194,6 +194,7 @@ export class Linter {
     if (!config.get<boolean>("enableLinting")) {
       this.#registry.cancelAndDelete(document.uri.toString());
       this.#collection.delete(document.uri);
+      this.#status?.ran(document, "lint", true);
       return;
     }
 
@@ -211,13 +212,13 @@ export class Linter {
     try {
       diagnostics = await this.#engines.engine.lint(document, config, source.token);
       this.#lastLintMs = performance.now() - startedAt;
-      this.#status?.ran(document, true);
+      this.#status?.ran(document, "lint", true);
     } catch (e) {
       const wasSuperseded = source.token.isCancellationRequested;
       if (!wasSuperseded) {
         this.#collection.delete(document.uri);
         if (!(e instanceof vscode.CancellationError)) {
-          this.#status?.ran(document, false);
+          this.#status?.ran(document, "lint", false);
         }
       }
       throw e;

@@ -53,10 +53,10 @@ export class Formatter implements vscode.DocumentFormattingEditProvider {
     let stdout: string;
     try {
       stdout = await this.#engines.engine.format(document, config, options, source.token);
-      this.#status?.ran(document, true);
+      this.#status?.ran(document, "format", true);
     } catch (e) {
       if (!(e instanceof vscode.CancellationError) && !source.token.isCancellationRequested) {
-        this.#status?.ran(document, false);
+        this.#status?.ran(document, "format", false);
       }
       return void 0;
     } finally {

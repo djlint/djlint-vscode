@@ -120,7 +120,13 @@ export class Diagnostic {
   ) {}
 }
 
-export class CancellationError extends Error {}
+// As VS Code has it.
+export class CancellationError extends Error {
+  constructor() {
+    super("Canceled");
+    this.name = "Canceled";
+  }
+}
 
 export class CancellationTokenSource {
   readonly #listeners = new Set<() => void>();

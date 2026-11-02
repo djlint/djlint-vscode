@@ -610,7 +610,7 @@ describe(PyodideEngine, () => {
       const pending = format(engine);
       const worker = FakeWorker.latest;
       engine.dispose();
-      await expect(pending).rejects.toThrow("djLint engine disposed");
+      await expect(pending).rejects.toBeInstanceOf(vscode.CancellationError);
       expect(worker.terminated).toBe(true);
       expect(control.shownErrors).toStrictEqual([]);
     });
@@ -621,7 +621,7 @@ describe(PyodideEngine, () => {
       const worker = FakeWorker.latest;
       engine.dispose();
       worker.emit("exit", 1);
-      await expect(pending).rejects.toThrow("djLint engine disposed");
+      await expect(pending).rejects.toBeInstanceOf(vscode.CancellationError);
       expect(control.shownErrors).toStrictEqual([]);
     });
 

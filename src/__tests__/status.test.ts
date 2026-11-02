@@ -93,21 +93,39 @@ describe(DjlintStatus, () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
     status.update(document, "1.0", "first");
-    status.ran(document, false);
+    status.ran(document, "lint", false);
     expect(item().text).toBe("$(warning) djLint 1.0");
-    expect(item().accessibilityInformation?.label).toBe(
-      "djLint 1.0, the last run on this file failed",
-    );
+    expect(item().accessibilityInformation?.label).toBe("djLint 1.0. Linting this file failed.");
     expect(item().backgroundColor).toBeInstanceOf(vscode.ThemeColor);
-    expect(tooltip()).toContain("failed");
-    status.ran(document, true);
+    expect(tooltip()).toContain("Linting this file failed.");
+    status.ran(document, "lint", true);
     expect(item().text).toBe("djLint 1.0");
     expect(item().backgroundColor).toBeUndefined();
   });
 
+  it("keeps a failed format in view while linting works", () => {
+    const status = new DjlintStatus();
+    setActiveDocument(document);
+    status.ran(document, "format", false);
+    status.ran(document, "lint", false);
+    status.ran(document, "lint", true);
+    expect(item().text).toBe("$(warning) djLint");
+    expect(item().accessibilityInformation?.label).toBe("djLint. Formatting this file failed.");
+    status.ran(document, "format", true);
+    expect(item().text).toBe("djLint");
+  });
+
+  it("escapes what djLint's source says, icons included", () => {
+    const status = new DjlintStatus();
+    setActiveDocument(document);
+    status.update(document, "1.0", "/$(gear)/[x](command:y)");
+    expect(tooltip()).toContain(String.raw`/\$\(gear\)/\[x\]\(command:y\)`);
+    status.dispose();
+  });
+
   it("forgets a file once it is closed", () => {
     const status = new DjlintStatus();
-    status.ran(document, false);
+    status.ran(document, "lint", false);
     fireWorkspaceEvent("close", document);
     setActiveDocument(document);
     expect(item().text).toBe("djLint");
@@ -117,7 +135,7 @@ describe(DjlintStatus, () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
     status.update(document, "1.47.1", "bundled");
-    status.ran(document, false);
+    status.ran(document, "lint", false);
     status.clear();
     expect(item().text).toBe("djLint");
   });

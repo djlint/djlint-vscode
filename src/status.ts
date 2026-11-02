@@ -10,6 +10,8 @@ interface InUse {
   version: string;
 }
 
+export type Run = "format" | "lint";
+
 interface MenuEntry {
   action?: string;
   command?: string;
@@ -88,7 +90,7 @@ const toolEntries: readonly MenuEntry[] = [
 ];
 
 function escape(text: string): string {
-  return text.replaceAll(/[\\`*_{}[\]()#+\-.!|<>~]/gu, String.raw`\$&`);
+  return text.replaceAll(/[\\`*_{}[\]()#+\-.!|<>~$]/gu, String.raw`\$&`);
 }
 
 export class DjlintStatus implements vscode.Disposable {
@@ -98,8 +100,8 @@ export class DjlintStatus implements vscode.Disposable {
     100,
   );
   readonly #inUse = new Map<string, InUse>();
-  // The documents whose last format or lint failed.
-  readonly #failed = new Set<string>();
+  // What failed the last time it ran on a document.
+  readonly #failed = new Map<string, Set<Run>>();
   readonly #subscriptions: vscode.Disposable[];
 
   constructor() {
@@ -139,15 +141,18 @@ export class DjlintStatus implements vscode.Disposable {
   }
 
   // Whether the last format or lint of a document worked.
-  ran(document: vscode.TextDocument, ok: boolean): void {
+  ran(document: vscode.TextDocument, run: Run, ok: boolean): void {
     const key = document.uri.toString();
-    if (ok === !this.#failed.has(key)) {
+    const failed = this.#failed.get(key);
+    if (ok === !failed?.has(run)) {
       return;
     }
-    if (ok) {
+    if (!ok) {
+      this.#failed.set(key, new Set(failed).add(run));
+    } else if (failed?.size === 1) {
       this.#failed.delete(key);
     } else {
-      this.#failed.add(key);
+      failed?.delete(run);
     }
     this.#render();
   }
@@ -193,13 +198,15 @@ export class DjlintStatus implements vscode.Disposable {
     const inUse =
       this.#inUse.get(document.uri.toString()) ?? this.#inUse.get(directoryScopeKey(document));
     const name = inUse?.version ? `djLint ${inUse.version}` : "djLint";
-    const failed = this.#failed.has(document.uri.toString());
-    this.#item.text = failed ? `$(warning) ${name}` : name;
+    const failed = this.#failed.get(document.uri.toString());
+    const failures = [
+      ...(failed?.has("format") ? ["Formatting this file failed."] : []),
+      ...(failed?.has("lint") ? ["Linting this file failed."] : []),
+    ].join(" ");
+    this.#item.text = failures ? `$(warning) ${name}` : name;
     // Screen readers would read the tooltip's markdown out.
-    this.#item.accessibilityInformation = {
-      label: failed ? `${name}, the last run on this file failed` : name,
-    };
-    this.#item.backgroundColor = failed
+    this.#item.accessibilityInformation = { label: failures ? `${name}. ${failures}` : name };
+    this.#item.backgroundColor = failures
       ? new vscode.ThemeColor("statusBarItem.warningBackground")
       : void 0;
 
@@ -209,10 +216,8 @@ export class DjlintStatus implements vscode.Disposable {
     if (inUse?.source) {
       tooltip.appendMarkdown(`  \n${escape(inUse.source)}`);
     }
-    if (failed) {
-      tooltip.appendMarkdown(
-        "\n\n$(warning) The last run on this file failed. [Show Logs](command:djlint.showLogs)",
-      );
+    if (failures) {
+      tooltip.appendMarkdown(`\n\n$(warning) ${failures} [Show Logs](command:djlint.showLogs)`);
     }
     tooltip.appendMarkdown(
       `\n\n${settingEntries(document)
