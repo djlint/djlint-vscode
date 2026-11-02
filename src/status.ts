@@ -13,10 +13,7 @@ function languages(): string[] {
 }
 
 export class DjlintStatus implements vscode.Disposable {
-  readonly #item = vscode.languages.createLanguageStatusItem(
-    "djlint",
-    languages(),
-  );
+  readonly #item = vscode.languages.createLanguageStatusItem("djlint", languages());
   readonly #inUse = new Map<string, InUse>();
   readonly #editorChange: vscode.Disposable;
 
@@ -54,8 +51,7 @@ export class DjlintStatus implements vscode.Disposable {
     const document = vscode.window.activeTextEditor?.document;
     const inUse =
       document &&
-      (this.#inUse.get(document.uri.toString()) ??
-        this.#inUse.get(directoryScopeKey(document)));
+      (this.#inUse.get(document.uri.toString()) ?? this.#inUse.get(directoryScopeKey(document)));
     this.#item.text = inUse?.version ? `djLint ${inUse.version}` : "djLint";
     this.#item.detail = inUse?.source ?? "";
   }

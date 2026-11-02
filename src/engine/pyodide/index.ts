@@ -10,12 +10,7 @@ import type { DjlintStatus } from "../../status.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { readProject } from "./project.js";
-import type {
-  RunRequest,
-  RunResponse,
-  WorkerRequest,
-  WorkerResponse,
-} from "./protocol.js";
+import type { RunRequest, RunResponse, WorkerRequest, WorkerResponse } from "./protocol.js";
 
 export interface RuntimeWorker {
   onError: (listener: (e: Error) => void) => void;
@@ -35,9 +30,7 @@ interface Pending {
 
 type ProjectLocation = Pick<RunRequest, "cwd" | "pathOptions" | "project">;
 
-function absoluteOnly(
-  pathOptions: RunRequest["pathOptions"],
-): RunRequest["pathOptions"] {
+function absoluteOnly(pathOptions: RunRequest["pathOptions"]): RunRequest["pathOptions"] {
   return Object.fromEntries(
     Object.entries(pathOptions).filter(([, value]) => path.isAbsolute(value)),
   );
@@ -55,9 +48,7 @@ export class PyodideEngine implements DjlintEngine {
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #canReadProjectFiles: boolean;
   readonly #status: DjlintStatus;
-  readonly #getHostFolder: (
-    document: vscode.TextDocument,
-  ) => string | undefined;
+  readonly #getHostFolder: (document: vscode.TextDocument) => string | undefined;
 
   constructor(
     createWorker: () => RuntimeWorker,
@@ -156,9 +147,7 @@ export class PyodideEngine implements DjlintEngine {
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
       this.#outputChannel.error(response.error);
-      this.#report(
-        `Bundled djLint failed: ${lastLine(response.error) ?? response.error}`,
-      );
+      this.#report(`Bundled djLint failed: ${lastLine(response.error) ?? response.error}`);
       pending.reject(new Error(response.error));
     }
   }
@@ -197,9 +186,7 @@ export class PyodideEngine implements DjlintEngine {
       }
       case "ready": {
         this.#version = response.version;
-        this.#outputChannel.info(
-          `Using the bundled djLint ${response.version}`,
-        );
+        this.#outputChannel.info(`Using the bundled djLint ${response.version}`);
         break;
       }
       case "result": {
@@ -250,11 +237,7 @@ export class PyodideEngine implements DjlintEngine {
     const hostFolder = this.#getHostFolder(document);
     return hostFolder == null
       ? void 0
-      : {
-          cwd: hostFolder,
-          pathOptions: absoluteOnly(pathOptions),
-          project: void 0,
-        };
+      : { cwd: hostFolder, pathOptions: absoluteOnly(pathOptions), project: void 0 };
   }
 
   async #call(

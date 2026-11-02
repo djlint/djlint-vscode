@@ -10,9 +10,7 @@ const POLL_MS = 250;
 const WHOLE_MATCH = 13;
 const NO_LENGTH = 0;
 
-const { environments, hasDjlintOnPath, version } = JSON.parse(
-  process.env.DJLINT_E2E,
-);
+const { environments, hasDjlintOnPath, version } = JSON.parse(process.env.DJLINT_E2E);
 
 async function sleep(ms) {
   await new Promise((resolve) => {
@@ -25,29 +23,18 @@ exports.run = async () => {
   const uri = vscode.Uri.joinPath(folder.uri, "page.html");
   const document = await vscode.workspace.openTextDocument(uri);
   await vscode.window.showTextDocument(document);
-  const python = await vscode.extensions
-    .getExtension("ms-python.python")
-    .activate();
+  const python = await vscode.extensions.getExtension("ms-python.python").activate();
   await vscode.extensions.getExtension("monosans.djlint").activate();
 
   async function select(executable) {
-    if (
-      vscode.workspace
-        .getConfiguration("python")
-        .get("useEnvironmentsExtension")
-    ) {
-      const api = await vscode.extensions
-        .getExtension("ms-python.vscode-python-envs")
-        .activate();
+    if (vscode.workspace.getConfiguration("python").get("useEnvironmentsExtension")) {
+      const api = await vscode.extensions.getExtension("ms-python.vscode-python-envs").activate();
       await api.setEnvironment(
         folder.uri,
         await api.resolveEnvironment(vscode.Uri.file(executable)),
       );
     } else {
-      await python.environments.updateActiveEnvironmentPath(
-        executable,
-        folder.uri,
-      );
+      await python.environments.updateActiveEnvironmentPath(executable, folder.uri);
     }
   }
 
@@ -64,12 +51,8 @@ exports.run = async () => {
   }
 
   function findingLength() {
-    const finding = vscode.languages
-      .getDiagnostics(uri)
-      .find(({ code }) => code?.value === "H013");
-    return (
-      finding && finding.range.end.character - finding.range.start.character
-    );
+    const finding = vscode.languages.getDiagnostics(uri).find(({ code }) => code?.value === "H013");
+    return finding && finding.range.end.character - finding.range.start.character;
   }
 
   // Selecting more than once, because the Python extension can pick an environment of its own when it starts.
@@ -87,63 +70,30 @@ exports.run = async () => {
         await sleep(POLL_MS);
       }
     }
-    throw new Error(
-      `${label}: expected ${length}, got ${String(findingLength())}`,
-    );
+    throw new Error(`${label}: expected ${length}, got ${String(findingLength())}`);
   }
 
-  await expectLength(
-    "runs the selected environment",
-    environments.installed,
-    WHOLE_MATCH,
-  );
-  await expectLength(
-    "follows a new selection",
-    environments.withoutEnd,
-    NO_LENGTH,
-  );
+  await expectLength("runs the selected environment", environments.installed, WHOLE_MATCH);
+  await expectLength("follows a new selection", environments.withoutEnd, NO_LENGTH);
   if (environments.conda != null) {
     await select(environments.installed);
-    await expectLength(
-      "runs a conda environment",
-      environments.conda,
-      NO_LENGTH,
-    );
+    await expectLength("runs a conda environment", environments.conda, NO_LENGTH);
   }
   if (!hasDjlintOnPath) {
-    await expectLength(
-      "falls back to the bundled djLint",
-      environments.empty,
-      WHOLE_MATCH,
-    );
+    await expectLength("falls back to the bundled djLint", environments.empty, WHOLE_MATCH);
   }
 
   await select(environments.later);
   await sleep(RETRY_MS);
-  await expectLength(
-    "goes to another environment",
-    environments.installed,
-    WHOLE_MATCH,
-  );
-  execFileSync("uv", [
-    "pip",
-    "install",
-    "--python",
-    environments.later,
-    `djlint==${version}`,
-  ]);
-  await expectLength(
-    "finds djLint installed since",
-    environments.later,
-    NO_LENGTH,
-  );
+  await expectLength("goes to another environment", environments.installed, WHOLE_MATCH);
+  execFileSync("uv", ["pip", "install", "--python", environments.later, `djlint==${version}`]);
+  await expectLength("finds djLint installed since", environments.later, NO_LENGTH);
 
   await select(environments.installed);
-  const edits = await vscode.commands.executeCommand(
-    "vscode.executeFormatDocumentProvider",
-    uri,
-    { insertSpaces: true, tabSize: 4 },
-  );
+  const edits = await vscode.commands.executeCommand("vscode.executeFormatDocumentProvider", uri, {
+    insertSpaces: true,
+    tabSize: 4,
+  });
   const edit = new vscode.WorkspaceEdit();
   edit.set(uri, edits);
   await vscode.workspace.applyEdit(edit);

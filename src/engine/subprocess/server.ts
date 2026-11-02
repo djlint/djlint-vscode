@@ -55,11 +55,7 @@ export type ServerSettings = Record<string, unknown>;
 
 // The type of what execa returns depends on these options.
 // oxlint-disable-next-line typescript/explicit-function-return-type, typescript/promise-function-async
-function spawnServer(
-  exec: string,
-  prefixArgs: readonly string[],
-  cwd: string | undefined,
-) {
+function spawnServer(exec: string, prefixArgs: readonly string[], cwd: string | undefined) {
   return execa(exec, [...prefixArgs, "--lsp"], {
     buffer: false,
     ...(cwd != null && { cwd }),
@@ -67,34 +63,22 @@ function spawnServer(
   });
 }
 
-export function applyEdits(
-  document: vscode.TextDocument,
-  edits: readonly TextEdit[],
-): string {
+export function applyEdits(document: vscode.TextDocument, edits: readonly TextEdit[]): string {
   const text = document.getText();
   return edits
     .map(({ newText, range }) => ({
-      end: document.offsetAt(
-        new vscode.Position(range.end.line, range.end.character),
-      ),
+      end: document.offsetAt(new vscode.Position(range.end.line, range.end.character)),
       newText,
-      start: document.offsetAt(
-        new vscode.Position(range.start.line, range.start.character),
-      ),
+      start: document.offsetAt(new vscode.Position(range.start.line, range.start.character)),
     }))
     .toSorted((a, b) => b.start - a.start)
     .reduce(
-      (result, { end, newText, start }) =>
-        result.slice(0, start) + newText + result.slice(end),
+      (result, { end, newText, start }) => result.slice(0, start) + newText + result.slice(end),
       text,
     );
 }
 
-function toLintDiagnostic({
-  code = "",
-  message,
-  range,
-}: Diagnostic): LintDiagnostic {
+function toLintDiagnostic({ code = "", message, range }: Diagnostic): LintDiagnostic {
   return {
     code: String(code),
     column: range.start.character,
@@ -179,16 +163,10 @@ export class DjlintServer {
     token: vscode.CancellationToken,
   ): Promise<string> {
     const { version } = document;
-    const edits = await this.#withDocument(
-      document,
-      settings,
-      token,
-      "textDocument/formatting",
-      {
-        options: formattingOptions,
-        textDocument: { uri: document.uri.toString() },
-      },
-    );
+    const edits = await this.#withDocument(document, settings, token, "textDocument/formatting", {
+      options: formattingOptions,
+      textDocument: { uri: document.uri.toString() },
+    });
     // The edits are for the text the server got.
     if (document.version !== version) {
       throw new vscode.CancellationError();
@@ -201,13 +179,9 @@ export class DjlintServer {
     settings: ServerSettings,
     token: vscode.CancellationToken,
   ): Promise<LintDiagnostic[]> {
-    const report = (await this.#withDocument(
-      document,
-      settings,
-      token,
-      "textDocument/diagnostic",
-      { textDocument: { uri: document.uri.toString() } },
-    )) as { items?: Diagnostic[] };
+    const report = (await this.#withDocument(document, settings, token, "textDocument/diagnostic", {
+      textDocument: { uri: document.uri.toString() },
+    })) as { items?: Diagnostic[] };
     return (report.items ?? []).map((item) => toLintDiagnostic(item));
   }
 
@@ -274,9 +248,7 @@ export class DjlintServer {
       }
       await this.#untilStarted(token);
       // Sent for each run, as it also has the server import custom rules anew, as a new process would.
-      this.#notify("workspace/didChangeConfiguration", {
-        settings: { djlint: settings },
-      });
+      this.#notify("workspace/didChangeConfiguration", { settings: { djlint: settings } });
       const uri = document.uri.toString();
       this.#notify("textDocument/didOpen", {
         textDocument: {
@@ -319,15 +291,9 @@ export class DjlintServer {
     if (this.#isClosed) {
       return;
     }
-    const body = Buffer.from(
-      JSON.stringify({ jsonrpc: "2.0", ...message }),
-      "utf8",
-    );
+    const body = Buffer.from(JSON.stringify({ jsonrpc: "2.0", ...message }), "utf8");
     this.#process.stdin.write(
-      Buffer.concat([
-        Buffer.from(`Content-Length: ${body.length}\r\n\r\n`),
-        body,
-      ]),
+      Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`), body]),
     );
   }
 

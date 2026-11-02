@@ -11,31 +11,19 @@ import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
 import { DjlintStatus } from "../status.js";
 import { changeOf, flush, makeContext, makeDocument } from "./helpers.js";
-import {
-  control,
-  fireWorkspaceEvent,
-  resetVscode,
-  workspaceListenerCount,
-} from "./vscode-stub.js";
+import { control, fireWorkspaceEvent, resetVscode, workspaceListenerCount } from "./vscode-stub.js";
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
   ...(await importOriginal<typeof import("node:fs/promises")>()),
   stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
-vi.mock("which-command", () => ({
-  whichCommand: async (command: string) => command,
-}));
+vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 vi.mock("execa", async (importOriginal) => ({
   ...(await importOriginal<typeof import("execa")>()),
   execa: vi.fn<typeof import("execa").execa>(),
 }));
-vi.mock("@vscode/python-environments", () => ({
-  EXTENSION_ID: "ms-python.vscode-python-envs",
-}));
-vi.mock(
-  "@vscode/python-extension",
-  async () => import("./python-extension-mock.js"),
-);
+vi.mock("@vscode/python-environments", () => ({ EXTENSION_ID: "ms-python.vscode-python-envs" }));
+vi.mock("@vscode/python-extension", async () => import("./python-extension-mock.js"));
 
 type Spawn = (
   exec: string,
@@ -49,8 +37,7 @@ const document = makeDocument("/w/a.html", "<p>x</p>");
 let context: vscode.ExtensionContext;
 
 function probes(): number {
-  return spawn.mock.calls.filter(([, args]) => args.includes("--version"))
-    .length;
+  return spawn.mock.calls.filter(([, args]) => args.includes("--version")).length;
 }
 
 /**
@@ -74,10 +61,7 @@ async function reacted(action: () => void): Promise<boolean> {
 describe("the extension", () => {
   beforeEach(() => {
     resetVscode();
-    control.configuration = {
-      enableLinting: true,
-      executablePath: "/bin/djlint",
-    };
+    control.configuration = { enableLinting: true, executablePath: "/bin/djlint" };
     spawn.mockReset();
     spawn.mockImplementation(async (_exec, args) => ({
       exitCode: 0,
@@ -104,16 +88,13 @@ describe("the extension", () => {
       expect(control.outputChannels).toHaveLength(1);
     });
 
-    it.each(engineSettingKeys)(
-      "re-resolves when djlint.%s changes",
-      async (key) => {
-        await expect(
-          reacted(() => {
-            fireWorkspaceEvent("config", changeOf(`djlint.${key}`));
-          }),
-        ).resolves.toBe(true);
-      },
-    );
+    it.each(engineSettingKeys)("re-resolves when djlint.%s changes", async (key) => {
+      await expect(
+        reacted(() => {
+          fireWorkspaceEvent("config", changeOf(`djlint.${key}`));
+        }),
+      ).resolves.toBe(true);
+    });
 
     it("does not pay for that when an output-only setting changes", async () => {
       await expect(
@@ -164,10 +145,7 @@ describe("the extension", () => {
             executable: { uri: { fsPath: path } },
           }),
         };
-        control.extensions.set("ms-python.python", {
-          exports: { environments },
-          isActive: true,
-        });
+        control.extensions.set("ms-python.python", { exports: { environments }, isActive: true });
         control.configuration = { enableLinting: true, useVenv: true };
       });
 
@@ -249,9 +227,7 @@ describe("the extension", () => {
     it("is constant for a setting that only picks which djLint runs", () => {
       const { affectsConfiguration } = changeOf("djlint.executablePath");
       const answer = (query: string): boolean => affectsConfiguration(query);
-      expect(queriesFor(answer, documents)).toHaveLength(
-        queriesFor(answer, []).length,
-      );
+      expect(queriesFor(answer, documents)).toHaveLength(queriesFor(answer, []).length);
     });
   });
 
@@ -260,9 +236,7 @@ describe("the extension", () => {
       const local = makeContext();
       activate(local);
       expect(
-        local.subscriptions.every(
-          (subscription) => typeof subscription.dispose === "function",
-        ),
+        local.subscriptions.every((subscription) => typeof subscription.dispose === "function"),
       ).toBe(true);
       expect(() => {
         for (const subscription of local.subscriptions) {

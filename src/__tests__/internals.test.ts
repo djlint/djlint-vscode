@@ -12,12 +12,7 @@ import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
 import type { CustomExecaError } from "../engine/subprocess/exec.js";
 import { classifyRunFailure } from "../engine/subprocess/index.js";
 import { selectSupportedArgs } from "../engine/subprocess/version.js";
-import {
-  makeChannel,
-  makeConfig,
-  makeDocument,
-  makeExecaError,
-} from "./helpers.js";
+import { makeChannel, makeConfig, makeDocument, makeExecaError } from "./helpers.js";
 import { resetVscode } from "./vscode-stub.js";
 
 describe("shared internals", () => {
@@ -89,16 +84,8 @@ describe("shared internals", () => {
     };
 
     it("filters out flags too new for the version", () => {
-      const supported = selectSupportedArgs(
-        args,
-        "1.25",
-        context,
-        new Set(),
-        makeChannel(),
-      );
-      expect(supported.map((arg) => arg.cliName)).toStrictEqual([
-        "--format-css",
-      ]);
+      const supported = selectSupportedArgs(args, "1.25", context, new Set(), makeChannel());
+      expect(supported.map((arg) => arg.cliName)).toStrictEqual(["--format-css"]);
     });
 
     it("warns once per version and flag, naming the setting", () => {
@@ -125,16 +112,8 @@ describe("shared internals", () => {
     it("skips a flag that is not set without a warning", () => {
       const channel = makeChannel();
       const unset = { ...context, config: makeConfig({ formatCss: true }) };
-      const supported = selectSupportedArgs(
-        args,
-        "1.25",
-        unset,
-        new Set(),
-        channel,
-      );
-      expect(supported.map((arg) => arg.cliName)).toStrictEqual([
-        "--format-css",
-      ]);
+      const supported = selectSupportedArgs(args, "1.25", unset, new Set(), channel);
+      expect(supported.map((arg) => arg.cliName)).toStrictEqual(["--format-css"]);
       expect(channel.of("warn")).toHaveLength(0);
     });
 
@@ -147,9 +126,7 @@ describe("shared internals", () => {
       ["all", "1.44", true],
       ["django", "1.41", true],
     ])("gates profile %s on djLint %s", (profile, version, isKept) => {
-      const profileArgs = formattingArgs.filter(
-        (arg) => arg.cliName === "--profile",
-      );
+      const profileArgs = formattingArgs.filter((arg) => arg.cliName === "--profile");
       const supported = selectSupportedArgs(
         profileArgs,
         version,
@@ -162,9 +139,7 @@ describe("shared internals", () => {
 
     it("keeps everything for a new enough version", () => {
       const channel = makeChannel();
-      expect(
-        selectSupportedArgs(args, "1.44.2", context, new Set(), channel),
-      ).toHaveLength(2);
+      expect(selectSupportedArgs(args, "1.44.2", context, new Set(), channel)).toHaveLength(2);
       expect(channel.of("warn")).toHaveLength(0);
     });
   });

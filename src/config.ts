@@ -13,8 +13,6 @@ export function getConfiguredPath(
   return value === OLD_DEFAULTS[key] ? "" : value;
 }
 
-export function getConfig(
-  scope?: vscode.ConfigurationScope,
-): vscode.WorkspaceConfiguration {
+export function getConfig(scope?: vscode.ConfigurationScope): vscode.WorkspaceConfiguration {
   return vscode.workspace.getConfiguration(configSection, scope);
 }

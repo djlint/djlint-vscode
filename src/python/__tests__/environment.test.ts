@@ -4,20 +4,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import { makeChannel } from "../../__tests__/helpers.js";
-import {
-  control,
-  fireWorkspaceEvent,
-  resetVscode,
-} from "../../__tests__/vscode-stub.js";
+import { control, fireWorkspaceEvent, resetVscode } from "../../__tests__/vscode-stub.js";
 import { ENVIRONMENT_TIMEOUT_MS, PythonEnvironments } from "../environment.js";
 
-vi.mock("@vscode/python-environments", () => ({
-  EXTENSION_ID: "ms-python.vscode-python-envs",
-}));
-vi.mock(
-  "@vscode/python-extension",
-  async () => import("../../__tests__/python-extension-mock.js"),
-);
+vi.mock("@vscode/python-environments", () => ({ EXTENSION_ID: "ms-python.vscode-python-envs" }));
+vi.mock("@vscode/python-extension", async () => import("../../__tests__/python-extension-mock.js"));
 
 const ENVS_ID = "ms-python.vscode-python-envs";
 const PY_ID = "ms-python.python";
@@ -41,11 +32,7 @@ function envsExtension(
   active: unknown,
   options: { activateThrows?: boolean; exportsApi?: boolean } = {},
 ): {
-  extension: {
-    activate: () => Promise<unknown>;
-    exports: unknown;
-    isActive: boolean;
-  };
+  extension: { activate: () => Promise<unknown>; exports: unknown; isActive: boolean };
   fire: (event: unknown) => void;
   getEnvironment: ReturnType<typeof vi.fn>;
 } {
@@ -102,11 +89,7 @@ function classicExtension(executable: string | null | undefined): {
       resolveEnvironment: async () =>
         executable === null
           ? void 0
-          : {
-              executable: {
-                uri: executable == null ? void 0 : { fsPath: executable },
-              },
-            },
+          : { executable: { uri: executable == null ? void 0 : { fsPath: executable } } },
     },
   };
   return {
@@ -145,16 +128,11 @@ describe(PythonEnvironments, () => {
       const { environments } = makeEnvironments();
       await environments.getActive(void 0);
 
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       await expect(environments.getActive(void 0)).resolves.toBeNull();
 
       environments.resetIfUnavailable();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
     });
 
     it("picks up a Python extension installed while running", async () => {
@@ -163,22 +141,14 @@ describe(PythonEnvironments, () => {
       environments.onDidChange(onChange);
       await environments.getActive(void 0);
 
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       fireWorkspaceEvent("extensions");
       expect(onChange).toHaveBeenCalledOnce();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
     });
 
     it("ignores other extensions once it has a provider", async () => {
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       const { environments } = makeEnvironments();
       const onChange = vi.fn<() => void>();
       environments.onDidChange(onChange);
@@ -194,18 +164,10 @@ describe(PythonEnvironments, () => {
       });
 
       it("follows the classic extension, which holds the selection", async () => {
-        control.extensions.set(
-          ENVS_ID,
-          envsExtension(environment("conda", ["run"])).extension,
-        );
-        control.extensions.set(
-          PY_ID,
-          classicExtension("/usr/bin/python").extension,
-        );
+        control.extensions.set(ENVS_ID, envsExtension(environment("conda", ["run"])).extension);
+        control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
         const { environments } = makeEnvironments();
-        await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-          classicResult,
-        );
+        await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
       });
 
       it("still reads Python Environments when it is all there is", async () => {
@@ -292,9 +254,7 @@ describe(PythonEnvironments, () => {
         environments.resetIfUnavailable();
         const second = environments.getActive(void 0);
         answer(environment("/py", []));
-        await expect(second).resolves.toMatchObject({
-          command: { executable: "/py" },
-        });
+        await expect(second).resolves.toMatchObject({ command: { executable: "/py" } });
         expect(subscriptions()).toBe(1);
       });
 
@@ -344,33 +304,17 @@ describe(PythonEnvironments, () => {
 
     // python.useEnvironmentsExtension=false: the extension exports no API.
     it("falls back to classic when Python Environments exports no API", async () => {
-      control.extensions.set(
-        ENVS_ID,
-        envsExtension(null, { exportsApi: false }).extension,
-      );
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(ENVS_ID, envsExtension(null, { exportsApi: false }).extension);
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       const { environments } = makeEnvironments();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
     });
 
     it("falls back to classic when activation fails", async () => {
-      control.extensions.set(
-        ENVS_ID,
-        envsExtension(null, { activateThrows: true }).extension,
-      );
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(ENVS_ID, envsExtension(null, { activateThrows: true }).extension);
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       const { channel, environments } = makeEnvironments();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
       expect(channel.of("warn").join()).toContain("boom");
     });
 
@@ -382,22 +326,13 @@ describe(PythonEnvironments, () => {
         exports: broken,
         isActive: true,
       });
-      control.extensions.set(
-        PY_ID,
-        classicExtension("/usr/bin/python").extension,
-      );
+      control.extensions.set(PY_ID, classicExtension("/usr/bin/python").extension);
       const { environments } = makeEnvironments();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
     });
 
     it("falls back to nothing when the classic API is unusable too", async () => {
-      control.extensions.set(PY_ID, {
-        activate: async () => ({}),
-        exports: {},
-        isActive: true,
-      });
+      control.extensions.set(PY_ID, { activate: async () => ({}), exports: {}, isActive: true });
       const { channel, environments } = makeEnvironments();
       await expect(environments.getActive(void 0)).resolves.toBeNull();
       expect(channel.of("warn")).toHaveLength(1);
@@ -406,15 +341,9 @@ describe(PythonEnvironments, () => {
     it("activates an extension that is not active yet", async () => {
       const activate = vi.fn<() => Promise<void>>(async () => void 0);
       const { extension } = classicExtension("/usr/bin/python");
-      control.extensions.set(PY_ID, {
-        ...extension,
-        activate,
-        isActive: false,
-      });
+      control.extensions.set(PY_ID, { ...extension, activate, isActive: false });
       const { environments } = makeEnvironments();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual(
-        classicResult,
-      );
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual(classicResult);
       expect(activate).toHaveBeenCalledOnce();
     });
   });
@@ -460,9 +389,7 @@ describe(PythonEnvironments, () => {
     it("has no command when classic cannot name an executable", async () => {
       control.extensions.set(PY_ID, classicExtension(void 0).extension);
       const { environments } = makeEnvironments();
-      await expect(environments.getActive(void 0)).resolves.toStrictEqual({
-        command: null,
-      });
+      await expect(environments.getActive(void 0)).resolves.toStrictEqual({ command: null });
     });
 
     it("is null when classic cannot resolve the environment", async () => {
@@ -489,9 +416,7 @@ describe(PythonEnvironments, () => {
         environments.getActive(void 0),
         environments.getActive(void 0),
       ]);
-      expect(
-        results.map((result) => result?.command?.executable),
-      ).toStrictEqual(["/py", "/py"]);
+      expect(results.map((result) => result?.command?.executable)).toStrictEqual(["/py", "/py"]);
       expect(activations).toBe(1);
 
       environments.resetIfUnavailable();

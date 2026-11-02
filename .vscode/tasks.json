@@ -3,11 +3,7 @@
   "tasks": [
     {
       "label": "watch",
-      "dependsOn": [
-        "npm: watch:tsc",
-        "npm: watch:esbuild",
-        "npm: watch:esbuild-worker"
-      ],
+      "dependsOn": ["npm: watch:tsc", "npm: watch:esbuild", "npm: watch:esbuild-worker"],
       "presentation": { "reveal": "never" },
       "group": { "kind": "build", "isDefault": true }
     },
