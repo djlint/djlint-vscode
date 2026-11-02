@@ -4,6 +4,7 @@
   "Bundled djLint failed to start: {0}": "Bundled djLint failed to start: {0}",
   "Bundled djLint failed: {0}": "Bundled djLint failed: {0}",
   "Bundled djLint stopped unexpectedly ({0}).": "Bundled djLint stopped unexpectedly ({0}).",
+  "Bundled with the extension": "Bundled with the extension",
   "Details": "Details",
   "Formatting this file failed.": "Formatting this file failed.",
   "Formatting {0}": "Formatting {0}",

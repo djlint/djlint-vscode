@@ -146,7 +146,11 @@ export class PyodideEngine implements DjlintEngine {
       return;
     }
     if (response.ok) {
-      this.#status.update(pending.document, this.#version, "bundled");
+      this.#status.update(
+        pending.document,
+        this.#version,
+        vscode.l10n.t("Bundled with the extension"),
+      );
       pending.resolve(response.output);
     } else if (!pending.isCancelled) {
       this.#outputChannel.error(response.error);
