@@ -11,6 +11,7 @@
   "Linting this file failed.": "Не удалось проверить этот файл.",
   "Linting while typing": "Проверка при вводе",
   "Linting {0}": "{0} проверяется",
+  "No default formatter for {0}": "Для {0} не выбран форматер по умолчанию",
   "Not formatting {0}": "{0} форматирует не djLint",
   "Not linting while typing": "Без проверки при вводе",
   "Not linting {0}": "{0} не проверяется",

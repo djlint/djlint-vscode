@@ -527,6 +527,22 @@ export class MarkdownString {
     this.value += value;
     return this;
   }
+
+  // Escapes as VS Code's own does: theme icons, modified ones included, when they are
+  // supported, then Markdown; runs of spaces and tabs become non-breaking spaces.
+  appendText(value: string): this {
+    const text = this.supportThemeIcons
+      ? value.replaceAll(/(?<escaped>\\)?\$\([A-Za-z0-9-]+(?:~[A-Za-z]+)?\)/gu, (icon, escaped) =>
+          escaped ? icon : `\\${icon}`,
+        )
+      : value;
+    this.value += text
+      .replaceAll(/[\\`*_{}[\]()#+\-!~]/gu, String.raw`\$&`)
+      .replaceAll(/[ \t]+/gu, (spaces) => "&nbsp;".repeat(spaces.length))
+      .replaceAll(">", String.raw`\>`)
+      .replaceAll("\n", "\n\n");
+    return this;
+  }
 }
 
 export const languages = {

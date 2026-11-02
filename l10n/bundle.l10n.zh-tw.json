@@ -11,6 +11,7 @@
   "Linting this file failed.": "對此檔案執行 lint 失敗。",
   "Linting while typing": "輸入時執行 lint",
   "Linting {0}": "對 {0} 執行 lint",
+  "No default formatter for {0}": "{0} 未設定預設格式化工具",
   "Not formatting {0}": "不格式化 {0}",
   "Not linting while typing": "輸入時不執行 lint",
   "Not linting {0}": "不對 {0} 執行 lint",

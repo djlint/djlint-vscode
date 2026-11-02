@@ -11,6 +11,7 @@
   "Linting this file failed.": "Linting this file failed.",
   "Linting while typing": "Linting while typing",
   "Linting {0}": "Linting {0}",
+  "No default formatter for {0}": "No default formatter for {0}",
   "Not formatting {0}": "Not formatting {0}",
   "Not linting while typing": "Not linting while typing",
   "Not linting {0}": "Not linting {0}",

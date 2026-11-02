@@ -11,6 +11,7 @@
   "Linting this file failed.": "Échec du linting de ce fichier.",
   "Linting while typing": "Linting pendant la frappe",
   "Linting {0}": "Linting de {0}",
+  "No default formatter for {0}": "Aucun formateur par défaut pour {0}",
   "Not formatting {0}": "Pas de formatage de {0}",
   "Not linting while typing": "Pas de linting pendant la frappe",
   "Not linting {0}": "Pas de linting de {0}",

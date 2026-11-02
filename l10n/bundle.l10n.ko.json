@@ -11,6 +11,7 @@
   "Linting this file failed.": "이 파일을 린트하지 못했습니다.",
   "Linting while typing": "입력하는 동안 린트",
   "Linting {0}": "{0} 린트 중",
+  "No default formatter for {0}": "{0}의 기본 포맷터가 설정되지 않음",
   "Not formatting {0}": "{0} 포맷 안 함",
   "Not linting while typing": "입력하는 동안 린트 안 함",
   "Not linting {0}": "{0} 린트 안 함",

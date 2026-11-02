@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- When no default formatter is set for a language, the status bar menu says so, instead of saying that djLint does not format it. It also recognizes `monosans.djlint` as the default formatter however it is capitalized, and shows a path with `$(...)` in it as text.
+
 ## [2026.11.5] - 2026-11-03
 
 - Bundle djLint 1.49.3. In a `{% set %}` written across lines, it indents the arguments of a function call the way it indents the items of a list.
