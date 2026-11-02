@@ -1,15 +1,7 @@
 // PyodideEngine's side of the worker protocol, with the worker replaced. Every
 // way a request can end must settle its caller: a format promise left pending
 // would hang the editor's "Formatting..." state with nothing to retry against.
-import {
-  afterEach,
-  assert,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterEach, assert, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import { everySetting } from "../../../__tests__/every-setting.js";
@@ -34,8 +26,7 @@ import { createNodeWorker } from "../node-worker.js";
 import type { RunRequest } from "../protocol.js";
 
 vi.mock("node:worker_threads", async () => {
-  const { FakeWorker: Worker } =
-    await import("../../../__tests__/fake-worker.js");
+  const { FakeWorker: Worker } = await import("../../../__tests__/fake-worker.js");
   return { Worker };
 });
 
@@ -133,11 +124,7 @@ describe(PyodideEngine, () => {
     it("has no cwd for a document that is not a local file", async () => {
       const { engine } = makeEngine();
       engine
-        .lint(
-          makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")),
-          config,
-          liveToken(),
-        )
+        .lint(makeDocument(vscode.Uri.parse("vscode-vfs://github/o/r/t.html")), config, liveToken())
         .catch(() => void 0);
       await vi.waitFor(() => {
         expect(FakeWorker.latest.lastRun.cwd).toBeUndefined();
@@ -178,27 +165,16 @@ describe(PyodideEngine, () => {
 
     it("uses the lint argument set for a lint, which has no indent", () => {
       const { options } = sentFor(
-        {
-          formatCss: true,
-          ignore: ["H013"],
-          profile: "django",
-          useEditorIndentation: true,
-        },
+        { formatCss: true, ignore: ["H013"], profile: "django", useEditorIndentation: true },
         "lint",
       );
       expect(options).toStrictEqual({ ignore: "H013", profile: "django" });
     });
 
     it("separates host paths from plain settings", () => {
-      const request = sentFor(
-        { configuration: "/ws/.djlintrc", rules: "conf/rules.yaml" },
-        "lint",
-      );
+      const request = sentFor({ configuration: "/ws/.djlintrc", rules: "conf/rules.yaml" }, "lint");
       expect(request.options).toStrictEqual({});
-      expect(Object.keys(request.pathOptions).toSorted()).toStrictEqual([
-        "configuration",
-        "rules",
-      ]);
+      expect(Object.keys(request.pathOptions).toSorted()).toStrictEqual(["configuration", "rules"]);
       const { configuration, rules } = request.pathOptions;
       assert.isDefined(configuration);
       assert.isDefined(rules);
@@ -216,9 +192,7 @@ describe(PyodideEngine, () => {
       const format = sentFor(everySetting(formattingArgs)).options;
       const lint = sentFor(everySetting(lintingArgs), "lint").options;
       expect(
-        Object.keys({ ...format, ...lint }).filter((name) =>
-          name.includes("-"),
-        ),
+        Object.keys({ ...format, ...lint }).filter((name) => name.includes("-")),
       ).toStrictEqual([]);
       expect(format).not.toHaveProperty("quiet");
       expect(format).not.toHaveProperty("reformat");
@@ -236,9 +210,7 @@ describe(PyodideEngine, () => {
     });
 
     it("parses a lint's JSON", async () => {
-      const diagnostics: LintDiagnostic[] = [
-        { code: "H013", column: 5, line: 1, message: "m" },
-      ];
+      const diagnostics: LintDiagnostic[] = [{ code: "H013", column: 5, line: 1, message: "m" }];
       const { engine } = makeEngine();
       const pending = engine.lint(document, config, liveToken());
       FakeWorker.latest.succeed(1, JSON.stringify(diagnostics));
@@ -310,9 +282,7 @@ describe(PyodideEngine, () => {
       const first = format(engine);
       const crashed = FakeWorker.latest;
       crashed.respond({ error: "fatal", type: "crashed" });
-      await expect(first).rejects.toThrow(
-        "Bundled djLint runtime crashed: fatal",
-      );
+      await expect(first).rejects.toThrow("Bundled djLint runtime crashed: fatal");
       expect(crashed.terminated).toBe(true);
 
       const second = format(engine);
@@ -348,9 +318,7 @@ describe(PyodideEngine, () => {
       const pending = format(engine);
       FakeWorker.latest.failRun(1, TRACEBACK);
       await expect(pending).rejects.toThrow(TRACEBACK);
-      expect(control.shownErrors).toStrictEqual([
-        "Bundled djLint failed: ValueError: bad value",
-      ]);
+      expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: ValueError: bad value"]);
       expect(channel.of("error")).toStrictEqual([TRACEBACK]);
     });
 
@@ -417,9 +385,7 @@ describe(PyodideEngine, () => {
       await expect(first).rejects.toBe(error);
       await expect(second).rejects.toBe(error);
       expect(dead.terminated).toBe(true);
-      expect(control.shownErrors).toStrictEqual([
-        "Bundled djLint runtime failed: out of memory",
-      ]);
+      expect(control.shownErrors).toStrictEqual(["Bundled djLint runtime failed: out of memory"]);
 
       const third = format(engine);
       expect(FakeWorker.instances).toHaveLength(2);
@@ -622,9 +588,7 @@ describe(PyodideEngine, () => {
       const { engine } = makeEngine();
       const source = new vscode.CancellationTokenSource();
       source.cancel();
-      await expect(format(engine, source.token)).rejects.toBeInstanceOf(
-        vscode.CancellationError,
-      );
+      await expect(format(engine, source.token)).rejects.toBeInstanceOf(vscode.CancellationError);
       expect(FakeWorker.instances).toHaveLength(0);
     });
 
@@ -664,9 +628,7 @@ describe(PyodideEngine, () => {
     it("refuses new work rather than resurrect a worker", async () => {
       const { engine } = makeEngine();
       engine.dispose();
-      await expect(format(engine)).rejects.toBeInstanceOf(
-        vscode.CancellationError,
-      );
+      await expect(format(engine)).rejects.toBeInstanceOf(vscode.CancellationError);
       expect(FakeWorker.instances).toHaveLength(0);
     });
   });

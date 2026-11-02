@@ -23,9 +23,7 @@ export interface ResolveDjlintCommandDeps {
   onConfiguredPathRejected: (setting: string, exec: string) => void;
 }
 
-export async function resolveDjlintCommand(
-  deps: ResolveDjlintCommandDeps,
-): Promise<RunnerCommand> {
+export async function resolveDjlintCommand(deps: ResolveDjlintCommandDeps): Promise<RunnerCommand> {
   async function tryCommand(
     exec: string,
     prefixArgs: readonly string[],
@@ -117,8 +115,7 @@ export class CommandResolver {
     }
 
     const pending =
-      this.#inFlight.get(perDirectoryKey) ??
-      this.#resolveAndCache(deps, scopeKey, perDirectoryKey);
+      this.#inFlight.get(perDirectoryKey) ?? this.#resolveAndCache(deps, scopeKey, perDirectoryKey);
     this.#inFlight.set(perDirectoryKey, pending);
     try {
       return await pending;
@@ -131,9 +128,7 @@ export class CommandResolver {
 
   #fresh(key: string): CommandCacheEntry | undefined {
     const entry = this.#cache.get(key);
-    return entry != null && Date.now() - entry.resolvedAt < RESOLUTION_TTL_MS
-      ? entry
-      : void 0;
+    return entry != null && Date.now() - entry.resolvedAt < RESOLUTION_TTL_MS ? entry : void 0;
   }
 
   async #resolveAndCache(
