@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.49.3. In a `{% set %}` written across lines, it indents the arguments of a function call the way it indents the items of a list.
 - The djLint item in the status bar now appears on templates in the languages djLint formats. Click it or hover over it to turn linting, or linting while typing, on or off for that language, make djLint its formatter, show the logs, restart djLint or open the settings. It turns yellow with a warning when the last format or lint of the file failed.
 - The extension follows the display language of VS Code. Its settings, commands, status bar menu and messages are translated into Chinese (Simplified and Traditional), Czech, French, German, Italian, Japanese, Korean, Polish, Portuguese (Brazil), Russian, Spanish and Turkish. Links to the djLint docs, such as a rule's code in the Problems panel, open the docs in that language too. Lint findings and other messages from djLint itself stay in English.
 
