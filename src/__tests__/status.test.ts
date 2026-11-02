@@ -118,8 +118,10 @@ describe(DjlintStatus, () => {
   it("escapes what djLint's source says, icons included", () => {
     const status = new DjlintStatus();
     setActiveDocument(document);
-    status.update(document, "1.0", "/$(gear)/[x](command:y)");
-    expect(tooltip()).toContain(String.raw`/\\$\(gear\)/\[x\]\(command:y\)`);
+    status.update(document, "1.0", "/my env/$(gear)/$(sync~spin)/[x](command:y)");
+    expect(tooltip()).toContain(
+      String.raw`/my&nbsp;env/\\$\(gear\)/\\$\(sync\~spin\)/\[x\]\(command:y\)`,
+    );
     status.dispose();
   });
 
