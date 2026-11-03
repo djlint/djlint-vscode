@@ -132,8 +132,10 @@ interface ExecaErrorFields {
   exitCode?: number | undefined;
   isCanceled?: boolean;
   shortMessage?: string;
+  signal?: string;
   stderr?: string;
   stdout?: string;
+  timedOut?: boolean;
 }
 
 export function makeExecaError(fields: ExecaErrorFields): CustomExecaError {

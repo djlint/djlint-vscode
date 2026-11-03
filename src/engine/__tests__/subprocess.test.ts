@@ -144,6 +144,23 @@ describe(SubprocessEngine, () => {
       expect(env["PYTHONPATH"]?.split(path.delimiter)[0]).toBe(Uri.file("/w").fsPath);
     });
 
+    it("keeps the PYTHONPATH it inherits after the workspace root", async () => {
+      vi.stubEnv("PYTHONPATH", "/site");
+      installDjlint();
+      const { engine } = makeEngine();
+      await engine.format(
+        document,
+        makeConfig({ configuration: "pyproject.toml" }),
+        formattingOptions,
+        liveToken(),
+      );
+      vi.unstubAllEnvs();
+      const [[, , options]] = runs() as [Parameters<Spawn>];
+      expect(options["env"]).toStrictEqual({
+        PYTHONPATH: [Uri.file("/w").fsPath, "/site"].join(path.delimiter),
+      });
+    });
+
     it("leaves PYTHONPATH alone otherwise", async () => {
       installDjlint();
       const { engine } = makeEngine();

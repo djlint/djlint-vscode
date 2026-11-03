@@ -117,6 +117,14 @@ describe("shared internals", () => {
       expect(channel.of("warn")).toHaveLength(0);
     });
 
+    it("skips a string setting left empty, as it is by default, without a warning", () => {
+      const channel = makeChannel();
+      const quoteStyle = formattingArgs.filter((arg) => arg.cliName === "--quote-style");
+      const empty = { ...context, config: makeConfig({ quoteStyle: "" }) };
+      expect(selectSupportedArgs(quoteStyle, "1.25", empty, new Set(), channel)).toStrictEqual([]);
+      expect(channel.of("warn")).toHaveLength(0);
+    });
+
     it.each([
       ["tera", "1.41", false],
       ["tera", "1.42", true],

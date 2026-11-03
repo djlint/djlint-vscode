@@ -82,6 +82,29 @@ describe(readProject, () => {
     expect(read?.project).toStrictEqual({ cwd: ".", files: {} });
   });
 
+  it("leaves out a configuration file it lists but cannot read", async () => {
+    control.files = new Map([
+      ["memfs://repo/app/.djlintrc", "unreadable"],
+      ["memfs://repo/app/pyproject.toml", "root"],
+    ]);
+    vi.spyOn(workspace.fs, "readFile").mockImplementation(async (uri) => {
+      // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
+      if (uri.toString().endsWith(".djlintrc")) {
+        throw new Error("permission denied");
+      }
+      return new TextEncoder().encode(control.files.get(uri.toString()));
+    });
+    const read = await readProject(document("a.html"), {}, channel);
+    expect(read?.project.files).toStrictEqual({ "pyproject.toml": "root" });
+  });
+
+  it("reads an absolute path setting inside the folder as the project's own file", async () => {
+    control.files = new Map([["memfs://repo/app/conf/rules.yaml", "rules"]]);
+    const read = await readProject(document("a.html"), { rules: "/app/conf/rules.yaml" }, channel);
+    expect(read?.project.files).toStrictEqual({ "conf/rules.yaml": "rules" });
+    expect(read?.pathOptions).toStrictEqual({ rules: "/project/conf/rules.yaml" });
+  });
+
   it("reads the file a path setting names, and points the setting at it", async () => {
     control.files = new Map([["memfs://repo/app/conf/rules.yaml", "rules"]]);
     const read = await readProject(document("a.html"), { rules: "conf/rules.yaml" }, channel);
