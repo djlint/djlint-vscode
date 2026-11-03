@@ -5,14 +5,17 @@ import { describe, expect, it } from "vitest";
 
 interface Manifest {
   contributes: {
-    configuration: { properties: Record<string, { default?: unknown }> };
+    configuration: { properties: Record<string, { default?: unknown }> }[];
     configurationDefaults: Record<string, Record<string, unknown>>;
   };
 }
 
 const manifest = JSON.parse(readFileSync("package.json", "utf8")) as Manifest;
-const languages = manifest.contributes.configuration.properties["djlint.formatLanguages"]
-  ?.default as string[];
+const settings = Object.assign(
+  {},
+  ...manifest.contributes.configuration.map((section) => section.properties),
+) as Record<string, { default?: unknown }>;
+const languages = settings["djlint.formatLanguages"]?.default as string[];
 
 describe("the language IDs", () => {
   it("have no duplicates", () => {

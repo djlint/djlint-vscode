@@ -93,433 +93,523 @@
         "category": "djLint"
       }
     ],
-    "configuration": {
-      "properties": {
-        "djlint.blankLineAfterTag": {
-          "type": "array",
-          "items": {
-            "type": "string"
+    "configuration": [
+      {
+        "title": "%config.section.extension%",
+        "order": 0,
+        "properties": {
+          "djlint.importStrategy": {
+            "type": "string",
+            "enum": [
+              "fromEnvironment",
+              "useBundled"
+            ],
+            "default": "fromEnvironment",
+            "markdownEnumDescriptions": [
+              "%config.importStrategy.fromEnvironment%",
+              "%config.importStrategy.useBundled%"
+            ],
+            "markdownDescription": "%config.importStrategy%",
+            "scope": "language-overridable",
+            "order": 0
           },
-          "default": [],
-          "markdownDescription": "%config.blankLineAfterTag%",
-          "scope": "resource"
-        },
-        "djlint.blankLineBeforeTag": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.executablePath": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%config.executablePath%",
+            "scope": "language-overridable",
+            "order": 1
           },
-          "default": [],
-          "markdownDescription": "%config.blankLineBeforeTag%",
-          "scope": "resource"
-        },
-        "djlint.closeVoidTags": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.closeVoidTags%",
-          "scope": "resource"
-        },
-        "djlint.configuration": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "%config.configuration%",
-          "scope": "resource"
-        },
-        "djlint.customBlocks": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.pythonPath": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%config.pythonPath%",
+            "scope": "language-overridable",
+            "order": 2
           },
-          "default": [],
-          "markdownDescription": "%config.customBlocks%",
-          "scope": "resource"
-        },
-        "djlint.customHtml": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.useVenv": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%config.useVenv%",
+            "scope": "language-overridable",
+            "order": 3
           },
-          "default": [],
-          "markdownDescription": "%config.customHtml%",
-          "scope": "resource"
-        },
-        "djlint.enableLinting": {
-          "type": "boolean",
-          "default": false,
-          "scope": "language-overridable",
-          "description": "%config.enableLinting%"
-        },
-        "djlint.executablePath": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "%config.executablePath%",
-          "scope": "language-overridable"
-        },
-        "djlint.exclude": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.formatLanguages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [
+              "django-html",
+              "jinja",
+              "jinja-html",
+              "jinja2",
+              "html-hubl",
+              "hubl-html",
+              "twig",
+              "html-nunjucks",
+              "njk",
+              "nunjucks",
+              "handlebars",
+              "spacebars",
+              "liquid",
+              "jekyll",
+              "pos-liquid",
+              "go-template",
+              "go-tmpl",
+              "gotemplate",
+              "GoTemplate",
+              "gohtml",
+              "GoHTML",
+              "gotmpl",
+              "hugo-html",
+              "mustache",
+              "htmlmustache",
+              "tera",
+              "tera-html",
+              "askama-html",
+              "html"
+            ],
+            "description": "%config.formatLanguages%",
+            "order": 4
+          }
+        }
+      },
+      {
+        "title": "%config.section.files%",
+        "order": 1,
+        "properties": {
+          "djlint.exclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%config.exclude%",
+            "scope": "resource",
+            "order": 0
           },
-          "default": [],
-          "description": "%config.exclude%",
-          "scope": "resource"
-        },
-        "djlint.extendExclude": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.extendExclude": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%config.extendExclude%",
+            "scope": "resource",
+            "order": 1
           },
-          "default": [],
-          "description": "%config.extendExclude%",
-          "scope": "resource"
-        },
-        "djlint.formatAttributeJsJson": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.formatAttributeJsJson%",
-          "scope": "resource"
-        },
-        "djlint.formatAttributeJsJsonMinProps": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "description": "%config.formatAttributeJsJsonMinProps%",
-          "scope": "resource"
-        },
-        "djlint.formatAttributeJsJsonPattern": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "%config.formatAttributeJsJsonPattern%",
-          "scope": "resource"
-        },
-        "djlint.formatAttributeTemplateTags": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.formatAttributeTemplateTags%",
-          "scope": "resource"
-        },
-        "djlint.formatCss": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.formatCss%",
-          "scope": "resource"
-        },
-        "djlint.formatLanguages": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.useGitignore": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.useGitignore%",
+            "scope": "resource",
+            "order": 2
           },
-          "default": [
-            "django-html",
-            "jinja",
-            "jinja-html",
-            "jinja2",
-            "html-hubl",
-            "hubl-html",
-            "twig",
-            "html-nunjucks",
-            "njk",
-            "nunjucks",
-            "handlebars",
-            "spacebars",
-            "liquid",
-            "jekyll",
-            "pos-liquid",
-            "go-template",
-            "go-tmpl",
-            "gotemplate",
-            "GoTemplate",
-            "gohtml",
-            "GoHTML",
-            "gotmpl",
-            "hugo-html",
-            "mustache",
-            "htmlmustache",
-            "tera",
-            "tera-html",
-            "askama-html",
-            "html"
-          ],
-          "description": "%config.formatLanguages%"
-        },
-        "djlint.formatJs": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.formatJs%",
-          "scope": "resource"
-        },
-        "djlint.ignore": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.requirePragma": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.requirePragma%",
+            "scope": "resource",
+            "order": 3
+          }
+        }
+      },
+      {
+        "title": "%config.section.configuration%",
+        "order": 2,
+        "properties": {
+          "djlint.profile": {
+            "type": "string",
+            "enum": [
+              "",
+              "all",
+              "django",
+              "jinja",
+              "nunjucks",
+              "handlebars",
+              "liquid",
+              "golang",
+              "angular",
+              "tera",
+              "askama",
+              "html"
+            ],
+            "enumDescriptions": [
+              "%config.profile.unset%",
+              "%config.profile.all%",
+              "%config.profile.django%",
+              "%config.profile.jinja%",
+              "%config.profile.nunjucks%",
+              "%config.profile.handlebars%",
+              "%config.profile.liquid%",
+              "%config.profile.golang%",
+              "%config.profile.angular%",
+              "%config.profile.tera%",
+              "%config.profile.askama%",
+              "%config.profile.html%"
+            ],
+            "default": "",
+            "scope": "language-overridable",
+            "markdownDescription": "%config.profile%",
+            "order": 0
           },
-          "default": [],
-          "description": "%config.ignore%",
-          "scope": "resource"
-        },
-        "djlint.ignoreBlocks": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.configuration": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%config.configuration%",
+            "scope": "resource",
+            "order": 1
+          }
+        }
+      },
+      {
+        "title": "%config.section.linter%",
+        "order": 3,
+        "properties": {
+          "djlint.enableLinting": {
+            "type": "boolean",
+            "default": false,
+            "scope": "language-overridable",
+            "description": "%config.enableLinting%",
+            "order": 0
           },
-          "default": [],
-          "description": "%config.ignoreBlocks%",
-          "scope": "resource"
-        },
-        "djlint.ignoreCase": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.ignoreCase%",
-          "scope": "resource"
-        },
-        "djlint.importStrategy": {
-          "type": "string",
-          "enum": [
-            "fromEnvironment",
-            "useBundled"
-          ],
-          "default": "fromEnvironment",
-          "markdownEnumDescriptions": [
-            "%config.importStrategy.fromEnvironment%",
-            "%config.importStrategy.useBundled%"
-          ],
-          "markdownDescription": "%config.importStrategy%",
-          "scope": "language-overridable"
-        },
-        "djlint.include": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "djlint.lintOnType": {
+            "type": "boolean",
+            "default": true,
+            "scope": "language-overridable",
+            "markdownDescription": "%config.lintOnType%",
+            "order": 1
           },
-          "default": [],
-          "description": "%config.include%",
-          "scope": "resource"
-        },
-        "djlint.indentCss": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "markdownDescription": "%config.indentCss%",
-          "scope": "resource"
-        },
-        "djlint.indentJs": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "markdownDescription": "%config.indentJs%",
-          "scope": "resource"
-        },
-        "djlint.keepBrInline": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.keepBrInline%",
-          "scope": "resource"
-        },
-        "djlint.lineBreakAfterMultilineTag": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.lineBreakAfterMultilineTag%",
-          "scope": "resource"
-        },
-        "djlint.lintOnType": {
-          "type": "boolean",
-          "default": true,
-          "scope": "language-overridable",
-          "markdownDescription": "%config.lintOnType%"
-        },
-        "djlint.maxAttributeLength": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "description": "%config.maxAttributeLength%",
-          "scope": "resource"
-        },
-        "djlint.maxBlankLines": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "markdownDescription": "%config.maxBlankLines%",
-          "scope": "resource"
-        },
-        "djlint.maxLineLength": {
-          "type": [
-            "integer",
-            "null"
-          ],
-          "default": null,
-          "description": "%config.maxLineLength%",
-          "scope": "resource"
-        },
-        "djlint.nameEndblocks": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.nameEndblocks%",
-          "scope": "resource"
-        },
-        "djlint.noEntityFormatting": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.noEntityFormatting%",
-          "scope": "resource"
-        },
-        "djlint.noFunctionFormatting": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.noFunctionFormatting%",
-          "scope": "resource"
-        },
-        "djlint.noIndentInnerHtml": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.noIndentInnerHtml%",
-          "scope": "resource"
-        },
-        "djlint.noLineAfterYaml": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.noLineAfterYaml%",
-          "scope": "resource"
-        },
-        "djlint.noSetFormatting": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.noSetFormatting%",
-          "scope": "resource"
-        },
-        "djlint.preserveBlankLines": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.preserveBlankLines%",
-          "scope": "resource"
-        },
-        "djlint.preserveClassNewlines": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.preserveClassNewlines%",
-          "scope": "resource"
-        },
-        "djlint.preserveLeadingSpace": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.preserveLeadingSpace%",
-          "scope": "resource"
-        },
-        "djlint.profile": {
-          "type": "string",
-          "enum": [
-            "",
-            "all",
-            "django",
-            "jinja",
-            "nunjucks",
-            "handlebars",
-            "liquid",
-            "golang",
-            "angular",
-            "tera",
-            "askama",
-            "html"
-          ],
-          "enumDescriptions": [
-            "%config.profile.unset%",
-            "%config.profile.all%",
-            "%config.profile.django%",
-            "%config.profile.jinja%",
-            "%config.profile.nunjucks%",
-            "%config.profile.handlebars%",
-            "%config.profile.liquid%",
-            "%config.profile.golang%",
-            "%config.profile.angular%",
-            "%config.profile.tera%",
-            "%config.profile.askama%",
-            "%config.profile.html%"
-          ],
-          "default": "",
-          "scope": "language-overridable",
-          "markdownDescription": "%config.profile%"
-        },
-        "djlint.pythonPath": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "%config.pythonPath%",
-          "scope": "language-overridable"
-        },
-        "djlint.quoteStyle": {
-          "type": "string",
-          "enum": [
-            "",
-            "double",
-            "single"
-          ],
-          "enumDescriptions": [
-            "%config.quoteStyle.unset%",
-            "%config.quoteStyle.double%",
-            "%config.quoteStyle.single%"
-          ],
-          "default": "",
-          "markdownDescription": "%config.quoteStyle%",
-          "scope": "resource"
-        },
-        "djlint.requirePragma": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.requirePragma%",
-          "scope": "resource"
-        },
-        "djlint.rules": {
-          "type": "string",
-          "default": "",
-          "markdownDescription": "%config.rules%",
-          "scope": "resource"
-        },
-        "djlint.singleAttributePerLine": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.singleAttributePerLine%",
-          "scope": "resource"
-        },
-        "djlint.sortAttributes": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.sortAttributes%",
-          "scope": "resource"
-        },
-        "djlint.sortLoadTags": {
-          "type": "boolean",
-          "default": false,
-          "markdownDescription": "%config.sortLoadTags%",
-          "scope": "resource"
-        },
-        "djlint.useEditorIndentation": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "%config.useEditorIndentation%",
-          "scope": "resource"
-        },
-        "djlint.useGitignore": {
-          "type": "boolean",
-          "default": false,
-          "description": "%config.useGitignore%",
-          "scope": "resource"
-        },
-        "djlint.useVenv": {
-          "type": "boolean",
-          "default": true,
-          "markdownDescription": "%config.useVenv%",
-          "scope": "language-overridable"
+          "djlint.ignore": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%config.ignore%",
+            "scope": "resource",
+            "order": 2
+          },
+          "djlint.include": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%config.include%",
+            "scope": "resource",
+            "order": 3
+          },
+          "djlint.rules": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%config.rules%",
+            "scope": "resource",
+            "order": 4
+          }
+        }
+      },
+      {
+        "title": "%config.section.layout%",
+        "order": 4,
+        "properties": {
+          "djlint.useEditorIndentation": {
+            "type": "boolean",
+            "default": true,
+            "markdownDescription": "%config.useEditorIndentation%",
+            "scope": "resource",
+            "order": 0
+          },
+          "djlint.maxLineLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "description": "%config.maxLineLength%",
+            "scope": "resource",
+            "order": 1
+          },
+          "djlint.maxAttributeLength": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "description": "%config.maxAttributeLength%",
+            "scope": "resource",
+            "order": 2
+          },
+          "djlint.singleAttributePerLine": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.singleAttributePerLine%",
+            "scope": "resource",
+            "order": 3
+          },
+          "djlint.lineBreakAfterMultilineTag": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.lineBreakAfterMultilineTag%",
+            "scope": "resource",
+            "order": 4
+          },
+          "djlint.noIndentInnerHtml": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.noIndentInnerHtml%",
+            "scope": "resource",
+            "order": 5
+          },
+          "djlint.keepBrInline": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.keepBrInline%",
+            "scope": "resource",
+            "order": 6
+          },
+          "djlint.customBlocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "%config.customBlocks%",
+            "scope": "resource",
+            "order": 7
+          },
+          "djlint.customHtml": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "%config.customHtml%",
+            "scope": "resource",
+            "order": 8
+          },
+          "djlint.ignoreBlocks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "%config.ignoreBlocks%",
+            "scope": "resource",
+            "order": 9
+          },
+          "djlint.blankLineAfterTag": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "%config.blankLineAfterTag%",
+            "scope": "resource",
+            "order": 10
+          },
+          "djlint.blankLineBeforeTag": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "markdownDescription": "%config.blankLineBeforeTag%",
+            "scope": "resource",
+            "order": 11
+          },
+          "djlint.maxBlankLines": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "markdownDescription": "%config.maxBlankLines%",
+            "scope": "resource",
+            "order": 12
+          },
+          "djlint.preserveBlankLines": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.preserveBlankLines%",
+            "scope": "resource",
+            "order": 13
+          },
+          "djlint.preserveLeadingSpace": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.preserveLeadingSpace%",
+            "scope": "resource",
+            "order": 14
+          },
+          "djlint.noLineAfterYaml": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.noLineAfterYaml%",
+            "scope": "resource",
+            "order": 15
+          }
+        }
+      },
+      {
+        "title": "%config.section.rewrites%",
+        "order": 5,
+        "properties": {
+          "djlint.closeVoidTags": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.closeVoidTags%",
+            "scope": "resource",
+            "order": 0
+          },
+          "djlint.ignoreCase": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.ignoreCase%",
+            "scope": "resource",
+            "order": 1
+          },
+          "djlint.sortAttributes": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.sortAttributes%",
+            "scope": "resource",
+            "order": 2
+          },
+          "djlint.sortLoadTags": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.sortLoadTags%",
+            "scope": "resource",
+            "order": 3
+          },
+          "djlint.nameEndblocks": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.nameEndblocks%",
+            "scope": "resource",
+            "order": 4
+          },
+          "djlint.quoteStyle": {
+            "type": "string",
+            "enum": [
+              "",
+              "double",
+              "single"
+            ],
+            "enumDescriptions": [
+              "%config.quoteStyle.unset%",
+              "%config.quoteStyle.double%",
+              "%config.quoteStyle.single%"
+            ],
+            "default": "",
+            "markdownDescription": "%config.quoteStyle%",
+            "scope": "resource",
+            "order": 5
+          },
+          "djlint.noEntityFormatting": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.noEntityFormatting%",
+            "scope": "resource",
+            "order": 6
+          },
+          "djlint.noFunctionFormatting": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.noFunctionFormatting%",
+            "scope": "resource",
+            "order": 7
+          },
+          "djlint.noSetFormatting": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.noSetFormatting%",
+            "scope": "resource",
+            "order": 8
+          },
+          "djlint.preserveClassNewlines": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.preserveClassNewlines%",
+            "scope": "resource",
+            "order": 9
+          },
+          "djlint.formatAttributeTemplateTags": {
+            "type": "boolean",
+            "default": false,
+            "description": "%config.formatAttributeTemplateTags%",
+            "scope": "resource",
+            "order": 10
+          }
+        }
+      },
+      {
+        "title": "%config.section.cssJs%",
+        "order": 6,
+        "properties": {
+          "djlint.formatCss": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.formatCss%",
+            "scope": "resource",
+            "order": 0
+          },
+          "djlint.indentCss": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "markdownDescription": "%config.indentCss%",
+            "scope": "resource",
+            "order": 1
+          },
+          "djlint.formatJs": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.formatJs%",
+            "scope": "resource",
+            "order": 2
+          },
+          "djlint.indentJs": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "markdownDescription": "%config.indentJs%",
+            "scope": "resource",
+            "order": 3
+          },
+          "djlint.formatAttributeJsJson": {
+            "type": "boolean",
+            "default": false,
+            "markdownDescription": "%config.formatAttributeJsJson%",
+            "scope": "resource",
+            "order": 4
+          },
+          "djlint.formatAttributeJsJsonPattern": {
+            "type": "string",
+            "default": "",
+            "markdownDescription": "%config.formatAttributeJsJsonPattern%",
+            "scope": "resource",
+            "order": 5
+          },
+          "djlint.formatAttributeJsJsonMinProps": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "default": null,
+            "description": "%config.formatAttributeJsJsonMinProps%",
+            "scope": "resource",
+            "order": 6
+          }
         }
       }
-    },
+    ],
     "configurationDefaults": {
       "[django-html]": {
         "djlint.enableLinting": true,

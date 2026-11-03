@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "들여쓰기 공백 수를 VS Code에서 가져옵니다(`#editor.tabSize#` 설정 참고). 사용하지 않도록 설정하면 djLint 구성 파일에서 가져옵니다. djLint ≥ 0.4.3에서 사용할 수 있습니다.",
   "config.useGitignore": ".gitignore의 제외 항목을 기본 제외 경로에 추가합니다. djLint 1.49부터는 편집기에 열린 파일에도 적용됩니다. djLint ≥ 0.5.9에서 사용할 수 있습니다.",
   "config.useVenv": "사용하도록 설정하면, `#djlint.executablePath#`와 `#djlint.pythonPath#` 모두 동작하는 djLint를 제공하지 않을 때 활성 환경의 Python 인터프리터로 djLint를 실행합니다. 환경은 `python.useEnvironmentsExtension`이 켜져 있으면 Python Environments 확장(`ms-python.vscode-python-envs`)에서, 그렇지 않으면 Python 확장(`ms-python.python`)에서 읽어 옵니다.",
+  "config.section.extension": "확장",
+  "config.section.files": "파일",
+  "config.section.configuration": "구성",
+  "config.section.linter": "린터",
+  "config.section.layout": "레이아웃",
+  "config.section.rewrites": "다시 쓰기",
+  "config.section.cssJs": "CSS 및 JavaScript",
   "untrustedWorkspaces": "신뢰할 수 없는 작업 영역에서는 번들된 djLint만 실행되며, 이 djLint는 파일을 읽지 않습니다."
 }

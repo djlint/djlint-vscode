@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "Брать размер отступа из VS Code (см. параметр `#editor.tabSize#`). Отключите, чтобы брать его из файла конфигурации djLint. Требуется djLint ≥ 0.4.3.",
   "config.useGitignore": "Добавить исключения из .gitignore к исключаемым по умолчанию. С djLint 1.49 действует и для файла в редакторе. Требуется djLint ≥ 0.5.9.",
   "config.useVenv": "Если включено, запускать djLint интерпретатором Python из активного окружения, когда ни `#djlint.executablePath#`, ни `#djlint.pythonPath#` не дают работающего djLint. Окружение берётся из расширения Python Environments (`ms-python.vscode-python-envs`), если включён `python.useEnvironmentsExtension`, а иначе — из расширения Python (`ms-python.python`).",
+  "config.section.extension": "Расширение",
+  "config.section.files": "Файлы",
+  "config.section.configuration": "Конфигурация",
+  "config.section.linter": "Линтер",
+  "config.section.layout": "Расположение",
+  "config.section.rewrites": "Правки",
+  "config.section.cssJs": "CSS и JavaScript",
   "untrustedWorkspaces": "В рабочей области, которой вы не доверяете, запускается только встроенный djLint, и он не читает никаких файлов."
 }

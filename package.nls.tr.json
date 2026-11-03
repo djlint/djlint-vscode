@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "Girinti boşluğu sayısını VS Code'dan alır (bkz. `#editor.tabSize#` ayarı). djLint yapılandırma dosyasından almak için devre dışı bırakın. djLint ≥ 0.4.3 gerektirir.",
   "config.useGitignore": ".gitignore'daki hariç tutmaları varsayılan hariç tutma listesine ekler. djLint 1.49'dan itibaren düzenleyicideki dosyaya uygulanır. djLint ≥ 0.5.9 gerektirir.",
   "config.useVenv": "Etkinleştirildiğinde, ne `#djlint.executablePath#` ne de `#djlint.pythonPath#` çalışan bir djLint vermezse djLint'i etkin ortamın Python yorumlayıcısıyla çalıştırır. Ortam, `python.useEnvironmentsExtension` açıkken Python Environments uzantısından (`ms-python.vscode-python-envs`), aksi hâlde Python uzantısından (`ms-python.python`) okunur.",
+  "config.section.extension": "Uzantı",
+  "config.section.files": "Dosyalar",
+  "config.section.configuration": "Yapılandırma",
+  "config.section.linter": "Linter",
+  "config.section.layout": "Düzen",
+  "config.section.rewrites": "Yeniden yazmalar",
+  "config.section.cssJs": "CSS ve JavaScript",
   "untrustedWorkspaces": "Güvenilmeyen bir çalışma alanında yalnızca uzantıyla gelen djLint çalışır ve hiçbir dosya okumaz."
 }

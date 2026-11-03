@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "Převzít počet mezer odsazení z VS Code (viz nastavení `#editor.tabSize#`). Zakažte, chcete-li ho převzít z konfiguračního souboru djLint. Vyžaduje djLint ≥ 0.4.3.",
   "config.useGitignore": "Přidat vyloučení ze souboru .gitignore k výchozím vyloučeným cestám. Od djLint 1.49 platí i pro soubor v editoru. Vyžaduje djLint ≥ 0.5.9.",
   "config.useVenv": "Pokud je povoleno, spustí se djLint interpretem Pythonu z aktivního prostředí, když ani `#djlint.executablePath#`, ani `#djlint.pythonPath#` nevede k funkčnímu djLint. Prostředí se načte z rozšíření Python Environments (`ms-python.vscode-python-envs`), když je zapnuté `python.useEnvironmentsExtension`, jinak z rozšíření Python (`ms-python.python`).",
+  "config.section.extension": "Rozšíření",
+  "config.section.files": "Soubory",
+  "config.section.configuration": "Konfigurace",
+  "config.section.linter": "Linter",
+  "config.section.layout": "Rozvržení",
+  "config.section.rewrites": "Přepisy",
+  "config.section.cssJs": "CSS a JavaScript",
   "untrustedWorkspaces": "V nedůvěryhodném pracovním prostoru se spouští jen přibalený djLint a nečte žádné soubory."
 }

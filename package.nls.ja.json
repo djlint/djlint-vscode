@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "インデントのスペース数を VS Code から取得します (`#editor.tabSize#` 設定を参照)。無効にすると、djLint の設定ファイルから取得します。djLint ≥ 0.4.3 が必要です。",
   "config.useGitignore": ".gitignore の除外設定をデフォルトの除外パスに追加します。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 0.5.9 が必要です。",
   "config.useVenv": "有効にすると、`#djlint.executablePath#` と `#djlint.pythonPath#` のどちらでも動作する djLint が得られない場合に、アクティブな環境の Python インタープリターで djLint を実行します。環境は、`python.useEnvironmentsExtension` がオンの場合は Python Environments 拡張機能 (`ms-python.vscode-python-envs`) から、それ以外の場合は Python 拡張機能 (`ms-python.python`) から読み取られます。",
+  "config.section.extension": "拡張機能",
+  "config.section.files": "ファイル",
+  "config.section.configuration": "設定",
+  "config.section.linter": "リンター",
+  "config.section.layout": "レイアウト",
+  "config.section.rewrites": "書き換え",
+  "config.section.cssJs": "CSS と JavaScript",
   "untrustedWorkspaces": "信頼されていないワークスペースでは同梱の djLint だけが実行され、その djLint はファイルを一切読み込みません。"
 }
