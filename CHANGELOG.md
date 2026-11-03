@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Several settings describe what they do more clearly, in every language. `djlint.include`, for example, now says it turns on linter rules that are off by default. The wording matches djLint's own `--help` and docs.
+
 ## [2026.11.6] - 2026-11-03
 
 - Bundle djLint 1.49.4. Formatting a file a second time no longer changes it, so a format on save leaves a formatted file alone. Text inside template tags in attribute values and strings that span lines in template tags is kept as written, a default `type` is dropped only where the browser would read the same type, and long runs of unclosed template tags no longer make formatting take minutes.
