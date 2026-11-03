@@ -1,5 +1,5 @@
 {
-  "description": "HTML template formatter and linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go templates, Mustache, Tera, Askama, Mako)",
+  "description": "HTML template formatter and linter (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, Go templates, Angular, Tera, Askama, Mako)",
   "command.restart": "Restart",
   "command.showLogs": "Show Logs",
   "config.blankLineAfterTag": "Add an additional blank line after `{% <tag> ... %}` tag groups. Blank lines are never added to the end of a block. Requires djLint ≥ 1.25.",

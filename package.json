@@ -8,6 +8,7 @@
     "Linters"
   ],
   "keywords": [
+    "angular",
     "askama",
     "django",
     "djlint",
@@ -153,6 +154,8 @@
               "nunjucks",
               "handlebars",
               "spacebars",
+              "mustache",
+              "htmlmustache",
               "liquid",
               "jekyll",
               "pos-liquid",
@@ -164,8 +167,6 @@
               "GoHTML",
               "gotmpl",
               "hugo-html",
-              "mustache",
-              "htmlmustache",
               "tera",
               "tera-html",
               "askama-html",
@@ -663,6 +664,14 @@
         "djlint.enableLinting": true,
         "djlint.profile": "handlebars"
       },
+      "[mustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
+      "[htmlmustache]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "handlebars"
+      },
       "[liquid]": {
         "djlint.enableLinting": true,
         "djlint.profile": "liquid"
@@ -706,14 +715,6 @@
       "[hugo-html]": {
         "djlint.enableLinting": true,
         "djlint.profile": "golang"
-      },
-      "[mustache]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
-      },
-      "[htmlmustache]": {
-        "djlint.enableLinting": true,
-        "djlint.profile": "handlebars"
       },
       "[tera]": {
         "djlint.enableLinting": true,

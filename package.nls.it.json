@@ -1,5 +1,5 @@
 {
-  "description": "Formattatore e linter per template HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, template Go, Mustache, Tera, Askama, Mako)",
+  "description": "Formattatore e linter per template HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, template Go, Angular, Tera, Askama, Mako)",
   "command.restart": "Riavvia",
   "command.showLogs": "Mostra log",
   "config.blankLineAfterTag": "Aggiunge una riga vuota dopo i gruppi di tag `{% <tag> ... %}`. Le righe vuote non vengono mai aggiunte alla fine di un blocco. Richiede djLint ≥ 1.25.",
