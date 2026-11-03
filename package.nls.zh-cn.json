@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "当标签的属性分布在多行时，让其内容另起一行。需要 djLint ≥ 1.27。",
   "config.lintOnType": "除了在打开和保存时检查外，还在键入暂停片刻后检查。需要 `#djlint.enableLinting#`。",
   "config.maxAttributeLength": "当标签的属性长度超过此值时，格式化工具会把它们分到多行。需要 djLint ≥ 1.25。",
-  "config.maxBlankLines": "最多保留这么多行连续的空行。不设置时使用 djLint 的默认值 0，即删除空行。启用 `#djlint.preserveBlankLines#` 时会保留所有空行，因此此设置无效。需要 djLint ≥ 1.31。",
+  "config.maxBlankLines": "最多保留这么多行连续的空行。不设置时使用 djLint 的默认值 0，即删除空行。启用 `#djlint.preserveBlankLines#` 时此设置无效。需要 djLint ≥ 1.31。",
   "config.maxLineLength": "只有当整行不超过此长度时，格式化工具才会把一些 HTML 和模板标签合并到一行。需要 djLint ≥ 1.25。",
   "config.nameEndblocks": "对于跨多行书写的块，把块的名称写入关闭它的 `{% endblock %}` 中。这正是 `T003` 所要求的。需要 djLint ≥ 1.45。",
   "config.noEntityFormatting": "不把实体引用改写为它所表示的字符，因此 `&copy;` 会保持原样，而不会变成 ©。承载语法的实体和不可见字符的实体，无论如何都不会被改写。需要 djLint ≥ 1.45。",

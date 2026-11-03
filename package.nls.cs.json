@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Když jsou atributy značky rozložené na více řádků, začít její obsah na novém řádku. Vyžaduje djLint ≥ 1.27.",
   "config.lintOnType": "Lintovat po krátké pauze v psaní, a také při otevření a uložení. Vyžaduje `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "Když jsou atributy značky delší než tato hodnota, formátovač je rozloží na více řádků. Vyžaduje djLint ≥ 1.25.",
-  "config.maxBlankLines": "Ponechat nejvýše tolik prázdných řádků za sebou. Když není nastaveno, platí výchozí hodnota djLint 0, která prázdné řádky odstraní. Nemá účinek, když je zapnuté `#djlint.preserveBlankLines#`, protože to zachová všechny prázdné řádky. Vyžaduje djLint ≥ 1.31.",
+  "config.maxBlankLines": "Ponechat nejvýše tolik prázdných řádků za sebou. Když není nastaveno, platí výchozí hodnota djLint 0, která prázdné řádky odstraní. Nemá účinek, když je zapnuté `#djlint.preserveBlankLines#`. Vyžaduje djLint ≥ 1.31.",
   "config.maxLineLength": "Formátovač spojí některé HTML a šablonové značky na jeden řádek, jen když se řádek vejde do této délky. Vyžaduje djLint ≥ 1.25.",
   "config.nameEndblocks": "Zapsat název bloku do `{% endblock %}`, který ho uzavírá, pokud je blok zapsaný přes více řádků. Právě to vyžaduje `T003`. Vyžaduje djLint ≥ 1.45.",
   "config.noEntityFormatting": "Nepřepisovat znakovou entitu na znak, který označuje, takže `&copy;` zůstane tak, jak je zapsané, a nezmění se na ©. Entity, které nesou syntaxi, a neviditelné entity se nepřepisují v žádném případě. Vyžaduje djLint ≥ 1.45.",

@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "태그의 속성이 여러 줄에 걸쳐 있으면 내용을 새 줄에서 시작합니다. djLint ≥ 1.27에서 사용할 수 있습니다.",
   "config.lintOnType": "파일을 열고 저장할 때뿐만 아니라 입력을 잠시 멈췄을 때도 린트합니다. `#djlint.enableLinting#`을 사용하도록 설정해야 합니다.",
   "config.maxAttributeLength": "태그 속성이 이 길이를 넘으면 포맷터가 속성을 여러 줄로 나눕니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
-  "config.maxBlankLines": "연속된 빈 줄을 최대 이 수만큼 남깁니다. 설정하지 않으면 djLint의 기본값인 0을 사용하며, 이때는 빈 줄을 모두 제거합니다. `#djlint.preserveBlankLines#`를 켜면 모든 빈 줄이 유지되므로 효과가 없습니다. djLint ≥ 1.31에서 사용할 수 있습니다.",
+  "config.maxBlankLines": "연속된 빈 줄을 최대 이 수만큼 남깁니다. 설정하지 않으면 djLint의 기본값인 0을 사용하며, 이때는 빈 줄을 모두 제거합니다. `#djlint.preserveBlankLines#`를 켜면 효과가 없습니다. djLint ≥ 1.31에서 사용할 수 있습니다.",
   "config.maxLineLength": "포맷터는 줄이 이 길이 안에 들어갈 때만 일부 HTML 태그와 템플릿 태그를 한 줄로 합칩니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.nameEndblocks": "여러 줄에 걸쳐 쓴 블록을 닫는 `{% endblock %}`에 블록의 이름을 씁니다. `T003`이 요구하는 동작입니다. djLint ≥ 1.45에서 사용할 수 있습니다.",
   "config.noEntityFormatting": "엔티티 참조를 그것이 나타내는 문자로 바꾸지 않으므로, `&copy;`는 ©가 되지 않고 쓴 그대로 남습니다. 구문을 담당하는 엔티티와 보이지 않는 문자의 엔티티는 어느 쪽이든 바꾸지 않습니다. djLint ≥ 1.45에서 사용할 수 있습니다.",

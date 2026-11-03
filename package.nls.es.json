@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Cuando los atributos de una etiqueta ocupan varias líneas, empieza su contenido en una línea nueva. Requiere djLint ≥ 1.27.",
   "config.lintOnType": "Analiza el código tras una breve pausa al escribir, además de al abrir y al guardar. Necesita `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "Cuando los atributos de una etiqueta superan esta longitud, el formateador los reparte en varias líneas. Requiere djLint ≥ 1.25.",
-  "config.maxBlankLines": "Conserva como máximo este número de líneas en blanco seguidas. Si no se establece, se usa el valor predeterminado de djLint, 0, que elimina las líneas en blanco. No tiene efecto si `#djlint.preserveBlankLines#` está activado, porque así se conservan todas las líneas en blanco. Requiere djLint ≥ 1.31.",
+  "config.maxBlankLines": "Conserva como máximo este número de líneas en blanco seguidas. Si no se establece, se usa el valor predeterminado de djLint, 0, que elimina las líneas en blanco. No tiene efecto si `#djlint.preserveBlankLines#` está activado. Requiere djLint ≥ 1.31.",
   "config.maxLineLength": "El formateador junta algunas etiquetas HTML y de plantilla en una sola línea solo si la línea cabe en esta longitud. Requiere djLint ≥ 1.25.",
   "config.nameEndblocks": "Escribe el nombre del bloque en el `{% endblock %}` que lo cierra, cuando el bloque ocupa varias líneas. Es lo que pide `T003`. Requiere djLint ≥ 1.45.",
   "config.noEntityFormatting": "No reescribe una referencia de entidad como el carácter que nombra, así que `&copy;` se deja tal como está escrito en lugar de convertirse en ©. Las entidades con función sintáctica, y las invisibles, nunca se reescriben en ningún caso. Requiere djLint ≥ 1.45.",
