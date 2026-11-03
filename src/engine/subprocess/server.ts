@@ -1,13 +1,19 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion -- what the server sends is the protocol's */
 import { execa } from "execa";
 import * as vscode from "vscode";
+import {
+  createMessageConnection,
+  ResponseError,
+  StreamMessageReader,
+  StreamMessageWriter,
+} from "vscode-jsonrpc/node";
+import type { MessageConnection } from "vscode-jsonrpc/node";
+import type { Diagnostic, TextEdit } from "vscode-languageserver-types";
 
 import { showFailure } from "../../notify.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 import type { LintDiagnostic } from "../types.js";
 
-const HEADER_END = Buffer.from("\r\n\r\n");
-const CONTENT_LENGTH_REGEX = /^content-length:\s*(?<length>\d+)/imu;
 const REQUEST_CANCELLED = -32_800;
 const LOG_ERROR = 1;
 const LOG_WARNING = 2;
@@ -16,40 +22,6 @@ const CANCEL_GRACE_MS = 1000;
 // Windows keeps a running environment's files locked, which stops `pip install` and `uv sync` in it.
 // Elsewhere a server waits out a pause in work, as starting one takes most of a second, but one of a djLint since upgraded is never used again.
 export const IDLE_STOP_MS = process.platform === "win32" ? 30_000 : 600_000;
-
-interface Position {
-  character: number;
-  line: number;
-}
-
-interface Range {
-  end: Position;
-  start: Position;
-}
-
-interface Diagnostic {
-  code?: number | string;
-  message: string;
-  range: Range;
-}
-
-interface TextEdit {
-  newText: string;
-  range: Range;
-}
-
-interface Message {
-  error?: { code: number; message: string };
-  id?: number | string | null;
-  method?: string;
-  params?: unknown;
-  result?: unknown;
-}
-
-interface Waiter {
-  reject: (reason: Error) => void;
-  resolve: (result: unknown) => void;
-}
 
 export type ServerSettings = Record<string, unknown>;
 
@@ -86,7 +58,8 @@ function toLintDiagnostic({ code = "", message, range }: Diagnostic): LintDiagno
     endLine: range.end.line + 1,
     isUtf16: true,
     line: range.start.line + 1,
-    message,
+    // Since LSP 3.18 a message can be markup, which djLint doesn't send.
+    message: typeof message === "string" ? message : message.value,
   };
 }
 
@@ -97,15 +70,15 @@ export class ServerResponseError extends Error {
 
 /** `djlint --lsp`, running once instead of a process for every format and lint. */
 export class DjlintServer {
-  #nextId = 0;
-  #buffer = Buffer.alloc(0);
   #queue: Promise<unknown> = Promise.resolve();
   #isClosed = false;
   #isStopping = false;
   #running = 0;
   #idleTimer: NodeJS.Timeout | undefined;
-  readonly #waiters = new Map<number, Waiter>();
   readonly #shownMessages = new Set<string>();
+  // Settles only when the server closes, with why, which ends whatever run is waiting on it.
+  readonly #closed = Promise.withResolvers<never>();
+  readonly #connection: MessageConnection;
   readonly #process: ReturnType<typeof spawnServer>;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #started: Promise<unknown>;
@@ -120,16 +93,50 @@ export class DjlintServer {
   ) {
     this.#outputChannel = outputChannel;
     this.#version = version;
+    // Nothing waits on it until a run does.
+    void Promise.allSettled([this.#closed.promise]);
     this.#process = spawnServer(exec, prefixArgs, cwd);
-    this.#process.stdout.on("data", (chunk: Buffer) => {
-      this.#receive(chunk);
+    const reader = new StreamMessageReader(this.#process.stdout);
+    const writer = new StreamMessageWriter(this.#process.stdin);
+    reader.onError(() => {
+      this.#close(new Error("djLint's language server sent a bad message"));
     });
+    writer.onError(() => {
+      this.#close(new Error("djLint's language server closed its input"));
+    });
+    const log = (message: string): void => {
+      this.#outputChannel.debug(message);
+    };
+    this.#connection = createMessageConnection(reader, writer, {
+      error: log,
+      info: log,
+      log,
+      warn: log,
+    });
+    this.#connection.onNotification(
+      "window/logMessage",
+      ({ message, type }: { message: string; type: number }) => {
+        if (type === LOG_ERROR) {
+          this.#outputChannel.error(message);
+        } else if (type === LOG_WARNING) {
+          this.#outputChannel.warn(message);
+        } else {
+          this.#outputChannel.info(message);
+        }
+      },
+    );
+    this.#connection.onNotification("window/showMessage", ({ message }: { message: string }) => {
+      if (!this.#shownMessages.has(message)) {
+        this.#shownMessages.add(message);
+        void showFailure(message, this.#outputChannel);
+      }
+    });
+    // A request this client has no use for, such as `workspace/configuration`, gets an empty answer.
+    this.#connection.onRequest(() => null);
+    this.#connection.listen();
     this.#process.stderr.setEncoding("utf8");
     this.#process.stderr.on("data", (chunk: string) => {
       this.#outputChannel.debug(chunk.trimEnd());
-    });
-    this.#process.stdin.on("error", () => {
-      this.#close(new Error("djLint's language server closed its input"));
     });
     // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- nothing waits for the server to end
     void this.#process.then(() => {
@@ -215,8 +222,8 @@ export class DjlintServer {
       this.#process.kill();
     }, STOP_TIMEOUT_MS);
     try {
-      await this.#request("shutdown", null);
-      this.#notify("exit", null);
+      await this.#request("shutdown");
+      this.#notify("exit");
       await this.#process;
     } catch {
       this.#process.kill();
@@ -231,7 +238,7 @@ export class DjlintServer {
     settings: ServerSettings,
     token: vscode.CancellationToken,
     method: string,
-    params: unknown,
+    params: object,
   ): Promise<unknown> {
     const previous = this.#queue;
     const { promise, resolve } = Promise.withResolvers<undefined>();
@@ -287,47 +294,46 @@ export class DjlintServer {
     }
   }
 
-  #write(message: object): void {
+  #notify(method: string, params?: object): void {
     if (this.#isClosed) {
       return;
     }
-    const body = Buffer.from(JSON.stringify({ jsonrpc: "2.0", ...message }), "utf8");
-    this.#process.stdin.write(
-      Buffer.concat([Buffer.from(`Content-Length: ${body.length}\r\n\r\n`), body]),
-    );
-  }
-
-  #notify(method: string, params: unknown): void {
-    this.#write({ method, params });
+    // A notification that cannot be written closes the server through the writer's error.
+    const sent =
+      params == null
+        ? this.#connection.sendNotification(method)
+        : this.#connection.sendNotification(method, params);
+    void Promise.allSettled([sent]);
   }
 
   async #request(
     method: string,
-    params: unknown,
+    params?: object,
     token?: vscode.CancellationToken,
   ): Promise<unknown> {
     if (this.#isClosed) {
       throw new Error("djLint's language server has ended");
     }
-    this.#nextId += 1;
-    const id = this.#nextId;
-    const { promise, reject, resolve } = Promise.withResolvers<unknown>();
-    this.#waiters.set(id, { reject, resolve });
     const timer = setTimeout(() => {
       this.#close(new Error(`djLint's language server timed out on ${method}`));
     }, RUN_TIMEOUT_MS);
     let cancelTimer: NodeJS.Timeout | undefined;
+    // The connection asks the server to cancel; the server only cancels what it hasn't started, and a stuck run would hold up all that follows.
     const cancellation = token?.onCancellationRequested(() => {
-      this.#notify("$/cancelRequest", { id });
-      // The server only cancels what it hasn't started, and a stuck run would hold up all that follows.
       cancelTimer = setTimeout(() => {
         this.#isStopping = true;
         this.#close(new vscode.CancellationError());
       }, CANCEL_GRACE_MS);
     });
-    this.#write({ id, method, params });
     try {
-      return await promise;
+      return await Promise.race([this.#send(method, params, token), this.#closed.promise]);
+    } catch (e) {
+      if (e instanceof ResponseError) {
+        throw e.code === REQUEST_CANCELLED
+          ? new vscode.CancellationError()
+          : new ServerResponseError(e.message);
+      }
+      throw e;
     } finally {
       clearTimeout(timer);
       clearTimeout(cancelTimer);
@@ -335,75 +341,15 @@ export class DjlintServer {
     }
   }
 
-  #receive(chunk: Buffer): void {
-    this.#buffer = Buffer.concat([this.#buffer, chunk]);
-    for (;;) {
-      const headerEnd = this.#buffer.indexOf(HEADER_END);
-      if (headerEnd === -1) {
-        return;
-      }
-      const header = this.#buffer.toString("ascii", 0, headerEnd);
-      const length = CONTENT_LENGTH_REGEX.exec(header)?.groups?.["length"];
-      const bodyStart = headerEnd + HEADER_END.length;
-      const bodyEnd = bodyStart + Number(length);
-      if (length == null) {
-        this.#close(new Error("djLint's language server sent a bad message"));
-        return;
-      }
-      if (this.#buffer.length < bodyEnd) {
-        return;
-      }
-      const body = this.#buffer.toString("utf8", bodyStart, bodyEnd);
-      this.#buffer = this.#buffer.subarray(bodyEnd);
-      let message: Message;
-      try {
-        message = JSON.parse(body) as Message;
-      } catch {
-        this.#close(new Error("djLint's language server sent a bad message"));
-        return;
-      }
-      this.#handle(message);
+  // The connection takes a trailing cancellation token as the token, and anything else as a parameter.
+  async #send(method: string, params?: object, token?: vscode.CancellationToken): Promise<unknown> {
+    if (params == null) {
+      return this.#connection.sendRequest(method);
     }
-  }
-
-  #handle(message: Message): void {
-    if (message.method != null) {
-      this.#handleServerMessage(message);
-      return;
+    if (token == null) {
+      return this.#connection.sendRequest(method, params);
     }
-    const waiter = this.#waiters.get(Number(message.id));
-    if (waiter == null) {
-      return;
-    }
-    this.#waiters.delete(Number(message.id));
-    if (message.error == null) {
-      waiter.resolve(message.result);
-    } else if (message.error.code === REQUEST_CANCELLED) {
-      waiter.reject(new vscode.CancellationError());
-    } else {
-      waiter.reject(new ServerResponseError(message.error.message));
-    }
-  }
-
-  #handleServerMessage({ id, method, params }: Message): void {
-    if (method === "window/logMessage") {
-      const { message, type } = params as { message: string; type: number };
-      if (type === LOG_ERROR) {
-        this.#outputChannel.error(message);
-      } else if (type === LOG_WARNING) {
-        this.#outputChannel.warn(message);
-      } else {
-        this.#outputChannel.info(message);
-      }
-    } else if (method === "window/showMessage") {
-      const { message } = params as { message: string };
-      if (!this.#shownMessages.has(message)) {
-        this.#shownMessages.add(message);
-        void showFailure(message, this.#outputChannel);
-      }
-    } else if (id != null) {
-      this.#write({ id, result: null });
-    }
+    return this.#connection.sendRequest(method, params, token);
   }
 
   #close(reason: Error): void {
@@ -411,11 +357,8 @@ export class DjlintServer {
       return;
     }
     this.#isClosed = true;
+    this.#closed.reject(reason);
+    this.#connection.dispose();
     this.#process.kill();
-    const waiters = this.#waiters.values().toArray();
-    this.#waiters.clear();
-    for (const { reject } of waiters) {
-      reject(reason);
-    }
   }
 }

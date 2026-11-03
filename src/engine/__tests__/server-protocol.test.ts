@@ -53,16 +53,29 @@ class FakeLanguageServer {
   isKilled = false;
   readonly #exit = Promise.withResolvers<object>();
 
+  #input = Buffer.alloc(0);
+
   constructor() {
+    // A message can come in more than one write: its header, then its body.
     this.stdin.on("data", (chunk: Buffer) => {
-      // DjlintServer writes each message whole, in one write.
-      const text = chunk.toString("utf8");
-      const body = text.slice(text.indexOf(HEADER_END) + HEADER_END.length);
-      const message = JSON.parse(body) as Message;
-      this.received.push(message);
-      setImmediate(() => {
-        this.handlers.get(message.method ?? "")?.(message);
-      });
+      this.#input = Buffer.concat([this.#input, chunk]);
+      for (;;) {
+        const headerEnd = this.#input.indexOf(HEADER_END);
+        const length = /content-length:\s*(?<length>\d+)/iu.exec(
+          this.#input.toString("ascii", 0, Math.max(headerEnd, 0)),
+        )?.groups?.["length"];
+        const bodyStart = headerEnd + HEADER_END.length;
+        const bodyEnd = bodyStart + Number(length);
+        if (headerEnd === -1 || length == null || this.#input.length < bodyEnd) {
+          return;
+        }
+        const message = JSON.parse(this.#input.toString("utf8", bodyStart, bodyEnd)) as Message;
+        this.#input = this.#input.subarray(bodyEnd);
+        this.received.push(message);
+        setImmediate(() => {
+          this.handlers.get(message.method ?? "")?.(message);
+        });
+      }
     });
   }
 
