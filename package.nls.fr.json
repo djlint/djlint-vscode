@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Quand les attributs d'une balise sont répartis sur plusieurs lignes, commencer son contenu sur une nouvelle ligne. Nécessite djLint ≥ 1.27.",
   "config.lintOnType": "Linter après une courte pause dans la frappe, ainsi qu'à l'ouverture et à l'enregistrement. Nécessite `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "Quand les attributs d'une balise dépassent cette longueur, le formateur les répartit sur plusieurs lignes. Nécessite djLint ≥ 1.25.",
-  "config.maxBlankLines": "Garder au plus ce nombre de lignes vides consécutives. Laissez non défini pour utiliser la valeur par défaut de djLint, 0, qui supprime les lignes vides. Nécessite djLint ≥ 1.31.",
+  "config.maxBlankLines": "Garder au plus ce nombre de lignes vides consécutives. Laissez non défini pour utiliser la valeur par défaut de djLint, 0, qui supprime les lignes vides. Sans effet quand `#djlint.preserveBlankLines#` est activé, car toutes les lignes vides sont alors conservées. Nécessite djLint ≥ 1.31.",
   "config.maxLineLength": "Le formateur ne regroupe certaines balises HTML et de template sur une seule ligne que si la ligne tient dans cette longueur. Nécessite djLint ≥ 1.25.",
   "config.nameEndblocks": "Écrire le nom du bloc dans le `{% endblock %}` qui le ferme, quand le bloc est écrit sur plusieurs lignes. C'est ce que demande `T003`. Nécessite djLint ≥ 1.45.",
   "config.noEntityFormatting": "Ne pas réécrire une référence d'entité sous la forme du caractère qu'elle désigne : `&copy;` reste tel qu'il est écrit au lieu de devenir ©. Les entités porteuses de syntaxe, et les entités invisibles, ne sont de toute façon jamais réécrites. Nécessite djLint ≥ 1.45.",

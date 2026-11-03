@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 
 import { download } from "./download.mjs";
 import { pyodideLicenses } from "./pyodide-licenses.mjs";
@@ -139,23 +140,37 @@ async function downloadVerified(url, name, expectedSha) {
   writeFileSync(`${OUT}/${name}`, buf);
 }
 
+// PyPI's JSON API is cached, so for a release minutes old it can still list
+// only some of the files. The wheel is looked for again before giving up.
+const PYPI_ATTEMPTS = 6;
+const PYPI_RETRY_DELAY_MS = 30_000;
+
 /**
  * @param {string} pkg
  * @param {{ version: string, hashes: string[] }} pin
  * @returns {Promise<{ filename: string, sha: string }>}
  */
 async function downloadPureWheelFromPypi(pkg, { hashes, version }) {
-  const meta =
-    /** @type {{ urls: { filename: string, url: string, digests: { sha256: string } }[] }} */
-    (JSON.parse((await download(`https://pypi.org/pypi/${pkg}/${version}/json`)).toString("utf8")));
-  const wheel = meta.urls.find(
-    (u) => u.filename.endsWith("-py3-none-any.whl") && hashes.includes(u.digests.sha256),
-  );
-  if (!wheel) {
-    throw new Error(`no pure-python wheel for ${pkg}==${version} on PyPI matches uv.lock`);
+  for (let attempt = 1; ; attempt += 1) {
+    const meta =
+      /** @type {{ urls: { filename: string, url: string, digests: { sha256: string } }[] }} */
+      (
+        JSON.parse(
+          (await download(`https://pypi.org/pypi/${pkg}/${version}/json`)).toString("utf8"),
+        )
+      );
+    const wheel = meta.urls.find(
+      (u) => u.filename.endsWith("-py3-none-any.whl") && hashes.includes(u.digests.sha256),
+    );
+    if (wheel) {
+      await downloadVerified(wheel.url, wheel.filename, wheel.digests.sha256);
+      return { filename: wheel.filename, sha: wheel.digests.sha256 };
+    }
+    if (attempt === PYPI_ATTEMPTS) {
+      throw new Error(`no pure-python wheel for ${pkg}==${version} on PyPI matches uv.lock`);
+    }
+    await sleep(PYPI_RETRY_DELAY_MS);
   }
-  await downloadVerified(wheel.url, wheel.filename, wheel.digests.sha256);
-  return { filename: wheel.filename, sha: wheel.digests.sha256 };
 }
 
 /**

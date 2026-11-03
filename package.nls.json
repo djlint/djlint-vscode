@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "When a tag's attributes are spread over lines, start its content on a new line. Requires djLint ≥ 1.27.",
   "config.lintOnType": "Lint after a short pause in typing, as well as on opening and saving. Needs `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "The formatter spreads a tag's attributes over lines once they are longer than this. Requires djLint ≥ 1.25.",
-  "config.maxBlankLines": "Keep at most this many blank lines in a row. Leave unset for djLint's default of 0, which removes blank lines. Requires djLint ≥ 1.31.",
+  "config.maxBlankLines": "Keep at most this many blank lines in a row. Leave unset for djLint's default of 0, which removes blank lines. Has no effect when `#djlint.preserveBlankLines#` is enabled, since that keeps every blank line. Requires djLint ≥ 1.31.",
   "config.maxLineLength": "The formatter joins some HTML and template tags onto one line only when the line fits within this length. Requires djLint ≥ 1.25.",
   "config.nameEndblocks": "Write the block's name into the `{% endblock %}` that closes it, where the block is written across lines. This is what `T003` asks for. Requires djLint ≥ 1.45.",
   "config.noEntityFormatting": "Do not rewrite an entity reference as the character it names, so `&copy;` is left as written rather than becoming ©. The entities that carry syntax, and the invisible ones, are never rewritten either way. Requires djLint ≥ 1.45.",

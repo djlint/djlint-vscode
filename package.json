@@ -348,7 +348,7 @@
             "null"
           ],
           "default": null,
-          "description": "%config.maxBlankLines%",
+          "markdownDescription": "%config.maxBlankLines%",
           "scope": "resource"
         },
         "djlint.maxLineLength": {

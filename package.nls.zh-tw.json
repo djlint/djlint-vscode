@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "當標籤的屬性分散在多行時，讓其內容從新的一行開始。需要 djLint ≥ 1.27。",
   "config.lintOnType": "除了在開啟和儲存時，也在你停止輸入片刻後執行 lint。需要 `#djlint.enableLinting#`。",
   "config.maxAttributeLength": "當標籤的屬性長度超過這個值時，格式化工具會把它們分散到多行。需要 djLint ≥ 1.25。",
-  "config.maxBlankLines": "最多保留這麼多行連續的空白行。不設定則使用 djLint 的預設值 0，也就是移除空白行。需要 djLint ≥ 1.31。",
+  "config.maxBlankLines": "最多保留這麼多行連續的空白行。不設定則使用 djLint 的預設值 0，也就是移除空白行。啟用 `#djlint.preserveBlankLines#` 時會保留所有空白行，因此此設定無效。需要 djLint ≥ 1.31。",
   "config.maxLineLength": "只有當整行不超過這個長度時，格式化工具才會把部分 HTML 和範本標籤合併成一行。需要 djLint ≥ 1.25。",
   "config.nameEndblocks": "對於跨越多行撰寫的區塊，將區塊的名稱寫入關閉它的 `{% endblock %}`。這正是 `T003` 所要求的。需要 djLint ≥ 1.45。",
   "config.noEntityFormatting": "不要將字元實體參照改寫為它所代表的字元，因此 `&copy;` 會保持原樣，而不會變成 ©。帶有語法作用的實體以及不可見字元的實體，無論如何都不會被改寫。需要 djLint ≥ 1.45。",

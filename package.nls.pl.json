@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Gdy atrybuty tagu są rozłożone na kilka wierszy, zaczyna jego zawartość w nowym wierszu. Wymaga djLint ≥ 1.27.",
   "config.lintOnType": "Lintuje po krótkiej przerwie w pisaniu, a także przy otwarciu i zapisaniu. Wymaga `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "Gdy atrybuty tagu są dłuższe niż ta wartość, formater rozkłada je na kilka wierszy. Wymaga djLint ≥ 1.25.",
-  "config.maxBlankLines": "Zostawia najwyżej tyle pustych wierszy z rzędu. Pozostaw nieustawione, aby użyć domyślnej wartości djLint, czyli 0, która usuwa puste wiersze. Wymaga djLint ≥ 1.31.",
+  "config.maxBlankLines": "Zostawia najwyżej tyle pustych wierszy z rzędu. Pozostaw nieustawione, aby użyć domyślnej wartości djLint, czyli 0, która usuwa puste wiersze. Nie działa, gdy włączone jest `#djlint.preserveBlankLines#`, bo wtedy zostają wszystkie puste wiersze. Wymaga djLint ≥ 1.31.",
   "config.maxLineLength": "Formater łączy niektóre tagi HTML i tagi szablonu w jeden wiersz tylko wtedy, gdy wiersz mieści się w tej długości. Wymaga djLint ≥ 1.25.",
   "config.nameEndblocks": "Wpisuje nazwę bloku do zamykającego go `{% endblock %}`, jeśli blok zajmuje kilka wierszy. Tego właśnie wymaga `T003`. Wymaga djLint ≥ 1.45.",
   "config.noEntityFormatting": "Nie zamienia odwołania do encji na znak, który ono oznacza, więc `&copy;` pozostaje w zapisanej postaci, zamiast stać się ©. Encje niosące składnię oraz encje niewidoczne i tak nigdy nie są zamieniane. Wymaga djLint ≥ 1.45.",
