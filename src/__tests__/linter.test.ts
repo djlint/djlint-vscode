@@ -437,20 +437,28 @@ describe(Linter, () => {
       expect(diagnosticsOf(document)).toBeUndefined();
     });
 
-    it("warns of no failure for a run the engine cancelled", async () => {
+    it("drops stale ones, but warns of no failure, for a run the engine cancelled", async () => {
       control.configuration = { enableLinting: true, formatLanguages: ["html"] };
       setActiveDocument(document);
       const status = new DjlintStatus();
+      let isCancelling = false;
       const linter = new Linter(
         makeContext(),
         makeChannel(),
         makeEngines({
           lint: async () => {
-            throw new vscode.CancellationError();
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
+            if (isCancelling) {
+              throw new vscode.CancellationError();
+            }
+            return [H013];
           },
         }),
         status,
       );
+      await linter.refreshAll();
+      expect(diagnosticsOf(document)).toHaveLength(1);
+      isCancelling = true;
       await linter.refreshAll();
       expect(diagnosticsOf(document)).toBeUndefined();
       expect(control.statusItems[0]?.text).toBe("djLint");
