@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Bir etiketin öznitelikleri birden çok satıra yayıldığında içeriğini yeni bir satırda başlatır. djLint ≥ 1.27 gerektirir.",
   "config.lintOnType": "Açarken ve kaydederken olduğu gibi, yazmaya kısa bir ara verildikten sonra da lint denetimi yapar. `#djlint.enableLinting#` gerektirir.",
   "config.maxAttributeLength": "Bir etiketin öznitelikleri bu uzunluğu aştığında biçimlendirici onları birden çok satıra dağıtır. djLint ≥ 1.25 gerektirir.",
-  "config.maxBlankLines": "Art arda en fazla bu kadar boş satır bırakır. djLint'in boş satırları kaldıran varsayılan değeri 0 için ayarlanmamış bırakın. djLint ≥ 1.31 gerektirir.",
+  "config.maxBlankLines": "Art arda en fazla bu kadar boş satır bırakır. djLint'in boş satırları kaldıran varsayılan değeri 0 için ayarlanmamış bırakın. `#djlint.preserveBlankLines#` açıkken tüm boş satırlar korunduğu için etkisi olmaz. djLint ≥ 1.31 gerektirir.",
   "config.maxLineLength": "Biçimlendirici bazı HTML ve şablon etiketlerini yalnızca satır bu uzunluğa sığıyorsa tek satırda birleştirir. djLint ≥ 1.25 gerektirir.",
   "config.nameEndblocks": "Blok birden çok satıra yayılarak yazılmışsa bloğun adını onu kapatan `{% endblock %}` etiketine yazar. `T003` kuralının istediği de budur. djLint ≥ 1.45 gerektirir.",
   "config.noEntityFormatting": "Bir varlık başvurusunu adlandırdığı karakter olarak yeniden yazmaz; böylece `&copy;`, © olmak yerine yazıldığı gibi bırakılır. Sözdizimi taşıyan varlıklar ve görünmez olanlar her iki durumda da hiçbir zaman yeniden yazılmaz. djLint ≥ 1.45 gerektirir.",

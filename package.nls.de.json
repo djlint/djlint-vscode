@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "Beginnt den Inhalt eines Tags in einer neuen Zeile, wenn seine Attribute auf mehrere Zeilen verteilt sind. Erfordert djLint ≥ 1.27.",
   "config.lintOnType": "Lintet nach einer kurzen Tipppause sowie beim Öffnen und Speichern. Erfordert `#djlint.enableLinting#`.",
   "config.maxAttributeLength": "Sind die Attribute eines Tags länger als dieser Wert, verteilt der Formatter sie auf mehrere Zeilen. Erfordert djLint ≥ 1.25.",
-  "config.maxBlankLines": "Behält höchstens so viele aufeinanderfolgende Leerzeilen. Nicht festlegen, um den Standardwert von djLint (0) zu verwenden, der Leerzeilen entfernt. Erfordert djLint ≥ 1.31.",
+  "config.maxBlankLines": "Behält höchstens so viele aufeinanderfolgende Leerzeilen. Nicht festlegen, um den Standardwert von djLint (0) zu verwenden, der Leerzeilen entfernt. Hat keine Wirkung, wenn `#djlint.preserveBlankLines#` aktiviert ist, da dann alle Leerzeilen erhalten bleiben. Erfordert djLint ≥ 1.31.",
   "config.maxLineLength": "Der Formatter setzt manche HTML- und Template-Tags nur dann in eine Zeile, wenn die Zeile in diese Länge passt. Erfordert djLint ≥ 1.25.",
   "config.nameEndblocks": "Schreibt den Namen des Blocks in das `{% endblock %}`, das ihn schließt, sofern der Block über mehrere Zeilen geschrieben ist. Genau das verlangt `T003`. Erfordert djLint ≥ 1.45.",
   "config.noEntityFormatting": "Ersetzt eine Entity-Referenz nicht durch das Zeichen, das sie bezeichnet, sodass `&copy;` so bleibt, wie es geschrieben ist, statt zu © zu werden. Die Entities, die Syntax tragen, und die unsichtbaren werden ohnehin nie ersetzt. Erfordert djLint ≥ 1.45.",

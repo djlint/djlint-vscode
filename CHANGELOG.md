@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.49.5. A file with many tags that are never closed, such as a half-written template, formats in under a second instead of taking minutes. With `djlint.formatJs` or `djlint.formatCss` on, a second format no longer changes a long `<script>` or `<style>` tag or a ternary written over several lines. A `<script>` that holds a client-side template, such as `type="text/template"`, is left as written.
+- The description of `djlint.maxBlankLines` says that the setting has no effect while `djlint.preserveBlankLines` is on.
 - Several settings describe what they do more clearly, in every language. `djlint.include`, for example, now says it turns on linter rules that are off by default. The wording matches djLint's own `--help` and docs.
 
 ## [2026.11.6] - 2026-11-03
