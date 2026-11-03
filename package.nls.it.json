@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "Ottiene il numero di spazi di rientro da VS Code (vedi l'impostazione `#editor.tabSize#`). Disabilita questa opzione per ottenerlo dal file di configurazione di djLint. Richiede djLint ≥ 0.4.3.",
   "config.useGitignore": "Aggiunge le esclusioni di .gitignore a quelle predefinite. Si applica al file nell'editor a partire da djLint 1.49. Richiede djLint ≥ 0.5.9.",
   "config.useVenv": "Se abilitata, esegue djLint con l'interprete Python dell'ambiente attivo quando né `#djlint.executablePath#` né `#djlint.pythonPath#` portano a un djLint funzionante. L'ambiente viene letto dall'estensione Python Environments (`ms-python.vscode-python-envs`) quando `python.useEnvironmentsExtension` è attivo, altrimenti dall'estensione Python (`ms-python.python`).",
+  "config.section.extension": "Estensione",
+  "config.section.files": "File",
+  "config.section.configuration": "Configurazione",
+  "config.section.linter": "Linter",
+  "config.section.layout": "Layout",
+  "config.section.rewrites": "Riscritture",
+  "config.section.cssJs": "CSS e JavaScript",
   "untrustedWorkspaces": "In un'area di lavoro non attendibile viene eseguito solo il djLint incluso, che non legge alcun file."
 }

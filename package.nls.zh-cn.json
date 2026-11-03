@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "从 VS Code 获取缩进空格数（请参阅 `#editor.tabSize#` 设置）。禁用后将从 djLint 配置文件中获取。需要 djLint ≥ 0.4.3。",
   "config.useGitignore": "将 .gitignore 中的排除项添加到默认的排除列表中。从 djLint 1.49 起适用于编辑器中的文件。需要 djLint ≥ 0.5.9。",
   "config.useVenv": "启用后，如果 `#djlint.executablePath#` 和 `#djlint.pythonPath#` 都没有提供可用的 djLint，则使用当前环境的 Python 解释器运行 djLint。开启 `python.useEnvironmentsExtension` 时，从 Python Environments 扩展（`ms-python.vscode-python-envs`）读取环境，否则从 Python 扩展（`ms-python.python`）读取。",
+  "config.section.extension": "扩展",
+  "config.section.files": "文件",
+  "config.section.configuration": "配置",
+  "config.section.linter": "代码检查",
+  "config.section.layout": "布局",
+  "config.section.rewrites": "改写",
+  "config.section.cssJs": "CSS 和 JavaScript",
   "untrustedWorkspaces": "在不受信任的工作区中，只运行内置的 djLint，并且它不读取任何文件。"
 }

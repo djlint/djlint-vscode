@@ -69,5 +69,12 @@
   "config.useEditorIndentation": "Get the number of indent spaces from VS Code (see the `#editor.tabSize#` setting). Disable to get it from the djLint config file. Requires djLint ≥ 0.4.3.",
   "config.useGitignore": "Add .gitignore excludes to the default exclude. Applies to the file in the editor from djLint 1.49. Requires djLint ≥ 0.5.9.",
   "config.useVenv": "When enabled, run djLint with the Python interpreter of the active environment if neither `#djlint.executablePath#` nor `#djlint.pythonPath#` gives a working djLint. The environment is read from the Python Environments extension (`ms-python.vscode-python-envs`) when `python.useEnvironmentsExtension` is on, otherwise from the Python extension (`ms-python.python`).",
+  "config.section.extension": "Extension",
+  "config.section.files": "Files",
+  "config.section.configuration": "Configuration",
+  "config.section.linter": "Linter",
+  "config.section.layout": "Layout",
+  "config.section.rewrites": "Rewrites",
+  "config.section.cssJs": "CSS and JavaScript",
   "untrustedWorkspaces": "In an untrusted workspace, only the bundled djLint runs, and it reads no files."
 }
