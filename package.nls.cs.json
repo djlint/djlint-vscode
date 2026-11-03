@@ -1,5 +1,5 @@
 {
-  "description": "Formátovač a linter HTML šablon (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, šablony Go, Mustache, Tera, Askama, Mako)",
+  "description": "Formátovač a linter HTML šablon (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, šablony Go, Angular, Tera, Askama, Mako)",
   "command.restart": "Restartovat",
   "command.showLogs": "Zobrazit protokoly",
   "config.blankLineAfterTag": "Přidat další prázdný řádek za skupiny značek `{% <tag> ... %}`. Na konec bloku se prázdné řádky nikdy nepřidají. Vyžaduje djLint ≥ 1.25.",

@@ -1,5 +1,5 @@
 {
-  "description": "HTML 模板格式化工具和代码检查工具（Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go 模板、Mustache、Tera、Askama、Mako）",
+  "description": "HTML 模板格式化工具和代码检查工具（Django、Jinja、Twig、Nunjucks、Handlebars、Mustache、Liquid、Go 模板、Angular、Tera、Askama、Mako）",
   "command.restart": "重启",
   "command.showLogs": "显示日志",
   "config.blankLineAfterTag": "在 `{% <tag> ... %}` 标签组之后添加一个额外的空行。块的末尾永远不会添加空行。需要 djLint ≥ 1.25。",

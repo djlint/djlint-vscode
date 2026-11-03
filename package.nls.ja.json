@@ -1,5 +1,5 @@
 {
-  "description": "HTML テンプレートのフォーマッターとリンター (Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go テンプレート、Mustache、Tera、Askama、Mako)",
+  "description": "HTML テンプレートのフォーマッターとリンター (Django、Jinja、Twig、Nunjucks、Handlebars、Mustache、Liquid、Go テンプレート、Angular、Tera、Askama、Mako)",
   "command.restart": "再起動",
   "command.showLogs": "ログを表示する",
   "config.blankLineAfterTag": "`{% <tag> ... %}` タグのまとまりの後に空行を追加します。ブロックの末尾に空行が追加されることはありません。djLint ≥ 1.25 が必要です。",

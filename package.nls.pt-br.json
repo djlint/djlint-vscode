@@ -1,5 +1,5 @@
 {
-  "description": "Formatador e linter de templates HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, templates Go, Mustache, Tera, Askama, Mako)",
+  "description": "Formatador e linter de templates HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, templates Go, Angular, Tera, Askama, Mako)",
   "command.restart": "Reiniciar",
   "command.showLogs": "Mostrar Logs",
   "config.blankLineAfterTag": "Adiciona uma linha em branco extra depois de grupos de tags `{% <tag> ... %}`. Linhas em branco nunca são adicionadas ao fim de um bloco. Requer djLint ≥ 1.25.",

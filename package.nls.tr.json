@@ -1,5 +1,5 @@
 {
-  "description": "HTML şablonları için biçimlendirici ve linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go şablonları, Mustache, Tera, Askama, Mako)",
+  "description": "HTML şablonları için biçimlendirici ve linter (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, Go şablonları, Angular, Tera, Askama, Mako)",
   "command.restart": "Yeniden başlat",
   "command.showLogs": "Günlükleri Göster",
   "config.blankLineAfterTag": "`{% <tag> ... %}` etiket gruplarından sonra fazladan bir boş satır ekler. Bir bloğun sonuna hiçbir zaman boş satır eklenmez. djLint ≥ 1.25 gerektirir.",

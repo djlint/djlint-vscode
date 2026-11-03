@@ -1,5 +1,5 @@
 {
-  "description": "Formater i linter szablonów HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, szablony Go, Mustache, Tera, Askama, Mako)",
+  "description": "Formater i linter szablonów HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Mustache, Liquid, szablony Go, Angular, Tera, Askama, Mako)",
   "command.restart": "Ponownie uruchom",
   "command.showLogs": "Pokaż dzienniki",
   "config.blankLineAfterTag": "Dodaje dodatkowy pusty wiersz po grupach tagów `{% <tag> ... %}`. Puste wiersze nigdy nie są dodawane na końcu bloku. Wymaga djLint ≥ 1.25.",
