@@ -108,11 +108,29 @@ describe("the extension", () => {
       ]);
     });
 
+    it("changes no setting from a language command without an editor", async () => {
+      await control.commands.get("djlint.toggleLinting")?.();
+      await control.commands.get("djlint.useAsFormatter")?.();
+      expect(control.configurationUpdates).toStrictEqual([]);
+    });
+
     it("opens the settings of the extension", async () => {
       await control.commands.get("djlint.openSettings")?.();
       expect(control.executedCommands).toStrictEqual([
         { args: ["@ext:monosans.djlint"], id: "workbench.action.openSettings" },
       ]);
+    });
+
+    it("shows its logs, and its menu", async () => {
+      let menus = 0;
+      control.quickPick = () => {
+        menus += 1;
+        return void 0;
+      };
+      await control.commands.get("djlint.showLogs")?.();
+      await control.commands.get("djlint.showMenu")?.();
+      expect(control.outputChannels[0]?.shownCount).toBe(1);
+      expect(menus).toBe(1);
     });
 
     it("opens one output channel", () => {

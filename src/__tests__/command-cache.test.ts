@@ -142,6 +142,18 @@ describe(CommandResolver, () => {
     });
   });
 
+  it("remembers nothing of a lookup that broke", async () => {
+    const resolver = new CommandResolver();
+    const probe = vi
+      .fn<ResolveDjlintCommandDeps["probe"]>()
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValue("1.44.2");
+    const deps = makeDeps(probe);
+    await expect(resolver.resolve(deps, "ws", "dir")).rejects.toThrow("boom");
+    await expect(resolver.resolve(deps, "ws", "dir")).resolves.toMatchObject({ version: "1.44.2" });
+    expect(probe).toHaveBeenCalledTimes(2);
+  });
+
   it("forgets a missing djLint on invalidation", async () => {
     const resolver = new CommandResolver();
     let installed = false;

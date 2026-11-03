@@ -6,7 +6,7 @@ import * as vscode from "vscode";
 import { getDocumentFolder, getExistingDocumentFolder } from "../engine/document-folder.js";
 import { parseLinterOutput } from "../engine/subprocess/parse-lint-output.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../engine/subprocess/version.js";
-import { deriveStdinFilename, workspaceScopeKey } from "../paths.js";
+import { deriveStdinFilename, directoryScopeKey, workspaceScopeKey } from "../paths.js";
 import { makeDocument, setWorkspaceFolders } from "./helpers.js";
 import { control, resetVscode, Uri } from "./vscode-stub.js";
 
@@ -73,6 +73,8 @@ describe("version and path helpers", () => {
     it.each([
       ["an empty line field", `H1${FS}:5${FS}m${RS}\n`],
       ["a non-numeric line", `H1${FS}x:5${FS}m${RS}\n`],
+      ["no column", `H1${FS}5${FS}m${RS}\n`],
+      ["a position of three parts", `H1${FS}5:1:2${FS}m${RS}\n`],
     ])("drops a record with %s", (_label, stdout) => {
       expect(parseLinterOutput(stdout)).toStrictEqual([]);
     });
@@ -120,6 +122,12 @@ describe("version and path helpers", () => {
       expect(parseLinterOutput("H013 1:5 first\nH014 2:6 second")).toStrictEqual([
         { code: "H013", column: 5, line: 1, message: "first" },
         { code: "H014", column: 6, line: 2, message: "second" },
+      ]);
+    });
+
+    it("skips a finding on a line past any safe number", () => {
+      expect(parseLinterOutput("H013 99999999999999999999:5 big\nH014 2:6 small")).toStrictEqual([
+        { code: "H014", column: 6, line: 2, message: "small" },
       ]);
     });
 
@@ -192,6 +200,15 @@ describe("version and path helpers", () => {
       expect(one).toBe(workspaceScopeKey(makeDocument("/one/c.html")));
       expect(one).not.toBe(workspaceScopeKey(makeDocument("/two/c.html")));
       expect(workspaceScopeKey(makeDocument("/loose/c.html"))).toBe("");
+    });
+
+    it("scopes by the folder a URI names, or by the URI where it names none", () => {
+      const key = directoryScopeKey(makeDocument("/w/a/b.html"));
+      expect(key).toBe(directoryScopeKey(makeDocument("/w/a/c.html")));
+      expect(key).not.toBe(directoryScopeKey(makeDocument("/w/c.html")));
+      expect(directoryScopeKey(makeDocument(vscode.Uri.parse("untitled:Untitled-1")))).toBe(
+        "untitled:Untitled-1",
+      );
     });
   });
 

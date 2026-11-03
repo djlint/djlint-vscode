@@ -213,6 +213,42 @@ describe(DjlintStatus, () => {
     expect(labels).not.toContain("$(check) Formatting html");
     expect(control.executedCommands).toStrictEqual([{ args: [], id: "djlint.showLogs" }]);
   });
+
+  it("leaves out of its menu what it has nothing to do about", async () => {
+    control.configuration = {
+      "editor.defaultFormatter": "monosans.djlint",
+      formatLanguages: ["html"],
+    };
+    const status = new DjlintStatus();
+    setActiveDocument(document);
+    expect(tooltip()).toContain("$(check) Formatting `html`");
+    const labels: string[] = [];
+    control.quickPick = (items) => {
+      labels.push(...items.map(({ label }) => label));
+      return void 0;
+    };
+    await status.showMenu();
+    expect(labels).toContain("$(circle-slash) Not linting html");
+    expect(labels.filter((label) => label.includes("Formatting"))).toStrictEqual([]);
+    status.dispose();
+  });
+
+  it("offers only its own commands without a file, and runs nothing when dismissed", async () => {
+    const status = new DjlintStatus();
+    const labels: string[] = [];
+    control.quickPick = (items) => {
+      labels.push(...items.map(({ label }) => label));
+      return void 0;
+    };
+    await status.showMenu();
+    expect(labels).toStrictEqual([
+      "$(output) Show Logs",
+      "$(debug-restart) Restart",
+      "$(gear) Settings",
+    ]);
+    expect(control.executedCommands).toStrictEqual([]);
+    status.dispose();
+  });
 });
 
 describe(updateForLanguage, () => {

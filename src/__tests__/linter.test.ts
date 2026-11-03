@@ -361,6 +361,12 @@ describe(Linter, () => {
       ).resolves.toStrictEqual(new vscode.Range(0, 2, 0, 5));
     });
 
+    it("takes columns that are already the editor's as they are", async () => {
+      await expect(
+        rangeOf("😀<a>", { column: 2, endColumn: 5, endLine: 1, isUtf16: true, line: 1 }),
+      ).resolves.toStrictEqual(new vscode.Range(0, 2, 0, 5));
+    });
+
     it("is empty when djLint gives no end", async () => {
       await expect(rangeOf("<img>", { column: 1, line: 1 })).resolves.toStrictEqual(
         new vscode.Range(0, 1, 0, 1),
@@ -429,6 +435,34 @@ describe(Linter, () => {
       healthy = false;
       await expect(linter.refreshAll()).resolves.toBeUndefined();
       expect(diagnosticsOf(document)).toBeUndefined();
+    });
+
+    it("drops stale ones, but warns of no failure, for a run the engine cancelled", async () => {
+      control.configuration = { enableLinting: true, formatLanguages: ["html"] };
+      setActiveDocument(document);
+      const status = new DjlintStatus();
+      let isCancelling = false;
+      const linter = new Linter(
+        makeContext(),
+        makeChannel(),
+        makeEngines({
+          lint: async () => {
+            // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
+            if (isCancelling) {
+              throw new vscode.CancellationError();
+            }
+            return [H013];
+          },
+        }),
+        status,
+      );
+      await linter.refreshAll();
+      expect(diagnosticsOf(document)).toHaveLength(1);
+      isCancelling = true;
+      await linter.refreshAll();
+      expect(diagnosticsOf(document)).toBeUndefined();
+      expect(control.statusItems[0]?.text).toBe("djLint");
+      status.dispose();
     });
 
     it("takes back its warning once linting is turned off", async () => {

@@ -64,9 +64,24 @@ describe("djLint errors", () => {
       expect(message).not.toContain("does not support the");
     });
 
+    it("says djLint ran out of time", () => {
+      const { message } = report(makeExecaError({ timedOut: true }));
+      expect(message).toBe("djLint did not finish in time.");
+    });
+
+    it("names the signal that stopped djLint", () => {
+      const { message } = report(makeExecaError({ signal: "SIGKILL" }));
+      expect(message).toBe("djLint was stopped by SIGKILL.");
+    });
+
     it("says why djLint could not start", () => {
       const { message } = report(makeExecaError({ code: "E2BIG" }));
       expect(message).toBe("djLint could not start: E2BIG.");
+    });
+
+    it("says djLint could not start when nothing says why", () => {
+      const { message } = report(makeExecaError({}));
+      expect(message).toBe("djLint could not start: unknown error.");
     });
 
     it("summarizes stderr by its last non-empty line", () => {
