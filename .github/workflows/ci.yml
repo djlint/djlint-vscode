@@ -94,9 +94,8 @@ jobs:
       # Last, because the steps above need no djLint on PATH.
       - run: uv tool install --python 3.14 "$(node -p "/djlint==[^\"]+/.exec(require('fs').readFileSync('pyproject.toml', 'utf8'))[0]")"
         shell: bash
-      # With djLint on PATH, the suites that run it are not skipped, so the
-      # coverage report is the most complete here.
-      - run: npx vitest run --coverage
+      # With djLint on PATH, the suites that run it are not skipped.
+      - run: npx vitest run
   e2e-web:
     runs-on: ubuntu-26.04
     steps:
