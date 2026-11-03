@@ -1,5 +1,5 @@
 {
-  "description": "HTML 範本格式化工具與 linter（Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go 範本、Mustache、Tera、Askama）",
+  "description": "HTML 範本格式化工具與 linter（Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go 範本、Mustache、Tera、Askama、Mako）",
   "command.restart": "重新啟動",
   "command.showLogs": "顯示記錄",
   "config.blankLineAfterTag": "在 `{% <tag> ... %}` 標籤群組之後額外加上一個空白行。空白行永遠不會被加在區塊的結尾。需要 djLint ≥ 1.25。",

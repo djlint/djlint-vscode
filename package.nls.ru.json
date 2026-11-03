@@ -1,5 +1,5 @@
 {
-  "description": "Форматер и линтер HTML-шаблонов (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, шаблоны Go, Mustache, Tera, Askama)",
+  "description": "Форматер и линтер HTML-шаблонов (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, шаблоны Go, Mustache, Tera, Askama, Mako)",
   "command.restart": "Перезапустить",
   "command.showLogs": "Показать журналы",
   "config.blankLineAfterTag": "Добавлять пустую строку после групп тегов `{% <tag> ... %}`. В конец блока пустые строки никогда не добавляются. Требуется djLint ≥ 1.25.",

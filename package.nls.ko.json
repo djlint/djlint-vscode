@@ -1,5 +1,5 @@
 {
-  "description": "HTML 템플릿 포맷터 및 린터(Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go 템플릿, Mustache, Tera, Askama)",
+  "description": "HTML 템플릿 포맷터 및 린터(Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go 템플릿, Mustache, Tera, Askama, Mako)",
   "command.restart": "다시 시작",
   "command.showLogs": "로그 표시",
   "config.blankLineAfterTag": "`{% <tag> ... %}` 태그 그룹 뒤에 빈 줄을 하나 추가합니다. 블록의 끝에는 빈 줄을 추가하지 않습니다. djLint ≥ 1.25에서 사용할 수 있습니다.",

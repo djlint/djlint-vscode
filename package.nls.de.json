@@ -1,5 +1,5 @@
 {
-  "description": "Formatter und Linter für HTML-Templates (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go-Templates, Mustache, Tera, Askama)",
+  "description": "Formatter und Linter für HTML-Templates (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go-Templates, Mustache, Tera, Askama, Mako)",
   "command.restart": "Neu starten",
   "command.showLogs": "Protokolle anzeigen",
   "config.blankLineAfterTag": "Fügt nach Gruppen von `{% <tag> ... %}`-Tags eine zusätzliche Leerzeile ein. Am Ende eines Blocks werden nie Leerzeilen eingefügt. Erfordert djLint ≥ 1.25.",
