@@ -32,7 +32,7 @@
   "config.lineBreakAfterMultilineTag": "タグの属性が複数行にわたるとき、その中身を新しい行から始めます。djLint ≥ 1.27 が必要です。",
   "config.lintOnType": "ファイルを開いたときと保存したときに加えて、入力が少し止まったときにもリントします。`#djlint.enableLinting#` が必要です。",
   "config.maxAttributeLength": "タグの属性がこの長さを超えると、フォーマッターは属性を複数行に分けます。djLint ≥ 1.25 が必要です。",
-  "config.maxBlankLines": "連続する空行を最大でこの行数まで残します。未設定のままにすると、djLint のデフォルトの 0 が使われ、空行は削除されます。`#djlint.preserveBlankLines#` が有効な場合はすべての空行が残るため、この設定は効きません。djLint ≥ 1.31 が必要です。",
+  "config.maxBlankLines": "連続する空行を最大でこの行数まで残します。未設定のままにすると、djLint のデフォルトの 0 が使われ、空行は削除されます。`#djlint.preserveBlankLines#` が有効な場合、この設定は効きません。djLint ≥ 1.31 が必要です。",
   "config.maxLineLength": "フォーマッターは、行がこの長さに収まる場合に限り、一部の HTML タグとテンプレートタグを 1 行にまとめます。djLint ≥ 1.25 が必要です。",
   "config.nameEndblocks": "複数行にわたって書かれたブロックについて、それを閉じる `{% endblock %}` にブロックの名前を書き込みます。これは `T003` が求めていることです。djLint ≥ 1.45 が必要です。",
   "config.noEntityFormatting": "実体参照を、それが表す文字に書き換えません。たとえば `&copy;` は © にならず、書かれたまま残ります。構文上の意味を持つ実体参照と目に見えない文字の実体参照は、どちらにしても書き換えられません。djLint ≥ 1.45 が必要です。",
