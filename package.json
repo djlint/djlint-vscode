@@ -17,6 +17,7 @@
     "hugo",
     "jinja",
     "liquid",
+    "mako",
     "mustache",
     "nunjucks",
     "tera",
@@ -168,6 +169,7 @@
               "tera",
               "tera-html",
               "askama-html",
+              "mako",
               "html"
             ],
             "description": "%config.formatLanguages%",
@@ -233,6 +235,7 @@
               "angular",
               "tera",
               "askama",
+              "mako",
               "html"
             ],
             "enumDescriptions": [
@@ -247,6 +250,7 @@
               "%config.profile.angular%",
               "%config.profile.tera%",
               "%config.profile.askama%",
+              "%config.profile.mako%",
               "%config.profile.html%"
             ],
             "default": "",
@@ -722,6 +726,10 @@
       "[askama-html]": {
         "djlint.enableLinting": true,
         "djlint.profile": "askama"
+      },
+      "[mako]": {
+        "djlint.enableLinting": true,
+        "djlint.profile": "mako"
       },
       "[html]": {
         "djlint.enableLinting": true

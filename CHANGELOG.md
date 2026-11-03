@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- A `mako` profile for Mako templates, in the profile setting and as the default for the `mako` language, which djLint now formats and lints out of the box. It needs djLint 1.49.8 or later.
+
 ## [2026.11.7] - 2026-11-03
 
 - Bundle djLint 1.49.7. A file with many tags that are never closed, such as a half-written template, formats in under a second instead of taking minutes. With `djlint.formatJs` or `djlint.formatCss` on, a second format no longer changes a long `<script>` or `<style>` tag or a ternary written over several lines. A `<script>` that holds a client-side template, such as `type="text/template"`, is left as written.
