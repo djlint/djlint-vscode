@@ -99,6 +99,7 @@ const PROFILE_MIN_VERSIONS: ReadonlyMap<string, string> = new Map([
   ["all", "1.44"],
   ["askama", "1.42"],
   ["liquid", "1.42"],
+  ["mako", "1.49.8"],
   ["tera", "1.42"],
 ]);
 

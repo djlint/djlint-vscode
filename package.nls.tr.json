@@ -1,5 +1,5 @@
 {
-  "description": "HTML şablonları için biçimlendirici ve linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go şablonları, Mustache, Tera, Askama)",
+  "description": "HTML şablonları için biçimlendirici ve linter (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, Go şablonları, Mustache, Tera, Askama, Mako)",
   "command.restart": "Yeniden başlat",
   "command.showLogs": "Günlükleri Göster",
   "config.blankLineAfterTag": "`{% <tag> ... %}` etiket gruplarından sonra fazladan bir boş satır ekler. Bir bloğun sonuna hiçbir zaman boş satır eklenmez. djLint ≥ 1.25 gerektirir.",
@@ -43,7 +43,7 @@
   "config.preserveBlankLines": "Mümkün olduğunda boş satırları korur. Boş satırların bilinçli olduğu, html olmayan şablon dosyaları için idealdir. djLint ≥ 1.3 gerektirir.",
   "config.preserveClassNewlines": "Çok satırlı class özniteliklerinin içindeki satır sonlarını korur. djLint ≥ 1.39 gerektirir.",
   "config.preserveLeadingSpace": "Mümkün olduğunda metnin başındaki boşluğu korur. Metin girintisinin bilinçli olduğu, html olmayan şablon dosyaları için idealdir. djLint ≥ 1.2 gerektirir.",
-  "config.profile": "Şablon dili için bir profil ayarlar. Profil, o dile uygulanan linter kurallarını etkinleştirir ve yeniden biçimlendirmeyi de değiştirebilir. djLint ≥ 0.4.5 gerektirir; `askama`, `tera` ve `liquid` profilleri djLint ≥ 1.42, `all` ise djLint ≥ 1.44 gerektirir.",
+  "config.profile": "Şablon dili için bir profil ayarlar. Profil, o dile uygulanan linter kurallarını etkinleştirir ve yeniden biçimlendirmeyi de değiştirebilir. djLint ≥ 0.4.5 gerektirir; `askama`, `tera` ve `liquid` profilleri djLint ≥ 1.42, `all` djLint ≥ 1.44, `mako` ise djLint ≥ 1.49.8 gerektirir.",
   "config.profile.unset": "Profil iletmez; böylece djLint yapılandırma dosyanızdaki profili ya da kendi varsayılanını kullanır.",
   "config.profile.all": "Tüm şablon dilleri bir arada. Bunlardan biri için geçerli olmayan bir kural atlanır.",
   "config.profile.django": "Django şablonları.",
@@ -55,6 +55,7 @@
   "config.profile.angular": "Angular şablonları.",
   "config.profile.tera": "Tera şablonları. Zola için de bunu kullanın.",
   "config.profile.askama": "Askama şablonları; Rust'ta Jinja tarzı şablonlar. Rust ifadeleri hiçbir zaman yeniden biçimlendirilmez.",
+  "config.profile.mako": "Mako şablonları. Kontrol satırları ve `##` yorumları her zaman kendi satırında kalır; Python ifadeleri hiçbir zaman yeniden biçimlendirilmez.",
   "config.profile.html": "Şablon sözdizimi içermeyen düz HTML.",
   "config.pythonPath": "`python -m djlint` komutunu çalıştırmak için kullanılan Python yorumlayıcısının yolu ya da PATH üzerinde aranacak yalın bir komut adı. Yol ayırıcısı içeren göreli bir değer, çalışma alanı kökünden çözümlenir. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` ve `${env:NAME}` genişletilir. Boş olduğunda ya da çalışan bir djLint vermediğinde sırada etkin Python ortamı denenir (bkz. `#djlint.useVenv#`).",
   "config.quoteStyle": "Şablon etiketlerinin içindeki dizeler için kullanılacak tırnaklar. `T002` aynı tırnakları ister ve biçimlendirici bunları `{% if x == \"a\" %}` gibi koşullarda da kullanır; böylece bir dosyada aynı dize iki farklı şekilde yazılmaz. HTML özniteliklerinin tırnakları `H008` kuralına bırakılır. djLint ≥ 1.45 gerektirir.",

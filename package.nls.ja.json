@@ -1,5 +1,5 @@
 {
-  "description": "HTML テンプレートのフォーマッターとリンター (Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go テンプレート、Mustache、Tera、Askama)",
+  "description": "HTML テンプレートのフォーマッターとリンター (Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go テンプレート、Mustache、Tera、Askama、Mako)",
   "command.restart": "再起動",
   "command.showLogs": "ログを表示する",
   "config.blankLineAfterTag": "`{% <tag> ... %}` タグのまとまりの後に空行を追加します。ブロックの末尾に空行が追加されることはありません。djLint ≥ 1.25 が必要です。",
@@ -43,7 +43,7 @@
   "config.preserveBlankLines": "可能な場合、空行を保持します。空行が意図的な、html 以外のテンプレートファイルに最適です。djLint ≥ 1.3 が必要です。",
   "config.preserveClassNewlines": "複数行にわたる class 属性の中の改行を保持します。djLint ≥ 1.39 が必要です。",
   "config.preserveLeadingSpace": "可能な場合、テキストの先頭のスペースを保持します。テキストのインデントが意図的な、html 以外のテンプレートファイルに最適です。djLint ≥ 1.2 が必要です。",
-  "config.profile": "テンプレート言語のプロファイルを設定します。プロファイルは、その言語に当てはまるリンターのルールを有効にし、再フォーマットの方法も変えることがあります。djLint ≥ 0.4.5 が必要です。`askama`、`tera`、`liquid` のプロファイルには djLint ≥ 1.42、`all` には djLint ≥ 1.44 が必要です。",
+  "config.profile": "テンプレート言語のプロファイルを設定します。プロファイルは、その言語に当てはまるリンターのルールを有効にし、再フォーマットの方法も変えることがあります。djLint ≥ 0.4.5 が必要です。`askama`、`tera`、`liquid` のプロファイルには djLint ≥ 1.42、`all` には djLint ≥ 1.44、`mako` には djLint ≥ 1.49.8 が必要です。",
   "config.profile.unset": "プロファイルを渡さず、djLint が設定ファイルのプロファイルか、独自のデフォルトを使うようにします。",
   "config.profile.all": "すべてのテンプレート言語を一度に対象にします。いずれかの言語に当てはまらないルールはスキップされます。",
   "config.profile.django": "Django テンプレート。",
@@ -55,6 +55,7 @@
   "config.profile.angular": "Angular テンプレート。",
   "config.profile.tera": "Tera テンプレート。Zola にもこれを使います。",
   "config.profile.askama": "Askama テンプレート (Rust の Jinja 形式のテンプレート)。Rust の式は再フォーマットされません。",
+  "config.profile.mako": "Mako テンプレート。制御行と `##` コメントは常に独立した行に置かれ、Python の式は再フォーマットされません。",
   "config.profile.html": "テンプレート構文を含まないプレーンな HTML。",
   "config.pythonPath": "`python -m djlint` の実行に使う Python インタープリターへのパス、または PATH から検索するコマンド名。パス区切り文字を含む相対値は、ワークスペースのルートを基準に解決されます。`${workspaceFolder}`、`${workspaceFolder:name}`、`${userHome}`、`${env:NAME}` は展開されます。空の場合や動作する djLint が得られない場合は、次にアクティブな Python 環境を試します (`#djlint.useVenv#` を参照)。",
   "config.quoteStyle": "テンプレートタグ内の文字列に使う引用符。`T002` も同じ引用符を求め、フォーマッターは `{% if x == \"a\" %}` のような条件の中でもこの引用符を使うため、1 つのファイルで同じ文字列が 2 通りの書き方になることはありません。HTML 属性の引用符は `H008` に任されます。djLint ≥ 1.45 が必要です。",

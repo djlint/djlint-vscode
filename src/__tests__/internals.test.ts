@@ -132,6 +132,8 @@ describe("shared internals", () => {
       ["askama", "1.41", false],
       ["all", "1.43", false],
       ["all", "1.44", true],
+      ["mako", "1.49.7", false],
+      ["mako", "1.49.8", true],
       ["django", "1.41", true],
     ])("gates profile %s on djLint %s", (profile, version, isKept) => {
       const profileArgs = formattingArgs.filter((arg) => arg.cliName === "--profile");

@@ -1,5 +1,5 @@
 {
-  "description": "HTML 模板格式化工具和代码检查工具（Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go 模板、Mustache、Tera、Askama）",
+  "description": "HTML 模板格式化工具和代码检查工具（Django、Jinja、Twig、Nunjucks、Handlebars、Liquid、Go 模板、Mustache、Tera、Askama、Mako）",
   "command.restart": "重启",
   "command.showLogs": "显示日志",
   "config.blankLineAfterTag": "在 `{% <tag> ... %}` 标签组之后添加一个额外的空行。块的末尾永远不会添加空行。需要 djLint ≥ 1.25。",
@@ -43,7 +43,7 @@
   "config.preserveBlankLines": "尽可能保留空行。非常适合空行有意为之的非 html 模板文件。需要 djLint ≥ 1.3。",
   "config.preserveClassNewlines": "保留多行 class 属性中的换行。需要 djLint ≥ 1.39。",
   "config.preserveLeadingSpace": "尽可能保留文本的前导空格。非常适合文本缩进有意为之的非 html 模板文件。需要 djLint ≥ 1.2。",
-  "config.profile": "为模板语言设置预设。预设会启用适用于该语言的代码检查规则，也可能改变重新格式化的方式。需要 djLint ≥ 0.4.5；`askama`、`tera` 和 `liquid` 预设需要 djLint ≥ 1.42，`all` 需要 djLint ≥ 1.44。",
+  "config.profile": "为模板语言设置预设。预设会启用适用于该语言的代码检查规则，也可能改变重新格式化的方式。需要 djLint ≥ 0.4.5；`askama`、`tera` 和 `liquid` 预设需要 djLint ≥ 1.42，`all` 需要 djLint ≥ 1.44，`mako` 需要 djLint ≥ 1.49.8。",
   "config.profile.unset": "不传递预设，因此 djLint 会使用配置文件中的预设，或它自己的默认值。",
   "config.profile.all": "同时适用于所有模板语言。不适用于其中某种语言的规则会被跳过。",
   "config.profile.django": "Django 模板。",
@@ -55,6 +55,7 @@
   "config.profile.angular": "Angular 模板。",
   "config.profile.tera": "Tera 模板。Zola 也使用这个预设。",
   "config.profile.askama": "Askama 模板，即 Rust 中的 Jinja 风格模板。Rust 表达式永远不会被重新格式化。",
+  "config.profile.mako": "Mako 模板。控制行和 `##` 注释始终独占一行，Python 表达式永远不会被重新格式化。",
   "config.profile.html": "纯 HTML，不含模板语法。",
   "config.pythonPath": "用于运行 `python -m djlint` 的 Python 解释器的路径，或在 PATH 中查找的命令名称。包含路径分隔符的相对值从工作区根目录开始解析。`${workspaceFolder}`、`${workspaceFolder:name}`、`${userHome}` 和 `${env:NAME}` 会被展开。如果为空或其中没有可用的 djLint，接下来会尝试当前的 Python 环境（请参阅 `#djlint.useVenv#`）。",
   "config.quoteStyle": "模板标签内字符串使用的引号。`T002` 要求使用相同的引号，格式化工具在 `{% if x == \"a\" %}` 这样的条件中也会使用这种引号，这样同一个文件中同一个字符串就不会有两种写法。HTML 属性的引号交由 `H008` 处理。需要 djLint ≥ 1.45。",

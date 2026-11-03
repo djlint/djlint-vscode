@@ -1,5 +1,5 @@
 {
-  "description": "Formatador e linter de templates HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, templates Go, Mustache, Tera, Askama)",
+  "description": "Formatador e linter de templates HTML (Django, Jinja, Twig, Nunjucks, Handlebars, Liquid, templates Go, Mustache, Tera, Askama, Mako)",
   "command.restart": "Reiniciar",
   "command.showLogs": "Mostrar Logs",
   "config.blankLineAfterTag": "Adiciona uma linha em branco extra depois de grupos de tags `{% <tag> ... %}`. Linhas em branco nunca são adicionadas ao fim de um bloco. Requer djLint ≥ 1.25.",
@@ -43,7 +43,7 @@
   "config.preserveBlankLines": "Preserva as linhas em branco, quando possível. Ideal para arquivos de template que não são html, em que as linhas em branco são intencionais. Requer djLint ≥ 1.3.",
   "config.preserveClassNewlines": "Preserva as quebras de linha dentro de atributos class de várias linhas. Requer djLint ≥ 1.39.",
   "config.preserveLeadingSpace": "Preserva o espaço no início do texto, quando possível. Ideal para arquivos de template que não são html, em que a indentação do texto é intencional. Requer djLint ≥ 1.2.",
-  "config.profile": "Define um perfil para a linguagem de template. O perfil habilita as regras do linter que se aplicam a essa linguagem e também pode alterar a reformatação. Requer djLint ≥ 0.4.5; os perfis `askama`, `tera` e `liquid` requerem djLint ≥ 1.42, e `all` requer djLint ≥ 1.44.",
+  "config.profile": "Define um perfil para a linguagem de template. O perfil habilita as regras do linter que se aplicam a essa linguagem e também pode alterar a reformatação. Requer djLint ≥ 0.4.5; os perfis `askama`, `tera` e `liquid` requerem djLint ≥ 1.42, `all` requer djLint ≥ 1.44 e `mako` requer djLint ≥ 1.49.8.",
   "config.profile.unset": "Não passa um perfil, então o djLint usa o do seu arquivo de configuração, ou o seu próprio padrão.",
   "config.profile.all": "Todas as linguagens de template de uma vez. Uma regra que não vale para uma delas é pulada.",
   "config.profile.django": "Templates Django.",
@@ -55,6 +55,7 @@
   "config.profile.angular": "Templates Angular.",
   "config.profile.tera": "Templates Tera. Use este também para Zola.",
   "config.profile.askama": "Templates Askama, templates no estilo Jinja em Rust. As expressões Rust nunca são reformatadas.",
+  "config.profile.mako": "Templates Mako. Linhas de controle e comentários `##` ficam sempre em uma linha própria, e as expressões Python nunca são reformatadas.",
   "config.profile.html": "HTML puro, sem sintaxe de template.",
   "config.pythonPath": "Caminho de um interpretador Python usado para executar `python -m djlint`, ou um nome de comando sozinho a ser procurado no PATH. Um valor relativo que contém um separador de caminho é resolvido a partir da raiz do workspace. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` e `${env:NAME}` são expandidos. Quando vazio ou sem um djLint funcional, o ambiente Python ativo é tentado em seguida (veja `#djlint.useVenv#`).",
   "config.quoteStyle": "Aspas a usar em strings dentro de tags de template. A `T002` exige as mesmas aspas, e o formatador as usa em condições como `{% if x == \"a\" %}`, para que um mesmo arquivo não escreva a mesma string das duas formas. As aspas dos atributos HTML ficam a cargo da `H008`. Requer djLint ≥ 1.45.",
