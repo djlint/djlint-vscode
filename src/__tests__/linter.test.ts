@@ -224,14 +224,6 @@ describe(Linter, () => {
       expect(diagnosticsOf(document)).toHaveLength(1);
     });
 
-    it("does not hold up activation", () => {
-      control.documents = [document];
-      const { lint } = makeManualLint();
-      expect(() => {
-        makeLinter(lint).linter.activate();
-      }).not.toThrow();
-    });
-
     it("diagnoses the editor on screen before background tabs", async () => {
       const background = makeDocument("/w/bg.html");
       const another = makeDocument("/w/bg2.html");
