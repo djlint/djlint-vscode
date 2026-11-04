@@ -18,7 +18,6 @@ jobs:
       - e2e
       - e2e-web
       - pre-commit
-      - tsc
     runs-on: ubuntu-26.04
     steps:
       - uses: re-actors/alls-green@b5b5b37504aa4183270bd3d855c52a67f212be35 # release/v1
@@ -133,16 +132,3 @@ jobs:
         env:
           NPM_CONFIG_MIN_RELEASE_AGE: "3" # days
           UV_EXCLUDE_NEWER: 3 days
-  tsc:
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version-file: .nvmrc
-          package-manager-cache: false
-          check-latest: true
-      - run: npm ci
-      - run: npx tsc --noEmit

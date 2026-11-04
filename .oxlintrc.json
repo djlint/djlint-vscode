@@ -9,7 +9,12 @@
     "style": "error",
     "restriction": "error"
   },
-  "options": { "denyWarnings": true, "reportUnusedDisableDirectives": "error", "typeAware": true },
+  "options": {
+    "denyWarnings": true,
+    "reportUnusedDisableDirectives": "error",
+    "typeAware": true,
+    "typeCheck": true
+  },
   "env": { "node": true },
   "ignorePatterns": ["assets/", "test/"],
   "rules": {
