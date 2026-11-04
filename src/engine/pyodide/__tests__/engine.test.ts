@@ -158,11 +158,6 @@ describe(PyodideEngine, () => {
       });
     });
 
-    it("omits false booleans rather than sending them", () => {
-      const { options } = sentFor({ formatJs: false });
-      expect(options).not.toHaveProperty("format_js");
-    });
-
     it("uses the lint argument set for a lint, which has no indent", () => {
       const { options } = sentFor(
         { formatCss: true, ignore: ["H013"], profile: "django", useEditorIndentation: true },

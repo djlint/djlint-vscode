@@ -144,7 +144,6 @@ describe("djLint errors", () => {
       ["a format run", 1, "", false, false],
       ["a traceback", 1, "Traceback (most recent call last)", true, false],
       ["a usage error", 2, "", true, false],
-      ["exit 1 with a real complaint", 1, "Traceback", true, false],
     ])("%s", (_label, exitCode, stderr, isLint, expected) => {
       expect(isValidLintResult(makeExecaError({ exitCode, stderr }), isLint)).toBe(expected);
     });

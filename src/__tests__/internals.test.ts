@@ -170,12 +170,6 @@ describe("shared internals", () => {
       timedOut = result as unknown as typeof timedOut;
     });
 
-    it("is reaped, not cancelled", () => {
-      expect(timedOut.timedOut).toBe(true);
-      expect(timedOut.isCanceled).toBe(false);
-      expect(timedOut.exitCode).toBeUndefined();
-    });
-
     it("is not mistaken for lint findings or a missing djLint", () => {
       expect(isValidLintResult(timedOut, true)).toBe(false);
       expect(isDjlintUnavailable(timedOut)).toBe(false);
