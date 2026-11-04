@@ -1,15 +1,32 @@
-# What the extension bundles. Run `uv lock` after changing it.
+# What the extension bundles, and the tools for the Python in this repo. Run
+# `uv lock` after changing it. Only the project's dependencies are bundled.
 # requires-python must be the Python that Pyodide runs, so Renovate leaves it
 # alone. When a Pyodide bump moves to a new Python, `npm run assets` fails until
-# this is updated, and the python-version in the workflows has to follow.
+# this is updated, and the python-version in the workflows and the
+# language_version of the mypy hook have to follow.
 [project]
 name = "djlint-vscode"
 version = "0"
 requires-python = "==3.14.*"
 dependencies = ["djlint==1.49.9"]
 
+[dependency-groups]
+dev = [
+  "covdefaults==2.3.0",
+  "mypy==2.4.1",
+  "pytest-cov==7.1.0",
+  "ruff==0.17.3",
+  { include-group = "test" },
+]
+# For build/minify_python.py.
+minify = ["python-minifier==3.4.0"]
+test = ["pytest==9.2.0", { include-group = "minify" }]
+test-ci = [
+  "pytest-github-actions-annotate-failures==0.4.2",
+  { include-group = "test" },
+]
+
 [tool.uv]
-environments = ["sys_platform == 'linux'"]
 exclude-newer = "3 days"
 exclude-newer-package = { djlint = false }
 package = false

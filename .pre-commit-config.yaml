@@ -33,6 +33,26 @@ repos:
           - --no-error-on-unmatched-pattern
         additional_dependencies:
           - oxfmt@0.75.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c # frozen: v0.17.3
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: ad26ebfa797fcb9b8f83275937c1c1d6e126719c # frozen: v2.4.1
+    hooks:
+      - id: mypy
+        # The Python Pyodide runs, as in pyproject.toml.
+        language_version: "3.14"
+        language: python
+        args:
+          - --scripts-are-modules
+        additional_dependencies:
+          - djlint==1.49.9
+          - pytest==9.2.0
+          - python-minifier==3.4.0
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
     hooks:

@@ -12,7 +12,7 @@ import zipfile
 from email.parser import HeaderParser
 from pathlib import Path
 
-LICENSE_FILE = re.compile(r"(?:licen[cs]e|copying|notice)(?:[-.]|$)", re.I)
+LICENSE_FILE = re.compile(r"(?:licen[cs]e|copying|notice)(?:[-.]|$)", re.IGNORECASE)
 RULE = "=" * 80
 
 # Upstream license files of projects whose wheels and sdists carry none.
@@ -30,23 +30,19 @@ def fetch_missing_license(name: str, version: str) -> str:
             " add its upstream one to MISSING_LICENSES"
         )
         raise SystemExit(msg)
-    with urllib.request.urlopen(
-        url.format(version=version), timeout=60
-    ) as response:
-        return response.read().decode()
+    # The URLs above are all https.
+    with urllib.request.urlopen(url.format(version=version), timeout=60) as response:  # noqa: S310
+        body: bytes = response.read()
+    return body.decode()
 
 
 def section(wheel: Path) -> str:
     with zipfile.ZipFile(wheel) as archive:
         names = archive.namelist()
         dist_info = next(
-            name.split("/")[0]
-            for name in names
-            if name.split("/")[0].endswith(".dist-info")
+            name.split("/")[0] for name in names if name.split("/")[0].endswith(".dist-info")
         )
-        metadata = HeaderParser().parsestr(
-            archive.read(f"{dist_info}/METADATA").decode()
-        )
+        metadata = HeaderParser().parsestr(archive.read(f"{dist_info}/METADATA").decode())
         files = sorted(
             name
             for name in names
@@ -71,10 +67,7 @@ def section(wheel: Path) -> str:
         or metadata.get("License", "")
     )
     texts_joined = "\n\n".join(texts)
-    return (
-        f"{RULE}\n{metadata['Name']} {metadata['Version']} ({license_})\n\n"
-        f"{texts_joined}\n"
-    )
+    return f"{RULE}\n{metadata['Name']} {metadata['Version']} ({license_})\n\n{texts_joined}\n"
 
 
 def main() -> None:

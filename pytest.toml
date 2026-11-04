@@ -1,0 +1,7 @@
+[pytest]
+empty_parameter_set_mark = "fail_at_collect"
+filterwarnings = ["error"]
+# The scripts under test live beside the code that runs them, not in a package.
+pythonpath = ["build", "src/engine/pyodide"]
+strict = true
+testpaths = ["build", "src"]

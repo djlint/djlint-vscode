@@ -63,12 +63,14 @@ function runUv(args, options = {}) {
 }
 
 /**
- * @returns {Closure} What uv.lock pins, with the hashes of its files.
+ * @returns {Closure} What uv.lock pins for the project, with the hashes of its
+ * files. The dependency groups are tools for this repo, and are left out.
  */
 function readClosure() {
   const exported = runUv([
     "export",
     "--locked",
+    "--no-default-groups",
     "--no-emit-project",
     "--no-header",
     "--no-annotate",
@@ -89,6 +91,10 @@ function readClosure() {
       throw new Error(`unrecognized line from uv export: ${trimmed}`);
     }
     const [, name = "", version = ""] = pin;
+    // uv.lock is resolved for every platform, and Pyodide is none of them.
+    if (trimmed.includes(";")) {
+      throw new Error(`${name} is only needed on some platforms: decide whether Pyodide needs it`);
+    }
     closure.set(name.toLowerCase(), { hashes, version });
   }
   return closure;
