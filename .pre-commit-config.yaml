@@ -33,6 +33,28 @@ repos:
           - --no-error-on-unmatched-pattern
         additional_dependencies:
           - oxfmt@0.75.0
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 25bcf95026b96e2dd3c0aec3090c3d6ef6ca2e6c # frozen: v0.17.3
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+      - id: ruff-format
+  # mypy runs where the code does, in the environment uv.lock describes. A hook
+  # environment would pin djLint again, and wait out the cooldown of each
+  # release that uv.lock takes at once.
+  - repo: local
+    hooks:
+      - id: mypy
+        name: mypy
+        language: system
+        entry: uv run --locked --group dev mypy
+        args:
+          - --scripts-are-modules
+        types_or:
+          - python
+          - pyi
+        require_serial: true
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
     hooks:

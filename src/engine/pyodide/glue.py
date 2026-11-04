@@ -1,25 +1,33 @@
 """Run djLint for the worker, through its Python API."""
 
+from __future__ import annotations
+
 import importlib
 import json
-import os
 import sys
 from pathlib import Path
 from shutil import rmtree
+from typing import TYPE_CHECKING
 
 from djlint.api import format_text, is_excluded, lint_text, load_config
+
+if TYPE_CHECKING:
+    from types import ModuleType
+    from typing import Any
+
+    from djlint.settings import Config
 
 # A project's rule module leaves no __pycache__ behind in the project.
 sys.dont_write_bytecode = True
 
-_HOME = os.getcwd()
+_HOME = str(Path.cwd())
 _GUEST_ROOTS = ("/host/", "/project/")
 _BASE_SYS_PATH = list(sys.path)
 _PROJECT = Path("/project")
-_reported_rules = set()
+_reported_rules: set[str] = set()
 
 
-def _write_project(project):
+def _write_project(project: dict[str, Any]) -> str:
     """Lay out the project's files, for a document with no folder to mount."""
     rmtree(_PROJECT, ignore_errors=True)
     # Where djLint's search for a project root ends.
@@ -35,13 +43,13 @@ def _write_project(project):
     return str(cwd)
 
 
-def _is_project_module(module):
+def _is_project_module(module: ModuleType) -> bool:
     """Tell by its file or, for a namespace package, by its folders."""
     locations = (getattr(module, "__file__", ""), *getattr(module, "__path__", ()))
     return any(str(location).startswith(_GUEST_ROOTS) for location in locations)
 
 
-def _forget_projects():
+def _forget_projects() -> None:
     """Import a project's rule modules afresh, as a new process would."""
     for name, module in list(sys.modules.items()):
         if _is_project_module(module):
@@ -51,19 +59,27 @@ def _forget_projects():
     sys.path[:] = _BASE_SYS_PATH
 
 
-def _report_skipped_rules(config):
+def _report_skipped_rules(config: Config) -> None:
     for name in config.skipped_rules:
         if name not in _reported_rules:
             _reported_rules.add(name)
-            print(f"Skipping rule {name}: python_module is not available here.", file=sys.stderr)
+            sys.stderr.write(f"Skipping rule {name}: python_module is not available here.\n")
 
 
-def run(mode, src, options, path_options, filename, cwd, project):
+def run(
+    mode: str,
+    src: str,
+    options: str,
+    path_options: str,
+    filename: str,
+    cwd: str | None,
+    project: str | None,
+) -> str:
     """Return the formatted text, or the diagnostics as JSON."""
     _forget_projects()
     if project is not None:
         folder = _write_project(json.loads(project))
-    elif cwd and os.path.isdir(cwd):
+    elif cwd and Path(cwd).is_dir():
         folder = cwd
     else:
         folder = _HOME
@@ -82,16 +98,14 @@ def run(mode, src, options, path_options, filename, cwd, project):
     if mode == "format":
         return format_text(config, src)
     # A rule module can count lines from zero.
-    return json.dumps(
-        [
-            {
-                "code": finding.code,
-                "column": finding.column,
-                "endColumn": finding.end_column,
-                "endLine": max(finding.end_line, 1),
-                "line": max(finding.line, 1),
-                "message": finding.message,
-            }
-            for finding in lint_text(config, src, filename)
-        ]
-    )
+    return json.dumps([
+        {
+            "code": finding.code,
+            "column": finding.column,
+            "endColumn": finding.end_column,
+            "endLine": max(finding.end_line, 1),
+            "line": max(finding.line, 1),
+            "message": finding.message,
+        }
+        for finding in lint_text(config, src, filename)
+    ])

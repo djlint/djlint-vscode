@@ -1,6 +1,9 @@
 {
   "recommendations": [
+    "charliermarsh.ruff",
     "connor4312.esbuild-problem-matchers",
+    "ms-python.mypy-type-checker",
+    "ms-python.python",
     "oxc.oxc-vscode",
     "tombi-toml.tombi",
     "TypeScriptTeam.native-preview"
