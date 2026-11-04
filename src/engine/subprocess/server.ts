@@ -95,6 +95,8 @@ export class DjlintServer {
     this.#version = version;
     this.#process = spawnServer(exec, prefixArgs, cwd);
     const reader = new StreamMessageReader(this.#process.stdout);
+    // Its timer for a message that stops halfway would outlive the server; the request timeout covers that.
+    reader.partialMessageTimeout = 0;
     const writer = new StreamMessageWriter(this.#process.stdin);
     reader.onError(() => {
       this.#close(new Error("djLint's language server sent a bad message"));
