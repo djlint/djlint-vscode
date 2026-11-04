@@ -76,8 +76,8 @@ export class DjlintServer {
   #running = 0;
   #idleTimer: NodeJS.Timeout | undefined;
   readonly #shownMessages = new Set<string>();
-  // Settles only when the server closes, with why, which ends whatever run is waiting on it.
-  readonly #closed = Promise.withResolvers<never>();
+  // What fails each request still waiting, with the reason the server closed.
+  readonly #waiting = new Set<(reason: Error) => void>();
   readonly #connection: MessageConnection;
   readonly #process: ReturnType<typeof spawnServer>;
   readonly #outputChannel: vscode.LogOutputChannel;
@@ -93,8 +93,6 @@ export class DjlintServer {
   ) {
     this.#outputChannel = outputChannel;
     this.#version = version;
-    // Nothing waits on it until a run does.
-    void Promise.allSettled([this.#closed.promise]);
     this.#process = spawnServer(exec, prefixArgs, cwd);
     const reader = new StreamMessageReader(this.#process.stdout);
     const writer = new StreamMessageWriter(this.#process.stdin);
@@ -325,8 +323,11 @@ export class DjlintServer {
         this.#close(new vscode.CancellationError());
       }, CANCEL_GRACE_MS);
     });
+    // One for each request: a promise that outlived them all would keep every answer it raced.
+    const closed = Promise.withResolvers<never>();
+    this.#waiting.add(closed.reject);
     try {
-      return await Promise.race([this.#send(method, params, token), this.#closed.promise]);
+      return await Promise.race([this.#send(method, params, token), closed.promise]);
     } catch (e) {
       if (e instanceof ResponseError) {
         throw e.code === REQUEST_CANCELLED
@@ -335,6 +336,7 @@ export class DjlintServer {
       }
       throw e;
     } finally {
+      this.#waiting.delete(closed.reject);
       clearTimeout(timer);
       clearTimeout(cancelTimer);
       cancellation?.dispose();
@@ -357,7 +359,10 @@ export class DjlintServer {
       return;
     }
     this.#isClosed = true;
-    this.#closed.reject(reason);
+    for (const reject of this.#waiting) {
+      reject(reason);
+    }
+    this.#waiting.clear();
     this.#connection.dispose();
     this.#process.kill();
   }
