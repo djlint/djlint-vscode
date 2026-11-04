@@ -22,7 +22,7 @@
     { "matchDepTypes": ["devDependencies"], "matchManagers": ["npm"], "automerge": true },
     { "matchManagers": ["github-actions", "pre-commit"], "automerge": true },
     {
-      "description": "Our own package: uv.lock and the mypy hook take it as soon as it is out.",
+      "description": "Our own package: uv.lock takes it as soon as it is out.",
       "matchPackageNames": ["djlint"],
       "minimumReleaseAge": null
     },

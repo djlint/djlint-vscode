@@ -40,19 +40,21 @@ repos:
         args:
           - --fix
       - id: ruff-format
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: ad26ebfa797fcb9b8f83275937c1c1d6e126719c # frozen: v2.4.1
+  # mypy runs where the code does, in the environment uv.lock describes. A hook
+  # environment would pin djLint again, and wait out the cooldown of each
+  # release that uv.lock takes at once.
+  - repo: local
     hooks:
       - id: mypy
-        # The Python Pyodide runs, as in pyproject.toml.
-        language_version: "3.14"
-        language: python
+        name: mypy
+        language: system
+        entry: uv run --locked --group dev mypy
         args:
           - --scripts-are-modules
-        additional_dependencies:
-          - djlint==1.49.9
-          - pytest==9.2.0
-          - python-minifier==3.4.0
+        types_or:
+          - python
+          - pyi
+        require_serial: true
   - repo: https://github.com/zizmorcore/zizmor-pre-commit
     rev: c92afdf2c6ca336aaa8f39e2bd8d48f62dbd8e1f # frozen: v1.31.1
     hooks:
