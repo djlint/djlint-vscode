@@ -58,6 +58,7 @@
     "@vscode/python-environments": "1.4.0",
     "@vscode/python-extension": "1.0.6",
     "execa": "10.2.1",
+    "vscode-jsonrpc": "10.0.0",
     "which-command": "0.1.0"
   },
   "devDependencies": {
@@ -78,7 +79,8 @@
     "path-browserify": "1.0.1",
     "pyodide": "314.0.7",
     "typescript": "7.0.2",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "vscode-languageserver-types": "3.18.5"
   },
   "l10n": "./l10n",
   "contributes": {
