@@ -16,6 +16,7 @@ jobs:
       - oxlint
       - package
       - e2e
+      - e2e-python
       - e2e-web
       - pre-commit
     runs-on: ubuntu-26.04
@@ -55,7 +56,6 @@ jobs:
       - run: npx vsce package --out djlint.vsix
       - run: unzip -q djlint.vsix -d unpacked
       - run: npm run verify-bundle -- unpacked/extension
-      - run: npx vitest run
   e2e:
     strategy:
       fail-fast: false
@@ -86,15 +86,42 @@ jobs:
         run: xvfb-run -a npm run test:e2e
       - if: ${{ runner.os != 'Linux' }}
         run: npm run test:e2e
-      - if: ${{ runner.os == 'Linux' }}
-        run: xvfb-run -a npm run test:e2e:python
-      - if: ${{ runner.os != 'Linux' }}
-        run: npm run test:e2e:python
-      # Last, because the steps above need no djLint on PATH.
+      # Last, because the step above needs no djLint on PATH.
       - run: uv tool install --python 3.14 "$(node -p "/djlint==[^\"]+/.exec(require('fs').readFileSync('pyproject.toml', 'utf8'))[0]")"
         shell: bash
       # With djLint on PATH, the suites that run it are not skipped.
       - run: npx vitest run
+  # Apart from e2e, so that the longest suite runs alongside the others.
+  e2e-python:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-26
+          - ubuntu-26.04
+          - windows-2025
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          python-version: "3.14"
+          enable-cache: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+          check-latest: true
+      - run: npm ci
+      - run: npm run assets
+      - run: npm run esbuild-base -- --minify
+      - run: npm run esbuild-worker -- --minify
+      - if: ${{ runner.os == 'Linux' }}
+        run: xvfb-run -a npm run test:e2e:python
+      - if: ${{ runner.os != 'Linux' }}
+        run: npm run test:e2e:python
   e2e-web:
     runs-on: ubuntu-26.04
     steps:
