@@ -12,6 +12,7 @@
   "options": {
     "denyWarnings": true,
     "reportUnusedDisableDirectives": "error",
+    "respectEslintDisableDirectives": false,
     "typeAware": true,
     "typeCheck": true
   },
