@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2026.11.9] - 2026-11-05
+
+- The installed extension is about 4 KB smaller.
+
 ## [2026.11.8] - 2026-11-04
 
 - Bundle djLint 1.49.9. Twig's `{% apply %}`, `{% sandbox %}` and `{% guard %}` blocks indent their contents. An end tag that closes no open block, such as `{% endtoc %}`, stays at its level instead of moving everything after it one level to the left. A string written as adjacent literals, as in `{{ _("Hello " "world") }}`, keeps its quotes, and a U+2028 or other Unicode line break in a call's arguments is no longer turned into a line break. H057 now reports a video whose only track has an empty `kind`: browsers read that track as metadata, not captions.
