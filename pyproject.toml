@@ -7,7 +7,7 @@
 name = "djlint-vscode"
 version = "0"
 requires-python = "==3.14.*"
-dependencies = ["djlint==1.49.9"]
+dependencies = ["djlint==1.49.10"]
 
 [dependency-groups]
 dev = [
