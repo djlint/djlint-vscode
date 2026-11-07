@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.49.10. Its Python API, which the extension runs, no longer builds djLint's command line when it is imported, so djLint starts a little sooner.
+
 ## [2026.11.9] - 2026-11-05
 
 - The installed extension is about 4 KB smaller.
