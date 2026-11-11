@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.11] - 2026-11-11
+
 - Bundle djLint 1.50.0. A configuration file it can't read, such as a `djlint.toml` with a syntax error, and a number setting that isn't a number in one are now reported as errors. djLint used to skip them and go on with its defaults. An empty `.djlint_rules.yaml` no longer stops djLint from running.
 - In a virtual workspace, such as a GitHub repository opened in vscode.dev, a configuration file in the folder that the bundled djLint can't read is reported as an error. It used to be left out, so djLint ran with its defaults.
 
