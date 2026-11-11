@@ -406,7 +406,7 @@ export class SubprocessEngine implements DjlintEngine {
     return stdout;
   }
 
-  // After a configuration it cannot read, for example, djLint goes on with its defaults.
+  // What djLint warns about and runs on after, such as two rules that contradict each other, or, before 1.50.0, a configuration file it could not read.
   #logWarnings(stderr: string): void {
     const warnings = stderr.trim();
     if (!warnings || this.#loggedWarnings.has(warnings)) {

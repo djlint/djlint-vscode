@@ -249,6 +249,21 @@ export class PyodideEngine implements DjlintEngine {
       : { cwd: hostFolder, pathOptions: absoluteOnly(pathOptions), project: void 0 };
   }
 
+  async #readProject(
+    document: vscode.TextDocument,
+    pathOptions: RunRequest["pathOptions"],
+  ): Promise<ProjectLocation | undefined> {
+    try {
+      return await readProject(document, pathOptions, this.#outputChannel);
+    } catch (e) {
+      const reason = e instanceof Error ? e.message : String(e);
+      const message = vscode.l10n.t("Bundled djLint failed: {0}", reason);
+      this.#outputChannel.error(message);
+      this.#report(message);
+      throw e;
+    }
+  }
+
   async #call(
     mode: DjlintMode,
     context: ArgContext,
@@ -260,7 +275,7 @@ export class PyodideEngine implements DjlintEngine {
     const { options, pathOptions } = buildOptions(context, mode);
     const request: RunRequest = {
       ...(this.#locateOnHost(document, pathOptions) ??
-        (await readProject(document, pathOptions, this.#outputChannel)) ?? {
+        (await this.#readProject(document, pathOptions)) ?? {
           cwd: void 0,
           pathOptions: absoluteOnly(pathOptions),
           project: void 0,
