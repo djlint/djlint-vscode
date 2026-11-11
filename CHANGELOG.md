@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.50.0. A configuration file it can't read, such as a `djlint.toml` with a syntax error, and a number setting that isn't a number in one are now reported as errors. djLint used to skip them and go on with its defaults. An empty `.djlint_rules.yaml` no longer stops djLint from running.
+
 ## [2026.11.10] - 2026-11-07
 
 - Bundle djLint 1.49.10. Its Python API, which the extension runs, no longer builds djLint's command line when it is imported, so djLint starts a little sooner.
