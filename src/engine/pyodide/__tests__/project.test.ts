@@ -82,7 +82,7 @@ describe(readProject, () => {
     expect(read?.project).toStrictEqual({ cwd: ".", files: {} });
   });
 
-  it("leaves out a configuration file it lists but cannot read", async () => {
+  it("refuses a configuration file it lists but cannot read", async () => {
     control.files = new Map([
       ["memfs://repo/app/.djlintrc", "unreadable"],
       ["memfs://repo/app/pyproject.toml", "root"],
@@ -94,8 +94,9 @@ describe(readProject, () => {
       }
       return new TextEncoder().encode(control.files.get(uri.toString()));
     });
-    const read = await readProject(document("a.html"), {}, channel);
-    expect(read?.project.files).toStrictEqual({ "pyproject.toml": "root" });
+    await expect(readProject(document("a.html"), {}, channel)).rejects.toThrow(
+      "Could not read .djlintrc: permission denied",
+    );
   });
 
   it("reads an absolute path setting inside the folder as the project's own file", async () => {

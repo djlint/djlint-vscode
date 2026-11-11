@@ -29,6 +29,18 @@ async function readText(uri: vscode.Uri): Promise<string | undefined> {
   }
 }
 
+// A file the folder lists is the project's configuration, so running on without it would check against rules nobody chose, as djLint 1.50.0 and later refuse to.
+async function readListedFile(folder: vscode.Uri, file: string): Promise<string> {
+  const uri = vscode.Uri.joinPath(folder, ...file.split("/"));
+  try {
+    return new TextDecoder().decode(await vscode.workspace.fs.readFile(uri));
+  } catch (e) {
+    throw new Error(`Could not read ${file}: ${e instanceof Error ? e.message : String(e)}`, {
+      cause: e,
+    });
+  }
+}
+
 // One request per folder, where asking for each file by name would be seven. Each can be a network round trip, and this runs on every format and lint.
 async function listConfigFiles(folder: vscode.Uri, directory: string): Promise<string[]> {
   const uri = vscode.Uri.joinPath(folder, ...directory.split("/"));
@@ -77,7 +89,7 @@ function locateNamedFile(option: string, value: string, folder: vscode.Uri): Nam
   return { file, option, uri, value };
 }
 
-// Without a host filesystem to mount, the files djLint looks for are read through VS Code and handed over with the request.
+// Without a host filesystem to mount, the files djLint looks for are read through VS Code and handed over with the request. A path setting that cannot be read here, such as a user setting naming a file on another machine, is left out with a warning, but a configuration file in the folder that cannot be read is an error.
 export async function readProject(
   document: vscode.TextDocument,
   pathOptions: RunRequest["pathOptions"],
@@ -96,21 +108,16 @@ export async function readProject(
     ["", ...parents].map(async (directory) => listConfigFiles(folder.uri, directory)),
   );
   const candidates = listed.flat();
-  const texts = await Promise.all(
-    candidates.map(async (file) => readText(vscode.Uri.joinPath(folder.uri, ...file.split("/")))),
-  );
   const named = Object.entries(pathOptions).map(([option, value]) =>
     locateNamedFile(option, value, folder.uri),
   );
   const namedTexts = await Promise.all(named.map(async ({ uri }) => readText(uri)));
 
-  const files: ProjectSnapshot["files"] = {};
-  for (const [index, file] of candidates.entries()) {
-    const text = texts[index];
-    if (text != null) {
-      files[file] = text;
-    }
-  }
+  const files: ProjectSnapshot["files"] = Object.fromEntries(
+    await Promise.all(
+      candidates.map(async (file) => [file, await readListedFile(folder.uri, file)] as const),
+    ),
+  );
   const guestPathOptions: RunRequest["pathOptions"] = {};
   for (const [index, { file, option, value }] of named.entries()) {
     const text = namedTexts[index];

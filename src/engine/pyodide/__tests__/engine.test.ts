@@ -325,6 +325,22 @@ describe(PyodideEngine, () => {
       expect(control.shownErrors).toStrictEqual(["Bundled djLint failed: "]);
     });
 
+    it("reports a configuration file in a virtual folder that cannot be read", async () => {
+      const folder = Uri.parse("memfs://repo/app");
+      control.workspaceFolders = [{ uri: folder }];
+      control.files = new Map([["memfs://repo/app/.djlintrc", "{}"]]);
+      vi.spyOn(vscode.workspace.fs, "readFile").mockRejectedValueOnce(
+        new Error("permission denied"),
+      );
+      const { channel, engine } = makeEngine();
+      const virtual = makeDocument(vscode.Uri.parse("memfs://repo/app/t.html"));
+      const pending = engine.lint(virtual, config, liveToken());
+      await expect(pending).rejects.toThrow("Could not read .djlintrc: permission denied");
+      const message = "Bundled djLint failed: Could not read .djlintrc: permission denied";
+      expect(control.shownErrors).toStrictEqual([message]);
+      expect(channel.of("error")).toStrictEqual([message]);
+    });
+
     it("notifies once for a failure that repeats, logging every one", async () => {
       const { channel, engine } = makeEngine();
       const first = format(engine);
