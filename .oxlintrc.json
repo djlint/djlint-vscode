@@ -34,15 +34,17 @@
     "no-duplicate-imports": ["error", { "allowSeparateTypeImports": true }],
     "no-empty": ["error", { "allowEmptyCatch": true }],
     "no-eq-null": "off",
-    "no-ex-assign": "off",
     "no-magic-numbers": "off",
     "no-new": "off",
     "no-ternary": "off",
+    "no-unreachable-loop": "error",
+    "no-useless-assignment": "error",
     "no-void": "off",
     "one-var": ["error", "never"],
     "radix": "off",
     "require-await": "off",
     "sort-imports": "off",
+    "import/export": "error",
     "import/exports-last": "off",
     "import/group-exports": "off",
     "import/max-dependencies": "off",
@@ -56,19 +58,20 @@
     "oxc/no-optional-chaining": "off",
     "oxc/no-rest-spread-properties": "off",
     "promise/avoid-new": "off",
-    "typescript/ban-ts-comment": ["error", { "ts-expect-error": false }],
+    "promise/no-return-in-finally": "error",
     "typescript/explicit-member-accessibility": ["error", { "accessibility": "no-public" }],
     "typescript/no-confusing-void-expression": ["error", { "ignoreArrowShorthand": true }],
+    "typescript/no-unnecessary-condition": "error",
     "typescript/parameter-properties": ["error", { "prefer": "parameter-property" }],
     "typescript/prefer-readonly-parameter-types": "off",
     "typescript/strict-boolean-expressions": [
       "error",
       { "allowNullableBoolean": true, "allowNullableNumber": true, "allowNullableString": true }
     ],
-    "typescript/use-unknown-in-catch-callback-variable": "off",
     "unicorn/catch-error-name": ["error", { "name": "e" }],
     "unicorn/explicit-length-check": "off",
     "unicorn/no-null": "off",
+    "unicorn/no-useless-iterator-to-array": "error",
     "unicorn/number-literal-case": "off",
     "unicorn/prefer-top-level-await": "off"
   },
@@ -85,16 +88,9 @@
         "jsdoc/require-param-description": "off",
         "jsdoc/require-returns-description": "off",
         "node/no-sync": "off",
-        "typescript/dot-notation": "off",
         "typescript/explicit-function-return-type": "off",
         "typescript/explicit-module-boundary-types": "off",
-        "typescript/no-unsafe-argument": "off",
-        "typescript/no-unsafe-assignment": "off",
-        "typescript/no-unsafe-call": "off",
-        "typescript/no-unsafe-member-access": "off",
-        "typescript/no-unsafe-return": "off",
         "typescript/no-unsafe-type-assertion": "off",
-        "typescript/strict-boolean-expressions": "off",
         "unicorn/no-await-expression-member": "off"
       }
     },
@@ -121,10 +117,7 @@
         "src/engine/pyodide/index.ts",
         "src/engine/pyodide/node-worker.ts"
       ],
-      "rules": {
-        "typescript/promise-function-async": "off",
-        "unicorn/require-post-message-target-origin": "off"
-      }
+      "rules": { "unicorn/require-post-message-target-origin": "off" }
     },
     {
       "files": ["src/extension.web.ts", "src/engine/pyodide/browser-worker.ts"],
@@ -144,7 +137,6 @@
         "no-duplicate-imports": "off",
         "no-inline-comments": "off",
         "no-shadow": "off",
-        "no-unused-vars": "off",
         "sort-keys": "off",
         "node/no-sync": "off",
         "promise/prefer-await-to-then": "off",
@@ -161,7 +153,6 @@
         "typescript/unbound-method": "off",
         "unicorn/consistent-function-scoping": "off",
         "unicorn/custom-error-definition": "off",
-        "unicorn/filename-case": "off",
         "unicorn/max-nested-calls": "off",
         "unicorn/no-await-expression-member": "off",
         "unicorn/no-unreadable-array-destructuring": "off",
