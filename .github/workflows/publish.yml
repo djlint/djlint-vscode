@@ -27,7 +27,7 @@ jobs:
           package-manager-cache: false
           check-latest: true
       - run: test "$GITHUB_REF_NAME" = "v$(node -p "require('./package.json').version")"
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx vsce package --out djlint.vsix
       - run: unzip -q djlint.vsix -d unpacked
       - run: npm run verify-bundle -- unpacked/extension
@@ -39,6 +39,8 @@ jobs:
   publish-vsce:
     runs-on: ubuntu-26.04
     needs: package
+    permissions:
+      id-token: write # to publish to the VS Code Marketplace with trusted publishing
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -52,12 +54,12 @@ jobs:
         with:
           name: vsix
       - run: npm ci --ignore-scripts
-      - run: npx vsce publish --packagePath djlint.vsix --skip-duplicate
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      - run: npx vsce publish --oidc --packagePath djlint.vsix --skip-duplicate
   publish-ovsx:
     runs-on: ubuntu-26.04
     needs: package
+    permissions:
+      id-token: write # to publish to Open VSX with trusted publishing
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -71,6 +73,4 @@ jobs:
         with:
           name: vsix
       - run: npm ci --ignore-scripts
-      - run: npx ovsx publish djlint.vsix --skip-duplicate
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+      - run: npx ovsx publish djlint.vsix --trusted-publishing --skip-duplicate
