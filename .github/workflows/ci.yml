@@ -52,7 +52,7 @@ jobs:
           node-version-file: .nvmrc
           package-manager-cache: false
           check-latest: true
-      - run: npm ci
+      - run: npm ci --ignore-scripts
       - run: npx vsce package --out djlint.vsix
       - run: unzip -q djlint.vsix -d unpacked
       - run: npm run verify-bundle -- unpacked/extension
