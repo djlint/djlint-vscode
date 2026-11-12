@@ -67,10 +67,9 @@ function makeEngine(canReadProjectFiles = true, channel = makeChannel()): Pyodid
 
 async function settle(pending: Promise<unknown>): Promise<string> {
   return Promise.race([
-    pending.then(
-      () => "resolved",
-      (e: unknown) => `rejected: ${e instanceof Error ? e.message : String(e)}`,
-    ),
+    pending
+      .then(() => "resolved")
+      .catch((e: unknown) => `rejected: ${e instanceof Error ? e.message : String(e)}`),
     new Promise<string>((resolve) => {
       setTimeout(resolve, 60_000, "never settled");
     }),
