@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+## [2026.11.12] - 2026-11-12
+
+- New versions reach the VS Code Marketplace and Open VSX through trusted publishing: GitHub Actions publishes them with short-lived tokens instead of stored access tokens.
+
 ## [2026.11.11] - 2026-11-11
 
 - Bundle djLint 1.50.0. A configuration file it can't read, such as a `djlint.toml` with a syntax error, and a number setting that isn't a number in one are now reported as errors. djLint used to skip them and go on with its defaults. An empty `.djlint_rules.yaml` no longer stops djLint from running.
