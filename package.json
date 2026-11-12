@@ -73,7 +73,7 @@
     "@vscode/vsce": "4.1.0",
     "esbuild": "0.28.2",
     "ovsx": "1.4.0",
-    "oxfmt": "0.77.0",
+    "oxfmt": "0.78.0",
     "oxlint": "1.92.0",
     "oxlint-tsgolint": "7.0.2006",
     "path-browserify": "1.0.1",
