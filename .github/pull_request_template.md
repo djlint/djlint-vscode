@@ -1,6 +1,12 @@
 <!--
 Pull requests are squash-merged, so write the title in the Conventional Commits
 style: `fix: ...`, `feat: ...`, `docs: ...`, `refactor: ...`, `test: ...`, `chore: ...`.
+
+CI runs the linters and tests. To catch failures before you push, run:
+
+uvx prek run --all-files
+npx oxlint
+npm test
 -->
 
 ## Summary
@@ -17,8 +23,6 @@ style: `fix: ...`, `feat: ...`, `docs: ...`, `refactor: ...`, `test: ...`, `chor
 
 ## Checklist
 
-- [ ] `uvx prek run --all-files` passes.
-- [ ] `npm run lint` passes.
-- [ ] `npm test` passes, and new behavior has tests.
+- [ ] New behavior has tests.
 - [ ] `CHANGELOG.md` describes any user-visible change under `[Unreleased]`.
 - [ ] `package.json` and `README.md` match any change to the settings or commands.
