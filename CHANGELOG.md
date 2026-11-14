@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.50.1. The notification for a `.djlint_rules.yaml` that isn't valid YAML says what's wrong with it. It used to show only the line and column. When the last line of a multiline template tag starts with a closing bracket, as in `]) }}`, it lines up with the line that opened that bracket instead of the tag.
+
 ## [2026.11.12] - 2026-11-12
 
 - New versions reach the VS Code Marketplace and Open VSX through trusted publishing: GitHub Actions publishes them with short-lived tokens instead of stored access tokens.
