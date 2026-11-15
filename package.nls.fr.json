@@ -25,7 +25,7 @@
   "config.importStrategy": "Le djLint à exécuter. Consultez [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Utiliser un djLint installé s'il en existe un, sinon le djLint embarqué.",
   "config.importStrategy.useBundled": "Toujours utiliser le djLint embarqué, quel que soit celui qui est installé. `#djlint.executablePath#`, `#djlint.pythonPath#` et `#djlint.useVenv#` sont ignorés.",
-  "config.include": "Codes du linter à activer, y compris ceux désactivés par défaut ou laissés de côté par le profil. Nécessite djLint ≥ 1.20.",
+  "config.include": "Codes du linter à activer, y compris ceux désactivés par défaut ou laissés de côté par le profil. Nécessite djLint ≥ 1.20, et ≥ 1.50.4 pour les règles laissées de côté par le profil.",
   "config.indentCss": "Largeur d'indentation du contenu des balises `<style>`, utilisée quand `#djlint.formatCss#` est activé. Nécessite djLint ≥ 1.25.",
   "config.indentJs": "Largeur d'indentation du contenu des balises `<script>`, utilisée quand `#djlint.formatJs#` est activé. Nécessite djLint ≥ 1.25.",
   "config.keepBrInline": "Garder `<br>` sur la ligne du texte qu'il coupe, plutôt que de lui donner une ligne à part. `<hr>` n'est pas concerné. Nécessite djLint ≥ 1.45.",

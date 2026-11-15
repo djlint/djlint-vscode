@@ -25,7 +25,7 @@
   "config.importStrategy": "실행할 djLint를 선택합니다. [사용되는 djLint](https://github.com/djlint/djlint-vscode#which-djlint-is-used)를 참고하세요.",
   "config.importStrategy.fromEnvironment": "설치된 djLint가 있으면 그것을, 없으면 번들된 djLint를 사용합니다.",
   "config.importStrategy.useBundled": "무엇이 설치되어 있든 항상 번들된 djLint를 사용합니다. `#djlint.executablePath#`, `#djlint.pythonPath#`, `#djlint.useVenv#`는 무시됩니다.",
-  "config.include": "켤 린터 코드입니다. 기본으로 꺼져 있거나 프로필에서 빠진 규칙도 켭니다. djLint ≥ 1.20에서 사용할 수 있습니다.",
+  "config.include": "켤 린터 코드입니다. 기본으로 꺼져 있거나 프로필에서 빠진 규칙도 켭니다. djLint ≥ 1.20에서 사용할 수 있으며, 프로필에서 빠진 규칙은 djLint ≥ 1.50.4가 필요합니다.",
   "config.indentCss": "`#djlint.formatCss#`를 사용하도록 설정했을 때 `<style>` 태그의 내용에 적용할 들여쓰기 너비입니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.indentJs": "`#djlint.formatJs#`를 사용하도록 설정했을 때 `<script>` 태그의 내용에 적용할 들여쓰기 너비입니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.keepBrInline": "`<br>`을 별도의 줄로 옮기지 않고, 줄을 바꾸는 텍스트와 같은 줄에 둡니다. `<hr>`에는 영향을 주지 않습니다. djLint ≥ 1.45에서 사용할 수 있습니다.",

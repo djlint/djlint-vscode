@@ -25,7 +25,7 @@
   "config.importStrategy": "Which djLint to run. See [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Use an installed djLint if one is found, otherwise the bundled one.",
   "config.importStrategy.useBundled": "Always use the bundled djLint, whatever is installed. `#djlint.executablePath#`, `#djlint.pythonPath#` and `#djlint.useVenv#` are ignored.",
-  "config.include": "Linter codes to turn on that are off by default or that the profile leaves out. Requires djLint ≥ 1.20.",
+  "config.include": "Linter codes to turn on that are off by default or that the profile leaves out. Requires djLint ≥ 1.20, and ≥ 1.50.4 for rules the profile leaves out.",
   "config.indentCss": "Indent width for the contents of `<style>` tags, used when `#djlint.formatCss#` is enabled. Requires djLint ≥ 1.25.",
   "config.indentJs": "Indent width for the contents of `<script>` tags, used when `#djlint.formatJs#` is enabled. Requires djLint ≥ 1.25.",
   "config.keepBrInline": "Keep `<br>` on the line of the text it breaks, rather than giving it a line of its own. `<hr>` is unaffected. Requires djLint ≥ 1.45.",

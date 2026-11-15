@@ -25,7 +25,7 @@
   "config.importStrategy": "要執行哪一個 djLint。請參閱 [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used)。",
   "config.importStrategy.fromEnvironment": "如果找到已安裝的 djLint 就使用它，否則使用內建的 djLint。",
   "config.importStrategy.useBundled": "不論安裝了什麼，一律使用內建的 djLint。`#djlint.executablePath#`、`#djlint.pythonPath#` 和 `#djlint.useVenv#` 會被忽略。",
-  "config.include": "要啟用的 linter 代碼，包括預設關閉的規則和 profile 未包含的規則。需要 djLint ≥ 1.20。",
+  "config.include": "要啟用的 linter 代碼，包括預設關閉的規則和 profile 未包含的規則。需要 djLint ≥ 1.20；啟用 profile 未包含的規則需要 djLint ≥ 1.50.4。",
   "config.indentCss": "`<style>` 標籤內容的縮排寬度，在啟用 `#djlint.formatCss#` 時使用。需要 djLint ≥ 1.25。",
   "config.indentJs": "`<script>` 標籤內容的縮排寬度，在啟用 `#djlint.formatJs#` 時使用。需要 djLint ≥ 1.25。",
   "config.keepBrInline": "讓 `<br>` 留在它所斷開的文字那一行，而不是讓它獨佔一行。`<hr>` 不受影響。需要 djLint ≥ 1.45。",

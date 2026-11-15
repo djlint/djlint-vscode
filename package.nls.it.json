@@ -25,7 +25,7 @@
   "config.importStrategy": "Quale djLint eseguire. Vedi [Quale djLint viene usato](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Usa un djLint installato, se ne viene trovato uno, altrimenti quello incluso.",
   "config.importStrategy.useBundled": "Usa sempre il djLint incluso, indipendentemente da ciò che è installato. `#djlint.executablePath#`, `#djlint.pythonPath#` e `#djlint.useVenv#` vengono ignorati.",
-  "config.include": "Codici del linter da attivare, anche se disattivati per impostazione predefinita o esclusi dal profilo. Richiede djLint ≥ 1.20.",
+  "config.include": "Codici del linter da attivare, anche se disattivati per impostazione predefinita o esclusi dal profilo. Richiede djLint ≥ 1.20, e ≥ 1.50.4 per le regole escluse dal profilo.",
   "config.indentCss": "Larghezza del rientro per il contenuto dei tag `<style>`, usata quando `#djlint.formatCss#` è abilitato. Richiede djLint ≥ 1.25.",
   "config.indentJs": "Larghezza del rientro per il contenuto dei tag `<script>`, usata quando `#djlint.formatJs#` è abilitato. Richiede djLint ≥ 1.25.",
   "config.keepBrInline": "Mantiene `<br>` sulla riga del testo che interrompe, invece di metterlo su una riga a sé. `<hr>` non è interessato. Richiede djLint ≥ 1.45.",
