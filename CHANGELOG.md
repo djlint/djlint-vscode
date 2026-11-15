@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.50.4. A code in `djlint.include` turns its rule on even when the profile leaves it out, so `T003` now runs without a profile or with `html`, and the setting's description says so. Without a profile, the linter runs the same rules as with `html`.
+
 ## [2026.11.14] - 2026-11-15
 
 - Bundle djLint 1.50.3. It only changes which versions of its own dependencies djLint accepts, so nothing changes in the extension.

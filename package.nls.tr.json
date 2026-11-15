@@ -25,7 +25,7 @@
   "config.importStrategy": "Hangi djLint'in çalıştırılacağı. Bkz. [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Kurulu bir djLint bulunursa onu, bulunmazsa uzantıyla gelen djLint'i kullanır.",
   "config.importStrategy.useBundled": "Ne kurulu olursa olsun her zaman uzantıyla gelen djLint'i kullanır. `#djlint.executablePath#`, `#djlint.pythonPath#` ve `#djlint.useVenv#` yok sayılır.",
-  "config.include": "Varsayılan olarak kapalı olup açılacak linter kodları. djLint ≥ 1.20 gerektirir.",
+  "config.include": "Açılacak linter kodları; varsayılan olarak kapalı olanlar ve profilin dışarıda bıraktıkları da buna dahildir. djLint ≥ 1.20 gerektirir.",
   "config.indentCss": "`#djlint.formatCss#` etkinken kullanılan, `<style>` etiketlerinin içeriği için girinti genişliği. djLint ≥ 1.25 gerektirir.",
   "config.indentJs": "`#djlint.formatJs#` etkinken kullanılan, `<script>` etiketlerinin içeriği için girinti genişliği. djLint ≥ 1.25 gerektirir.",
   "config.keepBrInline": "`<br>` etiketine kendi satırını vermek yerine onu böldüğü metnin satırında tutar. `<hr>` bundan etkilenmez. djLint ≥ 1.45 gerektirir.",

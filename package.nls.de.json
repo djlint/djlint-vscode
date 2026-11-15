@@ -25,7 +25,7 @@
   "config.importStrategy": "Welches djLint ausgeführt wird. Siehe [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Ein installiertes djLint verwenden, falls eines gefunden wird, andernfalls das mitgelieferte.",
   "config.importStrategy.useBundled": "Immer das mitgelieferte djLint verwenden, unabhängig davon, was installiert ist. `#djlint.executablePath#`, `#djlint.pythonPath#` und `#djlint.useVenv#` werden ignoriert.",
-  "config.include": "Standardmäßig ausgeschaltete Linter-Codes, die eingeschaltet werden. Erfordert djLint ≥ 1.20.",
+  "config.include": "Linter-Codes, die eingeschaltet werden, auch wenn sie standardmäßig aus sind oder das Profil sie weglässt. Erfordert djLint ≥ 1.20.",
   "config.indentCss": "Einrückungsbreite für den Inhalt von `<style>`-Tags, wenn `#djlint.formatCss#` aktiviert ist. Erfordert djLint ≥ 1.25.",
   "config.indentJs": "Einrückungsbreite für den Inhalt von `<script>`-Tags, wenn `#djlint.formatJs#` aktiviert ist. Erfordert djLint ≥ 1.25.",
   "config.keepBrInline": "Belässt `<br>` in der Zeile des Textes, den es umbricht, statt ihm eine eigene Zeile zu geben. `<hr>` ist davon nicht betroffen. Erfordert djLint ≥ 1.45.",

@@ -25,7 +25,7 @@
   "config.importStrategy": "実行する djLint。[どの djLint が使われるか](https://github.com/djlint/djlint-vscode#which-djlint-is-used) を参照してください。",
   "config.importStrategy.fromEnvironment": "インストールされている djLint が見つかればそれを使い、見つからなければ同梱の djLint を使います。",
   "config.importStrategy.useBundled": "何がインストールされていても、常に同梱の djLint を使います。`#djlint.executablePath#`、`#djlint.pythonPath#`、`#djlint.useVenv#` は無視されます。",
-  "config.include": "デフォルトでは無効になっている、有効にするリンターのコード。djLint ≥ 1.20 が必要です。",
+  "config.include": "有効にするリンターのコード。デフォルトで無効のルールや、プロファイルに含まれないルールも有効になります。djLint ≥ 1.20 が必要です。",
   "config.indentCss": "`<style>` タグの中身のインデント幅。`#djlint.formatCss#` が有効な場合に使われます。djLint ≥ 1.25 が必要です。",
   "config.indentJs": "`<script>` タグの中身のインデント幅。`#djlint.formatJs#` が有効な場合に使われます。djLint ≥ 1.25 が必要です。",
   "config.keepBrInline": "`<br>` を独立した行に置かず、改行するテキストと同じ行に残します。`<hr>` には影響しません。djLint ≥ 1.45 が必要です。",
