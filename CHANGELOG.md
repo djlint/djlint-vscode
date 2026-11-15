@@ -2,7 +2,7 @@
 
 ## [Unreleased]
 
-- Bundle djLint 1.50.4. A code in `djlint.include` turns its rule on even when the profile leaves it out, so `T003` now runs without a profile or with `html`, and the setting's description says so. Without a profile, the linter runs the same rules as with `html`.
+- Bundle djLint 1.50.4. A code in `djlint.include` turns its rule on even when the profile leaves it out, so `T003` now runs without a profile or with `html`, and the setting's description says so. A rule still stays off under a profile it doesn't apply to, such as `T028` under `django`. Without a profile, the linter runs the same rules as with `html`.
 
 ## [2026.11.14] - 2026-11-15
 
