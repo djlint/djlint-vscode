@@ -1,9 +1,13 @@
 blank_issues_enabled: false
 contact_links:
-  - name: "👉 Problem with djLint? Open an issue here."
+  - name: 🧩 Problem with djLint itself
     url: https://github.com/djlint/djLint/issues/new/choose
     about: >-
-      Having a problem with djLint's formatting, linting, or other features?
+      If djlint on the command line gives the same formatting or lint
+      result, report it in the djLint tracker.
+  - name: 📖 Documentation
+    url: https://github.com/djlint/djlint-vscode#readme
+    about: Installation, usage, which djLint runs and known issues.
   - name: 💬 Discord Server
     url: https://discord.gg/taghAqebzU
     about: >-
