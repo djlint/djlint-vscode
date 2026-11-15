@@ -25,7 +25,7 @@
   "config.importStrategy": "Który djLint uruchamiać. Zobacz [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Używa zainstalowanego djLint, jeśli zostanie znaleziony, a w przeciwnym razie dołączonego.",
   "config.importStrategy.useBundled": "Zawsze używa dołączonego djLint, niezależnie od tego, co jest zainstalowane. `#djlint.executablePath#`, `#djlint.pythonPath#` i `#djlint.useVenv#` są ignorowane.",
-  "config.include": "Domyślnie wyłączone kody lintera do włączenia. Wymaga djLint ≥ 1.20.",
+  "config.include": "Kody lintera do włączenia, także domyślnie wyłączone lub pominięte przez profil. Wymaga djLint ≥ 1.20, a dla reguł pominiętych przez profil ≥ 1.50.4.",
   "config.indentCss": "Szerokość wcięcia zawartości tagów `<style>`, używana, gdy włączone jest `#djlint.formatCss#`. Wymaga djLint ≥ 1.25.",
   "config.indentJs": "Szerokość wcięcia zawartości tagów `<script>`, używana, gdy włączone jest `#djlint.formatJs#`. Wymaga djLint ≥ 1.25.",
   "config.keepBrInline": "Zostawia `<br>` w wierszu tekstu, który dzieli, zamiast przenosić go do osobnego wiersza. Nie dotyczy to `<hr>`. Wymaga djLint ≥ 1.45.",

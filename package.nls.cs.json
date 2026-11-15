@@ -25,7 +25,7 @@
   "config.importStrategy": "Který djLint se má spouštět. Viz [Which djLint is used](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Použít nainstalovaný djLint, pokud se nějaký najde, jinak přibalený.",
   "config.importStrategy.useBundled": "Vždy použít přibalený djLint bez ohledu na to, co je nainstalováno. `#djlint.executablePath#`, `#djlint.pythonPath#` a `#djlint.useVenv#` se ignorují.",
-  "config.include": "Kódy linteru, ve výchozím nastavení vypnuté, které se zapnou. Vyžaduje djLint ≥ 1.20.",
+  "config.include": "Kódy linteru, které se zapnou, i když jsou ve výchozím nastavení vypnuté nebo je profil vynechává. Vyžaduje djLint ≥ 1.20, pro pravidla vynechaná profilem ≥ 1.50.4.",
   "config.indentCss": "Šířka odsazení obsahu značek `<style>`, když je povoleno `#djlint.formatCss#`. Vyžaduje djLint ≥ 1.25.",
   "config.indentJs": "Šířka odsazení obsahu značek `<script>`, když je povoleno `#djlint.formatJs#`. Vyžaduje djLint ≥ 1.25.",
   "config.keepBrInline": "Ponechat `<br>` na řádku textu, který zalamuje, a nedávat mu vlastní řádek. Na `<hr>` to nemá vliv. Vyžaduje djLint ≥ 1.45.",

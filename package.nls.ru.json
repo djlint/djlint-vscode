@@ -25,7 +25,7 @@
   "config.importStrategy": "Какой djLint запускать. См. [Какой djLint используется](https://github.com/djlint/djlint-vscode#which-djlint-is-used).",
   "config.importStrategy.fromEnvironment": "Использовать установленный djLint, если он найден, иначе встроенный.",
   "config.importStrategy.useBundled": "Всегда использовать встроенный djLint, что бы ни было установлено. `#djlint.executablePath#`, `#djlint.pythonPath#` и `#djlint.useVenv#` игнорируются.",
-  "config.include": "Коды правил линтера, выключенных по умолчанию, которые нужно включить. Требуется djLint ≥ 1.20.",
+  "config.include": "Коды правил линтера, которые нужно включить: выключенных по умолчанию или не входящих в профиль. Требуется djLint ≥ 1.20, а для правил, не входящих в профиль, ≥ 1.50.4.",
   "config.indentCss": "Размер отступа для содержимого тегов `<style>`; используется, когда включён `#djlint.formatCss#`. Требуется djLint ≥ 1.25.",
   "config.indentJs": "Размер отступа для содержимого тегов `<script>`; используется, когда включён `#djlint.formatJs#`. Требуется djLint ≥ 1.25.",
   "config.keepBrInline": "Оставлять `<br>` на одной строке с текстом, который он разрывает, а не выносить его на отдельную строку. На `<hr>` это не влияет. Требуется djLint ≥ 1.45.",
