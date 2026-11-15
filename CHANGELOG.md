@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.50.3. It only changes which versions of its own dependencies djLint accepts, so nothing changes in the extension.
+
 ## [2026.11.13] - 2026-11-14
 
 - Bundle djLint 1.50.1. The notification for a `.djlint_rules.yaml` that isn't valid YAML says what's wrong with it. It used to show only the line and column. When the last line of a multiline template tag starts with a closing bracket, as in `]) }}`, it lines up with the line that opened that bracket instead of the tag.
