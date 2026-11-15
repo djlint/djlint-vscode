@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.14] - 2026-11-15
+
 - Bundle djLint 1.50.3. It only changes which versions of its own dependencies djLint accepts, so nothing changes in the extension.
 
 ## [2026.11.13] - 2026-11-14
