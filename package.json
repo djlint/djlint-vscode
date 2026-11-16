@@ -198,7 +198,7 @@
               "type": "string"
             },
             "default": [],
-            "description": "%config.exclude%",
+            "markdownDescription": "%config.exclude%",
             "scope": "resource",
             "order": 0
           },
@@ -208,14 +208,14 @@
               "type": "string"
             },
             "default": [],
-            "description": "%config.extendExclude%",
+            "markdownDescription": "%config.extendExclude%",
             "scope": "resource",
             "order": 1
           },
           "djlint.useGitignore": {
             "type": "boolean",
             "default": false,
-            "description": "%config.useGitignore%",
+            "markdownDescription": "%config.useGitignore%",
             "scope": "resource",
             "order": 2
           },
@@ -302,7 +302,7 @@
               "type": "string"
             },
             "default": [],
-            "description": "%config.ignore%",
+            "markdownDescription": "%config.ignore%",
             "scope": "resource",
             "order": 2
           },
@@ -312,7 +312,7 @@
               "type": "string"
             },
             "default": [],
-            "description": "%config.include%",
+            "markdownDescription": "%config.include%",
             "scope": "resource",
             "order": 3
           },
@@ -342,7 +342,7 @@
               "null"
             ],
             "default": null,
-            "description": "%config.maxLineLength%",
+            "markdownDescription": "%config.maxLineLength%",
             "scope": "resource",
             "order": 1
           },
@@ -352,21 +352,21 @@
               "null"
             ],
             "default": null,
-            "description": "%config.maxAttributeLength%",
+            "markdownDescription": "%config.maxAttributeLength%",
             "scope": "resource",
             "order": 2
           },
           "djlint.singleAttributePerLine": {
             "type": "boolean",
             "default": false,
-            "description": "%config.singleAttributePerLine%",
+            "markdownDescription": "%config.singleAttributePerLine%",
             "scope": "resource",
             "order": 3
           },
           "djlint.lineBreakAfterMultilineTag": {
             "type": "boolean",
             "default": false,
-            "description": "%config.lineBreakAfterMultilineTag%",
+            "markdownDescription": "%config.lineBreakAfterMultilineTag%",
             "scope": "resource",
             "order": 4
           },
@@ -410,7 +410,7 @@
               "type": "string"
             },
             "default": [],
-            "description": "%config.ignoreBlocks%",
+            "markdownDescription": "%config.ignoreBlocks%",
             "scope": "resource",
             "order": 9
           },
@@ -447,21 +447,21 @@
           "djlint.preserveBlankLines": {
             "type": "boolean",
             "default": false,
-            "description": "%config.preserveBlankLines%",
+            "markdownDescription": "%config.preserveBlankLines%",
             "scope": "resource",
             "order": 13
           },
           "djlint.preserveLeadingSpace": {
             "type": "boolean",
             "default": false,
-            "description": "%config.preserveLeadingSpace%",
+            "markdownDescription": "%config.preserveLeadingSpace%",
             "scope": "resource",
             "order": 14
           },
           "djlint.noLineAfterYaml": {
             "type": "boolean",
             "default": false,
-            "description": "%config.noLineAfterYaml%",
+            "markdownDescription": "%config.noLineAfterYaml%",
             "scope": "resource",
             "order": 15
           }
@@ -481,7 +481,7 @@
           "djlint.ignoreCase": {
             "type": "boolean",
             "default": false,
-            "description": "%config.ignoreCase%",
+            "markdownDescription": "%config.ignoreCase%",
             "scope": "resource",
             "order": 1
           },
@@ -547,14 +547,14 @@
           "djlint.preserveClassNewlines": {
             "type": "boolean",
             "default": false,
-            "description": "%config.preserveClassNewlines%",
+            "markdownDescription": "%config.preserveClassNewlines%",
             "scope": "resource",
             "order": 9
           },
           "djlint.formatAttributeTemplateTags": {
             "type": "boolean",
             "default": false,
-            "description": "%config.formatAttributeTemplateTags%",
+            "markdownDescription": "%config.formatAttributeTemplateTags%",
             "scope": "resource",
             "order": 10
           }
@@ -618,7 +618,7 @@
               "null"
             ],
             "default": null,
-            "description": "%config.formatAttributeJsJsonMinProps%",
+            "markdownDescription": "%config.formatAttributeJsJsonMinProps%",
             "scope": "resource",
             "order": 6
           }
