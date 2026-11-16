@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 
+- djLint's warnings about settings that won't do what they look like, such as a misspelled name in `pyproject.toml` or a rule code in `djlint.ignore` that no rule has, now show up as warning notifications. Each shows once, and again after a djLint setting or one of its configuration files changes, or after djLint: Restart. They used to go only to the djLint output channel.
 - The descriptions of the djLint settings say what the djLint docs say, in the same words in every language, followed by what is special to the extension. Code, links and setting names in them show as such in all of them; 17 settings showed their backticks as text.
 
 ## [2026.11.15] - 2026-11-16

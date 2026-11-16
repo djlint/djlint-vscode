@@ -24,9 +24,13 @@ import {
 import { control, resetVscode } from "../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../args.js";
 import { SubprocessEngine } from "../subprocess/index.js";
+import { isVersionAtLeast, parseDjlintVersion } from "../subprocess/version.js";
 import { DjlintUnavailableError } from "../types.js";
 
 const installed = await execa("djlint", ["--version"], { reject: false });
+const installedVersion = installed.failed ? null : parseDjlintVersion(String(installed.stdout));
+// The warnings came in djLint 1.51.
+const hasWarnings = installedVersion != null && isVersionAtLeast(installedVersion, "1.51");
 
 const DIRTY = `<div><img src="x.png"></div>`;
 
@@ -93,6 +97,19 @@ describe.skipIf(installed.failed)("the installed djLint", { timeout: 60_000 }, (
     ).resolves.toBeInstanceOf(Array);
     expect(control.shownErrors).toStrictEqual([]);
   });
+
+  it.runIf(hasWarnings)(
+    "shows a warning from the command line as the language server words it",
+    async () => {
+      const configuration = path.join(root, "empty.toml");
+      await writeFile(configuration, "");
+      // A configuration file sends the run to the command line.
+      await engine.lint(document, makeConfig({ configuration, ignore: ["H999"] }), liveToken());
+      expect(control.shownWarnings).toStrictEqual([
+        "djLint: ignore names H999, which is not a linter rule.",
+      ]);
+    },
+  );
 });
 
 describe("a command that is not there", () => {

@@ -9,13 +9,15 @@ import type * as vscode from "vscode";
 
 import { EngineManager, engineSettingKeys } from "../engine/select.js";
 import { activate } from "../extension.js";
+import { showWarning } from "../notify.js";
 import { DjlintStatus } from "../status.js";
-import { changeOf, flush, makeContext, makeDocument } from "./helpers.js";
+import { changeOf, flush, makeChannel, makeContext, makeDocument } from "./helpers.js";
 import {
   control,
   fireWorkspaceEvent,
   resetVscode,
   setActiveDocument,
+  Uri,
   workspaceListenerCount,
 } from "./vscode-stub.js";
 
@@ -175,6 +177,40 @@ describe("the extension", () => {
           fireWorkspaceEvent("trust");
         }),
       ).resolves.toBe(true);
+    });
+
+    it.each([
+      [
+        "djLint: Restart",
+        (): void => {
+          control.commands.get("djlint.restart")?.();
+        },
+      ],
+      [
+        "a djLint setting changes",
+        (): void => {
+          fireWorkspaceEvent("config", changeOf("djlint.maxLineLength"));
+        },
+      ],
+      [
+        "a configuration file changes",
+        (): void => {
+          fireWorkspaceEvent("files", Uri.file("/w/pyproject.toml"));
+        },
+      ],
+    ])("shows a warning again after %s", async (event, fire) => {
+      const warning = `djLint: before ${event}`;
+      await showWarning(warning, makeChannel());
+      fire();
+      await showWarning(warning, makeChannel());
+      expect(control.shownWarnings).toStrictEqual([warning, warning]);
+    });
+
+    it("shows a warning once through another extension's setting changing", async () => {
+      await showWarning("djLint: before editor.tabSize", makeChannel());
+      fireWorkspaceEvent("config", changeOf("editor.tabSize"));
+      await showWarning("djLint: before editor.tabSize", makeChannel());
+      expect(control.shownWarnings).toStrictEqual(["djLint: before editor.tabSize"]);
     });
 
     describe("when the active Python environment changes", () => {

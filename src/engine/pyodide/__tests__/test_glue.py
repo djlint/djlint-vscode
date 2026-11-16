@@ -11,7 +11,7 @@ import pytest
 import glue
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
     from pathlib import Path
 
 UGLY = '<div><p>hi</p>\n<img src="x.png">\n</div>'
@@ -49,6 +49,7 @@ def run(
     filename: str = "t.html",
     cwd: Path | None = None,
     project: Mapping[str, object] | None = None,
+    on_warning: Callable[[str], None] = lambda _: None,
 ) -> str:
     return glue.run(
         mode,
@@ -58,6 +59,7 @@ def run(
         filename,
         None if cwd is None else str(cwd),
         None if project is None else json.dumps(project),
+        on_warning,
     )
 
 
@@ -149,6 +151,20 @@ def test_reports_a_projects_rule_module_once(capsys: pytest.CaptureFixture[str])
     lint(DIRTY, project=project)
     lint(DIRTY, project=project)
     assert capsys.readouterr().err == ("Skipping rule C001: python_module is not available here.\n")
+
+
+def test_hands_over_every_warning(home: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    (home / "pyproject.toml").write_text("[tool.djlint]\nmax_line_lenght = 80\n", encoding="utf-8")
+    warnings: list[str] = []
+    run("format", UGLY, on_warning=warnings.append)
+    run("format", UGLY, on_warning=warnings.append)
+    warning = (
+        "pyproject.toml sets max_line_lenght, which is not a djLint setting."
+        " Did you mean max_line_length?"
+    )
+    # Every time, and none on stderr: the extension decides what to show and log, and how often.
+    assert warnings == [warning, warning]
+    assert not capsys.readouterr().err
 
 
 def test_counts_lines_from_one(home: Path) -> None:

@@ -215,6 +215,14 @@ describe.skipIf(!isBuilt)("the bundled djLint", { timeout: TIMEOUT_MS }, () => {
       );
       await expect(lintCodes(DIRTY, { ignore: ["H013"] })).resolves.not.toContain("H013");
     });
+
+    it("that would do nothing are warned about once", async () => {
+      await lintCodes(DIRTY, { ignore: ["H999"] });
+      await lintCodes(DIRTY, { ignore: ["H999"] });
+      const warning = "ignore names H999, which is not a linter rule.";
+      expect(control.shownWarnings).toStrictEqual([`djLint: ${warning}`]);
+      expect(channel.of("warn")).toStrictEqual([`Warning: ${warning}`]);
+    });
   });
 
   describe("a djLint failure", () => {

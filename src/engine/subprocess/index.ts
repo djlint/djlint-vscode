@@ -1,6 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 import process from "node:process";
+import { stripVTControlCharacters } from "node:util";
 
 import { execa } from "execa";
 import * as vscode from "vscode";
@@ -9,7 +10,7 @@ import { whichCommand } from "which-command";
 import { buildOptions, formattingArgs, lintingArgs } from "../../args.js";
 import type { ArgContext } from "../../args.js";
 import { configSection, getConfiguredPath } from "../../config.js";
-import { showFailure } from "../../notify.js";
+import { showFailure, showWarning } from "../../notify.js";
 import {
   directoryScopeKey,
   normalizeConfiguredExecutable,
@@ -406,9 +407,15 @@ export class SubprocessEngine implements DjlintEngine {
     return stdout;
   }
 
-  // What djLint warns about and runs on after, such as two rules that contradict each other, or, before 1.50.0, a configuration file it could not read.
+  // What djLint warns about and runs on after, such as a misspelled setting, two rules that contradict each other, or, before 1.50.0, a configuration file it could not read.
   #logWarnings(stderr: string): void {
-    const warnings = stderr.trim();
+    // Coloured where click takes stderr for a terminal, as FORCE_COLOR or a wrapper can make it do.
+    const warnings = stripVTControlCharacters(stderr).trim();
+    // Only djLint's own lines: stderr also holds progress and Python's warnings, such as an old jsbeautifier's SyntaxWarning.
+    // Worded as the language server words them, so that a warning both give is shown once.
+    for (const [, message] of warnings.matchAll(/^Warning: (?<message>.+)$/gmu)) {
+      void showWarning(`djLint: ${message}`, this.#outputChannel);
+    }
     if (!warnings || this.#loggedWarnings.has(warnings)) {
       return;
     }

@@ -10,7 +10,7 @@ import {
 import type { MessageConnection } from "vscode-jsonrpc/node";
 import type { Diagnostic, TextEdit } from "vscode-languageserver-types";
 
-import { showFailure } from "../../notify.js";
+import { showFailure, showWarning } from "../../notify.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 import type { LintDiagnostic } from "../types.js";
 
@@ -125,12 +125,22 @@ export class DjlintServer {
         }
       },
     );
-    this.#connection.onNotification("window/showMessage", ({ message }: { message: string }) => {
-      if (!this.#shownMessages.has(message)) {
-        this.#shownMessages.add(message);
-        void showFailure(message, this.#outputChannel);
-      }
-    });
+    this.#connection.onNotification(
+      "window/showMessage",
+      ({ message, type }: { message: string; type?: number }) => {
+        if (type === LOG_WARNING) {
+          // Not counted here: showWarning shows one again once the configuration may have changed.
+          void showWarning(message, this.#outputChannel);
+        } else if (type != null && type > LOG_WARNING) {
+          // Information isn't worth a notification, and djLint sends none.
+          this.#outputChannel.info(message);
+        } else if (!this.#shownMessages.has(message)) {
+          // An error, the only kind djLint shows before 1.51, or a message with no type, which the server still means to be seen.
+          this.#shownMessages.add(message);
+          void showFailure(message, this.#outputChannel);
+        }
+      },
+    );
     // A request this client has no use for, such as `workspace/configuration`, gets an empty answer.
     this.#connection.onRequest(() => null);
     this.#connection.listen();

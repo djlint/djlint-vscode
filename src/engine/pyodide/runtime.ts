@@ -11,6 +11,7 @@ type Run = (
   filename: string,
   cwd: string | undefined,
   project: string | undefined,
+  onWarning: (message: string) => void,
 ) => string;
 
 interface Runtime {
@@ -74,6 +75,9 @@ export function serve(host: WorkerHost): void {
       filename,
       cwd == null ? void 0 : host.toGuestPath(pyodide, cwd),
       project == null ? void 0 : JSON.stringify(project),
+      (message) => {
+        host.send({ message, type: "warning" });
+      },
     );
   }
 

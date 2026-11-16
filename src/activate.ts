@@ -5,6 +5,7 @@ import { engineSettingKeys } from "./engine/select.js";
 import type { EngineManager } from "./engine/select.js";
 import { Formatter } from "./formatter.js";
 import { Linter } from "./linter.js";
+import { forgetShownWarnings } from "./notify.js";
 import { EXTENSION_ID, updateForLanguage } from "./status.js";
 import type { DjlintStatus } from "./status.js";
 
@@ -32,17 +33,30 @@ export function startExtension(
   }
 
   function restart(): void {
+    forgetShownWarnings();
     engines.reset();
     beforeRestart?.();
     refresh();
   }
 
+  // The files djLint reads its settings and rules from, wherever it finds them in the workspace.
+  const configFiles = vscode.workspace.createFileSystemWatcher(
+    "**/{pyproject.toml,djlint.toml,.djlint.toml,.djlintrc,.djlint_rules.yaml}",
+  );
+
   context.subscriptions.push(
     outputChannel,
+    configFiles,
+    configFiles.onDidChange(forgetShownWarnings),
+    configFiles.onDidCreate(forgetShownWarnings),
+    configFiles.onDidDelete(forgetShownWarnings),
     status,
     engines,
     vscode.workspace.onDidGrantWorkspaceTrust(restart),
     vscode.workspace.onDidChangeConfiguration((e) => {
+      if (e.affectsConfiguration(configSection)) {
+        forgetShownWarnings();
+      }
       if (engineSettingKeys.some((key) => e.affectsConfiguration(`${configSection}.${key}`))) {
         restart();
       }
