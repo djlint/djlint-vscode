@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- The descriptions of the djLint settings say what the djLint docs say, in the same words in every language, followed by what is special to the extension. Code, links and setting names in them show as such in all of them; 17 settings showed their backticks as text.
+
 ## [2026.11.15] - 2026-11-16
 
 - Bundle djLint 1.50.4. A code in `djlint.include` turns its rule on even when the profile leaves it out, so `T003` now runs without a profile or with `html`, and the setting's description says so. A rule still stays off under a profile it doesn't apply to, such as `T028` under `django`. Without a profile, the linter runs the same rules as with `html`.
