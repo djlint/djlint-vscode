@@ -10,7 +10,7 @@
   "config.customHtml": "インデントするカスタムの HTML タグの名前。例：`mjml`、`simple-greeting`。`mj-\\w+` のように正規表現も使えます。djLint ≥ 1.25 が必要です。",
   "config.enableLinting": "よくある問題をリントします。言語ごとに設定してください。すべての言語でオンにすると、Python や JavaScript も含め、開いたファイルをすべてリントします。",
   "config.executablePath": "`djlint` 実行可能ファイルへのパス、または PATH から検索するコマンド名。パス区切り文字を含む相対値は、ワークスペースのルートを基準に解決されます。`${workspaceFolder}`、`${workspaceFolder:name}`、`${userHome}`、`${env:NAME}` は展開されます。空の場合や動作する djLint が得られない場合は、`#djlint.pythonPath#`、アクティブな Python 環境、PATH から djLint を探し、見つからなければ同梱の djLint を使用します。",
-  "config.exclude": "スキップするパス。デフォルトのリストの代わりに使われます。各エントリーは正規表現で、プロジェクトのルートまたはチェックするフォルダーからの相対パスに含まれるフォルダー名やファイル名の全体（`vendor` や `templates/legacy` など）と照合されます。そのため `*.min.html` は `.*\\.min\\.html` と書きます。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 1.25 が必要です。",
+  "config.exclude": "スキップするパス。デフォルトのリストの代わりに使われます。各エントリーは正規表現で、プロジェクトのルートまたはチェックするフォルダーからの相対パスに含まれるフォルダー名やファイル名の全体（`vendor` や `templates/legacy` など）と照合されます。そのため `*.min.html` は `.*\\.min\\.html` と書きます。djLint 1.52.2 以降、エントリ内のカンマは `{}` や `[]` の中でなければ `\\,` と書きます。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 1.25 が必要です。",
   "config.extendExclude": "除外リストに加えてスキップするパス。除外リストは `#djlint.exclude#`、未設定なら設定ファイルの `exclude`、それもなければデフォルトのリストです。`#djlint.exclude#` と同じく正規表現で書きます。djLint 1.49 以降では、エディター内のファイルに適用されます。djLint ≥ 1.25 が必要です。",
   "config.formatAttributeJsJson": "`onclick` や `x-data` など、`#djlint.formatAttributeJsJsonPattern#` で指定した属性内の JavaScript と JSON もフォーマットします。プロパティの数が `#djlint.formatAttributeJsJsonMinProps#` より少ないオブジェクトは 1 行のまま残ります。djLint ≥ 1.37 が必要です。",
   "config.formatAttributeJsJsonMinProps": "プロパティがこの数以上あるオブジェクトだけをフォーマットします。これより少ないオブジェクトは 1 行のまま残ります。未設定のままにすると、djLint のデフォルトの 2 が使われます。djLint ≥ 1.37 が必要です。",

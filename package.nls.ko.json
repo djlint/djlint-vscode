@@ -10,7 +10,7 @@
   "config.customHtml": "들여쓸 사용자 정의 HTML 태그의 이름입니다. 예: `mjml`, `simple-greeting`. `mj-\\w+`처럼 정규식도 쓸 수 있습니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.enableLinting": "흔한 문제를 린트합니다. 언어마다 따로 설정하세요. 모든 언어에 켜 두면 Python과 JavaScript를 포함해 여는 파일을 모두 린트합니다.",
   "config.executablePath": "`djlint` 실행 파일의 경로, 또는 PATH에서 찾을 명령 이름입니다. 경로 구분자가 들어 있는 상대 값은 작업 영역 루트를 기준으로 확인합니다. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}`, `${env:NAME}`은 확장됩니다. 비어 있거나 동작하는 djLint를 가리키지 않으면 `#djlint.pythonPath#`, 활성 Python 환경, PATH 순으로 djLint를 찾고, 찾지 못하면 번들된 djLint를 사용합니다.",
-  "config.exclude": "건너뛸 경로입니다. 기본 목록 대신 사용합니다. 각 항목은 정규식이며, 프로젝트 루트나 검사하는 폴더를 기준으로 한 상대 경로에 있는 폴더 이름이나 파일 이름 전체(`vendor`, `templates/legacy` 등)와 비교합니다. 그래서 `*.min.html`은 `.*\\.min\\.html`로 씁니다. djLint 1.49부터는 편집기에 열린 파일에도 적용됩니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
+  "config.exclude": "건너뛸 경로입니다. 기본 목록 대신 사용합니다. 각 항목은 정규식이며, 프로젝트 루트나 검사하는 폴더를 기준으로 한 상대 경로에 있는 폴더 이름이나 파일 이름 전체(`vendor`, `templates/legacy` 등)와 비교합니다. 그래서 `*.min.html`은 `.*\\.min\\.html`로 씁니다. djLint 1.52.2부터 항목 안의 쉼표는 `{}`나 `[]` 안이 아니면 `\\,`로 씁니다. djLint 1.49부터는 편집기에 열린 파일에도 적용됩니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.extendExclude": "제외 목록에 더해 건너뛸 경로입니다. 제외 목록은 `#djlint.exclude#`, 없으면 구성 파일의 `exclude`, 그것도 없으면 기본 목록입니다. `#djlint.exclude#`와 같은 정규식으로 씁니다. djLint 1.49부터는 편집기에 열린 파일에도 적용됩니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.formatAttributeJsJson": "`onclick`, `x-data`처럼 `#djlint.formatAttributeJsJsonPattern#`이 지정하는 속성 안의 JavaScript와 JSON도 포맷합니다. 속성 개수가 `#djlint.formatAttributeJsJsonMinProps#`보다 적은 객체는 한 줄로 둡니다. djLint ≥ 1.37에서 사용할 수 있습니다.",
   "config.formatAttributeJsJsonMinProps": "속성이 이 개수 이상인 객체만 포맷합니다. 이보다 적은 객체는 한 줄로 유지됩니다. 설정하지 않으면 djLint의 기본값인 2를 사용합니다. djLint ≥ 1.37에서 사용할 수 있습니다.",

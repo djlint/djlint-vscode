@@ -10,7 +10,7 @@
   "config.customHtml": "要縮排的自訂 HTML 標籤名稱，例如 `mjml` 或 `simple-greeting`。名稱可以是正規表示式，例如 `mj-\\w+`。需要 djLint ≥ 1.25。",
   "config.enableLinting": "執行 lint 以找出常見問題。請針對個別語言設定：若對所有語言開啟，它會對你開啟的每個檔案執行 lint，包括 Python 和 JavaScript 檔案。",
   "config.executablePath": "`djlint` 執行檔的路徑，或要在 PATH 上尋找的指令名稱。含有路徑分隔符號的相對值會從工作區根目錄解析。`${workspaceFolder}`、`${workspaceFolder:name}`、`${userHome}` 和 `${env:NAME}` 會被展開。若為空白或找不到可用的 djLint，則會透過 `#djlint.pythonPath#`、作用中的 Python 環境和 PATH 尋找 djLint，都找不到時則使用內建的 djLint。",
-  "config.exclude": "要略過的路徑，用來取代預設清單。每個項目都是正規表示式，會與相對於專案根目錄或所檢查資料夾的路徑中完整的資料夾名稱或檔案名稱比對，例如 `vendor` 或 `templates/legacy`，因此 `*.min.html` 要寫成 `.*\\.min\\.html`。從 djLint 1.49 起會套用到編輯器中的檔案。需要 djLint ≥ 1.25。",
+  "config.exclude": "要略過的路徑，用來取代預設清單。每個項目都是正規表示式，會與相對於專案根目錄或所檢查資料夾的路徑中完整的資料夾名稱或檔案名稱比對，例如 `vendor` 或 `templates/legacy`，因此 `*.min.html` 要寫成 `.*\\.min\\.html`。從 djLint 1.52.2 起，項目中的逗號若不在 `{}` 或 `[]` 內，要寫成 `\\,`。從 djLint 1.49 起會套用到編輯器中的檔案。需要 djLint ≥ 1.25。",
   "config.extendExclude": "在排除清單之外要略過的路徑。排除清單依序取 `#djlint.exclude#`、設定檔中的 `exclude`，都未設定時為預設清單。與 `#djlint.exclude#` 一樣以正規表示式撰寫。從 djLint 1.49 起會套用到編輯器中的檔案。需要 djLint ≥ 1.25。",
   "config.formatAttributeJsJson": "同時格式化 `onclick`、`x-data` 等屬性內的 JavaScript 和 JSON，也就是 `#djlint.formatAttributeJsJsonPattern#` 所指定的屬性。屬性數量少於 `#djlint.formatAttributeJsJsonMinProps#` 的物件會保持在同一行。需要 djLint ≥ 1.37。",
   "config.formatAttributeJsJsonMinProps": "只有在物件至少有這麼多個屬性時才格式化它。屬性數量較少的物件會保持在同一行。不設定則使用 djLint 的預設值 2。需要 djLint ≥ 1.37。",
