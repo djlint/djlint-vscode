@@ -18,6 +18,7 @@ import {
 } from "../../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../../__tests__/vscode-stub.js";
 import { formattingArgs, lintingArgs } from "../../../args.js";
+import { forgetShownWarnings } from "../../../notify.js";
 import { getDocumentFolder } from "../../document-folder.js";
 import { RUN_TIMEOUT_MS } from "../../types.js";
 import type { LintDiagnostic } from "../../types.js";
@@ -254,6 +255,27 @@ describe(PyodideEngine, () => {
       expect(channel.of("info").join()).toContain("bundled djLint 1.47.1");
       engine.dispose();
     });
+
+    it("shows and logs each warning once, as the command line does", () => {
+      const { channel, engine } = makeEngine();
+      format(engine).catch(() => void 0);
+      const worker = FakeWorker.latest;
+      for (const message of ["first", "second", "first"]) {
+        worker.respond({ message, type: "warning" });
+      }
+      expect(control.shownWarnings).toStrictEqual(["djLint: first", "djLint: second"]);
+      expect(channel.of("warn")).toStrictEqual(["Warning: first", "Warning: second"]);
+
+      forgetShownWarnings();
+      worker.respond({ message: "first", type: "warning" });
+      expect(control.shownWarnings).toStrictEqual([
+        "djLint: first",
+        "djLint: second",
+        "djLint: first",
+      ]);
+      expect(channel.of("warn")).toHaveLength(2);
+      engine.dispose();
+    });
   });
 
   describe("a runtime that fails to start", () => {
@@ -366,7 +388,7 @@ describe(PyodideEngine, () => {
 
     // oxlint-disable-next-line vitest/prefer-expect-assertions -- the expect in a callback is vi.waitFor's, which is awaited
     it("opens the log from the notification's Details button", async () => {
-      control.errorMessageChoice = "Details";
+      control.messageChoice = "Details";
       const { channel, engine } = makeEngine();
       const pending = format(engine);
       FakeWorker.latest.failRun(1, "broken");

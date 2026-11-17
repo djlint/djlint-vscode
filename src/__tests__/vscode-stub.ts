@@ -15,6 +15,7 @@ export type WorkspaceEventKind =
   | "close"
   | "config"
   | "extensions"
+  | "files"
   | "folders"
   | "open"
   | "save"
@@ -249,13 +250,14 @@ function initialState(): {
   configuration: Record<string, unknown>;
   diagnostics: Map<string, readonly Diagnostic[]>;
   documents: readonly unknown[];
-  errorMessageChoice: string | undefined;
   extensions: Map<string, unknown>;
   formattingProviders: FormattingProviderRecord[];
   isTrusted: boolean;
   language: string;
+  messageChoice: string | undefined;
   outputChannels: RecordingChannel[];
   shownErrors: string[];
+  shownWarnings: string[];
   visibleDocuments: readonly unknown[];
   workspaceFolders: readonly WorkspaceFolder[];
 } {
@@ -272,12 +274,13 @@ function initialState(): {
     configuration: {},
     diagnostics: new Map(),
     documents: [],
-    errorMessageChoice: void 0,
     extensions: new Map(),
     formattingProviders: [],
     isTrusted: true,
+    messageChoice: void 0,
     outputChannels: [],
     shownErrors: [],
+    shownWarnings: [],
     visibleDocuments: [],
     language: "en",
     workspaceFolders: [],
@@ -309,7 +312,9 @@ export function workspaceListenerCount(kind: WorkspaceEventKind): number {
   return workspaceListeners.get(kind)?.size ?? 0;
 }
 
-function onWorkspaceEvent<T>(kind: WorkspaceEventKind): (listener: Listener<T>) => Disposable {
+type OnEvent<T> = (listener: Listener<T>) => Disposable;
+
+function onWorkspaceEvent<T>(kind: WorkspaceEventKind): OnEvent<T> {
   return (listener) => {
     const untyped = listener as Listener<unknown>;
     const listeners = workspaceListeners.get(kind) ?? new Set();
@@ -410,6 +415,15 @@ export const workspace = {
   get isTrusted(): boolean {
     return control.isTrusted;
   },
+  // Every change to a watched file, whichever kind, fires the "files" event.
+  createFileSystemWatcher: (
+    _pattern: string,
+  ): Disposable & Record<"onDidChange" | "onDidCreate" | "onDidDelete", OnEvent<unknown>> => ({
+    dispose: () => void 0,
+    onDidChange: onWorkspaceEvent<unknown>("files"),
+    onDidCreate: onWorkspaceEvent<unknown>("files"),
+    onDidDelete: onWorkspaceEvent<unknown>("files"),
+  }),
   onDidChangeConfiguration: onWorkspaceEvent<unknown>("config"),
   onDidChangeWorkspaceFolders: onWorkspaceEvent<{
     removed: readonly { uri: { fsPath: string } }[];
@@ -465,7 +479,11 @@ export const window = {
   },
   showErrorMessage: async (message: string, ..._items: string[]): Promise<string | undefined> => {
     control.shownErrors.push(message);
-    return control.errorMessageChoice;
+    return control.messageChoice;
+  },
+  showWarningMessage: async (message: string, ..._items: string[]): Promise<string | undefined> => {
+    control.shownWarnings.push(message);
+    return control.messageChoice;
   },
   get visibleTextEditors(): readonly { document: unknown }[] {
     return control.visibleDocuments.map((document) => ({ document }));

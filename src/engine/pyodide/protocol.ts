@@ -38,6 +38,12 @@ interface LogMessage {
   line: string;
 }
 
+// Each time djLint gives it, from every run.
+interface WarningMessage {
+  type: "warning";
+  message: string;
+}
+
 interface ReadyMessage {
   type: "ready";
   version: string;
@@ -58,4 +64,5 @@ export type WorkerResponse =
   | CrashedMessage
   | LogMessage
   | ReadyMessage
-  | RunResponse;
+  | RunResponse
+  | WarningMessage;

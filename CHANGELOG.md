@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- Bundle djLint 1.52.0. It warns about settings that won't do what they look like, which the extension now shows: a misspelled name, a rule code no rule has, or a CSS indent without `djlint.formatCss`. A switch in a configuration file takes only `true` or `false`, and a number setting written as `true` or with a fraction is an error. `.editorconfig` is read for each file by its path, as editors read it, and a `pyproject.toml` without djLint settings no longer hides the repository's configuration from a package inside it. New rules: `D058` for a Django tag or comment written over several lines, which Django prints as text, and `D059`, off by default, for runs of `{# #}` lines.
+- djLint's warnings about settings that won't do what they look like, such as a misspelled name in `pyproject.toml` or a rule code in `djlint.ignore` that no rule has, now show up as warning notifications. Each shows once, and again after a djLint setting or one of its configuration files changes, or after djLint: Restart. They used to go only to the djLint output channel.
 - The descriptions of the djLint settings say what the djLint docs say, in the same words in every language, followed by what is special to the extension. Code, links and setting names in them show as such in all of them; 17 settings showed their backticks as text.
 
 ## [2026.11.15] - 2026-11-16

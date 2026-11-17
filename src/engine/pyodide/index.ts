@@ -4,7 +4,7 @@ import * as vscode from "vscode";
 
 import { buildOptions } from "../../args.js";
 import type { ArgContext } from "../../args.js";
-import { lastLine, showFailure } from "../../notify.js";
+import { lastLine, showFailure, showWarning } from "../../notify.js";
 import { deriveStdinFilename } from "../../paths.js";
 import type { DjlintStatus } from "../../status.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
@@ -44,6 +44,7 @@ export class PyodideEngine implements DjlintEngine {
   #watchdog: ReturnType<typeof setTimeout> | undefined;
   readonly #pending = new Map<number, Pending>();
   readonly #reported = new Set<string>();
+  readonly #loggedWarnings = new Set<string>();
   readonly #createWorker: () => RuntimeWorker;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #canReadProjectFiles: boolean;
@@ -200,6 +201,15 @@ export class PyodideEngine implements DjlintEngine {
       }
       case "result": {
         this.#settle(response);
+        break;
+      }
+      case "warning": {
+        // Logged once, as the command line logs it.
+        if (!this.#loggedWarnings.has(response.message)) {
+          this.#loggedWarnings.add(response.message);
+          this.#outputChannel.warn(`Warning: ${response.message}`);
+        }
+        void showWarning(`djLint: ${response.message}`, this.#outputChannel);
         break;
       }
     }

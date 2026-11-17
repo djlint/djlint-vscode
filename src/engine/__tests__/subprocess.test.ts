@@ -20,6 +20,7 @@ import {
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
+import { forgetShownWarnings } from "../../notify.js";
 import type { PythonEnvironments } from "../../python/environment.js";
 import { expandVariables, SubprocessEngine } from "../subprocess/index.js";
 import {
@@ -361,6 +362,62 @@ describe(SubprocessEngine, () => {
       await engine.format(document, config, formattingOptions, liveToken());
       await engine.format(document, config, formattingOptions, liveToken());
       expect(channel.of("warn").filter((line) => line.includes("pyproject"))).toHaveLength(1);
+    });
+
+    it("shows each warning once, worded as the language server words it", async () => {
+      installDjlint(async () => ({
+        stderr: "Warning: first\r\nSkipping rule X.\r\nWarning: second\r\n",
+        stdout: "<p>x</p>\n",
+      }));
+      const { channel, engine } = makeEngine();
+      await engine.format(document, config, formattingOptions, liveToken());
+      await engine.lint(document, config, liveToken());
+      expect(control.shownWarnings).toStrictEqual(["djLint: first", "djLint: second"]);
+      expect(channel.of("warn")).toStrictEqual([
+        "Warning: first\r\nSkipping rule X.\r\nWarning: second",
+      ]);
+
+      forgetShownWarnings();
+      await engine.lint(document, config, liveToken());
+      expect(control.shownWarnings).toHaveLength(4);
+    });
+
+    it("shows only djLint's own warnings, coloured or not, from any version", async () => {
+      const plain = [
+        "Warning: max_blank_lines has no effect with preserve_blank_lines.",
+        "Warning: A rule is missing a name! 😢",
+        "Warning: H017 and H018 enforce opposite void tag styles. Enable only one convention. 😢",
+        "Linting 1/1 files",
+        String.raw`C:\py\jsbeautifier\core\options.py:3: SyntaxWarning: invalid escape sequence '\d'`,
+        "  Warning: not at the start of a line",
+      ];
+      // Yellow and red, as click colours these.
+      const [blankLines, missingName, ...rest] = plain;
+      const stderr = [
+        `\u001B[33m${blankLines}\u001B[0m`,
+        `\u001B[31m${missingName}\u001B[0m`,
+        ...rest,
+      ].join("\n");
+      installDjlint(async () => ({ stderr, stdout: "<p>x</p>\n" }));
+      const { channel, engine } = makeEngine();
+      await engine.format(document, config, formattingOptions, liveToken());
+      expect(control.shownWarnings).toStrictEqual([
+        "djLint: max_blank_lines has no effect with preserve_blank_lines.",
+        "djLint: A rule is missing a name! 😢",
+        "djLint: H017 and H018 enforce opposite void tag styles. Enable only one convention. 😢",
+      ]);
+      expect(channel.of("warn")).toStrictEqual([plain.join("\n")]);
+    });
+
+    it("does not take an indented line for a warning, even when it comes first", async () => {
+      installDjlint(async () => ({
+        stderr: "  Warning: not at the start of a line\n",
+        stdout: "<p>x</p>\n",
+      }));
+      const { channel, engine } = makeEngine();
+      await engine.format(document, config, formattingOptions, liveToken());
+      expect(control.shownWarnings).toStrictEqual([]);
+      expect(channel.of("warn")).toStrictEqual(["Warning: not at the start of a line"]);
     });
 
     it("does not wipe a document when nothing comes back", async () => {

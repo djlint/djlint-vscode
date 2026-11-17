@@ -14,6 +14,7 @@ import {
   makeDocument,
 } from "../../__tests__/helpers.js";
 import { control, resetVscode } from "../../__tests__/vscode-stub.js";
+import { forgetShownWarnings } from "../../notify.js";
 import { DjlintServer, ServerResponseError } from "../subprocess/server.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 
@@ -299,6 +300,65 @@ describe(DjlintServer, () => {
     await lint();
     await lint();
     expect(control.shownErrors).toStrictEqual(["bad config", "other"]);
+  });
+
+  // djLint 1.49 to 1.50 shows only errors, and only logs a setting it doesn't know.
+  it("shows what a server before 1.51 sends as before", async () => {
+    onLint((request) => {
+      fake.send({
+        method: "window/showMessage",
+        params: { message: "djLint failed: bad config", type: 1 },
+      });
+      fake.send({
+        method: "window/logMessage",
+        params: { message: "Ignoring the setting max_line_lenght.", type: 2 },
+      });
+      fake.reply(request, { items: [] });
+    });
+    await lint();
+    expect(control.shownErrors).toStrictEqual(["djLint failed: bad config"]);
+    expect(control.shownWarnings).toStrictEqual([]);
+    expect(channel.of("warn")).toStrictEqual(["Ignoring the setting max_line_lenght."]);
+  });
+
+  it("shows a message with no type as an error", async () => {
+    onLint((request) => {
+      fake.send({ method: "window/showMessage", params: { message: "untyped" } });
+      fake.reply(request, { items: [] });
+    });
+    await lint();
+    expect(control.shownErrors).toStrictEqual(["untyped"]);
+    expect(control.shownWarnings).toStrictEqual([]);
+  });
+
+  it("shows an error as an error and a warning as a warning, and only logs the rest", async () => {
+    onLint((request) => {
+      for (const [type, message] of [
+        [1, "djLint: broken"],
+        [2, "djLint: odd setting"],
+        [3, "djLint: some info"],
+        [4, "djLint: a log line"],
+      ] as const) {
+        fake.send({ method: "window/showMessage", params: { message, type } });
+      }
+      fake.reply(request, { items: [] });
+    });
+    await lint();
+    expect(control.shownErrors).toStrictEqual(["djLint: broken"]);
+    expect(control.shownWarnings).toStrictEqual(["djLint: odd setting"]);
+    expect(channel.of("info")).toStrictEqual(["djLint: some info", "djLint: a log line"]);
+  });
+
+  it("shows a warning again once the extension forgets it", async () => {
+    onLint((request) => {
+      fake.send({ method: "window/showMessage", params: { message: "djLint: again", type: 2 } });
+      fake.reply(request, { items: [] });
+    });
+    await lint();
+    await lint();
+    forgetShownWarnings();
+    await lint();
+    expect(control.shownWarnings).toStrictEqual(["djLint: again", "djLint: again"]);
   });
 
   it("answers a request from the server with nothing, and a notification not at all", async () => {

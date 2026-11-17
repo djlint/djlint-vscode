@@ -93,6 +93,10 @@ worker.on("message", (/** @type {WorkerResponse} */ response) => {
       pending.delete(response.id);
       break;
     }
+    case "warning": {
+      console.log(`     Warning: ${response.message}`);
+      break;
+    }
   }
 });
 worker.on("error", (e) => {

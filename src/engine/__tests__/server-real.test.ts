@@ -15,13 +15,15 @@ import {
   makeDocument,
   setWorkspaceFolders,
 } from "../../__tests__/helpers.js";
-import { resetVscode } from "../../__tests__/vscode-stub.js";
+import { control, resetVscode } from "../../__tests__/vscode-stub.js";
 import { DjlintServer, IDLE_STOP_MS } from "../subprocess/server.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../subprocess/version.js";
 
 const { failed, stdout } = await execa("djlint", ["--version"], { reject: false });
 const version = failed ? null : parseDjlintVersion(String(stdout));
 const hasServer = version != null && isVersionAtLeast(version, "1.49");
+// The warnings came in djLint 1.51.
+const hasWarnings = version != null && isVersionAtLeast(version, "1.51");
 
 describe("a language server that doesn't start", () => {
   it("lets go of a cancelled run", async () => {
@@ -99,6 +101,14 @@ describe.runIf(hasServer)("a real language server", { timeout: 60_000 }, () => {
         liveToken(),
       ),
     ).resolves.toBe(`<div>\n  <p>x</p>\n</div>\n`);
+  });
+
+  it.runIf(hasWarnings)("shows a warning about a setting as a warning", async () => {
+    await server.lint(documentOf("<p>x</p>"), { ignore: "H999" }, liveToken());
+    expect(control.shownWarnings).toStrictEqual([
+      "djLint: ignore names H999, which is not a linter rule.",
+    ]);
+    expect(control.shownErrors).toStrictEqual([]);
   });
 
   it("takes no profile from the language of a document", async () => {

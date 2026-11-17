@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from djlint.api import format_text, is_excluded, lint_text, load_config
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from types import ModuleType
     from typing import Any
 
@@ -74,8 +75,13 @@ def run(
     filename: str,
     cwd: str | None,
     project: str | None,
+    on_warning: Callable[[str], None],
 ) -> str:
-    """Return the formatted text, or the diagnostics as JSON."""
+    """Return the formatted text, or the diagnostics as JSON.
+
+    `on_warning` gets what djLint warns about, such as a misspelled setting,
+    for the extension to show.
+    """
     _forget_projects()
     if project is not None:
         folder = _write_project(json.loads(project))
@@ -87,6 +93,7 @@ def run(
         folder,
         # What a project handed over holds is its configuration, not its code.
         python_rules=project is None,
+        on_warning=on_warning,
         **json.loads(options),
         **{name: Path(value) for name, value in json.loads(path_options).items()},
     )
