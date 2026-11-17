@@ -87,7 +87,7 @@ export async function resolveDjlintCommand(deps: ResolveDjlintCommandDeps): Prom
   }
 
   throw new DjlintUnavailableError(
-    `Could not find djLint. Set ${configSection}.executablePath, ${configSection}.pythonPath, or install djLint so it is available on PATH.`,
+    `Could not find djLint. Set ${configSection}.executablePath or ${configSection}.pythonPath, or install djLint in the active Python environment, in the project with npm, or on PATH.`,
   );
 }
 
