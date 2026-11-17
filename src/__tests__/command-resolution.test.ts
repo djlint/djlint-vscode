@@ -1,5 +1,5 @@
 // Which djLint actually runs: executablePath > pythonPath > active environment
-// > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
+// > the djlint npm package > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
 import { describe, expect, it } from "vitest";
 
 import { resolveDjlintCommand } from "../engine/subprocess/resolve.js";
@@ -8,7 +8,7 @@ import { DjlintUnavailableError } from "../engine/types.js";
 
 /**
  * Resolution deps whose probe finds a real djLint only behind the exec names in `works`.
- * @param overrides - Deps to use in place of the defaults, which have no configured path and no active environment.
+ * @param overrides - Deps to use in place of the defaults, which have no configured path, no active environment and no npm package.
  * @param works - The exec names whose probe succeeds; every other probe fails.
  * @returns The deps, with the exec names probed and the `setting:exec` pairs rejected, in order.
  */
@@ -21,6 +21,7 @@ function makeDeps(
   const deps: ResolveDjlintCommandDeps = {
     activeEnvironment: null,
     executablePath: "",
+    findNpmPython: async () => null,
     onConfiguredPathRejected: (setting, exec) => {
       rejected.push(`${setting}:${exec}`);
     },
@@ -35,6 +36,7 @@ function makeDeps(
 }
 
 const condaEnvironment = { command: { args: ["run", "-p", "/env"], executable: "conda" } };
+const npmPython = "/project/node_modules/@djlint/linux-x64-gnu/python/bin/python3";
 
 describe(resolveDjlintCommand, () => {
   it("takes executablePath outright, probing nothing else", async () => {
@@ -104,9 +106,43 @@ describe(resolveDjlintCommand, () => {
     expect(probed).toStrictEqual(["/py -m djlint"]);
   });
 
+  it("runs the djlint npm package's Python, shut off from other Pythons", async () => {
+    const { deps, probed } = makeDeps({ findNpmPython: async () => npmPython }, [npmPython]);
+    await expect(resolveDjlintCommand(deps)).resolves.toStrictEqual({
+      exec: npmPython,
+      prefixArgs: ["-I", "-m", "djlint"],
+      version: "1.44.2",
+    });
+    expect(probed).toStrictEqual([`${npmPython} -I -m djlint`]);
+  });
+
+  it("prefers the active environment over the npm package, which it doesn't look up", async () => {
+    let lookups = 0;
+    const findNpmPython = async (): Promise<string> => {
+      lookups += 1;
+      return npmPython;
+    };
+    const { deps } = makeDeps({ activeEnvironment: condaEnvironment, findNpmPython }, [
+      "conda",
+      npmPython,
+    ]);
+    await expect(resolveDjlintCommand(deps)).resolves.toMatchObject({ exec: "conda" });
+    expect(lookups).toBe(0);
+  });
+
+  it("prefers the npm package over `djlint` on PATH", async () => {
+    const { deps } = makeDeps({ findNpmPython: async () => npmPython }, ["djlint", npmPython]);
+    await expect(resolveDjlintCommand(deps)).resolves.toMatchObject({ exec: npmPython });
+  });
+
   it("probes every candidate in order before giving up", async () => {
     const { deps, probed, rejected } = makeDeps(
-      { executablePath: "/a", activeEnvironment: condaEnvironment, pythonPath: "/b" },
+      {
+        activeEnvironment: condaEnvironment,
+        executablePath: "/a",
+        findNpmPython: async () => npmPython,
+        pythonPath: "/b",
+      },
       [],
     );
     await expect(resolveDjlintCommand(deps)).rejects.toBeInstanceOf(DjlintUnavailableError);
@@ -114,6 +150,7 @@ describe(resolveDjlintCommand, () => {
       "/a",
       "/b -m djlint",
       "conda run -p /env -m djlint",
+      `${npmPython} -I -m djlint`,
       "djlint",
       "python -m djlint",
       "python3 -m djlint",
