@@ -1,5 +1,5 @@
 // Finding the Python of the djlint npm package where Node would find the package.
-import { mkdir, mkdtemp, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -30,7 +30,8 @@ describe(findNpmPython, () => {
   let project: string;
 
   beforeEach(async () => {
-    project = await mkdtemp(path.join(tmpdir(), "djlint-npm-"));
+    // The real path, as the lookup gives one: the temporary folder is behind a link on macOS, and has a short name on Windows runners.
+    project = await realpath(await mkdtemp(path.join(tmpdir(), "djlint-npm-")));
   });
 
   afterEach(async () => {
