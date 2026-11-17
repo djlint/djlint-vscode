@@ -3,8 +3,15 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import process from "node:process";
 
-/** How djLint runs on the Python of its npm package: shut off from other Pythons, as the package's own command runs it. */
-export const NPM_PYTHON_ARGS: readonly string[] = ["-I", "-m", "djlint"];
+/**
+ * How djLint runs on the Python of its npm package. `-I` shuts out other Pythons, as the package's own command does, and so ignores PYTHONPATH.
+ * What it names goes after the package's own modules instead, which keeps a custom rule's python_module importable from the workspace, as with any other djLint, while nothing there can stand in for one of djLint's.
+ */
+export const NPM_PYTHON_ARGS: readonly string[] = [
+  "-I",
+  "-c",
+  "import os, sys; sys.path += filter(None, os.environ.get('PYTHONPATH', '').split(os.pathsep)); from djlint._cli import main; sys.argv[0] = 'djlint'; sys.exit(main())",
+];
 
 let muslPromise: Promise<boolean> | undefined;
 

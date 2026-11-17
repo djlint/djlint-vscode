@@ -2,6 +2,7 @@
 // > the djlint npm package > `djlint` on PATH > `python -m djlint` > `python3 -m djlint`.
 import { describe, expect, it } from "vitest";
 
+import { NPM_PYTHON_ARGS } from "../engine/subprocess/npm.js";
 import { resolveDjlintCommand } from "../engine/subprocess/resolve.js";
 import type { ResolveDjlintCommandDeps } from "../engine/subprocess/resolve.js";
 import { DjlintUnavailableError } from "../engine/types.js";
@@ -110,10 +111,10 @@ describe(resolveDjlintCommand, () => {
     const { deps, probed } = makeDeps({ findNpmPython: async () => npmPython }, [npmPython]);
     await expect(resolveDjlintCommand(deps)).resolves.toStrictEqual({
       exec: npmPython,
-      prefixArgs: ["-I", "-m", "djlint"],
+      prefixArgs: NPM_PYTHON_ARGS,
       version: "1.44.2",
     });
-    expect(probed).toStrictEqual([`${npmPython} -I -m djlint`]);
+    expect(probed).toStrictEqual([[npmPython, ...NPM_PYTHON_ARGS].join(" ")]);
   });
 
   it("prefers the active environment over the npm package, which it doesn't look up", async () => {
@@ -150,7 +151,7 @@ describe(resolveDjlintCommand, () => {
       "/a",
       "/b -m djlint",
       "conda run -p /env -m djlint",
-      `${npmPython} -I -m djlint`,
+      [npmPython, ...NPM_PYTHON_ARGS].join(" "),
       "djlint",
       "python -m djlint",
       "python3 -m djlint",
