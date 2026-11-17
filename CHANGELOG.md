@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.17] - 2026-11-17
+
 - Bundle djLint 1.53.0. A pattern in `djlint.exclude`, `djlint.extendExclude` or `per-file-ignores` that isn't a valid regular expression, such as the glob `*.min.html`, is reported as an error naming the setting, with the regular expression to write instead. A comma inside `{}` or `[]` in an `exclude` regex, as in `[0-9]{1,2}`, stays part of it; any other comma separates two regexes unless written `\,`. Each item of an `exclude` list in the config file is one regex, commas and all. A `#` comment no longer hides the entries after it, and an empty exclude list, or an entry that is only a comment, no longer excludes every file inside a folder. A `<!-- djlint:off -->` written right before its `<!-- djlint:on -->` no longer hides the rest of the file from the linter, and a `.editorconfig` djLint isn't allowed to read is left out instead of stopping the run.
 - The descriptions of `djlint.exclude`, `djlint.extendExclude`, `djlint.useGitignore`, `djlint.configuration` and `djlint.rules` say what the djLint docs now say: the exclude entries are regular expressions matched against whole folder and file names, `djlint.extendExclude` adds to whichever exclude list applies, a comma in an entry is written `\,` unless it sits inside `{}` or `[]`, the configuration file is a global one that the project's own config file overrides, and a `djlint.toml` there needs djLint 1.36.
 
