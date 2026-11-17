@@ -9,6 +9,9 @@ const RULE = "=".repeat(80);
 
 // What Pyodide 314 links; a change means a license to add below.
 const KNOWN_BUILT = ["libffi", "libhiwire", "liblzma", "libzstd"];
+// Targets of the same `all:` line that build no library: `pkgconfig` (Pyodide 314.0.8) only
+// writes Python's .pc files for the cross-build environment.
+const NOT_LIBRARIES = new Set(["pkgconfig"]);
 const KNOWN_PORTS = ["USE_BZIP2", "USE_ZLIB"];
 const KNOWN_LINKED = ["bz2", "lzma", "sqlite3", "zstd"];
 
@@ -68,7 +71,9 @@ export async function pyodideLicenses(version) {
   const setup = await fetchText(pyodide("cpython/Setup.local"));
 
   assertSame(
-    capture(makefile, /^all: \S+ (.+)$/mu, "the libraries it builds").split(/\s+/u),
+    capture(makefile, /^all: \S+ (.+)$/mu, "the libraries it builds")
+      .split(/\s+/u)
+      .filter((target) => !NOT_LIBRARIES.has(target)),
     KNOWN_BUILT,
     "the libraries",
   );
