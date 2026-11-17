@@ -409,6 +409,17 @@ describe(SubprocessEngine, () => {
       expect(channel.of("warn")).toStrictEqual([plain.join("\n")]);
     });
 
+    it("does not take an indented line for a warning, even when it comes first", async () => {
+      installDjlint(async () => ({
+        stderr: "  Warning: not at the start of a line\n",
+        stdout: "<p>x</p>\n",
+      }));
+      const { channel, engine } = makeEngine();
+      await engine.format(document, config, formattingOptions, liveToken());
+      expect(control.shownWarnings).toStrictEqual([]);
+      expect(channel.of("warn")).toStrictEqual(["Warning: not at the start of a line"]);
+    });
+
     it("does not wipe a document when nothing comes back", async () => {
       installDjlint(async () => ({ stdout: "" }));
       const { engine } = makeEngine();
