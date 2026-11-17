@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.18] - 2026-11-17
+
 - Bundle djLint 1.53.1. `H042` no longer reports a `<label for>` that points at a `<textarea>`, and the linter no longer skips what follows a custom element whose name starts with that of a raw text element, such as `<preview-card>` or `<script-x>`.
 
 ## [2026.11.17] - 2026-11-17
