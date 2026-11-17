@@ -5,7 +5,7 @@
   "config.blankLineAfterTag": "뒤에 빈 줄을 넣을 템플릿 태그입니다. 예: `load`, `extends`. 이런 태그가 연달아 있으면 마지막 태그 뒤에만 빈 줄을 넣고, 블록의 끝에는 넣지 않습니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.blankLineBeforeTag": "앞에 빈 줄을 넣을 템플릿 태그입니다. 예: `load`, `extends`. 이런 태그가 연달아 있으면 첫 태그 앞에만 빈 줄을 넣고, 파일이나 블록의 시작에는 넣지 않습니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.closeVoidTags": "알려진 빈 요소 태그를 슬래시로 닫아 `<img>`를 `<img />`로 바꿉니다. 이 옵션을 사용하면 반대를 요구하는 `H018`은 보고하지 않습니다. djLint ≥ 1.26에서 사용할 수 있습니다.",
-  "config.configuration": "홈 폴더에 둔 파일 같은 전역 구성 파일(`pyproject.toml`, `djlint.toml`, `.djlintrc`)입니다. 둘이 같은 옵션을 설정하면 프로젝트 자체의 구성 파일이 우선합니다. 파일 이름만 쓴 경우를 포함해 상대 경로는 작업 영역 루트를 기준으로 확인합니다. .djlintrc 형식은 djLint ≥ 1.13, TOML은 ≥ 1.34에서 사용할 수 있습니다.",
+  "config.configuration": "홈 폴더에 둔 파일 같은 전역 구성 파일(`pyproject.toml`, `djlint.toml`, `.djlintrc`)입니다. 둘이 같은 옵션을 설정하면 프로젝트 자체의 구성 파일이 우선합니다. 파일 이름만 쓴 경우를 포함해 상대 경로는 작업 영역 루트를 기준으로 확인합니다. .djlintrc 형식은 djLint ≥ 1.13, `pyproject.toml`은 ≥ 1.34, `djlint.toml`은 ≥ 1.36에서 사용할 수 있습니다.",
   "config.customBlocks": "들여쓸 사용자 정의 템플릿 블록의 이름입니다. 예: `{% toc %}...{% endtoc %}`라면 `toc`. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.customHtml": "들여쓸 사용자 정의 HTML 태그의 이름입니다. 예: `mjml`, `simple-greeting`. `mj-\\w+`처럼 정규식도 쓸 수 있습니다. djLint ≥ 1.25에서 사용할 수 있습니다.",
   "config.enableLinting": "흔한 문제를 린트합니다. 언어마다 따로 설정하세요. 모든 언어에 켜 두면 Python과 JavaScript를 포함해 여는 파일을 모두 린트합니다.",

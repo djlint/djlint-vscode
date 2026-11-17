@@ -5,7 +5,7 @@
   "config.blankLineAfterTag": "後ろに空行を入れるテンプレートタグ。例：`load`、`extends`。このタグが連続する場合は最後のタグの後にだけ空行が入り、ブロックの末尾には空行は追加されません。djLint ≥ 1.25 が必要です。",
   "config.blankLineBeforeTag": "前に空行を入れるテンプレートタグ。例：`load`、`extends`。このタグが連続する場合は最初のタグの前にだけ空行が入り、ファイルやブロックの先頭には空行は追加されません。djLint ≥ 1.25 が必要です。",
   "config.closeVoidTags": "既知の空要素のタグをスラッシュで閉じ、`<img>` を `<img />` にします。このオプションを指定すると、逆を求める `H018` は報告されません。djLint ≥ 1.26 が必要です。",
-  "config.configuration": "ホームフォルダーにあるものなど、グローバルな設定ファイル（`pyproject.toml`、`djlint.toml`、`.djlintrc`）。両者が同じオプションを設定している場合は、プロジェクト自身の設定ファイルが優先されます。ファイル名だけの場合も含め、相対パスはワークスペースのルートを基準に解決されます。.djlintrc 形式には djLint ≥ 1.13、TOML には ≥ 1.34 が必要です。",
+  "config.configuration": "ホームフォルダーにあるものなど、グローバルな設定ファイル（`pyproject.toml`、`djlint.toml`、`.djlintrc`）。両者が同じオプションを設定している場合は、プロジェクト自身の設定ファイルが優先されます。ファイル名だけの場合も含め、相対パスはワークスペースのルートを基準に解決されます。.djlintrc 形式には djLint ≥ 1.13、`pyproject.toml` には ≥ 1.34、`djlint.toml` には ≥ 1.36 が必要です。",
   "config.customBlocks": "インデントするカスタムのテンプレートブロックの名前。例：`{% toc %}...{% endtoc %}` なら `toc`。djLint ≥ 1.25 が必要です。",
   "config.customHtml": "インデントするカスタムの HTML タグの名前。例：`mjml`、`simple-greeting`。`mj-\\w+` のように正規表現も使えます。djLint ≥ 1.25 が必要です。",
   "config.enableLinting": "よくある問題をリントします。言語ごとに設定してください。すべての言語でオンにすると、Python や JavaScript も含め、開いたファイルをすべてリントします。",
