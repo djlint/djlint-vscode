@@ -67,7 +67,7 @@ def test_minifies_glue() -> None:
     assert "TYPE_CHECKING" not in minified
     assert "__future__" not in minified
     assert "Lay out the project" not in minified
-    assert "\ndef run(mode,src,options,path_options,filename,cwd,project):" in minified
+    assert "\ndef run(mode,src,options,path_options,filename,cwd,project,on_warning):" in minified
     assert len(minified) < GLUE.stat().st_size / 2
     namespace: dict[str, object] = {}
     exec(compile(minified, "glue", "exec"), namespace)  # noqa: S102
