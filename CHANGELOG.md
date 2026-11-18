@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.19] - 2026-11-18
+
 - A djLint the project installs with npm (`npm i -D djlint`) is found in its `node_modules`, after the active Python environment and before `djlint` on PATH. It runs on the Python its npm package comes with, so the machine needs no Python. The older npm package, which only ran pip, isn't picked up this way.
 
 ## [2026.11.18] - 2026-11-17
