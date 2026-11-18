@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [2026.11.20] - 2026-11-18
+
 - Bundle djLint 1.54.0. It only changes how djLint is packaged for npm, so nothing changes in the extension.
 
 ## [2026.11.19] - 2026-11-18
