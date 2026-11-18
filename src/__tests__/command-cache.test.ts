@@ -11,6 +11,7 @@ function makeDeps(probe: ResolveDjlintCommandDeps["probe"]): ResolveDjlintComman
   return {
     activeEnvironment: null,
     executablePath: "/bin/djlint",
+    findNpmPython: async () => null,
     onConfiguredPathRejected: () => void 0,
     probe,
     pythonPath: "",

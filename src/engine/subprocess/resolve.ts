@@ -1,6 +1,7 @@
 import { configSection } from "../../config.js";
 import type { PythonEnvironmentDetails } from "../../python/environment.js";
 import { DjlintUnavailableError, RESOLUTION_TTL_MS } from "../types.js";
+import { NPM_PYTHON_ARGS } from "./npm.js";
 
 export interface RunnerCommand {
   exec: string;
@@ -19,6 +20,8 @@ export interface ResolveDjlintCommandDeps {
   executablePath: string;
   pythonPath: string;
   activeEnvironment: PythonEnvironmentDetails | null;
+  /** The Python of the djlint npm package the document's folder sees, looked up only when it comes to that. */
+  findNpmPython: () => Promise<string | null>;
   probe: (exec: string, prefixArgs: readonly string[]) => Promise<ProbeResult>;
   onConfiguredPathRejected: (setting: string, exec: string) => void;
 }
@@ -61,6 +64,14 @@ export async function resolveDjlintCommand(deps: ResolveDjlintCommandDeps): Prom
     }
   }
 
+  const npmPython = await deps.findNpmPython();
+  if (npmPython != null) {
+    const command = await tryCommand(npmPython, NPM_PYTHON_ARGS);
+    if (command) {
+      return command;
+    }
+  }
+
   const onPath = await tryCommand("djlint", []);
   if (onPath) {
     return onPath;
@@ -76,7 +87,7 @@ export async function resolveDjlintCommand(deps: ResolveDjlintCommandDeps): Prom
   }
 
   throw new DjlintUnavailableError(
-    `Could not find djLint. Set ${configSection}.executablePath, ${configSection}.pythonPath, or install djLint so it is available on PATH.`,
+    `Could not find djLint. Set ${configSection}.executablePath or ${configSection}.pythonPath, or install djLint in the active Python environment, in the project with npm, or on PATH.`,
   );
 }
 

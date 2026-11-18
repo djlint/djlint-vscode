@@ -24,6 +24,7 @@ import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { checkErrors, isValidLintResult } from "./errors.js";
 import { isCustomExecaError, isDjlintUnavailable } from "./exec.js";
 import type { ChildOptions, CustomExecaError } from "./exec.js";
+import { findNpmPython } from "./npm.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
 import { CommandResolver } from "./resolve.js";
 import type { ProbeResult, RunnerCommand } from "./resolve.js";
@@ -331,6 +332,10 @@ export class SubprocessEngine implements DjlintEngine {
       {
         activeEnvironment,
         executablePath,
+        findNpmPython: async (): Promise<string | null> => {
+          const folder = await getExistingDocumentFolder(document);
+          return folder == null ? null : findNpmPython(folder);
+        },
         onConfiguredPathRejected: (setting, exec): void => {
           this.#outputChannel.warn(
             `${configSection}.${setting} is set to "${exec}", but no working djLint was found there. Ignoring it and trying the next candidate.`,

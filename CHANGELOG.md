@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+- A djLint the project installs with npm (`npm i -D djlint`) is found in its `node_modules`, after the active Python environment and before `djlint` on PATH. It runs on the Python its npm package comes with, so the machine needs no Python. The older npm package, which only ran pip, isn't picked up this way.
+
 ## [2026.11.18] - 2026-11-17
 
 - Bundle djLint 1.53.1. `H042` no longer reports a `<label for>` that points at a `<textarea>`, and the linter no longer skips what follows a custom element whose name starts with that of a raw text element, such as `<preview-card>` or `<script-x>`.

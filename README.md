@@ -17,7 +17,9 @@ uv add --dev djlint
 pip install djlint
 ```
 
-The extension finds it through the Python environment selected in VS Code. If another environment is selected, or no Python environment extension is installed, the extension may fall back to its own djLint. In that case set `djlint.pythonPath` or `djlint.executablePath`, see [Which djLint is used](#which-djlint-is-used). The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
+In a project that uses npm, `npm i -D djlint` adds it as well, with a Python of its own.
+
+The extension finds djLint through the Python environment selected in VS Code, or in the project's `node_modules`. If another environment is selected, or no Python environment extension is installed, the extension may fall back to its own djLint. In that case set `djlint.pythonPath` or `djlint.executablePath`, see [Which djLint is used](#which-djlint-is-used). The [djLint installation guide](https://djlint.com/docs/getting-started/#installation) has the details.
 
 ## Usage
 
@@ -54,8 +56,9 @@ The extension looks for a djLint to run, in this order:
 1. `djlint.executablePath`, a path to a djLint executable.
 2. `djlint.pythonPath`, a path to a Python interpreter to run djLint from (`python -m djlint`).
 3. The active environment reported by the [Python Environments extension](https://marketplace.visualstudio.com/items?itemName=ms-python.vscode-python-envs) if `python.useEnvironmentsExtension` is on, otherwise by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). Skipped when neither is installed, or when `djlint.useVenv` is `false`.
-4. `djlint` on PATH, then `python -m djlint` and `python3 -m djlint`.
-5. The djLint bundled with the extension.
+4. The djLint installed in the project with [npm](https://www.npmjs.com/package/djlint), found from the file's folder as Node finds packages: in a `node_modules` there or in a folder above. It runs on the Python that comes with it.
+5. `djlint` on PATH, then `python -m djlint` and `python3 -m djlint`.
+6. The djLint bundled with the extension.
 
 The djLint item in the status bar shows which one is in use. A candidate where djLint is not installed is skipped. An installed djLint that fails is not: its error is shown, as it is not safe to format with another version. The exceptions are `python` and `python3` from PATH, which count only if `-m djlint --version` answers, because a stub such as the Windows Store one fails the same way. Both path settings are unset by default and accept either a path or a bare command name: a relative value containing a path separator (`bin/djlint`, `./venv/bin/python`) is resolved from the workspace root, while a bare name (`djlint`, `python3`) is looked up on PATH. `${workspaceFolder}`, `${workspaceFolder:name}`, `${userHome}` and `${env:NAME}` are expanded in both. The old defaults, `"djlint"` for `djlint.executablePath` and `"python"` for `djlint.pythonPath`, count as unset, so use a path if one of them has to win over the active environment.
 
