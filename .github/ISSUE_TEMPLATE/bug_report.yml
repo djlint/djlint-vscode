@@ -106,6 +106,7 @@ body:
         - djlint.executablePath
         - djlint.pythonPath
         - Active Python environment
+        - npm package in the project
         - PATH
         - Not sure
     validations:
