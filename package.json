@@ -83,7 +83,7 @@
     "esbuild": "0.28.2",
     "ovsx": "1.4.0",
     "oxfmt": "0.78.0",
-    "oxlint": "1.93.0",
+    "oxlint": "1.94.0",
     "oxlint-tsgolint": "7.0.2007",
     "path-browserify": "1.0.1",
     "pyodide": "314.0.8",
