@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+## [2026.11.21] - 2026-11-24
+
+- The README lists `npm i -D djlint` next to uv and pip, and says that the `djlint` on PATH can come from `uv tool install`, pipx or `npm i -g`.
+- Update the bundled vscode-jsonrpc to 10.0.1.
+
 ## [2026.11.20] - 2026-11-18
 
 - Bundle djLint 1.54.0. It only changes how djLint is packaged for npm, so nothing changes in the extension.
