@@ -49,7 +49,7 @@ export class PythonEnvironments implements vscode.Disposable {
   readonly onDidChange: vscode.Event<void>;
 
   readonly #changeEmitter = new vscode.EventEmitter<void>();
-  readonly #disposables: vscode.Disposable[] = [this.#changeEmitter];
+  readonly #disposables: { dispose: () => unknown }[] = [this.#changeEmitter];
   #provider: Promise<EnvironmentProvider | null> | undefined;
   #isUnavailable = false;
   #isStalled = false;
