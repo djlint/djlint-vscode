@@ -4,7 +4,7 @@ import { formattingArgs, lintingArgs } from "../../args.js";
 import type { CliArg } from "../../args.js";
 import { docsUrl } from "../../docs.js";
 import { lastLine, showFailure } from "../../notify.js";
-import type { CustomExecaError } from "./exec.js";
+import type { RunError } from "./exec.js";
 
 const argsMap: ReadonlyMap<string, CliArg> = new Map(
   [...formattingArgs, ...lintingArgs].map((arg) => [arg.cliName, arg]),
@@ -12,7 +12,7 @@ const argsMap: ReadonlyMap<string, CliArg> = new Map(
 
 const NO_SUCH_OPTION_REGEX = /No\s+such\s+option[:\s]\s*['"]?(?<option>--[\w-]+)/u;
 
-function summarize(e: CustomExecaError): string {
+function summarize(e: RunError): string {
   const reason = lastLine(e.stderr);
   if (reason) {
     return vscode.l10n.t("djLint failed: {0}", reason);
@@ -28,7 +28,7 @@ function summarize(e: CustomExecaError): string {
     : vscode.l10n.t("djLint was stopped by {0}.", e.signal);
 }
 
-export function isValidLintResult(e: CustomExecaError, isLint: boolean): boolean {
+export function isValidLintResult(e: RunError, isLint: boolean): boolean {
   return (
     isLint &&
     e.exitCode === 1 &&
@@ -36,7 +36,7 @@ export function isValidLintResult(e: CustomExecaError, isLint: boolean): boolean
   );
 }
 
-export function checkErrors(e: CustomExecaError, outputChannel: vscode.LogOutputChannel): never {
+export function checkErrors(e: RunError, outputChannel: vscode.LogOutputChannel): never {
   const rejectedOption =
     e.exitCode == null ? void 0 : NO_SUCH_OPTION_REGEX.exec(e.stderr)?.groups?.["option"];
   const arg = rejectedOption == null ? void 0 : argsMap.get(rejectedOption);
@@ -54,6 +54,5 @@ export function checkErrors(e: CustomExecaError, outputChannel: vscode.LogOutput
     outputChannel,
   );
 
-  // oxlint-disable-next-line typescript/only-throw-error
   throw e;
 }

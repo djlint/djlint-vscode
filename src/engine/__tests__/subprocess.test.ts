@@ -1,6 +1,7 @@
 /* oxlint-disable no-template-curly-in-string -- the variables of a setting, as written */
-// SubprocessEngine with execa replaced: what it spawns, and how it classifies
+// SubprocessEngine with `run` replaced: what it spawns, and how it classifies
 // each way a spawned djLint can end.
+import { spawn as startServer } from "node:child_process";
 import { stat } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -14,7 +15,7 @@ import {
   makeChannel,
   makeConfig,
   makeDocument,
-  makeExecaError,
+  makeRunError,
   makePythonEnvironments,
   makeStatus,
   setWorkspaceFolders,
@@ -34,13 +35,31 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
   stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 
+// A language server that can't start, so that every run goes through `run`.
+vi.mock("node:child_process", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("node:child_process")>()),
+  spawn: vi.fn<typeof import("node:child_process").spawn>(() => {
+    throw new Error("no language server here");
+  }),
+}));
+
 vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 const { spawn } = vi.hoisted(() => ({ spawn: vi.fn<Spawn>() }));
 
-vi.mock("execa", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("execa")>()),
-  execa: async (...args: Parameters<Spawn>) => ({ stderr: "", ...(await spawn(...args)) }),
-}));
+// What `spawn` answers, as `run` reports it: anything but an exit with 0 is a RunError.
+vi.mock("../subprocess/exec.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../subprocess/exec.js")>();
+  return {
+    ...actual,
+    run: async (...args: Parameters<Spawn>) => {
+      const { stderr = "", ...result } = await spawn(...args);
+      if ((result.exitCode ?? 0) !== 0 || result.code != null || result.timedOut === true) {
+        throw new actual.RunError(args[0], { ...result, stderr });
+      }
+      return { stderr, stdout: result.stdout };
+    },
+  };
+});
 
 type Spawn = (
   exec: string,
@@ -49,7 +68,6 @@ type Spawn = (
 ) => Promise<{
   code?: string;
   exitCode?: number | undefined;
-  failed?: boolean;
   stderr?: string;
   stdout: string;
   timedOut?: boolean;
@@ -107,6 +125,7 @@ describe(SubprocessEngine, () => {
   beforeEach(() => {
     resetVscode();
     spawn.mockReset();
+    vi.mocked(startServer).mockClear();
     setWorkspaceFolders("/w");
   });
 
@@ -126,7 +145,6 @@ describe(SubprocessEngine, () => {
       expect(options).toMatchObject({
         cwd: Uri.file("/w/sub").fsPath,
         input: "<p>x</p>",
-        stripFinalNewline: false,
         timeout: RUN_TIMEOUT_MS,
       });
     });
@@ -188,10 +206,10 @@ describe(SubprocessEngine, () => {
       installDjlint();
       const { engine } = makeEngine();
       await engine.format(document, config, formattingOptions, liveToken());
-      expect(spawn.mock.calls[0]).toMatchObject([
+      expect(spawn.mock.calls[0]).toStrictEqual([
         "/bin/djlint",
         ["--version"],
-        { cwd: Uri.file("/w/sub").fsPath, reject: false, stdin: "ignore" },
+        { cwd: Uri.file("/w/sub").fsPath, timeout: expect.any(Number) },
       ]);
     });
 
@@ -584,7 +602,7 @@ describe(SubprocessEngine, () => {
         formattingOptions,
         liveToken(),
       );
-      expect(spawn.mock.calls.filter(([, args]) => args.includes("--lsp"))).toHaveLength(0);
+      expect(startServer).not.toHaveBeenCalled();
     });
 
     it("starts a language server for each workspace folder", async () => {
@@ -598,11 +616,10 @@ describe(SubprocessEngine, () => {
         engine.format(makeDocument(file), config, formattingOptions, liveToken());
       await format("/a/t.html");
       await format("/b/t.html");
-      expect(
-        spawn.mock.calls
-          .filter(([, args]) => args.includes("--lsp"))
-          .map(([, , options]) => options["cwd"]),
-      ).toStrictEqual([vscode.Uri.file("/a").fsPath, vscode.Uri.file("/b").fsPath]);
+      expect(vi.mocked(startServer).mock.calls.map(([, , options]) => options.cwd)).toStrictEqual([
+        vscode.Uri.file("/a").fsPath,
+        vscode.Uri.file("/b").fsPath,
+      ]);
     });
 
     it("detects per folder when an environment falls through to PATH", async () => {
@@ -800,7 +817,7 @@ describe(SubprocessEngine, () => {
 
     it("reads exit 1 from a lint as its findings, not a failure", async () => {
       installDjlint(async () => {
-        throw makeExecaError({ exitCode: 1, stdout: `H013${FS}1:5${FS}msg${RS}\n` });
+        throw makeRunError({ exitCode: 1, stdout: `H013${FS}1:5${FS}msg${RS}\n` });
       });
       const { engine } = makeEngine();
       await expect(engine.lint(document, config, liveToken())).resolves.toHaveLength(1);
@@ -809,7 +826,7 @@ describe(SubprocessEngine, () => {
     });
 
     it("reports a genuine failure and rethrows it", async () => {
-      const error = makeExecaError({ exitCode: 2, stderr: "Traceback\nValueError: bad\n" });
+      const error = makeRunError({ exitCode: 2, stderr: "Traceback\nValueError: bad\n" });
       installDjlint(async () => {
         throw error;
       });
@@ -822,7 +839,7 @@ describe(SubprocessEngine, () => {
     });
 
     it("treats a djLint that vanished as unavailable and forgets it", async () => {
-      const vanished = makeExecaError({ code: "ENOENT" });
+      const vanished = makeRunError({ code: "ENOENT" });
       installDjlint(async () => {
         throw vanished;
       });
@@ -843,7 +860,7 @@ describe(SubprocessEngine, () => {
       spawn.mockImplementation(async (_exec, args) =>
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         isProbe(args)
-          ? { exitCode: void 0, failed: true, stderr: "", stdout: "", timedOut: true }
+          ? { exitCode: void 0, stderr: "", stdout: "", timedOut: true }
           : { stdout: "FORMATTED" },
       );
       const { engine } = makeEngine();
@@ -870,9 +887,9 @@ describe(SubprocessEngine, () => {
       spawn.mockImplementation(async (_exec, args) => {
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         if (isProbe(args)) {
-          return { exitCode: 1, failed: true, stderr: "ImportError: boom", stdout: "" };
+          return { exitCode: 1, stderr: "ImportError: boom", stdout: "" };
         }
-        throw makeExecaError({ exitCode: 1, stderr: "ImportError: boom" });
+        throw makeRunError({ exitCode: 1, stderr: "ImportError: boom" });
       });
       const { engine } = makeEngine();
       await expect(
@@ -885,9 +902,9 @@ describe(SubprocessEngine, () => {
       spawn.mockImplementation(async (exec) => {
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         if (exec === "djlint") {
-          throw makeExecaError({ code: "ENOENT" });
+          throw makeRunError({ code: "ENOENT" });
         }
-        return { exitCode: 9009, failed: true, stderr: "Python was not found", stdout: "" };
+        return { exitCode: 9009, stderr: "Python was not found", stdout: "" };
       });
       const { engine } = makeEngine();
       await expect(
@@ -915,7 +932,7 @@ describe(SubprocessEngine, () => {
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         if (isFirstRun) {
           isFirstRun = false;
-          throw makeExecaError({ code: "ENOENT" });
+          throw makeRunError({ code: "ENOENT" });
         }
         return { stdout: "FORMATTED" };
       });
@@ -931,7 +948,7 @@ describe(SubprocessEngine, () => {
       spawn.mockImplementation(async (_exec, args) => {
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         if (!isProbe(args)) {
-          throw makeExecaError({ exitCode: 3, stderr: "gone" });
+          throw makeRunError({ exitCode: 3, stderr: "gone" });
         }
         // oxlint-disable-next-line vitest/no-conditional-in-test -- inside a mock implementation, not the test's own logic
         const output = firstProbe ? VERSION_OUTPUT : { exitCode: 1, stderr: NO_MODULE, stdout: "" };
@@ -945,21 +962,22 @@ describe(SubprocessEngine, () => {
       expect(control.shownErrors).toStrictEqual([]);
     });
 
-    it("does not report a cancellation", async () => {
-      const cancelled = makeExecaError({ isCanceled: true });
+    it("does not report a run it stopped", async () => {
+      const source = new vscode.CancellationTokenSource();
       installDjlint(async () => {
-        throw cancelled;
+        source.cancel();
+        throw makeRunError({ signal: "SIGTERM" });
       });
       const { engine } = makeEngine();
-      await expect(engine.format(document, config, formattingOptions, liveToken())).rejects.toBe(
-        cancelled,
-      );
+      await expect(
+        engine.format(document, config, formattingOptions, source.token),
+      ).rejects.toBeInstanceOf(vscode.CancellationError);
       expect(control.shownErrors).toStrictEqual([]);
       expect(probes()).toBe(1);
     });
 
     it("passes other errors through untouched", async () => {
-      const error = new TypeError("not from execa");
+      const error = new TypeError("not a failed run");
       installDjlint(async () => {
         throw error;
       });
@@ -973,10 +991,10 @@ describe(SubprocessEngine, () => {
   describe("cancellation", () => {
     function abortable(): Spawn {
       return async (_exec, _args, options) => {
-        const signal = options["cancelSignal"] as AbortSignal;
+        const signal = options["signal"] as AbortSignal;
         return new Promise((_resolve, reject) => {
           signal.addEventListener("abort", () => {
-            reject(makeExecaError({ isCanceled: true }));
+            reject(makeRunError({ signal: "SIGTERM" }));
           });
         });
       };
@@ -992,7 +1010,7 @@ describe(SubprocessEngine, () => {
         expect(runs()).toHaveLength(1);
       });
       source.cancel();
-      await expect(pending).rejects.toMatchObject({ isCanceled: true });
+      await expect(pending).rejects.toBeInstanceOf(vscode.CancellationError);
     });
 
     it("spawns nothing when the token fired during resolution", async () => {

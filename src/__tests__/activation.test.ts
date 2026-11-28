@@ -2,12 +2,11 @@
 // resolved-djLint state. Getting this wrong is invisible in normal use:
 // changing djlint.executablePath would simply keep running the old djLint until
 // the 5-minute TTL lapsed.
-import { execa } from "execa";
-import type { Mock } from "vitest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type * as vscode from "vscode";
 
 import { EngineManager, engineSettingKeys } from "../engine/select.js";
+import { run } from "../engine/subprocess/exec.js";
 import { activate } from "../extension.js";
 import { showWarning } from "../notify.js";
 import { DjlintStatus } from "../status.js";
@@ -26,19 +25,14 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
   stat: vi.fn<() => Promise<object>>(async () => ({})),
 }));
 vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
-vi.mock("execa", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn<typeof import("execa").execa>(),
+vi.mock("../engine/subprocess/exec.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../engine/subprocess/exec.js")>()),
+  run: vi.fn<typeof import("../engine/subprocess/exec.js").run>(),
 }));
 vi.mock("@vscode/python-environments", () => ({ EXTENSION_ID: "ms-python.vscode-python-envs" }));
 vi.mock("@vscode/python-extension", async () => import("./python-extension-mock.js"));
 
-type Spawn = (
-  exec: string,
-  args: readonly string[],
-) => Promise<{ exitCode: number; stdout: string }>;
-
-const spawn = execa as unknown as Mock<Spawn>;
+const spawn = vi.mocked(run);
 
 const document = makeDocument("/w/a.html", "<p>x</p>");
 
@@ -72,7 +66,7 @@ describe("the extension", () => {
     control.configuration = { enableLinting: true, executablePath: "/bin/djlint" };
     spawn.mockReset();
     spawn.mockImplementation(async (_exec, args) => ({
-      exitCode: 0,
+      stderr: "",
       stdout: args.includes("--version") ? "djlint, version 1.44.2" : "",
     }));
     context = makeContext();

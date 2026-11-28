@@ -1,9 +1,10 @@
 // DjlintServer against a stand-in for `djlint --lsp` that answers as a test
 // tells it to: the messages, failures and timing a real djLint gives no way to
 // bring about on demand.
+import { spawn } from "node:child_process";
+import { EventEmitter } from "node:events";
 import { PassThrough } from "node:stream";
 
-import { execa } from "execa";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
@@ -18,7 +19,9 @@ import { forgetShownWarnings } from "../../notify.js";
 import { DjlintServer, ServerResponseError } from "../subprocess/server.js";
 import { RUN_TIMEOUT_MS } from "../types.js";
 
-vi.mock("execa", () => ({ execa: vi.fn<typeof import("execa").execa>() }));
+vi.mock("node:child_process", () => ({
+  spawn: vi.fn<typeof import("node:child_process").spawn>(),
+}));
 
 const VERSION = "1.49.0";
 const HEADER_END = "\r\n\r\n";
@@ -52,7 +55,17 @@ class FakeLanguageServer {
     ["textDocument/formatting", (request) => this.reply(request, [])],
   ]);
   isKilled = false;
+  readonly process = Object.assign(new EventEmitter(), {
+    kill: () => {
+      this.isKilled = true;
+      this.end();
+    },
+    stderr: this.stderr,
+    stdin: this.stdin,
+    stdout: this.stdout,
+  });
   readonly #exit = Promise.withResolvers<object>();
+  #hasEnded = false;
 
   #input = Buffer.alloc(0);
 
@@ -77,18 +90,6 @@ class FakeLanguageServer {
           this.handlers.get(message.method ?? "")?.(message);
         });
       }
-    });
-  }
-
-  get process(): Promise<object> {
-    return Object.assign(this.#exit.promise, {
-      kill: () => {
-        this.isKilled = true;
-        this.end();
-      },
-      stderr: this.stderr,
-      stdin: this.stdin,
-      stdout: this.stdout,
     });
   }
 
@@ -127,6 +128,10 @@ class FakeLanguageServer {
   }
 
   end(): void {
+    if (!this.#hasEnded) {
+      this.#hasEnded = true;
+      this.process.emit("close", 0, null);
+    }
     this.#exit.resolve({});
   }
 }
@@ -153,7 +158,7 @@ describe(DjlintServer, () => {
   beforeEach(() => {
     resetVscode();
     fake = new FakeLanguageServer();
-    vi.mocked(execa).mockReturnValue(fake.process as never);
+    vi.mocked(spawn).mockReturnValue(fake.process as never);
     channel = makeChannel();
     server = new DjlintServer("djlint", [], "/w", VERSION, channel);
   });
@@ -409,6 +414,12 @@ describe(DjlintServer, () => {
     await expect(lint()).rejects.toThrow("djLint's language server ended");
     expect(server.isClosed).toBe(true);
     await expect(lint()).rejects.toThrow("djLint's language server has ended");
+  });
+
+  it("ends with the reason it couldn't start", async () => {
+    fake.process.emit("error", new Error("spawn djlint ENOENT"));
+    await expect(lint()).rejects.toThrow("spawn djlint ENOENT");
+    expect(server.isClosed).toBe(true);
   });
 
   it("ends when it can't write to the server", async () => {

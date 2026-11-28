@@ -1,5 +1,8 @@
 /* oxlint-disable typescript/no-unsafe-type-assertion -- what the server sends is the protocol's */
-import { execa } from "execa";
+import { spawn } from "node:child_process";
+import type { ChildProcessWithoutNullStreams } from "node:child_process";
+
+import { normalizeSpawnCommand } from "tinyexec";
 import * as vscode from "vscode";
 import {
   createMessageConnection,
@@ -25,14 +28,17 @@ export const IDLE_STOP_MS = process.platform === "win32" ? 30_000 : 600_000;
 
 export type ServerSettings = Record<string, unknown>;
 
-// The type of what execa returns depends on these options.
-// oxlint-disable-next-line typescript/explicit-function-return-type, typescript/promise-function-async
-function spawnServer(exec: string, prefixArgs: readonly string[], cwd: string | undefined) {
-  return execa(exec, [...prefixArgs, "--lsp"], {
-    buffer: false,
+// Without a shell, as `run` starts a command: on Windows tinyexec turns a `.cmd`, or a script with a shebang, into something `spawn` can start.
+function spawnServer(
+  exec: string,
+  prefixArgs: readonly string[],
+  cwd: string | undefined,
+): ChildProcessWithoutNullStreams {
+  const { args, command, options } = normalizeSpawnCommand(exec, [...prefixArgs, "--lsp"], {
     ...(cwd != null && { cwd }),
-    reject: false,
+    windowsHide: true,
   });
+  return spawn(command, args, { ...options, stdio: "pipe" });
 }
 
 export function applyEdits(document: vscode.TextDocument, edits: readonly TextEdit[]): string {
@@ -79,7 +85,8 @@ export class DjlintServer {
   // What fails each request still waiting, with the reason the server closed.
   readonly #waiting = new Set<(reason: Error) => void>();
   readonly #connection: MessageConnection;
-  readonly #process: ReturnType<typeof spawnServer>;
+  readonly #process: ChildProcessWithoutNullStreams;
+  readonly #ended: Promise<void>;
   readonly #outputChannel: vscode.LogOutputChannel;
   readonly #started: Promise<unknown>;
   readonly #version: string;
@@ -94,6 +101,16 @@ export class DjlintServer {
     this.#outputChannel = outputChannel;
     this.#version = version;
     this.#process = spawnServer(exec, prefixArgs, cwd);
+    // Not `exit`, after which some of what the server wrote may still be on its way.
+    this.#ended = new Promise((resolve) => {
+      this.#process.once("close", () => {
+        resolve();
+      });
+    });
+    // Why the server could not start, or could not be stopped.
+    this.#process.on("error", (e) => {
+      this.#close(e);
+    });
     const reader = new StreamMessageReader(this.#process.stdout);
     // Its timer for a message that stops halfway would outlive the server; the request timeout covers that.
     reader.partialMessageTimeout = 0;
@@ -149,7 +166,7 @@ export class DjlintServer {
       this.#outputChannel.debug(chunk.trimEnd());
     });
     // oxlint-disable-next-line promise/always-return, promise/prefer-await-to-then -- nothing waits for the server to end
-    void this.#process.then(() => {
+    void this.#ended.then(() => {
       this.#close(new Error("djLint's language server ended"));
     });
     this.#started = this.#initialize();
@@ -234,7 +251,7 @@ export class DjlintServer {
     try {
       await this.#request("shutdown");
       this.#notify("exit");
-      await this.#process;
+      await this.#ended;
     } catch {
       this.#process.kill();
     } finally {

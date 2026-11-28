@@ -2,7 +2,6 @@
 // untrusted workspace must never reach a subprocess or its own project files.
 import path from "node:path";
 
-import { execa } from "execa";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FakeWorker } from "../../__tests__/fake-worker.js";
@@ -21,6 +20,7 @@ import { control, resetVscode, Uri } from "../../__tests__/vscode-stub.js";
 import { createDesktopEngine } from "../desktop.js";
 import { PyodideEngine } from "../pyodide/index.js";
 import { EngineManager, FallbackEngine } from "../select.js";
+import { run } from "../subprocess/exec.js";
 
 vi.mock("node:worker_threads", async () => {
   const { FakeWorker: Worker } = await import("../../__tests__/fake-worker.js");
@@ -28,9 +28,9 @@ vi.mock("node:worker_threads", async () => {
 });
 
 vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
-vi.mock("execa", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("execa")>()),
-  execa: vi.fn<typeof import("execa").execa>(),
+vi.mock("../subprocess/exec.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../subprocess/exec.js")>()),
+  run: vi.fn<typeof import("../subprocess/exec.js").run>(),
 }));
 
 const extensionPath = "/ext";
@@ -52,7 +52,7 @@ describe(EngineManager, () => {
   beforeEach(() => {
     resetVscode();
     FakeWorker.reset();
-    vi.mocked(execa).mockReset();
+    vi.mocked(run).mockReset();
     setWorkspaceFolders("/w");
   });
 
@@ -68,7 +68,7 @@ describe(EngineManager, () => {
   it("starts nothing until an engine does some work", () => {
     expect(makeManager().engine).toBeDefined();
     expect(FakeWorker.instances).toHaveLength(0);
-    expect(execa).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
   });
 
   it("keeps one engine until reset, then disposes it", () => {
@@ -122,7 +122,7 @@ describe(EngineManager, () => {
       .catch(() => void 0);
     await flush();
     expect(FakeWorker.latest.lastRun.cwd).toBeUndefined();
-    expect(execa).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
     manager.dispose();
   });
 
@@ -138,7 +138,7 @@ describe(EngineManager, () => {
       .catch(() => void 0);
     await flush();
     expect(FakeWorker.latest.lastRun.cwd).toBe(Uri.file("/w/sub").fsPath);
-    expect(execa).not.toHaveBeenCalled();
+    expect(run).not.toHaveBeenCalled();
     manager.dispose();
   });
 });

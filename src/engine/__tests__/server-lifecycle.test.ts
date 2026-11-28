@@ -25,7 +25,7 @@ const { servers, spawn } = vi.hoisted(() => ({
     isStopping: boolean;
     lint: Mock<() => Promise<never[]>>;
   }[],
-  spawn: vi.fn<() => Promise<{ exitCode?: number; stdout: string }>>(),
+  spawn: vi.fn<() => Promise<{ stdout: string }>>(),
 }));
 
 vi.mock("node:fs/promises", async (importOriginal) => ({
@@ -35,9 +35,9 @@ vi.mock("node:fs/promises", async (importOriginal) => ({
 
 vi.mock("which-command", () => ({ whichCommand: async (command: string) => command }));
 
-vi.mock("execa", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("execa")>()),
-  execa: async () => ({ stderr: "", ...(await spawn()) }),
+vi.mock("../subprocess/exec.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../subprocess/exec.js")>()),
+  run: async () => ({ stderr: "", ...(await spawn()) }),
 }));
 
 vi.mock("../subprocess/server.js", async (importOriginal) => ({
@@ -59,7 +59,7 @@ vi.mock("../subprocess/server.js", async (importOriginal) => ({
   },
 }));
 
-const VERSION = { exitCode: 0, stdout: "djlint, version 1.49.0" };
+const VERSION = { stdout: "djlint, version 1.49.0" };
 const document = makeDocument("/w/t.html", "<p>x</p>");
 const config = makeConfig({ executablePath: "/bin/djlint" });
 

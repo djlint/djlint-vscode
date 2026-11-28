@@ -3,7 +3,6 @@ import path from "node:path";
 import process from "node:process";
 import { stripVTControlCharacters } from "node:util";
 
-import { execa } from "execa";
 import * as vscode from "vscode";
 import { whichCommand } from "which-command";
 
@@ -22,8 +21,7 @@ import { getExistingDocumentFolder } from "../document-folder.js";
 import { DjlintUnavailableError, RUN_TIMEOUT_MS } from "../types.js";
 import type { DjlintEngine, DjlintMode, LintDiagnostic } from "../types.js";
 import { checkErrors, isValidLintResult } from "./errors.js";
-import { isCustomExecaError, isDjlintUnavailable } from "./exec.js";
-import type { ChildOptions, CustomExecaError } from "./exec.js";
+import { isDjlintUnavailable, run, RunError } from "./exec.js";
 import { findNpmPython } from "./npm.js";
 import { parseLinterOutput } from "./parse-lint-output.js";
 import { CommandResolver } from "./resolve.js";
@@ -90,9 +88,9 @@ export function expandVariables(value: string, document: vscode.TextDocument): s
 type RunFailureClassification = "error" | "lint-result" | "unavailable";
 
 export async function classifyRunFailure(
-  e: CustomExecaError,
-  isValidResult: (e: CustomExecaError) => boolean,
-  isUnavailableFast: (e: CustomExecaError) => boolean,
+  e: RunError,
+  isValidResult: (e: RunError) => boolean,
+  isUnavailableFast: (e: RunError) => boolean,
   reprobe: () => Promise<ProbeResult>,
 ): Promise<RunFailureClassification> {
   if (isValidResult(e)) {
@@ -104,8 +102,8 @@ export async function classifyRunFailure(
   return (await reprobe()) === null ? "unavailable" : "error";
 }
 
-// On Windows, execa leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
-// Like execa, this tries the extension a command is written with, even one PATHEXT lacks: execa runs such a script by its shebang.
+// On Windows, tinyexec leaves a command it cannot find to cmd.exe, which exits 1 with a message in the language of the system.
+// Like tinyexec, this tries the extension a command is written with, even one PATHEXT lacks: tinyexec runs such a script by its shebang.
 async function isCommandFound(exec: string, cwd: string | undefined): Promise<boolean> {
   const extension = path.extname(exec);
   const found = await whichCommand(exec, {
@@ -126,18 +124,13 @@ async function probeExecutable(
     return null;
   }
   try {
-    const result = await execa(exec, [...prefixArgs, "--version"], {
+    const { stdout } = await run(exec, [...prefixArgs, "--version"], {
       ...(cwd != null && { cwd }),
-      reject: false,
-      stdin: "ignore",
       timeout: PROBE_TIMEOUT_MS,
     });
-    if (result.exitCode === 0) {
-      return parseDjlintVersion(result.stdout);
-    }
-    return isDjlintUnavailable(result) ? null : void 0;
-  } catch {
-    return null;
+    return parseDjlintVersion(stdout);
+  } catch (e) {
+    return e instanceof RunError && !isDjlintUnavailable(e) ? void 0 : null;
   }
 }
 
@@ -380,7 +373,7 @@ export class SubprocessEngine implements DjlintEngine {
     command: RunnerCommand,
     mode: DjlintMode,
     context: ArgContext,
-    cancelSignal: AbortSignal,
+    signal: AbortSignal,
   ): Promise<string> {
     const versionedContext = { ...context, djlintVersion: command.version };
     const supportedArgs = selectSupportedArgs(
@@ -395,19 +388,17 @@ export class SubprocessEngine implements DjlintEngine {
       "-",
       ...supportedArgs.flatMap((arg) => arg.build(versionedContext)),
     ];
-    const childOptions: ChildOptions = {
+    const { stderr, stdout } = await run(command.exec, childArgs, {
       ...(await this.#getCwd(context.document)),
       ...moduleSearchEnv(context),
-      cancelSignal,
       // As reading a file does, or a rule on blank lines misses `\r\n`, before djLint 1.49.1.
       input:
         mode === "lint"
           ? context.document.getText().replaceAll("\r\n", "\n")
           : context.document.getText(),
-      stripFinalNewline: false,
+      signal,
       timeout: RUN_TIMEOUT_MS,
-    };
-    const { stderr, stdout } = await execa(command.exec, childArgs, childOptions);
+    });
     this.#logWarnings(stderr);
     return stdout;
   }
@@ -448,7 +439,11 @@ export class SubprocessEngine implements DjlintEngine {
     try {
       return await this.#exec(command, mode, context, controller.signal);
     } catch (e) {
-      if (!isCustomExecaError(e) || e.isCanceled) {
+      // How a cancelled run ended says nothing about djLint.
+      if (controller.signal.aborted) {
+        throw new vscode.CancellationError();
+      }
+      if (!(e instanceof RunError)) {
         throw e;
       }
 
@@ -466,7 +461,7 @@ export class SubprocessEngine implements DjlintEngine {
 
       if (classification === "unavailable") {
         this.#resolver.invalidate();
-        this.#outputChannel.debug(`djLint is no longer available (${e.shortMessage}).`);
+        this.#outputChannel.debug(`djLint is no longer available: ${e.message}`);
         if (!isRetry) {
           return await this.#run(mode, context, token, void 0, true);
         }

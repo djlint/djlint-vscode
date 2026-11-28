@@ -4,12 +4,12 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { execa } from "execa";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import {
   formattingOptions,
+  installedDjlint,
   liveToken,
   makeChannel,
   makeDocument,
@@ -19,8 +19,8 @@ import { control, resetVscode } from "../../__tests__/vscode-stub.js";
 import { DjlintServer, IDLE_STOP_MS } from "../subprocess/server.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../subprocess/version.js";
 
-const { failed, stdout } = await execa("djlint", ["--version"], { reject: false });
-const version = failed ? null : parseDjlintVersion(String(stdout));
+const installed = await installedDjlint();
+const version = installed == null ? null : parseDjlintVersion(installed);
 const hasServer = version != null && isVersionAtLeast(version, "1.49");
 // The warnings came in djLint 1.51.
 const hasWarnings = version != null && isVersionAtLeast(version, "1.51");

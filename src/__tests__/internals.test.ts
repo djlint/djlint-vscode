@@ -2,17 +2,16 @@
 // cancellation bookkeeping shared by Formatter and Linter, the version gate
 // that decides which flags an older djLint is sent, and how a wedged run is
 // classified.
-import { execa } from "execa";
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 import { formattingArgs } from "../args.js";
 import { CancellationRegistry } from "../cancellation-registry.js";
 import { isValidLintResult } from "../engine/subprocess/errors.js";
-import { isDjlintUnavailable } from "../engine/subprocess/exec.js";
-import type { CustomExecaError } from "../engine/subprocess/exec.js";
+import { isDjlintUnavailable, run } from "../engine/subprocess/exec.js";
+import type { RunError } from "../engine/subprocess/exec.js";
 import { classifyRunFailure } from "../engine/subprocess/index.js";
 import { selectSupportedArgs } from "../engine/subprocess/version.js";
-import { makeChannel, makeConfig, makeDocument, makeExecaError } from "./helpers.js";
+import { failureOf, makeChannel, makeConfig, makeDocument, makeRunError } from "./helpers.js";
 import { resetVscode } from "./vscode-stub.js";
 
 describe("shared internals", () => {
@@ -156,21 +155,22 @@ describe("shared internals", () => {
 
   // An unresponsive child is killed by RUN_TIMEOUT_MS rather than hanging
   // forever. The resulting error must not be mistaken for either of the two
-  // benign failures, so this drives a real execa timeout rather than a
-  // hand-built object: a killed process reports exitCode `undefined`.
+  // benign failures, so this drives a real timeout rather than a hand-built
+  // object: a killed process reports exitCode `undefined`.
   describe("a wedged djLint run", () => {
-    let timedOut: CustomExecaError & { timedOut: boolean };
+    let timedOut: RunError;
 
     beforeAll(async () => {
-      const result = await execa(
-        process.execPath,
-        ["-e", "process.stdin.resume(); setTimeout(() => {}, 60000);"],
-        { input: "<div></div>", reject: false, timeout: 800 },
+      timedOut = await failureOf(
+        run(process.execPath, ["-e", "process.stdin.resume(); setTimeout(() => {}, 60000);"], {
+          input: "<div></div>",
+          timeout: 800,
+        }),
       );
-      timedOut = result as unknown as typeof timedOut;
     });
 
     it("is not mistaken for lint findings or a missing djLint", () => {
+      expect(timedOut).toMatchObject({ exitCode: void 0, timedOut: true });
       expect(isValidLintResult(timedOut, true)).toBe(false);
       expect(isDjlintUnavailable(timedOut)).toBe(false);
     });
@@ -205,7 +205,7 @@ describe("shared internals", () => {
         reprobes += 1;
         return "1.44.2";
       };
-      const error = makeExecaError({ exitCode: 1 });
+      const error = makeRunError({ exitCode: 1 });
       await expect(
         classifyRunFailure(
           error,

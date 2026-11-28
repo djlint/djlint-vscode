@@ -1,9 +1,10 @@
-import { ExecaError } from "execa";
-import { vi } from "vitest";
+import { assert, vi } from "vitest";
 import * as vscode from "vscode";
 
 import type { EngineManager } from "../engine/select.js";
-import type { CustomExecaError } from "../engine/subprocess/exec.js";
+import { run, RunError } from "../engine/subprocess/exec.js";
+import type { RunFailure } from "../engine/subprocess/exec.js";
+import { RUN_TIMEOUT_MS } from "../engine/types.js";
 import type { DjlintEngine } from "../engine/types.js";
 import type { PythonEnvironments } from "../python/environment.js";
 import type { DjlintStatus } from "../status.js";
@@ -127,25 +128,34 @@ export function changeOf(
   } as unknown as vscode.ConfigurationChangeEvent;
 }
 
-interface ExecaErrorFields {
-  code?: string;
-  exitCode?: number | undefined;
-  isCanceled?: boolean;
-  shortMessage?: string;
-  signal?: string;
-  stderr?: string;
-  stdout?: string;
-  timedOut?: boolean;
+export function makeRunError(failure: RunFailure): RunError {
+  return new RunError("djlint -", failure);
 }
 
-export function makeExecaError(fields: ExecaErrorFields): CustomExecaError {
-  const shortMessage = fields.shortMessage ?? "Command failed";
-  return Object.assign(new ExecaError(), {
-    isCanceled: false,
-    message: shortMessage,
-    shortMessage,
-    stderr: "",
-    stdout: "",
-    ...fields,
-  }) as unknown as CustomExecaError;
+/**
+ * How a run that must fail failed.
+ * @param running - The run.
+ * @returns The RunError it rejected with.
+ */
+export async function failureOf(running: Promise<unknown>): Promise<RunError> {
+  try {
+    await running;
+  } catch (e) {
+    assert(e instanceof RunError);
+    return e;
+  }
+  throw new Error("the command succeeded");
+}
+
+/**
+ * The djLint on PATH, for the suites that run it.
+ * @returns What its `--version` prints, or null where none runs.
+ */
+export async function installedDjlint(): Promise<string | null> {
+  try {
+    const { stdout } = await run("djlint", ["--version"], { timeout: RUN_TIMEOUT_MS });
+    return stdout;
+  } catch {
+    return null;
+  }
 }

@@ -6,13 +6,13 @@ import os from "node:os";
 import path from "node:path";
 import process from "node:process";
 
-import { execa } from "execa";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import * as vscode from "vscode";
 
 import { everySetting } from "../../__tests__/every-setting.js";
 import {
   formattingOptions,
+  installedDjlint,
   liveToken,
   makeChannel,
   makeConfig,
@@ -27,14 +27,14 @@ import { SubprocessEngine } from "../subprocess/index.js";
 import { isVersionAtLeast, parseDjlintVersion } from "../subprocess/version.js";
 import { DjlintUnavailableError } from "../types.js";
 
-const installed = await execa("djlint", ["--version"], { reject: false });
-const installedVersion = installed.failed ? null : parseDjlintVersion(String(installed.stdout));
+const installed = await installedDjlint();
+const installedVersion = installed == null ? null : parseDjlintVersion(installed);
 // The warnings came in djLint 1.51.
 const hasWarnings = installedVersion != null && isVersionAtLeast(installedVersion, "1.51");
 
 const DIRTY = `<div><img src="x.png"></div>`;
 
-describe.skipIf(installed.failed)("the installed djLint", { timeout: 60_000 }, () => {
+describe.skipIf(installed == null)("the installed djLint", { timeout: 60_000 }, () => {
   let root: string;
   let document: vscode.TextDocument;
   let engine: SubprocessEngine;
